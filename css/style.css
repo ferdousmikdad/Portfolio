@@ -1,0 +1,399 @@
+/* Custom Fonts */
+@font-face {
+    font-family: 'BoldPixels';
+    src: url('../assets/BoldPixels.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+* {
+    font-family: 'Fira Code', monospace;
+}
+
+/* CSS */
+body {
+  background-image: url('../assets/images/Noise.png'); /* small tile */
+  background-repeat: repeat;
+  background-size: auto;         /* keep actual tile size so it repeats */
+  background-attachment: fixed;  /* optional: noise doesn't scroll */
+  background-color: #fff;        /* fallback base color */
+}
+
+
+
+.title-font {
+    font-family: 'BoldPixels', 'Courier New', monospace;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+/* Sound Toggle Button Styles */
+#soundToggleBottom {
+    position: relative;
+    z-index: 100;
+    cursor: pointer !important;
+}
+
+#soundToggleBottom svg {
+    pointer-events: none;
+    display: block;
+}
+
+
+/* Pac-Man Image Style */
+.pacman-img {
+    transition: transform 0.1s ease;
+    width: 48px !important;
+    height: 48px !important;
+    z-index: 3;
+    position: relative;
+}
+
+.pacman-img.left {
+    transform: scaleX(-1);
+}
+
+.pacman-img.up {
+    transform: rotate(-90deg);
+}
+
+.pacman-img.down {
+    transform: rotate(90deg);
+}
+
+.pacman-img.right {
+    transform: rotate(0deg);
+}
+
+/* Dots for Pac-Man Game - Square Shape */
+.dot {
+    width: 6px;
+    height: 6px;
+    background: #4B4941;
+    border-radius: 0; /* Make dots square instead of rounded */
+    z-index: 2;
+    position: relative;
+}
+
+/* Project Preview Transition */
+.project-preview {
+    transition: opacity 0.3s ease;
+}
+
+/* Bottom Navigation Items */
+.nav-bottom-item {
+    cursor: pointer;
+    transition: color 0.3s ease;
+    position: relative;
+}
+
+.nav-bottom-item:hover {
+    color: #ef4444;
+}
+
+.nav-bottom-item.active {
+    color: #ef4444;
+}
+
+/* Contact Page Animations */
+.mepac-popup {
+    animation: popIn 0.5s ease-out;
+}
+
+@keyframes popIn {
+    0% {
+        transform: scale(0) rotate(0deg);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2) rotate(10deg);
+    }
+    100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+.speech-bubble {
+    animation: fadeInUp 0.5s ease-out 0.3s both;
+}
+
+@keyframes fadeInUp {
+    0% {
+        transform: translateY(10px);
+        opacity: 0;
+    }
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Utility Classes */
+.hidden {
+    display: none !important;
+}
+
+/* Game Grid */
+.game-grid {
+    display: grid;
+    gap: 0; /* Remove gap between cells */
+}
+
+.grid-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    margin: 0; /* Remove margin */
+    padding: 0; /* Remove padding */
+    border-radius: 0; /* Ensure cells are square, not rounded */
+}
+
+.cell-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    background-color: transparent; /* Ensure no black background */
+    background-repeat: no-repeat;
+}
+
+/* Fade In Animation */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Pixel Avatar */
+.pixel-avatar {
+    width: 128px;
+    height: 128px;
+    image-rendering: pixelated;
+    background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 100%);
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+}
+
+.pixel-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .title-font {
+        font-size: 2rem;
+    }
+    
+    .pixel-avatar {
+        width: 96px;
+        height: 96px;
+    }
+    
+    .nav-bottom-item {
+        font-size: 0.75rem;
+    }
+    
+    /* Game Grid Responsive */
+    .game-grid {
+        padding: 1rem;
+    }
+    
+    .grid-cell {
+        min-height: 30px;
+    }
+    
+    .pacman-img {
+        width: 24px !important;
+        height: 24px !important;
+    }
+    
+    .dot {
+        width: 4px;
+        height: 4px;
+    }
+    
+    /* Project Info Responsive */
+    #projectInfo, #projectInfo2 {
+        padding: 0.5rem;
+    }
+    
+    #projectTitle, #projectTitle2 {
+        font-size: 1.5rem;
+    }
+    
+    #projectDesc, #projectDesc2 {
+        font-size: 0.875rem;
+    }
+    
+    /* Start Overlay Responsive */
+    #startOverlay, #startOverlay2 {
+        padding: 1rem;
+    }
+    
+    #startGame, #startGame2 {
+        font-size: 1.5rem;
+        padding: 0.5rem 1rem;
+    }
+    
+    /* Project Navigation Arrows Responsive */
+    .project-nav-arrow {
+        padding: 0.5rem;
+    }
+    
+    .project-nav-arrow svg {
+        width: 1rem;
+        height: 1rem;
+    }
+}
+
+/* Mepac Moving Animation */
+.mepac-moving {
+    animation: mepacMove 4s infinite;
+}
+
+@keyframes mepacMove {
+    0% { transform: translate(0, 0) rotate(0deg); }
+    25% { transform: translate(10px, -10px) rotate(5deg); }
+    50% { transform: translate(0, -20px) rotate(0deg); }
+    75% { transform: translate(-10px, -10px) rotate(-5deg); }
+    100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+/* Bubble Animation */
+.bubble {
+    position: absolute;
+    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 50%;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 100;
+}
+
+.bubble-animate {
+    animation: bubbleFloat 1s ease-out forwards;
+}
+
+@keyframes bubbleFloat {
+    0% {
+        transform: translateY(0) scale(0);
+        opacity: 0.7;
+    }
+    50% {
+        opacity: 0.5;
+    }
+    100% {
+        transform: translateY(-150px) scale(1.8);
+        opacity: 0;
+    }
+}
+
+/* Loading state for images */
+.img-loading {
+    background-color: #1f2937;
+    position: relative;
+    overflow: hidden;
+}
+
+.img-loading::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+/* Image Gallery Styles */
+#imageGallery {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 1rem;
+  width: 100%;
+  height: 100%;
+}
+
+.gallery-item {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid #374151;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  aspect-ratio: 1/1;
+}
+
+.gallery-item:hover {
+  transform: scale(1.03);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+  border-color: #ef4444;
+}
+
+.gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.gallery-item:hover img {
+  transform: scale(1.05);
+}
+
+.gallery-item .overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+  padding: 1rem;
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+}
+
+.gallery-item:hover .overlay {
+  transform: translateY(0);
+}
+
+.gallery-item .overlay h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: white;
+  font-family: 'BoldPixels', 'Courier New', monospace;
+}
+
+/* Responsive adjustments for the gallery */
+@media (max-width: 768px) {
+  #imageGallery {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  #imageGallery {
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(6, 1fr);
+  }
+}
