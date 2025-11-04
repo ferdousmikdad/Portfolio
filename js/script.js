@@ -1,7 +1,10 @@
 // Main Application Controller
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Portfolio loaded successfully!');
-    
+
+    // Initialize SoundManager first
+    SoundManager.init();
+
     // Initialize all modules
     initNavigation();
     initGame();
@@ -9,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initPlayGameButton();
     initContactButton();
     initCustomCursor();
-    
+
     // Set initial page
     navigateTo('home');
 });
@@ -84,32 +87,35 @@ const SoundManager = (function() {
     
     // Play sound function
     function playSound(soundName) {
-        if (!soundEnabled || !userInteracted) return false;
-        
+        if (!soundEnabled) return false;
+
         const audio = audioElements[soundName];
         if (!audio) {
             console.error(`Sound not found: ${soundName}`);
             return false;
         }
-        
+
         try {
             // Initialize audio context if needed
             if (!audioContext) {
                 initAudioContext();
             }
-            
+
             // Reset audio to beginning
             audio.currentTime = 0;
-            
+
+            // Set user interaction flag if this is called from a user event
+            setUserInteracted();
+
             // Play the audio
             const playPromise = audio.play();
-            
+
             if (playPromise !== undefined) {
                 playPromise.then(() => {
-                    console.log(`Playing audio: ${audio.src}`);
+                    console.log(`Playing audio: ${soundName}`);
                 }).catch(error => {
                     console.error(`Audio play failed for ${soundName}:`, error);
-                    
+
                     // Try to resume audio context if it's suspended
                     if (audioContext && audioContext.state === 'suspended') {
                         audioContext.resume().then(() => {
@@ -122,7 +128,7 @@ const SoundManager = (function() {
                     }
                 });
             }
-            
+
             return true;
         } catch (error) {
             console.error(`Error playing sound ${soundName}:`, error);
@@ -151,11 +157,14 @@ const SoundManager = (function() {
     function toggleSound() {
         soundEnabled = !soundEnabled;
         console.log(`Sound ${soundEnabled ? 'enabled' : 'disabled'}`);
-        
+
+        // Update global soundOn variable for backward compatibility
+        window.soundOn = soundEnabled;
+
         if (!soundEnabled) {
             stopBackgroundAudio();
         }
-        
+
         return soundEnabled;
     }
     
@@ -169,11 +178,23 @@ const SoundManager = (function() {
         if (!userInteracted) {
             userInteracted = true;
             console.log('User interaction detected - audio can now play');
-            
+
             // Initialize audio context on first interaction
             if (!audioContext) {
                 initAudioContext();
             }
+
+            // Try to resume audio context if it's suspended
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume().then(() => {
+                    console.log('AudioContext resumed successfully');
+                }).catch(error => {
+                    console.error('Failed to resume AudioContext:', error);
+                });
+            }
+
+            // Update global soundOn variable for backward compatibility
+            window.soundOn = soundEnabled;
         }
     }
     
@@ -182,11 +203,14 @@ const SoundManager = (function() {
         init: function() {
             const success = loadAudioFiles();
             if (success) {
-                // Set up user interaction listeners
+                // Set up user interaction listeners (persist for better audio handling)
                 const interactionEvents = ['click', 'touchstart', 'keydown'];
                 interactionEvents.forEach(event => {
-                    document.addEventListener(event, setUserInteracted, { once: true });
+                    document.addEventListener(event, setUserInteracted);
                 });
+
+                // Initialize global soundOn variable
+                window.soundOn = soundEnabled;
             }
             return success;
         },
@@ -287,24 +311,24 @@ function initCustomCursor() {
 
 // Sound Toggle Functionality
 function initSoundToggle() {
+    console.log('Initializing sound toggle...');
+
     const soundToggleBottom = document.getElementById('soundToggleBottom');
     const soundOnIconBottom = document.getElementById('soundOnIconBottom');
     const soundOffIconBottom = document.getElementById('soundOffIconBottom');
-    
+
     if (!soundToggleBottom || !soundOnIconBottom || !soundOffIconBottom) {
-        console.error('Sound toggle elements not found');
+        console.error('Sound toggle elements not found:', {
+            soundToggleBottom: !!soundToggleBottom,
+            soundOnIconBottom: !!soundOnIconBottom,
+            soundOffIconBottom: !!soundOffIconBottom
+        });
         return;
-    }
-    
-    // Initialize the SoundManager
-    const soundInitialized = SoundManager.init();
-    
-    if (!soundInitialized) {
-        console.error('Failed to initialize sound system');
-        soundOnIconBottom.classList.add('hidden');
-        soundOffIconBottom.classList.remove('hidden');
-        return;
-    }
+      }
+
+    console.log('All sound toggle elements found');
+
+    // Remove restrictive check - let the toggle work even if sound system isn't fully initialized yet
     
     // Set initial state based on SoundManager
     updateSoundIcons();
@@ -313,37 +337,50 @@ function initSoundToggle() {
     soundToggleBottom.addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
-        
+
+        console.log('Sound toggle clicked');
+
+        // Ensure user interaction is set before toggling
+        SoundManager.setUserInteracted();
+
         // Toggle sound using SoundManager
         const newSoundState = SoundManager.toggle();
-        
+        console.log('Sound toggled to:', newSoundState ? 'ON' : 'OFF');
+
         // Update icons based on new state
         updateSoundIcons();
-        
-        // Play button sound when turning sound on
+
+        // Play button sound when turning sound on (with a small delay)
         if (newSoundState) {
-            SoundManager.setUserInteracted(); // Ensure user interaction is set
-            SoundManager.play('button');
+            setTimeout(() => {
+                SoundManager.play('button');
+            }, 100);
         }
     });
     
     // Function to update sound icons based on current state
     function updateSoundIcons() {
         const soundEnabled = SoundManager.isEnabled();
-        
+        console.log('Updating sound icons, sound enabled:', soundEnabled);
+
         if (soundEnabled) {
             soundOnIconBottom.classList.remove('hidden');
             soundOffIconBottom.classList.add('hidden');
+            console.log('Showing sound ON icon');
         } else {
             soundOnIconBottom.classList.add('hidden');
             soundOffIconBottom.classList.remove('hidden');
+            console.log('Showing sound OFF icon');
         }
     }
     
     // Expose sound state to window for backward compatibility
     window.soundOn = SoundManager.isEnabled();
-    
-    console.log('Sound toggle initialized successfully');
+
+    // Also expose the update function for external calls
+    window.updateSoundIcons = updateSoundIcons;
+
+    console.log('Sound toggle initialized successfully with state:', SoundManager.isEnabled() ? 'ON' : 'OFF');
 }
 
 // Play Game Button Functionality
@@ -508,3 +545,27 @@ window.playSound = playSound;
 window.stopBackgroundAudio = stopBackgroundAudio;
 window.playEatSound = playEatSound;
 window.createBubbleEffect = createBubbleEffect;
+window.SoundManager = SoundManager;
+
+// Debug function to test sound system
+window.testSound = function(soundName) {
+    console.log('Testing sound:', soundName);
+    console.log('Sound enabled:', SoundManager.isEnabled());
+    console.log('User interacted:', window.userInteracted);
+    console.log('Audio context state:', SoundManager.audioContext ? SoundManager.audioContext.state : 'not initialized');
+    return SoundManager.play(soundName);
+};
+
+// Debug function to test sound toggle specifically
+window.testSoundToggle = function() {
+    console.log('=== Sound Toggle Debug Info ===');
+    console.log('SoundToggleBottom element:', !!document.getElementById('soundToggleBottom'));
+    console.log('SoundOnIconBottom element:', !!document.getElementById('soundOnIconBottom'));
+    console.log('SoundOffIconBottom element:', !!document.getElementById('soundOffIconBottom'));
+    console.log('SoundManager.isEnabled():', SoundManager.isEnabled());
+    console.log('window.soundOn:', window.soundOn);
+    console.log('Current icon states:');
+    console.log('  Sound ON icon hidden:', document.getElementById('soundOnIconBottom')?.classList.contains('hidden'));
+    console.log('  Sound OFF icon hidden:', document.getElementById('soundOffIconBottom')?.classList.contains('hidden'));
+    console.log('================================');
+};
