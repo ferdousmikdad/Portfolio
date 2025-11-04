@@ -1,7 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* Custom Fonts */
 @font-face {
     font-family: 'BoldPixels';
-    src: url('../assets/BoldPixels.otf') format('opentype');
+    src: url('/BoldPixels.otf') format('opentype');
     font-weight: normal;
     font-style: normal;
 }
@@ -10,21 +14,87 @@
     font-family: 'Fira Code', monospace;
 }
 
-/* CSS */
-body {
-  background-image: url('../assets/images/Noise.png'); /* small tile */
-  background-repeat: repeat;
-  background-size: auto;         /* keep actual tile size so it repeats */
-  background-attachment: fixed;  /* optional: noise doesn't scroll */
-  background-color: #fff;        /* fallback base color */
+html, body {
+    overflow-x: hidden;
+    max-width: 100%;
 }
 
+body {
+  background-image: url('/images/Noise.png');
+  background-repeat: repeat;
+  background-size: auto;
+  background-attachment: fixed;
+  background-color: #070707;
+}
 
+.nav-items{
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #F3F0E5;
+    gap: .8rem;
+}
+
+.nav-play-btn{
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #F3F0E5;
+    background: #000;
+    border: none;
+    gap: .8rem;
+}
+.nav-play-btn:hover{
+    color: #CF0506;
+}
+
+.nav-sound-btn{
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #F3F0E5;
+    background: none;
+    border: none;
+    margin: .8 1rem 0 0 -1rem;
+}
+.nav-sound-btn:hover{
+    color: #CF0506;
+}
 
 .title-font {
     font-family: 'BoldPixels', 'Courier New', monospace;
     font-weight: bold;
     letter-spacing: 2px;
+    color: #F3F0E5;
+}
+
+.text-custom {
+    color: #B0AA95;
+}
+
+.text-red{
+    color: #CF0506;
+}
+
+.text-offwhite{
+    color: #F3F0E5;
+}
+.game-play{
+    z-index: 100;
+    padding: 1rem;
+    border-radius: 1rem;
+    top: 0%;
+    left: 0%;
+    transform: translate(100%, 100%);
+}
+
+.play-btn{
+    font-size: 3rem;
+}
+
+.border-custom {
+    border-color: #2D2C28;
+}
+
+.bg-dark {
+    background-color: #070707;
 }
 
 /* Sound Toggle Button Styles */
@@ -39,12 +109,13 @@ body {
     display: block;
 }
 
-
 /* Pac-Man Image Style */
 .pacman-img {
     transition: transform 0.1s ease;
-    width: 48px !important;
-    height: 48px !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 48px !important;
+    max-height: 48px !important;
     z-index: 3;
     position: relative;
 }
@@ -67,10 +138,10 @@ body {
 
 /* Dots for Pac-Man Game - Square Shape */
 .dot {
-    width: 6px;
-    height: 6px;
-    background: #4B4941;
-    border-radius: 0; /* Make dots square instead of rounded */
+    width: 8px;
+    height: 8px;
+    background: #B0AA95;
+    border-radius: 0;
     z-index: 2;
     position: relative;
 }
@@ -88,11 +159,11 @@ body {
 }
 
 .nav-bottom-item:hover {
-    color: #ef4444;
+    color: #F3F0E5;
 }
 
 .nav-bottom-item.active {
-    color: #ef4444;
+    color: #F3F0E5;
 }
 
 /* Contact Page Animations */
@@ -134,21 +205,55 @@ body {
     display: none !important;
 }
 
-/* Game Grid */
+/* Game Grid - FIXED */
 .game-grid {
     display: grid;
-    gap: 0; /* Remove gap between cells */
+    width: 100%;
+    height: 100%;
+    min-height: 500px;
+ 
 }
 
 .grid-cell {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: grid;
+    place-items: center;
     position: relative;
     overflow: hidden;
-    margin: 0; /* Remove margin */
-    padding: 0; /* Remove padding */
-    border-radius: 0; /* Ensure cells are square, not rounded */
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 0;
+    width: 100%;
+    height: 100%;
+    min-width: 30px;
+    min-height: 40px;
+    background-color: rgba(45, 44, 40, 0.3);
+    box-sizing: border-box;
+    cursor: url("/images/cursor.svg") 3 3, auto;
+    pointer-events: auto;
+}
+
+/* Before/After Image Container */
+.before-after-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.before-after-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: filter 0.3s ease;
+}
+
+.revealed-area {
+    position: absolute;
+    background-repeat: no-repeat;
+    transition: opacity 0.2s ease;
 }
 
 .cell-background {
@@ -158,7 +263,7 @@ body {
     width: 100%;
     height: 100%;
     z-index: 1;
-    background-color: transparent; /* Ensure no black background */
+    background-color: transparent;
     background-repeat: no-repeat;
 }
 
@@ -177,7 +282,7 @@ body {
     width: 128px;
     height: 128px;
     image-rendering: pixelated;
-    background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 100%);
+    background: linear-gradient(135deg, #2D2C28 0%, #1a1a16 100%);
     border-radius: 12px;
     position: relative;
     overflow: hidden;
@@ -187,74 +292,6 @@ body {
     width: 100%;
     height: 100%;
     object-fit: cover;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .title-font {
-        font-size: 2rem;
-    }
-    
-    .pixel-avatar {
-        width: 96px;
-        height: 96px;
-    }
-    
-    .nav-bottom-item {
-        font-size: 0.75rem;
-    }
-    
-    /* Game Grid Responsive */
-    .game-grid {
-        padding: 1rem;
-    }
-    
-    .grid-cell {
-        min-height: 30px;
-    }
-    
-    .pacman-img {
-        width: 24px !important;
-        height: 24px !important;
-    }
-    
-    .dot {
-        width: 4px;
-        height: 4px;
-    }
-    
-    /* Project Info Responsive */
-    #projectInfo, #projectInfo2 {
-        padding: 0.5rem;
-    }
-    
-    #projectTitle, #projectTitle2 {
-        font-size: 1.5rem;
-    }
-    
-    #projectDesc, #projectDesc2 {
-        font-size: 0.875rem;
-    }
-    
-    /* Start Overlay Responsive */
-    #startOverlay, #startOverlay2 {
-        padding: 1rem;
-    }
-    
-    #startGame, #startGame2 {
-        font-size: 1.5rem;
-        padding: 0.5rem 1rem;
-    }
-    
-    /* Project Navigation Arrows Responsive */
-    .project-nav-arrow {
-        padding: 0.5rem;
-    }
-    
-    .project-nav-arrow svg {
-        width: 1rem;
-        height: 1rem;
-    }
 }
 
 /* Mepac Moving Animation */
@@ -273,7 +310,7 @@ body {
 /* Bubble Animation */
 .bubble {
     position: absolute;
-    background-color: rgba(255, 255, 255, 0.7);
+    background-color: rgba(207, 5, 6, 0.3);
     border-radius: 50%;
     opacity: 0;
     pointer-events: none;
@@ -300,7 +337,7 @@ body {
 
 /* Loading state for images */
 .img-loading {
-    background-color: #1f2937;
+    background-color: #2D2C28;
     position: relative;
     overflow: hidden;
 }
@@ -326,7 +363,7 @@ body {
 }
 
 /* Image Gallery Styles */
-#imageGallery {
+.image-gallery {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(2, 1fr);
@@ -339,15 +376,15 @@ body {
   position: relative;
   overflow: hidden;
   border-radius: 8px;
-  border: 1px solid #374151;
+  border: 1px solid #2D2C28;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   aspect-ratio: 1/1;
 }
 
 .gallery-item:hover {
   transform: scale(1.03);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-  border-color: #ef4444;
+  box-shadow: 0 10px 15px -3px rgba(243, 240, 229, 0.3);
+  border-color: #F3F0E5;
 }
 
 .gallery-item img {
@@ -383,17 +420,121 @@ body {
   font-family: 'BoldPixels', 'Courier New', monospace;
 }
 
-/* Responsive adjustments for the gallery */
+/* Responsive Design */
 @media (max-width: 768px) {
-  #imageGallery {
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: repeat(3, 1fr);
-  }
+    .title-font {
+        font-size: 2rem;
+    }
+    
+    .pixel-avatar {
+        width: 96px;
+        height: 96px;
+    }
+    
+    .nav-bottom-item {
+        font-size: 0.75rem;
+    }
+    
+    .game-grid {
+        min-height: 32rem;
+    }
+    
+    .grid-cell {
+        min-height: 20px;
+        min-width: 20px;
+    }
+    
+    .pacman-img {
+        max-width: 32px !important;
+        max-height: 32px !important;
+    }
+    
+    .dot {
+        width: 6px;
+        height: 6px;
+    }
+
+    .image-gallery {
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(4, 1fr);
+    }
 }
 
 @media (max-width: 480px) {
-  #imageGallery {
+    .title-font {
+        font-size: 1.5rem;
+    }
+
+    .pixel-avatar {
+        width: 64px;}
+    
+    .image-gallery {
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .image-gallery {
+        grid-template-columns: 1fr;
+        grid-template-rows: repeat(6, 1fr);
+    }
+    
+    .grid-cell {
+        min-height: 1rem;
+    }
+}
+
+/* Side-by-side layout for profile and game */
+.profile-game-container {
+    display: grid;
     grid-template-columns: 1fr;
-    grid-template-rows: repeat(6, 1fr);
-  }
+    gap: 2rem;
+    border-radius: 1rem;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden; /* Prevent content from overflowing */
+}
+
+@media (min-width: 768px) {
+    .profile-game-container {
+        grid-template-columns: 1fr 2fr;
+        /* padding: 2rem; */
+    }
+}
+
+.profile-section {
+    width: 100%;
+    padding: 0;
+    display: grid;
+    padding: 2.5rem;
+    place-content: center;
+}
+
+@media (min-width: 768px) {
+    .profile-section {
+        padding-right: 1.5rem;
+    }
+}
+
+.game-section {
+    width: 100%;
+    height: 32rem; /* 500px in rem */
+    max-width: 100%; /* Remove fixed max-width to allow full container width */
+    display: grid;
+    margin: 0;
+    padding: 0;
+    padding: 2.5rem;
+    overflow: hidden; 
+    position: relative; /* Ensure positioning context for absolute children */
+}
+
+@media (min-width: 768px) {
+    .game-section {
+        width: auto;
+        padding-left: 1.5rem;
+        max-width: none; /* Remove max-width constraint */
+    }
 }

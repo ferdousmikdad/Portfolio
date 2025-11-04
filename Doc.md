@@ -58,20 +58,38 @@ This is a creative portfolio website for Ferdous Mikdad, a Creative & UI/UX Desi
 #### File Structure
 ```
 /
-├── index.html              
+├── index.html
 ├── assets/
+│   ├── BoldPixels.otf
+│   ├── audio/
+│   │   ├── background.mp3
+│   │   ├── button.mp3
+│   │   ├── mepac.mp3
+│   │   └── pacmaneat.mp3
 │   ├── data/
-│   │   └── project.js    
-│   ├── images/            
-│   └── BoldPixels.otf     
+│   │   ├── iPhoneAR.jpg
+│   │   └── project.js
+│   ├── images/
+│   │   ├── cursor.svg
+│   │   ├── ferdousmikdad.png
+│   │   ├── mepac.svg
+│   │   ├── Noise.png
+│   │   ├── pacman.svg
+│   │   ├── soundOff.svg
+│   │   └── soundOn.svg
+│   └── work/
+│       ├── mustofacalligraphy.webp
+│       ├── portfolio.webp
+│       ├── summersale.webp
+│       ├── work.json
+│       └── zariyalogo.webp
 ├── css/
-│   └── style.css          
+│   └── style.css
 └── js/
-    ├── navigation.js      
-    ├── game.js    
-    ├── ‍script.js
-    ├── work-gellery.js
-               
+    ├── game.js
+    ├── navigation.js
+    ├── script.js
+    └── work-gallery.js
 ```
 
 #### Key Components
