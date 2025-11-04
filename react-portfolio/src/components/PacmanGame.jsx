@@ -317,8 +317,8 @@ const PacmanGame = ({ pageType = 'home' }) => {
     }, [gameStarted, pacmanPos, dots, visitedCells, renderGame]);
 
     return (
-        <div className="w-full h-full min-h-[400px] max-h-[600px] relative border border-custom rounded-lg overflow-hidden bg-dark">
-            <div className=' '>
+        <div className="w-full h-full min-h-[400px] max-h-[600px] relative border border-custom rounded-lg overflow-hidden bg-dark" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className='absolute inset-0'>
                 <div className="absolute inset-0 z-10">
                     <img
                         ref={projectImgRef}
@@ -342,21 +342,19 @@ const PacmanGame = ({ pageType = 'home' }) => {
                 <div ref={gameGridRef} className="absolute inset-0 z-20 w-full h-full"></div>
             </div>
             {/* Start Game Overlay */}
-            <div className={`absolute inset-0 z-30 ${gameStarted ? 'hidden' : 'flex'} items-center justify-center bg-black/70`}>
-                <div className="flex items-center justify-center w-full h-full">
-                    <div className="text-center game-play" style={{ backgroundColor: '#070707', borderColor: '#B0AA95', borderWidth: '2px', borderStyle: 'solid' }}>
-                        <button
-                            onClick={startGameHandler}
-                            className="text-3xl title-font bg-transparent text-red play-btn border-none cursor-pointer mb-2 hover:text-title-custom transition-colors"
-                            style={{ cursor: 'url("/images/cursor.svg") 3 3, pointer' }}
-                        >
-                            Play!
-                        </button>
-                        <p className="text-custom text-lg m-0" style={{ cursor: 'url("/images/cursor.svg") 3 3, text' }}>Reveal the project</p>
-                    </div>
+            <div className={`absolute inset-0 z-30 ${gameStarted ? 'hidden' : 'flex'} items-center justify-center bg-black/70`} style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '100%', height: '100%' }}>
+                <div className="text-center game-play" style={{ backgroundColor: '#070707', borderColor: '#B0AA95', borderWidth: '2px', borderStyle: 'solid', padding: '2rem', borderRadius: '8px' }}>
+                    <button
+                        onClick={startGameHandler}
+                        className="text-3xl title-font bg-transparent text-red play-btn border-none cursor-pointer mb-2 hover:text-title-custom transition-colors"
+                        style={{ cursor: 'url("/images/cursor.svg") 3 3, pointer' }}
+                    >
+                        Play!
+                    </button>
+                    <p className="text-custom text-lg m-0" style={{ cursor: 'url("/images/cursor.svg") 3 3, text' }}>Reveal the project</p>
                 </div>
             </div>
-        
+
         </div>
     );
 };
