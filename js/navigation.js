@@ -60,7 +60,7 @@ function navigateTo(page) {
     } else if (page === 'tools') {
         const toolsPage = document.getElementById('toolsPage');
         toolsPage.classList.remove('hidden');
-        toolsPage.classList.add('flex', 'fade-in');
+        toolsPage.classList.add('fade-in');
     }
 }
 

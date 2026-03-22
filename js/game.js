@@ -233,6 +233,7 @@ function initializeGridOnly() {
 
 // Initialize Grid Only for Work Page (show grid without starting game)
 function initializeGridOnly2() {
+    if (!gameGrid2) return;
     gameGrid2.innerHTML = '';
     gameGrid2.style.display = 'grid';
     gameGrid2.style.gridTemplateColumns = `repeat(${GRID_SIZE}, 1fr)`;
@@ -341,6 +342,7 @@ function renderGame() {
 
 // Render Game for Work Page
 function renderGame2() {
+    if (!gameGrid2) return;
     gameGrid2.innerHTML = '';
     gameGrid2.style.display = 'grid';
     gameGrid2.style.gridTemplateColumns = `repeat(${GRID_SIZE}, 1fr)`;
@@ -529,6 +531,7 @@ function updateProject() {
 
 // Update Project Display for Work Page
 function updateProject2() {
+    if (!projectImg2 || !projectTitle2 || !projectDesc2) return;
     const project = window.projects[currentProject2];
     // Use preload function for better user experience
     if (window.preloadProjectImage) {
@@ -552,10 +555,11 @@ function updateProjectOpacity() {
 
 // Update Project Opacity for Work Page
 function updateProjectOpacity2() {
+    if (!projectImg2 || !projectInfo2) return;
     // Keep the full project image hidden
     projectImg2.style.opacity = 0;
     projectInfo2.style.opacity = 0;
-    
+
 }
 
 // Reset Game for Home Page
@@ -576,6 +580,7 @@ function resetGame() {
 
 // Reset Game for Work Page
 function resetGame2() {
+    if (!startOverlay2) return;
     gameStarted2 = false;
     startOverlay2.classList.remove('hidden');
     dotsEaten2 = 0;

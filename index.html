@@ -246,65 +246,82 @@
             </p>
           </div>
         </div>
-        <!-- TOOLS PAGE -->
-        <div id="toolsPage" class="page-content hidden flex-col items-start">
-          <div class="w-full max-w-[1140px] rounded-lg p-6">
-            <h2 class="title-font text-3xl mb-2 text-red-500">Tools</h2>
-            <p class="text-sm text-[#B0AA95] mb-8">Handy tools for designers & developers.</p>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- TOOLS PAGE (full-viewport overlay — rendered outside the max-w container via fixed positioning) -->
+        <div id="toolsPage" class="page-content hidden">
 
-              <button class="tool-btn group">
-                <span class="tool-btn-label">SVG Converter</span>
-                <span class="tool-btn-sub">Convert SVG to PNG, JPG, and more</span>
+          <!-- Left: Tool Navigation — spans full viewport height -->
+          <aside class="tools-sidebar">
+            <div class="tools-sidebar-header title-font">Tools</div>
+            <nav class="tools-nav" id="toolsNav">
+
+              <button class="tool-nav-btn active" data-url="tools/color-contrast-checker.html">
+                <span class="tool-nav-dot"></span>
+                <span>Color Contrast Checker</span>
               </button>
 
-              <button class="tool-btn group">
-                <span class="tool-btn-label">QR Code Generator</span>
-                <span class="tool-btn-sub">Generate QR codes from any URL or text</span>
+              <button class="tool-nav-btn" data-url="tools/retro-dot-effect.html">
+                <span class="tool-nav-dot"></span>
+                <span>Retro Dot Effect</span>
               </button>
 
-              <button class="tool-btn group">
-                <span class="tool-btn-label">Image Converter</span>
-                <span class="tool-btn-sub">Convert images between PNG, JPG, WebP, and more</span>
+              <button class="tool-nav-btn" data-url="">
+                <span class="tool-nav-dot"></span>
+                <span>SVG Converter</span>
               </button>
 
-              <button class="tool-btn group">
-                <span class="tool-btn-label">Image Compressor</span>
-                <span class="tool-btn-sub">Reduce image file size without losing quality</span>
+              <button class="tool-nav-btn" data-url="">
+                <span class="tool-nav-dot"></span>
+                <span>QR Code Generator</span>
               </button>
 
-              <button class="tool-btn group">
-                <span class="tool-btn-label">Image to Text — OCR</span>
-                <span class="tool-btn-sub">Extract text from any image instantly</span>
+              <button class="tool-nav-btn" data-url="">
+                <span class="tool-nav-dot"></span>
+                <span>Image Converter</span>
               </button>
 
-              <button class="tool-btn group" onclick="window.location.href='tools/retro-dot-effect.html'">
-                <span class="tool-btn-label">Retro Dot Effect</span>
-                <span class="tool-btn-sub">Transform images into a retro halftone dot style</span>
+              <button class="tool-nav-btn" data-url="">
+                <span class="tool-nav-dot"></span>
+                <span>Image Compressor</span>
               </button>
 
-              <button class="tool-btn group">
-                <span class="tool-btn-label">Color Palette Generator</span>
-                <span class="tool-btn-sub">Generate beautiful color palettes from any image</span>
+              <button class="tool-nav-btn" data-url="">
+                <span class="tool-nav-dot"></span>
+                <span>Image to Text — OCR</span>
               </button>
 
-              <button class="tool-btn group">
-                <span class="tool-btn-label">Color Contrast Checker</span>
-                <span class="tool-btn-sub">Check WCAG accessibility contrast ratios</span>
+              <button class="tool-nav-btn" data-url="">
+                <span class="tool-nav-dot"></span>
+                <span>Color Palette Generator</span>
               </button>
 
-              <button class="tool-btn group">
-                <span class="tool-btn-label">Markdown Previewer</span>
-                <span class="tool-btn-sub">Write and preview Markdown in real time</span>
+              <button class="tool-nav-btn" data-url="">
+                <span class="tool-nav-dot"></span>
+                <span>Markdown Previewer</span>
               </button>
 
-              <button class="tool-btn group">
-                <span class="tool-btn-label">Typing Speed Test</span>
-                <span class="tool-btn-sub">Measure your WPM and accuracy</span>
+              <button class="tool-nav-btn" data-url="">
+                <span class="tool-nav-dot"></span>
+                <span>Typing Speed Test</span>
               </button>
 
+            </nav>
+          </aside>
+
+          <!-- Right: Tool Viewer — centered, max-w-[1140px] -->
+          <div class="tools-viewer">
+            <div class="tools-preview-inner">
+              <iframe id="toolFrame" src="tools/color-contrast-checker.html" class="tools-iframe"></iframe>
+              <!-- Coming Soon placeholder -->
+              <div id="toolPlaceholder" class="tools-placeholder hidden">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#3f3f46" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <p class="title-font text-sm text-zinc-600" id="placeholderName"></p>
+                <p class="text-xs text-zinc-700">This tool is coming soon.</p>
+              </div>
             </div>
           </div>
+
         </div>
 
       </div>

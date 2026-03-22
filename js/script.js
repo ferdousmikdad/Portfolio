@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initGame();
     initContactButton();
     initCustomCursor();
+    initToolsNav();
 
     // Set initial page
     navigateTo('home');
@@ -143,6 +144,39 @@ function createBubbleEffect() {
             }, 2000);
         }, i * 50);
     }
+}
+
+// Tools Navigation
+function initToolsNav() {
+    const toolFrame       = document.getElementById('toolFrame');
+    const toolPlaceholder = document.getElementById('toolPlaceholder');
+    const placeholderName = document.getElementById('placeholderName');
+    const navBtns         = document.querySelectorAll('.tool-nav-btn');
+
+    if (!toolFrame) return;
+
+    navBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Update active state
+            navBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+
+            const url  = this.dataset.url;
+            const name = this.querySelector('span:last-child').textContent;
+
+            if (url) {
+                // Load tool in iframe
+                toolFrame.src = url;
+                toolFrame.classList.remove('hidden');
+                toolPlaceholder.classList.add('hidden');
+            } else {
+                // Show coming soon placeholder
+                toolFrame.classList.add('hidden');
+                toolPlaceholder.classList.remove('hidden');
+                placeholderName.textContent = name;
+            }
+        });
+    });
 }
 
 // Export for other modules
