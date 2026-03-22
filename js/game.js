@@ -59,70 +59,40 @@ function initGame() {
     // Event listeners for Home Page
     if (startGame) {
         startGame.addEventListener('click', function() {
-            // Stop background audio if playing
-            SoundManager.stopBackground();
-            
-            // Play button sound if sound is enabled
-            if (SoundManager.isEnabled()) {
-                SoundManager.play('button');
-            }
             startGameHandler();
         });
     }
     if (prevProjectBtn) {
         prevProjectBtn.addEventListener('click', function() {
-            // Stop background audio if playing
-            SoundManager.stopBackground();
             prevProjectHandler();
         });
     }
     if (nextProjectBtn) {
         nextProjectBtn.addEventListener('click', function() {
-            // Stop background audio if playing
-            SoundManager.stopBackground();
             nextProjectHandler();
         });
     }
-    
+
     // Event listeners for Work Page
     if (startGame2) {
         startGame2.addEventListener('click', function() {
-            // Stop background audio if playing
-            SoundManager.stopBackground();
-            
-            // Play button sound if sound is enabled
-            if (SoundManager.isEnabled()) {
-                SoundManager.play('button');
-            }
             startGameHandler2();
         });
     }
     if (prevProjectBtn2) {
         prevProjectBtn2.addEventListener('click', function() {
-            // Stop background audio if playing
-            SoundManager.stopBackground();
             prevProjectHandler2();
         });
     }
     if (nextProjectBtn2) {
         nextProjectBtn2.addEventListener('click', function() {
-            // Stop background audio if playing
-            SoundManager.stopBackground();
             nextProjectHandler2();
         });
     }
-    
+
     const startExploring = document.getElementById('startExploring');
     if (startExploring) {
         startExploring.addEventListener('click', function() {
-            // Stop background audio if playing
-            SoundManager.stopBackground();
-            
-            // Play button sound if sound is enabled
-            if (SoundManager.isEnabled()) {
-                SoundManager.play('button');
-            }
-            
             navigateTo('work');
         });
     }
@@ -148,18 +118,6 @@ function startGameHandler() {
         gameStarted = true;
         startOverlay.classList.add('hidden');
         initializeDots();
-        
-        // Change bottom navigation button text to "Reset Game"
-        const playGameBtn = document.getElementById('playGameBtn');
-        if (playGameBtn) {
-            playGameBtn.textContent = 'reset game';
-        }
-        
-        // Play background music if sound is enabled
-        if (SoundManager.isEnabled()) {
-            SoundManager.setUserInteracted(); // Ensure user interaction is set
-            // Note: We don't directly play background audio here as it's handled by the SoundManager
-        }
     } else {
         // Game is already started, reset it
         resetGame();
@@ -173,18 +131,6 @@ function startGameHandler2() {
         gameStarted2 = true;
         startOverlay2.classList.add('hidden');
         initializeDots2();
-        
-        // Change bottom navigation button text to "Reset Game"
-        const playGameBtn = document.getElementById('playGameBtn');
-        if (playGameBtn) {
-            playGameBtn.textContent = 'reset game';
-        }
-        
-        // Play background music if sound is enabled
-        if (SoundManager.isEnabled()) {
-            SoundManager.setUserInteracted(); // Ensure user interaction is set
-            // Note: We don't directly play background audio here as it's handled by the SoundManager
-        }
     } else {
         // Game is already started, reset it
         resetGame2();
@@ -506,10 +452,6 @@ function handleKeyPress(e) {
                 if (dot.x === newX && dot.y === newY && !dot.eaten) {
                     dot.eaten = true;
                     dotsEaten++;
-                    // Play eat sound if sound is enabled
-                    if (SoundManager.isEnabled()) {
-                        SoundManager.play('pacmanEat');
-                    }
                     updateProjectOpacity();
                 }
             });
@@ -517,21 +459,21 @@ function handleKeyPress(e) {
             renderGame();
         }
     }
-    
+
     // Handle Work Page Game
     if (gameStarted2 && dotsEaten2 < totalDots2) {
         if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
             e.preventDefault();
-            
+
             // Check if enough time has passed since the last move
             const currentTime = Date.now();
             if (currentTime - lastMoveTime2 < GAME_SPEED) {
                 return; // Skip this move if not enough time has passed
             }
-            
+
             let newX = pacmanPos2.x;
             let newY = pacmanPos2.y;
-            
+
             // Update direction and position
             if (e.key === 'ArrowLeft') {
                 direction2 = 'left';
@@ -550,7 +492,7 @@ function handleKeyPress(e) {
             pacmanPos2.x = newX;
             pacmanPos2.y = newY;
             lastMoveTime2 = currentTime; // Update the last move time
-            
+
             // Add current position to visited cells if not already there
             if (!visitedCells2.some(cell => cell.x === newX && cell.y === newY)) {
                 visitedCells2.push({ x: newX, y: newY });
@@ -561,10 +503,6 @@ function handleKeyPress(e) {
                 if (dot.x === newX && dot.y === newY && !dot.eaten) {
                     dot.eaten = true;
                     dotsEaten2++;
-                    // Play eat sound if sound is enabled
-                    if (SoundManager.isEnabled()) {
-                        SoundManager.play('pacmanEat');
-                    }
                     updateProjectOpacity2();
                 }
             });
@@ -633,14 +571,6 @@ function resetGame() {
     
     // Reinitialize the grid to show grid cells and Pacman
     initializeGridOnly();
-    
-    // Change bottom navigation button text back to "play game"
-    const playGameBtn = document.getElementById('playGameBtn');
-    if (playGameBtn) {
-        playGameBtn.textContent = 'play game';
-    }
-    
-    
     updateProjectOpacity();
 }
 
@@ -654,32 +584,14 @@ function resetGame2() {
     dots2 = [];
     lastMoveTime2 = 0;
     visitedCells2 = []; // Reset visited cells
-    
+
     // Reinitialize the grid to show grid cells and Pacman
     initializeGridOnly2();
-    
-    // Change bottom navigation button text back to "play game"
-    const playGameBtn = document.getElementById('playGameBtn');
-    if (playGameBtn) {
-        playGameBtn.textContent = 'play game';
-    }
-    
-    
     updateProjectOpacity2();
 }
 
 // Previous Project Handler for Home Page
 function prevProjectHandler() {
-    // Play button sound if sound is enabled
-    if (window.soundOn && window.buttonAudio) {
-        try {
-            window.buttonAudio.currentTime = 0; // Reset to beginning
-            window.buttonAudio.play().catch(e => console.log('Button audio play failed:', e));
-        } catch (error) {
-            console.error('Error playing button sound:', error);
-        }
-    }
-    
     currentProject = (currentProject - 1 + window.projects.length) % window.projects.length;
     updateProject();
     resetGame();
@@ -687,16 +599,6 @@ function prevProjectHandler() {
 
 // Next Project Handler for Home Page
 function nextProjectHandler() {
-    // Play button sound if sound is enabled
-    if (window.soundOn && window.buttonAudio) {
-        try {
-            window.buttonAudio.currentTime = 0; // Reset to beginning
-            window.buttonAudio.play().catch(e => console.log('Button audio play failed:', e));
-        } catch (error) {
-            console.error('Error playing button sound:', error);
-        }
-    }
-    
     currentProject = (currentProject + 1) % window.projects.length;
     updateProject();
     resetGame();
@@ -704,11 +606,6 @@ function nextProjectHandler() {
 
 // Previous Project Handler for Work Page
 function prevProjectHandler2() {
-    // Play button sound if sound is enabled
-    if (SoundManager.isEnabled()) {
-        SoundManager.play('button');
-    }
-    
     currentProject2 = (currentProject2 - 1 + window.projects.length) % window.projects.length;
     updateProject2();
     resetGame2();
@@ -716,16 +613,6 @@ function prevProjectHandler2() {
 
 // Next Project Handler for Work Page
 function nextProjectHandler2() {
-    // Play button sound if sound is enabled
-    if (window.soundOn && window.buttonAudio) {
-        try {
-            window.buttonAudio.currentTime = 0; // Reset to beginning
-            window.buttonAudio.play().catch(e => console.log('Button audio play failed:', e));
-        } catch (error) {
-            console.error('Error playing button sound:', error);
-        }
-    }
-    
     currentProject2 = (currentProject2 + 1) % window.projects.length;
     updateProject2();
     resetGame2();

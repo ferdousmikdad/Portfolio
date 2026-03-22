@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Halftone Dots Generator — Tools</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Fonts ── */
+    @font-face {
+      font-family: 'BoldPixels';
+      src: url('../assets/BoldPixels.otf') format('opentype');
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    * { font-family: 'Fira Code', monospace; }
+    .title-font {
+      font-family: 'BoldPixels', 'Courier New', monospace;
+      letter-spacing: 2px;
+    }
+
+    /* ── Base ── */
+    html, body { height: 100%; margin: 0; overflow: hidden; }
+    body { background: #09090b; color: #fff; display: flex; flex-direction: column; }
+
+    /* ── Drop Zone ── */
+    .drop-zone {
+      border: 2px dashed #27272a;
+      transition: border-color 0.2s, background 0.2s;
+      cursor: pointer;
+    }
+    .drop-zone.drag-over {
+      border-color: #ef4444;
+      background: rgba(239, 68, 68, 0.05);
+    }
+
+    /* ── Range Sliders ── */
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 3px;
+      border-radius: 2px;
+      background: #3f3f46;
+      outline: none;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: #ef4444;
+      cursor: pointer;
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: #ef4444;
+      border: none; cursor: pointer;
+    }
+
+    /* ── Color Inputs ── */
+    input[type="color"] {
+      -webkit-appearance: none;
+      border: none; padding: 0; background: none; cursor: pointer;
+      width: 36px; height: 36px;
+    }
+    input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+    input[type="color"]::-webkit-color-swatch { border: 1px solid #3f3f46; border-radius: 4px; }
+
+    /* ── Preset Buttons ── */
+    .preset-btn {
+      padding: 3px 10px;
+      font-size: 11px;
+      font-family: 'BoldPixels', monospace;
+      letter-spacing: 1px;
+      border: 1px solid #3f3f46;
+      border-radius: 4px;
+      background: transparent;
+      color: #71717a;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .preset-btn:hover, .preset-btn.active {
+      border-color: #ef4444;
+      color: #ef4444;
+    }
+
+    /* ── Shape Toggle Buttons ── */
+    .shape-btn {
+      flex: 1;
+      padding: 6px 0;
+      font-size: 11px;
+      background: transparent;
+      color: #71717a;
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .shape-btn.active {
+      background: rgba(239, 68, 68, 0.12);
+      color: #ef4444;
+    }
+
+    /* ── Canvas ── */
+    canvas {
+      display: block;
+      max-width: 100%;
+      max-height: 100%;
+      width: auto; height: auto;
+    }
+
+    /* ── Panels ── */
+    .panel-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #52525b;
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: #18181b; }
+    ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 3px; }
+
+    /* ── Processing Overlay ── */
+    #processingOverlay {
+      display: none;
+      position: absolute; inset: 0;
+      background: rgba(9, 9, 11, 0.75);
+      align-items: center; justify-content: center;
+      z-index: 20;
+    }
+    #processingOverlay.show { display: flex; }
+
+    /* ── Responsive: stack on small screens ── */
+    @media (max-width: 900px) {
+      body { overflow: auto; }
+      #mainLayout { flex-direction: column; height: auto; }
+      #canvasArea { flex-direction: column; }
+      #controlsPanel { width: 100%; border-left: none; border-top: 1px solid #27272a; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ════════════════════════════════════════════════
+       HEADER
+  ════════════════════════════════════════════════ -->
+  <header class="flex-none flex items-center gap-4 px-5 py-3 border-b border-zinc-800">
+    <a href="../index.html" class="title-font text-xs text-zinc-500 hover:text-red-500 transition-colors">
+      ← Back
+    </a>
+    <div class="w-px h-4 bg-zinc-700"></div>
+    <h1 class="title-font text-sm text-white">Halftone Dots Generator</h1>
+
+    <!-- Presets -->
+    <div class="ml-auto flex items-center gap-2 flex-wrap">
+      <span class="text-xs text-zinc-600">Presets:</span>
+      <button class="preset-btn active" data-preset="comic">Comic</button>
+      <button class="preset-btn" data-preset="soft">Soft</button>
+      <button class="preset-btn" data-preset="heavy">Heavy Ink</button>
+      <button class="preset-btn" data-preset="blueprint">Blueprint</button>
+    </div>
+  </header>
+
+  <!-- ════════════════════════════════════════════════
+       MAIN LAYOUT
+  ════════════════════════════════════════════════ -->
+  <div id="mainLayout" class="flex flex-1 overflow-hidden">
+
+    <!-- ── Canvas Area (Original + Result) ── -->
+    <div id="canvasArea" class="flex flex-1 overflow-hidden min-w-0">
+
+      <!-- Original Panel -->
+      <div class="flex flex-col flex-1 border-r border-zinc-800 min-w-0">
+        <div class="flex-none flex items-center px-4 py-2 border-b border-zinc-800">
+          <span class="panel-label">Original</span>
+        </div>
+        <div id="originalPanel"
+             class="flex-1 flex items-center justify-center p-4 overflow-hidden relative"
+             style="background: #0c0c0e;">
+
+          <!-- Upload / Drop Zone -->
+          <div id="dropZone"
+               class="drop-zone w-full h-full rounded-lg flex flex-col items-center justify-center gap-4">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none"
+                 stroke="#3f3f46" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            <div class="text-center pointer-events-none">
+              <p class="title-font text-xs text-zinc-400">Drop image here</p>
+              <p class="text-xs text-zinc-600 mt-1">JPG &middot; PNG &middot; WebP</p>
+            </div>
+            <label class="px-5 py-1.5 border border-zinc-700 rounded text-xs text-zinc-400
+                          cursor-pointer hover:border-red-500 hover:text-red-500 transition-colors title-font">
+              Choose File
+              <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" class="hidden" />
+            </label>
+          </div>
+
+          <!-- Original canvas (hidden until image loaded) -->
+          <canvas id="originalCanvas" class="hidden rounded"></canvas>
+        </div>
+      </div>
+
+      <!-- Halftone Result Panel -->
+      <div class="flex flex-col flex-1 min-w-0">
+        <div class="flex-none flex items-center justify-between px-4 py-2 border-b border-zinc-800">
+          <span class="panel-label">Halftone Result</span>
+          <div class="flex gap-2">
+            <button id="downloadSvg"
+                    class="hidden px-3 py-1 border border-zinc-700 hover:border-red-500
+                           text-zinc-400 hover:text-red-500 text-xs rounded title-font transition-colors">
+              SVG
+            </button>
+            <button id="downloadPng"
+                    class="hidden px-3 py-1 bg-red-600 hover:bg-red-500
+                           text-white text-xs rounded title-font transition-colors">
+              Download PNG
+            </button>
+          </div>
+        </div>
+        <div class="flex-1 flex items-center justify-center p-4 overflow-hidden relative"
+             style="background: #060608;">
+          <p id="resultPlaceholder" class="title-font text-xs text-zinc-700 select-none">
+            Upload an image to preview
+          </p>
+          <canvas id="halftoneCanvas" class="hidden"></canvas>
+
+          <!-- Processing overlay -->
+          <div id="processingOverlay">
+            <span class="title-font text-xs text-red-500 animate-pulse">Rendering…</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /canvasArea -->
+
+    <!-- ── Controls Sidebar ── -->
+    <div id="controlsPanel"
+         class="flex-none w-60 flex flex-col overflow-y-auto border-l border-zinc-800">
+
+      <div class="flex-none px-4 py-2 border-b border-zinc-800">
+        <span class="panel-label">Controls</span>
+      </div>
+
+      <div class="p-4 flex flex-col gap-5">
+
+        <!-- Dot Shape -->
+        <div>
+          <p class="text-xs text-zinc-500 mb-2">Dot Shape</p>
+          <div class="flex rounded overflow-hidden border border-zinc-800">
+            <button class="shape-btn active" data-shape="circle">● Circle</button>
+            <button class="shape-btn border-l border-zinc-800" data-shape="square">■ Square</button>
+          </div>
+        </div>
+
+        <!-- Dot Spacing -->
+        <div>
+          <div class="flex justify-between mb-2">
+            <label class="text-xs text-zinc-500">Dot Spacing</label>
+            <span id="spacingVal" class="text-xs text-red-500 tabular-nums">10px</span>
+          </div>
+          <input type="range" id="spacing" min="4" max="40" value="10" />
+        </div>
+
+        <!-- Max Dot Size -->
+        <div>
+          <div class="flex justify-between mb-2">
+            <label class="text-xs text-zinc-500">Max Dot Size</label>
+            <span id="maxSizeVal" class="text-xs text-red-500 tabular-nums">90%</span>
+          </div>
+          <input type="range" id="maxSize" min="10" max="100" value="90" />
+        </div>
+
+        <!-- Min Dot Size -->
+        <div>
+          <div class="flex justify-between mb-2">
+            <label class="text-xs text-zinc-500">Min Dot Size</label>
+            <span id="minSizeVal" class="text-xs text-red-500 tabular-nums">0%</span>
+          </div>
+          <input type="range" id="minSize" min="0" max="50" value="0" />
+        </div>
+
+        <!-- Contrast -->
+        <div>
+          <div class="flex justify-between mb-2">
+            <label class="text-xs text-zinc-500">Contrast</label>
+            <span id="contrastVal" class="text-xs text-red-500 tabular-nums">0</span>
+          </div>
+          <input type="range" id="contrast" min="-100" max="100" value="0" />
+        </div>
+
+        <!-- Brightness -->
+        <div>
+          <div class="flex justify-between mb-2">
+            <label class="text-xs text-zinc-500">Brightness</label>
+            <span id="brightnessVal" class="text-xs text-red-500 tabular-nums">0</span>
+          </div>
+          <input type="range" id="brightness" min="-100" max="100" value="0" />
+        </div>
+
+        <!-- Rotation Angle -->
+        <div>
+          <div class="flex justify-between mb-2">
+            <label class="text-xs text-zinc-500">Rotation Angle</label>
+            <span id="angleVal" class="text-xs text-red-500 tabular-nums">0°</span>
+          </div>
+          <input type="range" id="angle" min="0" max="90" value="0" />
+        </div>
+
+        <hr class="border-zinc-800" />
+
+        <!-- Dot Color -->
+        <div>
+          <p class="text-xs text-zinc-500 mb-2">Dot Color</p>
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded border border-zinc-700 overflow-hidden flex-none flex items-center justify-center">
+              <input type="color" id="dotColor" value="#000000" />
+            </div>
+            <span id="dotColorVal" class="text-xs text-zinc-400 font-mono">#000000</span>
+          </div>
+        </div>
+
+        <!-- Background Color -->
+        <div>
+          <p class="text-xs text-zinc-500 mb-2">Background Color</p>
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded border border-zinc-700 overflow-hidden flex-none flex items-center justify-center">
+              <input type="color" id="bgColor" value="#ffffff" />
+            </div>
+            <span id="bgColorVal" class="text-xs text-zinc-400 font-mono">#ffffff</span>
+          </div>
+        </div>
+
+        <hr class="border-zinc-800" />
+
+        <!-- Reset -->
+        <button id="resetBtn"
+                class="w-full py-2 border border-zinc-800 hover:border-zinc-600
+                       text-zinc-600 hover:text-zinc-400 text-xs rounded title-font transition-colors">
+          Reset Controls
+        </button>
+
+      </div>
+    </div><!-- /controlsPanel -->
+
+  </div><!-- /mainLayout -->
+
+<!-- ════════════════════════════════════════════════
+     SCRIPT
+════════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+// ================================================================
+// Halftone Dots Generator
+// Pure vanilla JS — no external dependencies
+// ================================================================
+
+
+// ── Presets ────────────────────────────────────────────────────
+const PRESETS = {
+  comic:     { spacing: 8,  maxSize: 95,  minSize: 0,  contrast: 30,  brightness: 0,   angle: 45, dotColor: '#000000', bgColor: '#ffffff' },
+  soft:      { spacing: 14, maxSize: 68,  minSize: 5,  contrast: -10, brightness: 10,  angle: 0,  dotColor: '#1a1a1a', bgColor: '#f5f5f0' },
+  heavy:     { spacing: 6,  maxSize: 100, minSize: 0,  contrast: 55,  brightness: -10, angle: 45, dotColor: '#000000', bgColor: '#ffffff' },
+  blueprint: { spacing: 10, maxSize: 80,  minSize: 0,  contrast: 20,  brightness: 0,   angle: 0,  dotColor: '#dce8ff', bgColor: '#0a2463' },
+};
+
+const DEFAULTS = {
+  spacing: 10, maxSize: 90, minSize: 0,
+  contrast: 0, brightness: 0, angle: 0,
+  dotColor: '#000000', bgColor: '#ffffff', shape: 'circle',
+};
+
+// Maximum dimension used when processing the source image.
+// Keeps rendering snappy without sacrificing visible quality.
+const MAX_PX = 900;
+
+
+// ── State ──────────────────────────────────────────────────────
+let sourcePixels = null;   // ImageData of the (possibly scaled) source
+let srcW = 0, srcH = 0;   // Dimensions of that source
+let dotShape  = 'circle';
+let renderPending = false;
+
+
+// ── DOM refs ───────────────────────────────────────────────────
+const dropZone         = document.getElementById('dropZone');
+const fileInput        = document.getElementById('fileInput');
+const originalCanvas   = document.getElementById('originalCanvas');
+const halftoneCanvas   = document.getElementById('halftoneCanvas');
+const resultPlaceholder = document.getElementById('resultPlaceholder');
+const processingOverlay = document.getElementById('processingOverlay');
+const downloadPngBtn   = document.getElementById('downloadPng');
+const downloadSvgBtn   = document.getElementById('downloadSvg');
+
+const ctrl = {
+  spacing:    document.getElementById('spacing'),
+  maxSize:    document.getElementById('maxSize'),
+  minSize:    document.getElementById('minSize'),
+  contrast:   document.getElementById('contrast'),
+  brightness: document.getElementById('brightness'),
+  angle:      document.getElementById('angle'),
+  dotColor:   document.getElementById('dotColor'),
+  bgColor:    document.getElementById('bgColor'),
+};
+
+const lbl = {
+  spacing:    document.getElementById('spacingVal'),
+  maxSize:    document.getElementById('maxSizeVal'),
+  minSize:    document.getElementById('minSizeVal'),
+  contrast:   document.getElementById('contrastVal'),
+  brightness: document.getElementById('brightnessVal'),
+  angle:      document.getElementById('angleVal'),
+  dotColor:   document.getElementById('dotColorVal'),
+  bgColor:    document.getElementById('bgColorVal'),
+};
+
+
+// ── Helpers: read controls ─────────────────────────────────────
+function getParams() {
+  return {
+    spacing:    +ctrl.spacing.value,
+    maxSize:    +ctrl.maxSize.value / 100,
+    minSize:    +ctrl.minSize.value / 100,
+    contrast:   +ctrl.contrast.value,
+    brightness: +ctrl.brightness.value,
+    angle:      +ctrl.angle.value * Math.PI / 180,
+    dotColor:   ctrl.dotColor.value,
+    bgColor:    ctrl.bgColor.value,
+    shape:      dotShape,
+  };
+}
+
+function updateLabels() {
+  lbl.spacing.textContent    = ctrl.spacing.value    + 'px';
+  lbl.maxSize.textContent    = ctrl.maxSize.value    + '%';
+  lbl.minSize.textContent    = ctrl.minSize.value    + '%';
+  lbl.contrast.textContent   = ctrl.contrast.value;
+  lbl.brightness.textContent = ctrl.brightness.value;
+  lbl.angle.textContent      = ctrl.angle.value      + '°';
+  lbl.dotColor.textContent   = ctrl.dotColor.value;
+  lbl.bgColor.textContent    = ctrl.bgColor.value;
+}
+
+
+// ── Image loading ──────────────────────────────────────────────
+function loadFile(file) {
+  if (!file || !file.type.startsWith('image/')) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => prepareSource(img);
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+/**
+ * Scale the image down if needed, extract its pixel data,
+ * and show the original preview on the left panel.
+ */
+function prepareSource(img) {
+  // Scale so the longest edge is at most MAX_PX
+  const scale = Math.min(1, MAX_PX / Math.max(img.naturalWidth, img.naturalHeight));
+  srcW = Math.round(img.naturalWidth  * scale);
+  srcH = Math.round(img.naturalHeight * scale);
+
+  // Extract pixel data via an offscreen canvas
+  const offscreen = document.createElement('canvas');
+  offscreen.width = srcW; offscreen.height = srcH;
+  const octx = offscreen.getContext('2d');
+  octx.drawImage(img, 0, 0, srcW, srcH);
+  sourcePixels = octx.getImageData(0, 0, srcW, srcH);
+
+  // Show original image in left panel
+  originalCanvas.width  = srcW;
+  originalCanvas.height = srcH;
+  originalCanvas.getContext('2d').drawImage(img, 0, 0, srcW, srcH);
+  originalCanvas.classList.remove('hidden');
+  dropZone.classList.add('hidden');
+
+  // Reveal result panel controls
+  resultPlaceholder.classList.add('hidden');
+  halftoneCanvas.classList.remove('hidden');
+  downloadPngBtn.classList.remove('hidden');
+  downloadSvgBtn.classList.remove('hidden');
+
+  scheduleRender();
+}
+
+
+// ── Pixel math ─────────────────────────────────────────────────
+/**
+ * Clamp-adjust a single 0-255 channel value for brightness & contrast.
+ * Brightness: linear shift. Contrast: Photoshop-style S-curve.
+ */
+function adjustChannel(v, contrast, brightness) {
+  v += brightness * 2.55;
+  if (contrast !== 0) {
+    const f = (259 * (contrast + 255)) / (255 * (259 - contrast));
+    v = f * (v - 128) + 128;
+  }
+  return v < 0 ? 0 : v > 255 ? 255 : v;
+}
+
+/**
+ * Return ITU-R BT.709 luminance (0–255) at pixel (x, y),
+ * applying brightness & contrast adjustments.
+ */
+function sampleLuminance(x, y, contrast, brightness) {
+  x = Math.round(x);
+  y = Math.round(y);
+  if (x < 0) x = 0; else if (x >= srcW) x = srcW - 1;
+  if (y < 0) y = 0; else if (y >= srcH) y = srcH - 1;
+
+  const i = (y * srcW + x) * 4;
+  const d = sourcePixels.data;
+  const r = adjustChannel(d[i],     contrast, brightness);
+  const g = adjustChannel(d[i + 1], contrast, brightness);
+  const b = adjustChannel(d[i + 2], contrast, brightness);
+
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+
+// ── Rendering ──────────────────────────────────────────────────
+/**
+ * Draw one dot — circle or square — at (cx, cy) with radius r.
+ */
+function drawDot(ctx, cx, cy, r, shape) {
+  if (r < 0.3) return;
+  ctx.beginPath();
+  if (shape === 'circle') {
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  } else {
+    ctx.rect(cx - r, cy - r, r * 2, r * 2);
+  }
+  ctx.fill();
+}
+
+/**
+ * Core halftone render.
+ *
+ * Algorithm:
+ *   1. Fill canvas with background colour.
+ *   2. Iterate a grid of (i, j) indices.
+ *   3. For each cell, rotate the grid point around the canvas centre
+ *      by the chosen angle → screen position (sx, sy).
+ *   4. Sample luminance at (sx, sy) in the source image.
+ *   5. Map luminance to dot radius: dark → large, light → small.
+ *   6. Draw the dot at (sx, sy).
+ *
+ * The grid is extended by the image diagonal so all canvas pixels
+ * are covered regardless of rotation angle.
+ */
+function renderHalftone() {
+  renderPending = false;
+  if (!sourcePixels) return;
+
+  const p    = getParams();
+  const sp   = p.spacing;
+  const maxR = sp * 0.5 * p.maxSize;
+  const minR = sp * 0.5 * p.minSize;
+  const cosA = Math.cos(p.angle);
+  const sinA = Math.sin(p.angle);
+  const W = srcW, H = srcH;
+  const cx = W / 2, cy = H / 2;
+
+  // Size the output canvas to match the source
+  halftoneCanvas.width  = W;
+  halftoneCanvas.height = H;
+  const ctx = halftoneCanvas.getContext('2d');
+
+  // Background
+  ctx.fillStyle = p.bgColor;
+  ctx.fillRect(0, 0, W, H);
+
+  // Clip so rotated dots don't bleed outside the frame
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, 0, W, H);
+  ctx.clip();
+
+  ctx.fillStyle = p.dotColor;
+
+  // Number of grid steps needed to cover the full diagonal after rotation
+  const diag  = Math.ceil(Math.sqrt(W * W + H * H));
+  const steps = Math.ceil(diag / sp) + 1;
+
+  for (let i = -steps; i <= steps; i++) {
+    for (let j = -steps; j <= steps; j++) {
+      // Position in grid space (centred at canvas middle)
+      const gx = j * sp;
+      const gy = i * sp;
+
+      // Rotate grid point → screen position
+      const sx = cx + gx * cosA - gy * sinA;
+      const sy = cy + gx * sinA + gy * cosA;
+
+      // Quick bounds cull — skip dots entirely outside the canvas
+      if (sx < -sp || sx > W + sp || sy < -sp || sy > H + sp) continue;
+
+      // Sample luminance; dark = large dot, light = small dot
+      const lum = sampleLuminance(sx, sy, p.contrast, p.brightness);
+      const t   = 1 - lum / 255;                    // 0 = white, 1 = black
+      const r   = minR + t * (maxR - minR);
+
+      drawDot(ctx, sx, sy, r, p.shape);
+    }
+  }
+
+  ctx.restore();
+  processingOverlay.classList.remove('show');
+}
+
+/**
+ * Schedule a render on the next animation frame.
+ * Uses a flag to prevent stacking multiple RAF calls.
+ */
+function scheduleRender() {
+  if (!sourcePixels || renderPending) return;
+  renderPending = true;
+  processingOverlay.classList.add('show');
+  // Double-rAF: gives the browser one frame to paint the overlay
+  // before the synchronous canvas work starts.
+  requestAnimationFrame(() => requestAnimationFrame(() => renderHalftone()));
+}
+
+
+// ── Export: PNG ────────────────────────────────────────────────
+downloadPngBtn.addEventListener('click', () => {
+  const a = document.createElement('a');
+  a.download = 'halftone-dots.png';
+  a.href = halftoneCanvas.toDataURL('image/png');
+  a.click();
+});
+
+
+// ── Export: SVG ────────────────────────────────────────────────
+downloadSvgBtn.addEventListener('click', exportSVG);
+
+/**
+ * Re-run the halftone algorithm and emit an SVG string.
+ * Each dot becomes a <circle> or <rect> element.
+ */
+function exportSVG() {
+  if (!sourcePixels) return;
+
+  const p    = getParams();
+  const sp   = p.spacing;
+  const maxR = sp * 0.5 * p.maxSize;
+  const minR = sp * 0.5 * p.minSize;
+  const cosA = Math.cos(p.angle);
+  const sinA = Math.sin(p.angle);
+  const W = srcW, H = srcH;
+  const cx = W / 2, cy = H / 2;
+  const diag  = Math.ceil(Math.sqrt(W * W + H * H));
+  const steps = Math.ceil(diag / sp) + 1;
+
+  let shapes = '';
+
+  for (let i = -steps; i <= steps; i++) {
+    for (let j = -steps; j <= steps; j++) {
+      const gx = j * sp;
+      const gy = i * sp;
+      const sx = cx + gx * cosA - gy * sinA;
+      const sy = cy + gx * sinA + gy * cosA;
+      if (sx < -sp || sx > W + sp || sy < -sp || sy > H + sp) continue;
+
+      const lum = sampleLuminance(sx, sy, p.contrast, p.brightness);
+      const t   = 1 - lum / 255;
+      const r   = minR + t * (maxR - minR);
+      if (r < 0.3) continue;
+
+      const rx = sx.toFixed(2), ry = sy.toFixed(2), rv = r.toFixed(2);
+      if (p.shape === 'circle') {
+        shapes += `<circle cx="${rx}" cy="${ry}" r="${rv}"/>`;
+      } else {
+        const s = (r * 2).toFixed(2);
+        shapes += `<rect x="${(sx - r).toFixed(2)}" y="${(sy - r).toFixed(2)}" width="${s}" height="${s}"/>`;
+      }
+    }
+  }
+
+  const svg = [
+    `<?xml version="1.0" encoding="UTF-8"?>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`,
+    `  <defs><clipPath id="b"><rect width="${W}" height="${H}"/></clipPath></defs>`,
+    `  <rect width="${W}" height="${H}" fill="${p.bgColor}"/>`,
+    `  <g fill="${p.dotColor}" clip-path="url(#b)">${shapes}</g>`,
+    `</svg>`,
+  ].join('\n');
+
+  const blob = new Blob([svg], { type: 'image/svg+xml' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.download = 'halftone-dots.svg';
+  a.href = url;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+
+// ── Presets ────────────────────────────────────────────────────
+function applyPreset(name) {
+  const p = PRESETS[name];
+  if (!p) return;
+  ctrl.spacing.value    = p.spacing;
+  ctrl.maxSize.value    = p.maxSize;
+  ctrl.minSize.value    = p.minSize;
+  ctrl.contrast.value   = p.contrast;
+  ctrl.brightness.value = p.brightness;
+  ctrl.angle.value      = p.angle;
+  ctrl.dotColor.value   = p.dotColor;
+  ctrl.bgColor.value    = p.bgColor;
+  updateLabels();
+  scheduleRender();
+}
+
+document.querySelectorAll('.preset-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    applyPreset(btn.dataset.preset);
+  });
+});
+
+
+// ── Shape toggle ───────────────────────────────────────────────
+document.querySelectorAll('.shape-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    dotShape = btn.dataset.shape;
+    scheduleRender();
+  });
+});
+
+
+// ── Slider & colour picker listeners ──────────────────────────
+Object.values(ctrl).forEach(input => {
+  input.addEventListener('input', () => {
+    updateLabels();
+    scheduleRender();
+  });
+});
+
+
+// ── Reset ──────────────────────────────────────────────────────
+document.getElementById('resetBtn').addEventListener('click', () => {
+  ctrl.spacing.value    = DEFAULTS.spacing;
+  ctrl.maxSize.value    = DEFAULTS.maxSize;
+  ctrl.minSize.value    = DEFAULTS.minSize;
+  ctrl.contrast.value   = DEFAULTS.contrast;
+  ctrl.brightness.value = DEFAULTS.brightness;
+  ctrl.angle.value      = DEFAULTS.angle;
+  ctrl.dotColor.value   = DEFAULTS.dotColor;
+  ctrl.bgColor.value    = DEFAULTS.bgColor;
+  dotShape = DEFAULTS.shape;
+  document.querySelectorAll('.shape-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  updateLabels();
+  scheduleRender();
+});
+
+
+// ── Drag & drop ────────────────────────────────────────────────
+dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', ()  => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  loadFile(e.dataTransfer.files[0]);
+});
+dropZone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', e => loadFile(e.target.files[0]));
+
+
+// ── Init ───────────────────────────────────────────────────────
+updateLabels();
+
+</script>
+</body>
+</html>
