@@ -31,6 +31,7 @@ function navigateTo(page) {
     // Hide all pages
     document.getElementById('homePage').classList.add('hidden');
     document.getElementById('workPage').classList.add('hidden');
+    document.getElementById('shopPage').classList.add('hidden');
     document.getElementById('contactPage').classList.add('hidden');
     document.getElementById('toolsPage').classList.add('hidden');
 
@@ -53,6 +54,10 @@ function navigateTo(page) {
         workPage.classList.remove('hidden');
         workPage.classList.add('flex', 'fade-in');
         if (window.initWorkGallery) window.initWorkGallery();
+    } else if (page === 'shop') {
+        const shopPage = document.getElementById('shopPage');
+        shopPage.classList.remove('hidden');
+        shopPage.classList.add('fade-in');
     } else if (page === 'contact') {
         const contactPage = document.getElementById('contactPage');
         contactPage.classList.remove('hidden');
