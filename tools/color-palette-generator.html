@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Color Palette Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Fira Code', monospace; }
+
+    body {
+      background: #09090b;
+      color: #e4e4e7;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px;
+      overflow-x: hidden;
+    }
+
+    .app { width: 100%; max-width: 1080px; }
+
+    /* ── Header ─────────────────────────────────────── */
+    .header { margin-bottom: 24px; }
+    .header h1 { font-size: 20px; font-weight: 700; color: #f4f4f5; letter-spacing: 0.5px; }
+    .header p { font-size: 11.5px; color: #52525b; margin-top: 4px; }
+
+    /* ── Input Card ─────────────────────────────────── */
+    .input-card {
+      background: #111113;
+      border: 1px solid #27272a;
+      border-radius: 10px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .picker-wrap {
+      position: relative;
+      width: 38px;
+      height: 38px;
+      border-radius: 7px;
+      border: 2px solid #3f3f46;
+      overflow: hidden;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+    .picker-preview {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .picker-wrap input[type="color"] {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+      border: none;
+      padding: 0;
+    }
+
+    .hex-input {
+      background: #18181b;
+      border: 1px solid #3f3f46;
+      border-radius: 7px;
+      color: #e4e4e7;
+      font-family: 'Fira Code', monospace;
+      font-size: 14px;
+      padding: 7px 12px;
+      width: 130px;
+      letter-spacing: 1px;
+      transition: border-color 0.15s;
+    }
+    .hex-input:focus { outline: none; border-color: #71717a; }
+    .hex-input.invalid { border-color: #ef4444; }
+
+    .input-label { font-size: 11px; color: #3f3f46; letter-spacing: 1px; }
+
+    .btn {
+      padding: 7px 15px;
+      border-radius: 7px;
+      font-family: 'Fira Code', monospace;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+    }
+    .btn-primary { background: #ef4444; color: #fff; }
+    .btn-primary:hover { background: #dc2626; }
+    .btn-ghost { background: transparent; border: 1px solid #3f3f46; color: #a1a1aa; }
+    .btn-ghost:hover { border-color: #71717a; color: #e4e4e7; }
+    .btn-subtle { background: #18181b; border: 1px solid #27272a; color: #71717a; }
+    .btn-subtle:hover { background: #1c1c1f; color: #a1a1aa; }
+    .ml-auto { margin-left: auto; }
+
+    /* ── Palette Grid ───────────────────────────────── */
+    .palette-grid {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 0;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+
+    .swatch {
+      position: relative;
+      aspect-ratio: 1/1;
+      min-height: 0;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 6px 5px;
+      transition: transform 0.12s, z-index 0s;
+      overflow: hidden;
+      user-select: none;
+    }
+    .swatch:hover { transform: scaleY(1.05); z-index: 2; }
+
+    .swatch-shade {
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 3px;
+    }
+    .swatch-hex {
+      font-size: 8.5px;
+      font-weight: 400;
+      text-transform: uppercase;
+      opacity: 0.8;
+    }
+    .swatch-copied {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      opacity: 0;
+      transition: opacity 0.18s;
+      background: rgba(0,0,0,0.25);
+      letter-spacing: 0.5px;
+      pointer-events: none;
+    }
+    .swatch-copied.show { opacity: 1; }
+
+    /* ── Action Bar ─────────────────────────────────── */
+    .action-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 64px;
+      flex-wrap: wrap;
+    }
+
+    /* ── Section Header ─────────────────────────────── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .section-title {
+      font-size: 10px;
+      font-weight: 600;
+      color: #3f3f46;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      white-space: nowrap;
+    }
+    .section-line { flex: 1; height: 1px; background: #18181b; }
+
+    /* ── Pairings Matrix ────────────────────────────── */
+    .matrix-wrap { margin-bottom: 40px; }
+    .matrix {
+      display: grid;
+      width: 100%;
+      gap: 2px;
+    }
+    .matrix-header-cell {
+      padding: 4px 6px;
+      font-size: 9px;
+      font-weight: 600;
+      color: #52525b;
+      text-align: center;
+      letter-spacing: 0.5px;
+    }
+    .matrix-row-label {
+      padding: 4px 8px;
+      font-size: 9px;
+      font-weight: 600;
+      color: #52525b;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      letter-spacing: 0.5px;
+    }
+    .matrix-cell {
+      width: 100%;
+      height: 34px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9.5px;
+      font-weight: 600;
+      cursor: default;
+      transition: transform 0.1s;
+      position: relative;
+    }
+    .matrix-cell:hover { transform: scale(1.12); z-index: 3; }
+    .matrix-cell.same { background: #18181b; }
+    .cell-aaa { background: rgba(34,197,94,0.18); color: #4ade80; }
+    .cell-aa  { background: rgba(234,179,8,0.15); color: #fbbf24; }
+    .cell-fail{ background: rgba(239,68,68,0.08); color: #52525b; }
+
+    /* ── Export Modal ───────────────────────────────── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 20px;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: #111113;
+      border: 1px solid #27272a;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 580px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      border-bottom: 1px solid #1a1a1d;
+      flex-shrink: 0;
+    }
+    .modal-title { font-size: 13px; font-weight: 600; color: #e4e4e7; }
+    .modal-close {
+      background: none;
+      border: none;
+      color: #52525b;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: color 0.15s;
+    }
+    .modal-close:hover { color: #a1a1aa; }
+
+    .modal-tabs {
+      display: flex;
+      border-bottom: 1px solid #1a1a1d;
+      flex-shrink: 0;
+      overflow-x: auto;
+    }
+    .modal-tab {
+      padding: 9px 14px;
+      font-size: 11px;
+      color: #52525b;
+      cursor: pointer;
+      border: none;
+      background: none;
+      font-family: 'Fira Code', monospace;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .modal-tab:hover { color: #a1a1aa; }
+    .modal-tab.active { color: #ef4444; border-bottom-color: #ef4444; }
+
+    .modal-body { padding: 16px 18px; overflow-y: auto; flex: 1; }
+
+    .export-code {
+      background: #0a0a0b;
+      border: 1px solid #1a1a1d;
+      border-radius: 7px;
+      padding: 14px;
+      font-size: 12px;
+      color: #a1a1aa;
+      line-height: 1.75;
+      white-space: pre;
+      overflow-x: auto;
+      margin-bottom: 0;
+      tab-size: 2;
+    }
+
+    .modal-foot {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding: 12px 18px;
+      border-top: 1px solid #1a1a1d;
+      flex-shrink: 0;
+    }
+
+    /* ── Responsive ─────────────────────────────────── */
+    @media (max-width: 680px) {
+      .palette-grid { grid-template-columns: repeat(5, 1fr); }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <div class="header">
+    <h1>Color Palette Generator</h1>
+    <p>Generate a full Tailwind-style color scale from any base color — copy, export, and check contrast</p>
+  </div>
+
+  <!-- Input -->
+  <div class="input-card">
+    <div class="picker-wrap" id="pickerWrap">
+      <div class="picker-preview" id="pickerPreview"></div>
+      <input type="color" id="colorPicker" value="#3b82f6" />
+    </div>
+    <input type="text" class="hex-input" id="hexInput" value="#3b82f6" maxlength="7" spellcheck="false" autocomplete="off" />
+    <span class="input-label">Base color</span>
+    <button class="btn btn-ghost" id="randomBtn">⚄ Random</button>
+    <button class="btn btn-primary ml-auto" id="exportBtn">Export ▾</button>
+  </div>
+
+  <!-- Palette -->
+  <div class="palette-grid" id="paletteGrid"></div>
+
+  <!-- Actions -->
+  <div class="action-bar">
+    <button class="btn btn-subtle" id="copyAllBtn">Copy All HEX</button>
+    <button class="btn btn-subtle" id="copySvgBtn">Copy as SVG</button>
+  </div>
+
+  <!-- Pairings Matrix -->
+  <div class="section-header">
+    <span class="section-title">Palette Pairings Matrix</span>
+    <div class="section-line"></div>
+  </div>
+  <p style="font-size:10px;color:#3f3f46;margin-bottom:12px;">Text shade (row) on background shade (col) — <span style="color:#4ade80">green = AAA</span> · <span style="color:#fbbf24">yellow = AA</span> · dim = fail</p>
+  <div class="matrix-wrap"><div class="matrix" id="matrix"></div></div>
+
+</div>
+
+<!-- Export Modal -->
+<div class="modal-overlay" id="exportModal">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="modal-title">Export Palette</span>
+      <button class="modal-close" id="modalClose">✕</button>
+    </div>
+    <div class="modal-tabs" id="modalTabs">
+      <button class="modal-tab active" data-fmt="tailwind">Tailwind</button>
+      <button class="modal-tab" data-fmt="css">CSS Vars</button>
+      <button class="modal-tab" data-fmt="hex">HEX</button>
+      <button class="modal-tab" data-fmt="rgb">RGB</button>
+      <button class="modal-tab" data-fmt="hsl">HSL</button>
+      <button class="modal-tab" data-fmt="oklch">OKLCH</button>
+    </div>
+    <div class="modal-body">
+      <pre class="export-code" id="exportCode"></pre>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-primary" id="copyExportBtn">Copy</button>
+      <button class="btn btn-ghost" id="downloadTxt">↓ .txt</button>
+      <button class="btn btn-ghost" id="downloadJson">↓ .json</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Color Math ──────────────────────────────────────────────────────────────
+
+function hexToRgb(hex) {
+  hex = hex.replace(/^#/, '');
+  if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+  const n = parseInt(hex, 16);
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+}
+
+function rgbToHex(r, g, b) {
+  return '#' + [r, g, b].map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
+}
+
+function rgbToHsl(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0;
+  const l = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      case g: h = ((b - r) / d + 2) / 6; break;
+      case b: h = ((r - g) / d + 4) / 6; break;
+    }
+  }
+  return { h: h * 360, s: s * 100, l: l * 100 };
+}
+
+function hslToRgb(h, s, l) {
+  h /= 360; s /= 100; l /= 100;
+  if (s === 0) { const v = Math.round(l * 255); return { r: v, g: v, b: v }; }
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+  const p = 2 * l - q;
+  const hue2rgb = (p, q, t) => {
+    t = ((t % 1) + 1) % 1;
+    if (t < 1/6) return p + (q - p) * 6 * t;
+    if (t < 1/2) return q;
+    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+    return p;
+  };
+  return {
+    r: Math.round(hue2rgb(p, q, h + 1/3) * 255),
+    g: Math.round(hue2rgb(p, q, h) * 255),
+    b: Math.round(hue2rgb(p, q, h - 1/3) * 255)
+  };
+}
+
+function hexToHsl(hex) { const { r, g, b } = hexToRgb(hex); return rgbToHsl(r, g, b); }
+function hslToHex(h, s, l) { const { r, g, b } = hslToRgb(h, s, l); return rgbToHex(r, g, b); }
+
+function toLinear(c) {
+  c /= 255;
+  return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+}
+
+function luminance(hex) {
+  const { r, g, b } = hexToRgb(hex);
+  return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
+}
+
+function contrastRatio(h1, h2) {
+  const l1 = luminance(h1), l2 = luminance(h2);
+  const lighter = Math.max(l1, l2), darker = Math.min(l1, l2);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+function hexToOklch(hex) {
+  const { r, g, b } = hexToRgb(hex);
+  const lr = toLinear(r), lg = toLinear(g), lb = toLinear(b);
+  const l_ = Math.cbrt(0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb);
+  const m_ = Math.cbrt(0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb);
+  const s_ = Math.cbrt(0.0883024619 * lr + 0.2817188376 * lg + 0.6299787005 * lb);
+  const L = 0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_;
+  const a = 1.9779984951 * l_ - 2.4285922050 * m_ + 0.4505937099 * s_;
+  const bk = 0.0259040371 * l_ + 0.7827717662 * m_ - 0.8086757660 * s_;
+  const C = Math.sqrt(a * a + bk * bk);
+  let H = Math.atan2(bk, a) * 180 / Math.PI;
+  if (H < 0) H += 360;
+  return { l: L, c: C, h: H };
+}
+
+// ── Palette Generation ──────────────────────────────────────────────────────
+
+const SHADES   = [50,  100, 200, 300, 400, 500, 600, 700, 800, 900];
+const LIGHTS   = [97,  93,  85,  72,  57,  45,  35,  26,  18,  11];
+const SAT_MULT = [0.22,0.35,0.55,0.72,0.88,1.0, 1.0, 0.96,0.90,0.82];
+
+function generatePalette(baseHex) {
+  const { h, s } = hexToHsl(baseHex);
+  return SHADES.map((shade, i) => {
+    const l   = LIGHTS[i];
+    const sat = Math.min(100, s * SAT_MULT[i]);
+    return { shade, hex: hslToHex(h, sat, l), lightness: l };
+  });
+}
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
+
+function bestText(bgHex) {
+  return contrastRatio(bgHex, '#ffffff') > contrastRatio(bgHex, '#000000')
+    ? '#ffffff' : '#000000';
+}
+
+function isValidHex(v) { return /^#[0-9a-fA-F]{6}$/.test(v); }
+
+function randomHex() {
+  return '#' + Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0');
+}
+
+function copyText(text) {
+  return navigator.clipboard.writeText(text).catch(() => {});
+}
+
+function flashBtn(btn, label) {
+  const orig = btn.textContent;
+  btn.textContent = label;
+  setTimeout(() => btn.textContent = orig, 1500);
+}
+
+// ── Render: Palette ──────────────────────────────────────────────────────────
+
+function renderPalette(palette) {
+  const grid = document.getElementById('paletteGrid');
+  grid.innerHTML = '';
+  palette.forEach(({ shade, hex }) => {
+    const tc = bestText(hex);
+    const el = document.createElement('div');
+    el.className = 'swatch';
+    el.style.background = hex;
+    el.innerHTML = `
+      <div class="swatch-copied" style="color:${tc}">Copied!</div>
+      <div class="swatch-shade" style="color:${tc}">${shade}</div>
+      <div class="swatch-hex" style="color:${tc}">${hex}</div>`;
+    el.addEventListener('click', () => {
+      copyText(hex);
+      const fb = el.querySelector('.swatch-copied');
+      fb.classList.add('show');
+      setTimeout(() => fb.classList.remove('show'), 1100);
+    });
+    grid.appendChild(el);
+  });
+}
+
+// ── Render: Pairings Matrix ──────────────────────────────────────────────────
+
+function renderMatrix(palette) {
+  const container = document.getElementById('matrix');
+  const n = palette.length;
+  container.style.gridTemplateColumns = `40px repeat(${n}, 1fr)`;
+  container.innerHTML = '';
+
+  // Top-left corner
+  container.appendChild(Object.assign(document.createElement('div'), {
+    className: 'matrix-header-cell', textContent: ''
+  }));
+
+  // Column headers (bg shades)
+  palette.forEach(({ shade }) => {
+    const el = document.createElement('div');
+    el.className = 'matrix-header-cell';
+    el.textContent = shade;
+    container.appendChild(el);
+  });
+
+  // Rows: text shade → bg shade
+  palette.forEach(({ shade: textShade, hex: textHex }) => {
+    // Row label
+    const label = document.createElement('div');
+    label.className = 'matrix-row-label';
+    label.textContent = textShade;
+    container.appendChild(label);
+
+    palette.forEach(({ shade: bgShade, hex: bgHex }) => {
+      const cell = document.createElement('div');
+      cell.className = 'matrix-cell';
+      if (textShade === bgShade) {
+        cell.classList.add('same');
+        cell.textContent = '—';
+      } else {
+        const ratio = contrastRatio(textHex, bgHex);
+        const cls = ratio >= 7 ? 'cell-aaa' : ratio >= 4.5 ? 'cell-aa' : 'cell-fail';
+        cell.classList.add(cls);
+        cell.style.color = ratio >= 4.5 ? '' : '#3f3f46';
+        cell.textContent = ratio.toFixed(1);
+        cell.style.background = bgHex;
+        cell.style.color = textHex;
+        // Overlay tint for pass/fail
+        cell.title = `${textShade} on ${bgShade}: ${ratio.toFixed(2)}:1`;
+      }
+      container.appendChild(cell);
+    });
+  });
+}
+
+// ── Export Formatters ────────────────────────────────────────────────────────
+
+const FORMATTERS = {
+  tailwind: p => {
+    const inner = p.map(({ shade, hex }) => `    ${shade}: "${hex}",`).join('\n');
+    return `colors: {\n  primary: {\n${inner}\n  }\n}`;
+  },
+  css: p => `:root {\n${p.map(({ shade, hex }) => `  --color-${shade}: ${hex};`).join('\n')}\n}`,
+  hex:  p => p.map(({ shade, hex }) => `${shade}: ${hex}`).join('\n'),
+  rgb:  p => p.map(({ shade, hex }) => {
+    const { r, g, b } = hexToRgb(hex);
+    return `${shade}: rgb(${r}, ${g}, ${b})`;
+  }).join('\n'),
+  hsl:  p => p.map(({ shade, hex }) => {
+    const { h, s, l } = hexToHsl(hex);
+    return `${shade}: hsl(${Math.round(h)}, ${Math.round(s)}%, ${Math.round(l)}%)`;
+  }).join('\n'),
+  oklch: p => p.map(({ shade, hex }) => {
+    const { l, c, h } = hexToOklch(hex);
+    return `${shade}: oklch(${(l * 100).toFixed(2)}% ${c.toFixed(4)} ${Math.round(h)})`;
+  }).join('\n'),
+};
+
+let currentFmt = 'tailwind';
+let currentPalette = [];
+
+function updateExportCode() {
+  document.getElementById('exportCode').textContent = FORMATTERS[currentFmt](currentPalette);
+}
+
+// ── SVG Builder ──────────────────────────────────────────────────────────────
+
+function buildSvg(palette) {
+  const W = 80, H = 120;
+  const totalW = palette.length * W;
+  const rects = palette.map(({ shade, hex, lightness }, i) => {
+    const tc = lightness > 55 ? '#000000' : '#ffffff';
+    return `  <rect x="${i * W}" y="0" width="${W}" height="${H}" fill="${hex}"/>
+  <text x="${i * W + W / 2}" y="${H - 26}" text-anchor="middle" font-family="monospace" font-size="12" font-weight="700" fill="${tc}" opacity="0.85">${shade}</text>
+  <text x="${i * W + W / 2}" y="${H - 10}" text-anchor="middle" font-family="monospace" font-size="8.5" fill="${tc}" opacity="0.65">${hex}</text>`;
+  }).join('\n');
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalW}" height="${H}" viewBox="0 0 ${totalW} ${H}">\n${rects}\n</svg>`;
+}
+
+// ── Core Generate ────────────────────────────────────────────────────────────
+
+function generate(hex) {
+  currentPalette = generatePalette(hex);
+  renderPalette(currentPalette);
+  renderMatrix(currentPalette);
+  updateExportCode();
+}
+
+// ── Input Sync ───────────────────────────────────────────────────────────────
+
+const picker  = document.getElementById('colorPicker');
+const hexInp  = document.getElementById('hexInput');
+const preview = document.getElementById('pickerPreview');
+
+function syncPreview(hex) {
+  preview.style.background = hex;
+  if (picker.value !== hex) picker.value = hex;
+}
+
+picker.addEventListener('input', () => {
+  const hex = picker.value;
+  hexInp.value = hex;
+  hexInp.classList.remove('invalid');
+  syncPreview(hex);
+  generate(hex);
+});
+
+hexInp.addEventListener('input', () => {
+  let v = hexInp.value.trim();
+  if (!v.startsWith('#')) v = '#' + v;
+  const valid = isValidHex(v);
+  hexInp.classList.toggle('invalid', !valid && v.length >= 4);
+  if (valid) { syncPreview(v); generate(v); }
+});
+
+document.getElementById('randomBtn').addEventListener('click', () => {
+  const hex = randomHex();
+  hexInp.value = hex;
+  hexInp.classList.remove('invalid');
+  syncPreview(hex);
+  generate(hex);
+});
+
+// ── Action Buttons ───────────────────────────────────────────────────────────
+
+document.getElementById('copyAllBtn').addEventListener('click', function () {
+  copyText(currentPalette.map(({ shade, hex }) => `${shade}: ${hex}`).join('\n'));
+  flashBtn(this, 'Copied!');
+});
+
+document.getElementById('copySvgBtn').addEventListener('click', function () {
+  copyText(buildSvg(currentPalette));
+  flashBtn(this, 'Copied!');
+});
+
+// ── Export Modal ─────────────────────────────────────────────────────────────
+
+document.getElementById('exportBtn').addEventListener('click', () => {
+  updateExportCode();
+  document.getElementById('exportModal').classList.add('open');
+});
+
+document.getElementById('modalClose').addEventListener('click', () => {
+  document.getElementById('exportModal').classList.remove('open');
+});
+
+document.getElementById('exportModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('exportModal'))
+    document.getElementById('exportModal').classList.remove('open');
+});
+
+document.getElementById('modalTabs').addEventListener('click', e => {
+  const tab = e.target.closest('.modal-tab');
+  if (!tab) return;
+  document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  currentFmt = tab.dataset.fmt;
+  updateExportCode();
+});
+
+document.getElementById('copyExportBtn').addEventListener('click', function () {
+  copyText(document.getElementById('exportCode').textContent);
+  flashBtn(this, 'Copied!');
+});
+
+document.getElementById('downloadTxt').addEventListener('click', () => {
+  const blob = new Blob([document.getElementById('exportCode').textContent], { type: 'text/plain' });
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(blob), download: `palette-${currentFmt}.txt`
+  });
+  a.click(); URL.revokeObjectURL(a.href);
+});
+
+document.getElementById('downloadJson').addEventListener('click', () => {
+  const obj = {};
+  currentPalette.forEach(({ shade, hex }) => obj[shade] = hex);
+  const blob = new Blob([JSON.stringify({ primary: obj }, null, 2)], { type: 'application/json' });
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(blob), download: 'palette.json'
+  });
+  a.click(); URL.revokeObjectURL(a.href);
+});
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+
+syncPreview('#3b82f6');
+generate('#3b82f6');
+</script>
+</body>
+</html>

@@ -3,82 +3,58 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Halftone Dots Generator — Tools</title>
-  <!-- Hide the back-bar when running inside the portfolio iframe -->
+  <title>Retro Dot Effect — Tools</title>
   <script>if (window.self !== window.top) document.documentElement.dataset.embed = '1';</script>
   <style>[data-embed='1'] header { display: none !important; }</style>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
-    /* ── Fonts ── */
     @font-face {
       font-family: 'BoldPixels';
       src: url('../assets/BoldPixels.otf') format('opentype');
     }
-    *, *::before, *::after { box-sizing: border-box; }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     * { font-family: 'Fira Code', monospace; }
+
     .title-font {
       font-family: 'BoldPixels', 'Courier New', monospace;
       letter-spacing: 2px;
     }
 
-    /* ── Base ── */
-    html, body { height: 100%; margin: 0; overflow: hidden; }
-    body { background: #09090b; color: #fff; display: flex; flex-direction: column; }
-
-    /* ── Drop Zone ── */
-    .drop-zone {
-      border: 2px dashed #27272a;
-      transition: border-color 0.2s, background 0.2s;
-      cursor: pointer;
-    }
-    .drop-zone.drag-over {
-      border-color: #ef4444;
-      background: rgba(239, 68, 68, 0.05);
+    html, body { height: 100%; }
+    body {
+      background-color: #09090b;
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
     }
 
-    /* ── Range Sliders ── */
-    input[type="range"] {
-      -webkit-appearance: none;
-      width: 100%;
-      height: 3px;
-      border-radius: 2px;
-      background: #3f3f46;
-      outline: none;
-      cursor: pointer;
-    }
-    input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 14px; height: 14px;
-      border-radius: 50%;
-      background: #ef4444;
-      cursor: pointer;
-    }
-    input[type="range"]::-moz-range-thumb {
-      width: 14px; height: 14px;
-      border-radius: 50%;
-      background: #ef4444;
-      border: none; cursor: pointer;
-    }
 
-    /* ── Color Inputs ── */
-    input[type="color"] {
-      -webkit-appearance: none;
-      border: none; padding: 0; background: none; cursor: pointer;
-      width: 36px; height: 36px;
+    /* ── Header ── */
+    .hdr-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 5px 14px;
+      font-family: 'BoldPixels', monospace;
+      font-size: 10px; letter-spacing: 1px;
+      border: 1.5px solid #3f3f46; border-radius: 6px;
+      background: transparent; color: #71717a;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
     }
-    input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
-    input[type="color"]::-webkit-color-swatch { border: 1px solid #3f3f46; border-radius: 4px; }
+    .hdr-btn:hover { border-color: #ef4444; color: #ef4444; }
 
     /* ── Preset Buttons ── */
     .preset-btn {
-      padding: 3px 10px;
-      font-size: 11px;
+      padding: 4px 12px;
+      font-size: 10px;
       font-family: 'BoldPixels', monospace;
       letter-spacing: 1px;
-      border: 1px solid #3f3f46;
-      border-radius: 4px;
+      border: 1.5px solid #3f3f46;
+      border-radius: 6px;
       background: transparent;
       color: #71717a;
       cursor: pointer;
@@ -89,281 +65,525 @@
       color: #ef4444;
     }
 
-    /* ── Shape Toggle Buttons ── */
+    /* ── Main content — centered when only drop zone visible ── */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px 40px;
+      gap: 20px;
+    }
+
+    /* ══════════════════════════════════════
+       DROP STATE (default, centered)
+    ══════════════════════════════════════ */
+    #dropState {
+      width: 100%;
+      max-width: 680px;
+    }
+
+    .drop-card {
+      background: #111113;
+      border: 1px solid #1c1c1e;
+      border-radius: 14px;
+      padding: 48px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 28px;
+    }
+
+    .drop-zone {
+      width: 100%;
+      border: 2px dashed #27272a;
+      border-radius: 12px;
+      padding: 64px 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: #ef4444;
+      background: rgba(239, 68, 68, 0.04);
+    }
+
+    .drop-zone-label {
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #52525b;
+      font-family: 'BoldPixels', monospace;
+      margin-bottom: 2px;
+    }
+
+    .drop-zone-sub {
+      font-size: 11px;
+      color: #3f3f46;
+    }
+
+    .choose-btn {
+      margin-top: 4px;
+      padding: 7px 22px;
+      border: 1.5px solid #3f3f46;
+      border-radius: 8px;
+      font-size: 11px;
+      font-family: 'BoldPixels', monospace;
+      letter-spacing: 1px;
+      color: #71717a;
+      background: transparent;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .choose-btn:hover { border-color: #ef4444; color: #ef4444; }
+
+    /* ══════════════════════════════════════
+       IMAGE STATE (hidden until upload)
+    ══════════════════════════════════════ */
+    #imageState {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      width: 100%;
+      max-width: 860px;
+    }
+    #imageState.show { display: flex; }
+
+    /* ── Card shared ── */
+    .tool-card {
+      width: 100%;
+      background: #111113;
+      border: 1px solid #1c1c1e;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 12px 20px;
+      border-bottom: 1px solid #1c1c1e;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .card-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: #52525b;
+      font-weight: 600;
+    }
+
+    /* ── Panels row ── */
+    .panels-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .img-panel {
+      display: flex;
+      flex-direction: column;
+    }
+    .img-panel:first-child { border-right: 1px solid #1c1c1e; }
+
+    .img-panel-body {
+      height: 320px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0c0c0e;
+      overflow: hidden;
+      position: relative;
+    }
+
+    canvas {
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+      display: block;
+    }
+
+    /* ── Controls card ── */
+    .controls-body {
+      padding: 20px 24px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 20px 28px;
+      align-items: start;
+    }
+
+    .ctrl-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .ctrl-label-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .ctrl-label {
+      font-size: 10px;
+      color: #52525b;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .ctrl-value {
+      font-size: 10px;
+      color: #ef4444;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ── Range Sliders ── */
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 3px;
+      border-radius: 2px;
+      background: #27272a;
+      outline: none;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 13px; height: 13px;
+      border-radius: 50%;
+      background: #ef4444;
+      cursor: pointer;
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 13px; height: 13px;
+      border-radius: 50%;
+      background: #ef4444;
+      border: none; cursor: pointer;
+    }
+
+    /* ── Shape toggle ── */
+    .shape-toggle {
+      display: flex;
+      border: 1px solid #27272a;
+      border-radius: 8px;
+      overflow: hidden;
+    }
     .shape-btn {
       flex: 1;
-      padding: 6px 0;
+      padding: 7px 0;
       font-size: 11px;
       background: transparent;
-      color: #71717a;
+      color: #52525b;
       border: none;
       cursor: pointer;
       transition: background 0.15s, color 0.15s;
     }
+    .shape-btn + .shape-btn { border-left: 1px solid #27272a; }
     .shape-btn.active {
-      background: rgba(239, 68, 68, 0.12);
+      background: rgba(239, 68, 68, 0.1);
       color: #ef4444;
     }
 
-    /* ── Canvas ── */
-    canvas {
-      display: block;
-      max-width: 100%;
-      max-height: 100%;
-      width: auto; height: auto;
+    /* ── Color picker ── */
+    .color-picker-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .color-swatch-wrap {
+      width: 34px; height: 34px;
+      border-radius: 8px;
+      border: 1.5px solid #27272a;
+      overflow: hidden;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .color-swatch-wrap:hover { border-color: #52525b; }
+    input[type="color"] {
+      -webkit-appearance: none;
+      border: none; padding: 0; background: none; cursor: pointer;
+      width: 44px; height: 44px;
+      margin: -5px;
+    }
+    input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+    input[type="color"]::-webkit-color-swatch { border: none; }
+    .color-hex-val {
+      font-size: 11px;
+      color: #71717a;
     }
 
-    /* ── Panels ── */
-    .panel-label {
+    /* ── Download buttons ── */
+    .dl-btn {
+      padding: 5px 14px;
       font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: #52525b;
+      font-family: 'BoldPixels', monospace;
+      letter-spacing: 1px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
     }
+    .dl-btn-outline {
+      border: 1.5px solid #3f3f46;
+      background: transparent;
+      color: #71717a;
+    }
+    .dl-btn-outline:hover { border-color: #ef4444; color: #ef4444; }
+    .dl-btn-solid {
+      border: 1.5px solid #ef4444;
+      background: #ef4444;
+      color: #fff;
+    }
+    .dl-btn-solid:hover { background: #dc2626; border-color: #dc2626; }
+
+    /* ── Reset button ── */
+    .reset-btn {
+      width: 100%;
+      padding: 8px;
+      border: 1.5px solid #27272a;
+      border-radius: 8px;
+      background: transparent;
+      color: #52525b;
+      font-size: 10px;
+      font-family: 'BoldPixels', monospace;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+      margin-top: 4px;
+    }
+    .reset-btn:hover { border-color: #52525b; color: #a1a1aa; }
+
+    /* ── Processing overlay ── */
+    #processingOverlay {
+      display: none;
+      position: absolute; inset: 0;
+      background: rgba(9, 9, 11, 0.75);
+      align-items: center; justify-content: center;
+      z-index: 10;
+    }
+    #processingOverlay.show { display: flex; }
 
     /* ── Scrollbar ── */
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-track { background: #18181b; }
     ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 3px; }
 
-    /* ── Processing Overlay ── */
-    #processingOverlay {
-      display: none;
-      position: absolute; inset: 0;
-      background: rgba(9, 9, 11, 0.75);
-      align-items: center; justify-content: center;
-      z-index: 20;
-    }
-    #processingOverlay.show { display: flex; }
-
-    /* ── Responsive: stack on small screens ── */
-    @media (max-width: 900px) {
-      body { overflow: auto; }
-      #mainLayout { flex-direction: column; height: auto; }
-      #canvasArea { flex-direction: column; }
-      #controlsPanel { width: 100%; border-left: none; border-top: 1px solid #27272a; }
+    @media (max-width: 600px) {
+      .panels-row { grid-template-columns: 1fr; }
+      .img-panel:first-child { border-right: none; border-bottom: 1px solid #1c1c1e; }
+      .controls-body { grid-template-columns: 1fr 1fr; }
+      .main-content { padding: 20px 16px 32px; }
     }
   </style>
 </head>
 <body>
 
-  <!-- ════════════════════════════════════════════════
-       HEADER
-  ════════════════════════════════════════════════ -->
-  <header class="flex-none flex items-center gap-4 px-5 py-3 border-b border-zinc-800">
-    <a href="../index.html" class="title-font text-xs text-zinc-500 hover:text-red-500 transition-colors">
-      ← Back
-    </a>
-    <div class="w-px h-4 bg-zinc-700"></div>
-    <h1 class="title-font text-sm text-white">Halftone Dots Generator</h1>
+<!-- ════ HEADER ════ -->
+<header style="background:#09090b; border-bottom:1px solid #1c1c1e;"
+        class="flex items-center gap-4 px-5 py-3 flex-shrink-0">
+  <a href="../index.html" class="title-font text-xs text-zinc-500 hover:text-red-500 transition-colors">← Back</a>
+  <div style="width:1px;height:16px;background:#27272a;"></div>
+  <h1 class="title-font text-xs text-white">Retro Dot Effect</h1>
 
-    <!-- Presets -->
-    <div class="ml-auto flex items-center gap-2 flex-wrap">
-      <span class="text-xs text-zinc-600">Presets:</span>
-      <button class="preset-btn active" data-preset="comic">Comic</button>
-      <button class="preset-btn" data-preset="soft">Soft</button>
-      <button class="preset-btn" data-preset="heavy">Heavy Ink</button>
-      <button class="preset-btn" data-preset="blueprint">Blueprint</button>
+  <!-- Presets — hidden until image loaded -->
+  <div id="presetsBar" class="ml-auto items-center gap-2 hidden" style="display:none; flex-wrap:wrap;">
+    <span style="font-size:10px;color:#3f3f46;letter-spacing:.08em;">Presets:</span>
+    <button class="preset-btn active" data-preset="comic">Comic</button>
+    <button class="preset-btn" data-preset="soft">Soft</button>
+    <button class="preset-btn" data-preset="heavy">Heavy Ink</button>
+    <button class="preset-btn" data-preset="blueprint">Blueprint</button>
+  </div>
+</header>
+
+
+<!-- ════ MAIN ════ -->
+<div class="main-content">
+
+  <!-- ── DROP STATE (default) ── -->
+  <div id="dropState">
+    <div class="drop-card">
+
+      <div>
+        <p class="title-font" style="font-size:11px;color:#e4e4e7;text-align:center;margin-bottom:4px;">Retro Dot Effect</p>
+        <p style="font-size:11px;color:#52525b;text-align:center;">Drop your image to generate a halftone dot result</p>
+      </div>
+
+      <div id="dropZone" class="drop-zone">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none"
+             stroke="#3f3f46" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        <p class="drop-zone-label">Drop image here</p>
+        <p class="drop-zone-sub">JPG · PNG · WebP</p>
+        <label class="choose-btn">
+          Choose File
+          <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" class="hidden" />
+        </label>
+      </div>
+
     </div>
-  </header>
+  </div><!-- /dropState -->
 
-  <!-- ════════════════════════════════════════════════
-       MAIN LAYOUT
-  ════════════════════════════════════════════════ -->
-  <div id="mainLayout" class="flex flex-1 overflow-hidden">
 
-    <!-- ── Canvas Area (Original + Result) ── -->
-    <div id="canvasArea" class="flex flex-1 overflow-hidden min-w-0">
+  <!-- ── IMAGE STATE (shown after upload) ── -->
+  <div id="imageState">
 
-      <!-- Original Panel -->
-      <div class="flex flex-col flex-1 border-r border-zinc-800 min-w-0">
-        <div class="flex-none flex items-center px-4 py-2 border-b border-zinc-800">
-          <span class="panel-label">Original</span>
+    <!-- Row 1: Original + Halftone panels -->
+    <div class="tool-card">
+      <div class="panels-row">
+
+        <!-- Original -->
+        <div class="img-panel">
+          <div class="card-header">
+            <span class="card-label">Original</span>
+            <button id="changeImageBtn" class="hdr-btn">⤴ Change Image</button>
+          </div>
+          <div class="img-panel-body">
+            <canvas id="originalCanvas"></canvas>
+          </div>
         </div>
-        <div id="originalPanel"
-             class="flex-1 flex items-center justify-center p-4 overflow-hidden relative"
-             style="background: #0c0c0e;">
 
-          <!-- Upload / Drop Zone -->
-          <div id="dropZone"
-               class="drop-zone w-full h-full rounded-lg flex flex-col items-center justify-center gap-4">
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none"
-                 stroke="#3f3f46" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-              <polyline points="17 8 12 3 7 8"/>
-              <line x1="12" y1="3" x2="12" y2="15"/>
-            </svg>
-            <div class="text-center pointer-events-none">
-              <p class="title-font text-xs text-zinc-400">Drop image here</p>
-              <p class="text-xs text-zinc-600 mt-1">JPG &middot; PNG &middot; WebP</p>
+        <!-- Halftone Result -->
+        <div class="img-panel">
+          <div class="card-header">
+            <span class="card-label">Halftone Result</span>
+            <div style="display:flex;gap:8px;">
+              <button id="downloadSvg" class="dl-btn dl-btn-outline">SVG</button>
+              <button id="downloadPng" class="dl-btn dl-btn-solid">↓ PNG</button>
             </div>
-            <label class="px-5 py-1.5 border border-zinc-700 rounded text-xs text-zinc-400
-                          cursor-pointer hover:border-red-500 hover:text-red-500 transition-colors title-font">
-              Choose File
-              <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" class="hidden" />
-            </label>
           </div>
-
-          <!-- Original canvas (hidden until image loaded) -->
-          <canvas id="originalCanvas" class="hidden rounded"></canvas>
-        </div>
-      </div>
-
-      <!-- Halftone Result Panel -->
-      <div class="flex flex-col flex-1 min-w-0">
-        <div class="flex-none flex items-center justify-between px-4 py-2 border-b border-zinc-800">
-          <span class="panel-label">Halftone Result</span>
-          <div class="flex gap-2">
-            <button id="downloadSvg"
-                    class="hidden px-3 py-1 border border-zinc-700 hover:border-red-500
-                           text-zinc-400 hover:text-red-500 text-xs rounded title-font transition-colors">
-              SVG
-            </button>
-            <button id="downloadPng"
-                    class="hidden px-3 py-1 bg-red-600 hover:bg-red-500
-                           text-white text-xs rounded title-font transition-colors">
-              Download PNG
-            </button>
+          <div class="img-panel-body">
+            <canvas id="halftoneCanvas"></canvas>
+            <div id="processingOverlay">
+              <span class="title-font" style="font-size:10px;color:#ef4444;letter-spacing:2px;">Rendering…</span>
+            </div>
           </div>
         </div>
-        <div class="flex-1 flex items-center justify-center p-4 overflow-hidden relative"
-             style="background: #060608;">
-          <p id="resultPlaceholder" class="title-font text-xs text-zinc-700 select-none">
-            Upload an image to preview
-          </p>
-          <canvas id="halftoneCanvas" class="hidden"></canvas>
 
-          <!-- Processing overlay -->
-          <div id="processingOverlay">
-            <span class="title-font text-xs text-red-500 animate-pulse">Rendering…</span>
-          </div>
-        </div>
       </div>
+    </div><!-- /panels card -->
 
-    </div><!-- /canvasArea -->
-
-    <!-- ── Controls Sidebar ── -->
-    <div id="controlsPanel"
-         class="flex-none w-60 flex flex-col overflow-y-auto border-l border-zinc-800">
-
-      <div class="flex-none px-4 py-2 border-b border-zinc-800">
-        <span class="panel-label">Controls</span>
+    <!-- Row 2: Controls -->
+    <div class="tool-card" id="controlsCard">
+      <div class="card-header">
+        <span class="card-label">Controls</span>
       </div>
-
-      <div class="p-4 flex flex-col gap-5">
+      <div class="controls-body">
 
         <!-- Dot Shape -->
-        <div>
-          <p class="text-xs text-zinc-500 mb-2">Dot Shape</p>
-          <div class="flex rounded overflow-hidden border border-zinc-800">
+        <div class="ctrl-group">
+          <span class="ctrl-label">Dot Shape</span>
+          <div class="shape-toggle">
             <button class="shape-btn active" data-shape="circle">● Circle</button>
-            <button class="shape-btn border-l border-zinc-800" data-shape="square">■ Square</button>
+            <button class="shape-btn" data-shape="square">■ Square</button>
           </div>
         </div>
 
         <!-- Dot Spacing -->
-        <div>
-          <div class="flex justify-between mb-2">
-            <label class="text-xs text-zinc-500">Dot Spacing</label>
-            <span id="spacingVal" class="text-xs text-red-500 tabular-nums">10px</span>
+        <div class="ctrl-group">
+          <div class="ctrl-label-row">
+            <span class="ctrl-label">Dot Spacing</span>
+            <span id="spacingVal" class="ctrl-value">10px</span>
           </div>
           <input type="range" id="spacing" min="4" max="40" value="10" />
         </div>
 
         <!-- Max Dot Size -->
-        <div>
-          <div class="flex justify-between mb-2">
-            <label class="text-xs text-zinc-500">Max Dot Size</label>
-            <span id="maxSizeVal" class="text-xs text-red-500 tabular-nums">90%</span>
+        <div class="ctrl-group">
+          <div class="ctrl-label-row">
+            <span class="ctrl-label">Max Dot Size</span>
+            <span id="maxSizeVal" class="ctrl-value">90%</span>
           </div>
           <input type="range" id="maxSize" min="10" max="100" value="90" />
         </div>
 
         <!-- Min Dot Size -->
-        <div>
-          <div class="flex justify-between mb-2">
-            <label class="text-xs text-zinc-500">Min Dot Size</label>
-            <span id="minSizeVal" class="text-xs text-red-500 tabular-nums">0%</span>
+        <div class="ctrl-group">
+          <div class="ctrl-label-row">
+            <span class="ctrl-label">Min Dot Size</span>
+            <span id="minSizeVal" class="ctrl-value">0%</span>
           </div>
           <input type="range" id="minSize" min="0" max="50" value="0" />
         </div>
 
         <!-- Contrast -->
-        <div>
-          <div class="flex justify-between mb-2">
-            <label class="text-xs text-zinc-500">Contrast</label>
-            <span id="contrastVal" class="text-xs text-red-500 tabular-nums">0</span>
+        <div class="ctrl-group">
+          <div class="ctrl-label-row">
+            <span class="ctrl-label">Contrast</span>
+            <span id="contrastVal" class="ctrl-value">0</span>
           </div>
           <input type="range" id="contrast" min="-100" max="100" value="0" />
         </div>
 
         <!-- Brightness -->
-        <div>
-          <div class="flex justify-between mb-2">
-            <label class="text-xs text-zinc-500">Brightness</label>
-            <span id="brightnessVal" class="text-xs text-red-500 tabular-nums">0</span>
+        <div class="ctrl-group">
+          <div class="ctrl-label-row">
+            <span class="ctrl-label">Brightness</span>
+            <span id="brightnessVal" class="ctrl-value">0</span>
           </div>
           <input type="range" id="brightness" min="-100" max="100" value="0" />
         </div>
 
-        <!-- Rotation Angle -->
-        <div>
-          <div class="flex justify-between mb-2">
-            <label class="text-xs text-zinc-500">Rotation Angle</label>
-            <span id="angleVal" class="text-xs text-red-500 tabular-nums">0°</span>
+        <!-- Rotation -->
+        <div class="ctrl-group">
+          <div class="ctrl-label-row">
+            <span class="ctrl-label">Rotation</span>
+            <span id="angleVal" class="ctrl-value">0°</span>
           </div>
           <input type="range" id="angle" min="0" max="90" value="0" />
         </div>
 
-        <hr class="border-zinc-800" />
-
         <!-- Dot Color -->
-        <div>
-          <p class="text-xs text-zinc-500 mb-2">Dot Color</p>
-          <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded border border-zinc-700 overflow-hidden flex-none flex items-center justify-center">
+        <div class="ctrl-group">
+          <span class="ctrl-label">Dot Color</span>
+          <div class="color-picker-row">
+            <div class="color-swatch-wrap">
               <input type="color" id="dotColor" value="#000000" />
             </div>
-            <span id="dotColorVal" class="text-xs text-zinc-400 font-mono">#000000</span>
+            <span id="dotColorVal" class="color-hex-val">#000000</span>
           </div>
         </div>
 
         <!-- Background Color -->
-        <div>
-          <p class="text-xs text-zinc-500 mb-2">Background Color</p>
-          <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded border border-zinc-700 overflow-hidden flex-none flex items-center justify-center">
+        <div class="ctrl-group">
+          <span class="ctrl-label">Background</span>
+          <div class="color-picker-row">
+            <div class="color-swatch-wrap">
               <input type="color" id="bgColor" value="#ffffff" />
             </div>
-            <span id="bgColorVal" class="text-xs text-zinc-400 font-mono">#ffffff</span>
+            <span id="bgColorVal" class="color-hex-val">#ffffff</span>
           </div>
         </div>
 
-        <hr class="border-zinc-800" />
-
         <!-- Reset -->
-        <button id="resetBtn"
-                class="w-full py-2 border border-zinc-800 hover:border-zinc-600
-                       text-zinc-600 hover:text-zinc-400 text-xs rounded title-font transition-colors">
-          Reset Controls
-        </button>
+        <div class="ctrl-group" style="justify-content:flex-end;">
+          <button id="resetBtn" class="reset-btn">Reset Controls</button>
+        </div>
 
       </div>
-    </div><!-- /controlsPanel -->
+    </div><!-- /controls card -->
 
-  </div><!-- /mainLayout -->
+  </div><!-- /imageState -->
 
-<!-- ════════════════════════════════════════════════
-     SCRIPT
-════════════════════════════════════════════════ -->
+</div><!-- /main-content -->
+
+
+<!-- ════ SCRIPT ════ -->
 <script>
 'use strict';
-
-// ================================================================
-// Halftone Dots Generator
-// Pure vanilla JS — no external dependencies
-// ================================================================
-
 
 // ── Presets ────────────────────────────────────────────────────
 const PRESETS = {
@@ -379,27 +599,25 @@ const DEFAULTS = {
   dotColor: '#000000', bgColor: '#ffffff', shape: 'circle',
 };
 
-// Maximum dimension used when processing the source image.
-// Keeps rendering snappy without sacrificing visible quality.
 const MAX_PX = 900;
 
-
 // ── State ──────────────────────────────────────────────────────
-let sourcePixels = null;   // ImageData of the (possibly scaled) source
-let srcW = 0, srcH = 0;   // Dimensions of that source
-let dotShape  = 'circle';
+let sourcePixels  = null;
+let srcW = 0, srcH = 0;
+let dotShape      = 'circle';
 let renderPending = false;
 
-
 // ── DOM refs ───────────────────────────────────────────────────
-const dropZone         = document.getElementById('dropZone');
-const fileInput        = document.getElementById('fileInput');
-const originalCanvas   = document.getElementById('originalCanvas');
-const halftoneCanvas   = document.getElementById('halftoneCanvas');
-const resultPlaceholder = document.getElementById('resultPlaceholder');
+const dropZone          = document.getElementById('dropZone');
+const fileInput         = document.getElementById('fileInput');
+const originalCanvas    = document.getElementById('originalCanvas');
+const halftoneCanvas    = document.getElementById('halftoneCanvas');
 const processingOverlay = document.getElementById('processingOverlay');
-const downloadPngBtn   = document.getElementById('downloadPng');
-const downloadSvgBtn   = document.getElementById('downloadSvg');
+const downloadPngBtn    = document.getElementById('downloadPng');
+const downloadSvgBtn    = document.getElementById('downloadSvg');
+const dropState         = document.getElementById('dropState');
+const imageState        = document.getElementById('imageState');
+const presetsBar        = document.getElementById('presetsBar');
 
 const ctrl = {
   spacing:    document.getElementById('spacing'),
@@ -424,7 +642,25 @@ const lbl = {
 };
 
 
-// ── Helpers: read controls ─────────────────────────────────────
+// ── State transitions ──────────────────────────────────────────
+function showImageState() {
+  dropState.style.display  = 'none';
+  imageState.classList.add('show');
+  presetsBar.style.display = 'flex';
+}
+
+function showDropState() {
+  imageState.classList.remove('show');
+  dropState.style.display  = '';
+  presetsBar.style.display = 'none';
+  sourcePixels = null;
+}
+
+// "Change Image" button — back to drop zone
+document.getElementById('changeImageBtn').addEventListener('click', showDropState);
+
+
+// ── Helpers ────────────────────────────────────────────────────
 function getParams() {
   return {
     spacing:    +ctrl.spacing.value,
@@ -463,45 +699,29 @@ function loadFile(file) {
   reader.readAsDataURL(file);
 }
 
-/**
- * Scale the image down if needed, extract its pixel data,
- * and show the original preview on the left panel.
- */
 function prepareSource(img) {
-  // Scale so the longest edge is at most MAX_PX
   const scale = Math.min(1, MAX_PX / Math.max(img.naturalWidth, img.naturalHeight));
   srcW = Math.round(img.naturalWidth  * scale);
   srcH = Math.round(img.naturalHeight * scale);
 
-  // Extract pixel data via an offscreen canvas
   const offscreen = document.createElement('canvas');
   offscreen.width = srcW; offscreen.height = srcH;
   const octx = offscreen.getContext('2d');
   octx.drawImage(img, 0, 0, srcW, srcH);
   sourcePixels = octx.getImageData(0, 0, srcW, srcH);
 
-  // Show original image in left panel
+  // Show original
   originalCanvas.width  = srcW;
   originalCanvas.height = srcH;
   originalCanvas.getContext('2d').drawImage(img, 0, 0, srcW, srcH);
-  originalCanvas.classList.remove('hidden');
-  dropZone.classList.add('hidden');
 
-  // Reveal result panel controls
-  resultPlaceholder.classList.add('hidden');
-  halftoneCanvas.classList.remove('hidden');
-  downloadPngBtn.classList.remove('hidden');
-  downloadSvgBtn.classList.remove('hidden');
-
+  // Reveal image state
+  showImageState();
   scheduleRender();
 }
 
 
 // ── Pixel math ─────────────────────────────────────────────────
-/**
- * Clamp-adjust a single 0-255 channel value for brightness & contrast.
- * Brightness: linear shift. Contrast: Photoshop-style S-curve.
- */
 function adjustChannel(v, contrast, brightness) {
   v += brightness * 2.55;
   if (contrast !== 0) {
@@ -511,30 +731,19 @@ function adjustChannel(v, contrast, brightness) {
   return v < 0 ? 0 : v > 255 ? 255 : v;
 }
 
-/**
- * Return ITU-R BT.709 luminance (0–255) at pixel (x, y),
- * applying brightness & contrast adjustments.
- */
 function sampleLuminance(x, y, contrast, brightness) {
-  x = Math.round(x);
-  y = Math.round(y);
+  x = Math.round(x); y = Math.round(y);
   if (x < 0) x = 0; else if (x >= srcW) x = srcW - 1;
   if (y < 0) y = 0; else if (y >= srcH) y = srcH - 1;
-
   const i = (y * srcW + x) * 4;
   const d = sourcePixels.data;
-  const r = adjustChannel(d[i],     contrast, brightness);
-  const g = adjustChannel(d[i + 1], contrast, brightness);
-  const b = adjustChannel(d[i + 2], contrast, brightness);
-
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return 0.2126 * adjustChannel(d[i],     contrast, brightness)
+       + 0.7152 * adjustChannel(d[i + 1], contrast, brightness)
+       + 0.0722 * adjustChannel(d[i + 2], contrast, brightness);
 }
 
 
 // ── Rendering ──────────────────────────────────────────────────
-/**
- * Draw one dot — circle or square — at (cx, cy) with radius r.
- */
 function drawDot(ctx, cx, cy, r, shape) {
   if (r < 0.3) return;
   ctx.beginPath();
@@ -546,21 +755,6 @@ function drawDot(ctx, cx, cy, r, shape) {
   ctx.fill();
 }
 
-/**
- * Core halftone render.
- *
- * Algorithm:
- *   1. Fill canvas with background colour.
- *   2. Iterate a grid of (i, j) indices.
- *   3. For each cell, rotate the grid point around the canvas centre
- *      by the chosen angle → screen position (sx, sy).
- *   4. Sample luminance at (sx, sy) in the source image.
- *   5. Map luminance to dot radius: dark → large, light → small.
- *   6. Draw the dot at (sx, sy).
- *
- * The grid is extended by the image diagonal so all canvas pixels
- * are covered regardless of rotation angle.
- */
 function renderHalftone() {
   renderPending = false;
   if (!sourcePixels) return;
@@ -574,46 +768,31 @@ function renderHalftone() {
   const W = srcW, H = srcH;
   const cx = W / 2, cy = H / 2;
 
-  // Size the output canvas to match the source
   halftoneCanvas.width  = W;
   halftoneCanvas.height = H;
   const ctx = halftoneCanvas.getContext('2d');
 
-  // Background
   ctx.fillStyle = p.bgColor;
   ctx.fillRect(0, 0, W, H);
 
-  // Clip so rotated dots don't bleed outside the frame
   ctx.save();
   ctx.beginPath();
   ctx.rect(0, 0, W, H);
   ctx.clip();
-
   ctx.fillStyle = p.dotColor;
 
-  // Number of grid steps needed to cover the full diagonal after rotation
   const diag  = Math.ceil(Math.sqrt(W * W + H * H));
   const steps = Math.ceil(diag / sp) + 1;
 
   for (let i = -steps; i <= steps; i++) {
     for (let j = -steps; j <= steps; j++) {
-      // Position in grid space (centred at canvas middle)
-      const gx = j * sp;
-      const gy = i * sp;
-
-      // Rotate grid point → screen position
+      const gx = j * sp, gy = i * sp;
       const sx = cx + gx * cosA - gy * sinA;
       const sy = cy + gx * sinA + gy * cosA;
-
-      // Quick bounds cull — skip dots entirely outside the canvas
       if (sx < -sp || sx > W + sp || sy < -sp || sy > H + sp) continue;
-
-      // Sample luminance; dark = large dot, light = small dot
       const lum = sampleLuminance(sx, sy, p.contrast, p.brightness);
-      const t   = 1 - lum / 255;                    // 0 = white, 1 = black
-      const r   = minR + t * (maxR - minR);
-
-      drawDot(ctx, sx, sy, r, p.shape);
+      const t   = 1 - lum / 255;
+      drawDot(ctx, sx, sy, minR + t * (maxR - minR), p.shape);
     }
   }
 
@@ -621,72 +800,51 @@ function renderHalftone() {
   processingOverlay.classList.remove('show');
 }
 
-/**
- * Schedule a render on the next animation frame.
- * Uses a flag to prevent stacking multiple RAF calls.
- */
 function scheduleRender() {
   if (!sourcePixels || renderPending) return;
   renderPending = true;
   processingOverlay.classList.add('show');
-  // Double-rAF: gives the browser one frame to paint the overlay
-  // before the synchronous canvas work starts.
   requestAnimationFrame(() => requestAnimationFrame(() => renderHalftone()));
 }
 
 
-// ── Export: PNG ────────────────────────────────────────────────
+// ── Export PNG ─────────────────────────────────────────────────
 downloadPngBtn.addEventListener('click', () => {
-  const a = document.createElement('a');
-  a.download = 'halftone-dots.png';
-  a.href = halftoneCanvas.toDataURL('image/png');
+  const a = Object.assign(document.createElement('a'), {
+    download: 'halftone-dots.png',
+    href: halftoneCanvas.toDataURL('image/png'),
+  });
   a.click();
 });
 
 
-// ── Export: SVG ────────────────────────────────────────────────
+// ── Export SVG ─────────────────────────────────────────────────
 downloadSvgBtn.addEventListener('click', exportSVG);
 
-/**
- * Re-run the halftone algorithm and emit an SVG string.
- * Each dot becomes a <circle> or <rect> element.
- */
 function exportSVG() {
   if (!sourcePixels) return;
-
   const p    = getParams();
   const sp   = p.spacing;
   const maxR = sp * 0.5 * p.maxSize;
   const minR = sp * 0.5 * p.minSize;
-  const cosA = Math.cos(p.angle);
-  const sinA = Math.sin(p.angle);
-  const W = srcW, H = srcH;
-  const cx = W / 2, cy = H / 2;
-  const diag  = Math.ceil(Math.sqrt(W * W + H * H));
-  const steps = Math.ceil(diag / sp) + 1;
-
+  const cosA = Math.cos(p.angle), sinA = Math.sin(p.angle);
+  const W = srcW, H = srcH, cx = W / 2, cy = H / 2;
+  const steps = Math.ceil(Math.sqrt(W * W + H * H) / sp) + 1;
   let shapes = '';
 
   for (let i = -steps; i <= steps; i++) {
     for (let j = -steps; j <= steps; j++) {
-      const gx = j * sp;
-      const gy = i * sp;
+      const gx = j * sp, gy = i * sp;
       const sx = cx + gx * cosA - gy * sinA;
       const sy = cy + gx * sinA + gy * cosA;
       if (sx < -sp || sx > W + sp || sy < -sp || sy > H + sp) continue;
-
       const lum = sampleLuminance(sx, sy, p.contrast, p.brightness);
-      const t   = 1 - lum / 255;
-      const r   = minR + t * (maxR - minR);
+      const r   = minR + (1 - lum / 255) * (maxR - minR);
       if (r < 0.3) continue;
-
       const rx = sx.toFixed(2), ry = sy.toFixed(2), rv = r.toFixed(2);
-      if (p.shape === 'circle') {
-        shapes += `<circle cx="${rx}" cy="${ry}" r="${rv}"/>`;
-      } else {
-        const s = (r * 2).toFixed(2);
-        shapes += `<rect x="${(sx - r).toFixed(2)}" y="${(sy - r).toFixed(2)}" width="${s}" height="${s}"/>`;
-      }
+      shapes += p.shape === 'circle'
+        ? `<circle cx="${rx}" cy="${ry}" r="${rv}"/>`
+        : `<rect x="${(sx-r).toFixed(2)}" y="${(sy-r).toFixed(2)}" width="${(r*2).toFixed(2)}" height="${(r*2).toFixed(2)}"/>`;
     }
   }
 
@@ -701,9 +859,7 @@ function exportSVG() {
 
   const blob = new Blob([svg], { type: 'image/svg+xml' });
   const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.download = 'halftone-dots.svg';
-  a.href = url;
+  const a    = Object.assign(document.createElement('a'), { download: 'halftone-dots.svg', href: url });
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
@@ -745,12 +901,9 @@ document.querySelectorAll('.shape-btn').forEach(btn => {
 });
 
 
-// ── Slider & colour picker listeners ──────────────────────────
+// ── Sliders & color pickers ────────────────────────────────────
 Object.values(ctrl).forEach(input => {
-  input.addEventListener('input', () => {
-    updateLabels();
-    scheduleRender();
-  });
+  input.addEventListener('input', () => { updateLabels(); scheduleRender(); });
 });
 
 
@@ -780,13 +933,15 @@ dropZone.addEventListener('drop', e => {
   dropZone.classList.remove('drag-over');
   loadFile(e.dataTransfer.files[0]);
 });
-dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('click', e => {
+  if (e.target.closest('label')) return; // label already opens the dialog natively
+  fileInput.click();
+});
 fileInput.addEventListener('change', e => loadFile(e.target.files[0]));
 
 
 // ── Init ───────────────────────────────────────────────────────
 updateLabels();
-
 </script>
 </body>
 </html>

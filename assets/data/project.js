@@ -27,37 +27,19 @@ window.projects = [
     }
 ];
 
-// Function to handle image loading errors
-window.handleProjectImageError = function(img) {
-    console.error(`Failed to load image: ${img.src}`);
-    // Set a fallback background color
-    img.style.backgroundColor = '#1f2937';
-    // Remove loading class
-    img.classList.remove('img-loading');
-    // Optionally set a placeholder text or icon
-    img.alt = 'Project image not available';
+// Preload an image and swap it in once ready; applies a shimmer while loading
+window.preloadProjectImage = function (imgElement, src) {
+    imgElement.classList.add('img-loading');
+
+    const preload    = new Image();
+    preload.onload   = () => { imgElement.src = src; imgElement.classList.remove('img-loading'); };
+    preload.onerror  = () => { imgElement.style.backgroundColor = '#1f2937'; imgElement.classList.remove('img-loading'); imgElement.alt = 'Project image not available'; };
+    preload.src      = src;
 };
 
-// Function to preload images with loading states
-window.preloadProjectImage = function(imgElement, src) {
-    // Add loading class
-    imgElement.classList.add('img-loading');
-    
-    // Create a new image to preload
-    const preloadImg = new Image();
-    
-    // Set up event handlers
-    preloadImg.onload = function() {
-        // Image loaded successfully
-        imgElement.src = src;
-        imgElement.classList.remove('img-loading');
-    };
-    
-    preloadImg.onerror = function() {
-        // Image failed to load
-        window.handleProjectImageError(imgElement);
-    };
-    
-    // Start loading the image
-    preloadImg.src = src;
+// Inline onerror fallback (referenced from index.html)
+window.handleProjectImageError = function (img) {
+    img.style.backgroundColor = '#1f2937';
+    img.classList.remove('img-loading');
+    img.alt = 'Project image not available';
 };

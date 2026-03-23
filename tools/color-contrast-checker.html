@@ -4,207 +4,285 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Color Contrast Checker — Tools</title>
-  <!-- Hide the back-bar when running inside the portfolio iframe -->
   <script>if (window.self !== window.top) document.documentElement.dataset.embed = '1';</script>
   <style>[data-embed='1'] header { display: none !important; }</style>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
-    /* ── Fonts ── */
     @font-face {
       font-family: 'BoldPixels';
       src: url('../assets/BoldPixels.otf') format('opentype');
     }
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
       font-family: 'Inter', sans-serif;
-      background: #0a0a0b;
+      background-color: #0a0a0b;
       color: #fff;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      overflow-y: auto;
     }
-    .title-font {
-      font-family: 'BoldPixels', 'Courier New', monospace;
-      letter-spacing: 2px;
-    }
-    .mono { font-family: 'Fira Code', monospace; }
 
-    /* ── Color panels ── */
-    .color-panel {
-      transition: background-color 0.25s ease;
-      position: relative;
+
+    .title-font { font-family: 'BoldPixels', 'Courier New', monospace; letter-spacing: 2px; }
+    .mono       { font-family: 'Fira Code', monospace; }
+
+    /* ── Header ── */
+    .hdr-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 5px 14px;
+      font-family: 'BoldPixels', monospace;
+      font-size: 10px; letter-spacing: 1px;
+      border: 1.5px solid #3f3f46; border-radius: 6px;
+      background: transparent; color: #71717a;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .hdr-btn:hover { border-color: #ef4444; color: #ef4444; }
+
+    /* ── Main layout ── */
+    .main-content {
+      flex: 1;
       display: flex;
       flex-direction: column;
-      justify-content: flex-end;
-      padding: 20px 24px;
-      flex: 1;
-      min-height: 260px;
-      overflow: hidden;
-    }
-    .panel-label {
-      position: absolute;
-      top: 20px; left: 24px;
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-      font-weight: 600;
-      opacity: 0.55;
-      transition: color 0.25s;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px;
+      gap: 20px;
     }
 
-    /* ── Hex Input ── */
-    .hex-row {
+    /* ══════════════════════════════════════════
+       ROW 1 — Controls Card
+    ══════════════════════════════════════════ */
+    .controls-card {
+      width: 100%;
+      max-width: 680px;
+      background: #111113;
+      border: 1px solid #1c1c1e;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    /* Two color columns */
+    .color-inputs-row {
+      display: grid;
+      grid-template-columns: 1fr 1px 1fr;
+    }
+
+    .col-divider {
+      background: #1c1c1e;
+      align-self: stretch;
+    }
+
+    .color-input-col {
+      padding: 18px 22px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* Small label row */
+    .col-label-row {
       display: flex;
       align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
+      gap: 8px;
     }
+
+    .col-label-text {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #52525b;
+    }
+
+    /* Color swatch circle */
+    .color-swatch {
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(255,255,255,0.15);
+      flex-shrink: 0;
+      transition: background-color 0.25s;
+    }
+
+    /* Hex input row */
+    .hex-field-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
     .hex-box {
       display: flex;
       align-items: center;
-      gap: 4px;
-      background: rgba(0,0,0,0.18);
-      border: 1.5px solid rgba(255,255,255,0.18);
+      gap: 3px;
+      background: #0a0a0b;
+      border: 1.5px solid #27272a;
       border-radius: 8px;
-      padding: 6px 12px;
-      backdrop-filter: blur(8px);
-      transition: border-color 0.2s, background 0.25s;
+      padding: 7px 10px;
+      flex: 1;
+      transition: border-color 0.2s;
     }
-    .hex-box:focus-within { border-color: rgba(255,255,255,0.5); }
+    .hex-box:focus-within { border-color: #3f3f46; }
+
     .hex-symbol {
       font-family: 'Fira Code', monospace;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
-      opacity: 0.6;
+      color: #52525b;
     }
+
     .hex-input {
       font-family: 'Fira Code', monospace;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       text-transform: uppercase;
-      width: 72px;
+      letter-spacing: 1px;
+      width: 64px;
       background: transparent;
       border: none;
       outline: none;
-      color: inherit;
-      letter-spacing: 1px;
+      color: #e4e4e7;
     }
-    .hex-input::selection { background: rgba(255,255,255,0.25); }
+    .hex-input::selection { background: rgba(255,255,255,0.2); }
 
-    /* ── Color picker ── */
-    .picker-wrapper {
-      width: 32px; height: 32px;
-      border-radius: 50%;
-      border: 2px solid rgba(255,255,255,0.25);
+    /* Native color picker trigger */
+    .picker-trigger {
+      width: 30px; height: 30px;
+      border-radius: 8px;
+      border: 1.5px solid #27272a;
       overflow: hidden;
       position: relative;
       cursor: pointer;
-      transition: border-color 0.2s;
       flex-shrink: 0;
+      transition: border-color 0.2s;
     }
-    .picker-wrapper:hover { border-color: rgba(255,255,255,0.55); }
+    .picker-trigger:hover { border-color: #52525b; }
+
     .picker-swatch {
       position: absolute; inset: 0;
       pointer-events: none;
       transition: background-color 0.25s;
     }
+
     input[type="color"] {
       position: absolute;
-      top: -4px; left: -4px;
-      width: 40px; height: 40px;
-      opacity: 0;
-      cursor: pointer;
+      top: -6px; left: -6px;
+      width: 44px; height: 44px;
+      opacity: 0; cursor: pointer;
     }
 
-    /* ── Icon button ── */
-    .icon-btn {
-      display: inline-flex;
+    /* ── Bottom of card: ratio + WCAG ── */
+    .ratio-strip {
+      border-top: 1px solid #1c1c1e;
+      padding: 14px 22px;
+      display: flex;
       align-items: center;
-      gap: 6px;
-      padding: 6px 14px;
-      border: 1.5px solid rgba(255,255,255,0.15);
-      border-radius: 8px;
-      font-size: 11px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s, border-color 0.2s, opacity 0.2s;
-      background: rgba(255,255,255,0.06);
-      color: inherit;
-      opacity: 0.7;
-    }
-    .icon-btn:hover { background: rgba(255,255,255,0.14); opacity: 1; border-color: rgba(255,255,255,0.3); }
-
-    /* ── Copy toast ── */
-    .copy-toast {
-      position: fixed;
-      bottom: 28px; left: 50%;
-      transform: translateX(-50%) translateY(12px);
-      background: #18181b;
-      border: 1px solid #3f3f46;
-      color: #a1a1aa;
-      padding: 8px 18px;
-      border-radius: 8px;
-      font-size: 12px;
-      font-family: 'Fira Code', monospace;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s, transform 0.2s;
-      z-index: 100;
-    }
-    .copy-toast.show {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
+      gap: 16px;
+      flex-wrap: wrap;
     }
 
-    /* ── Ratio display ── */
+    .ratio-block {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
     .ratio-number {
-      font-size: clamp(3rem, 8vw, 5.5rem);
-      font-weight: 800;
-      letter-spacing: -2px;
+      font-family: 'Fira Code', monospace;
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -1px;
       line-height: 1;
       transition: color 0.3s;
       font-variant-numeric: tabular-nums;
     }
-    .ratio-good  { color: #22c55e; }
-    .ratio-ok    { color: #f59e0b; }
-    .ratio-bad   { color: #ef4444; }
+    .ratio-good { color: #22c55e; }
+    .ratio-ok   { color: #f59e0b; }
+    .ratio-bad  { color: #ef4444; }
 
-    /* ── WCAG Badges ── */
-    .wcag-card {
+    .ratio-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #3f3f46;
+    }
+
+    /* Main checkmark badge */
+    .main-check {
       display: flex;
-      flex-direction: column;
       align-items: center;
       gap: 6px;
-      padding: 14px 20px;
-      border-radius: 14px;
-      min-width: 110px;
+      padding: 5px 12px;
+      border-radius: 999px;
       border: 1.5px solid transparent;
-      transition: background 0.25s, border-color 0.25s;
-    }
-    .wcag-card.pass {
-      background: rgba(34,197,94,0.1);
-      border-color: rgba(34,197,94,0.25);
-    }
-    .wcag-card.fail {
-      background: rgba(239,68,68,0.1);
-      border-color: rgba(239,68,68,0.2);
-    }
-    .wcag-icon {
-      font-size: 22px;
-      font-weight: 700;
-      line-height: 1;
-    }
-    .wcag-card.pass .wcag-icon { color: #22c55e; }
-    .wcag-card.fail .wcag-icon { color: #ef4444; }
-    .wcag-label { font-size: 11px; font-weight: 600; color: #a1a1aa; text-transform: uppercase; letter-spacing: 0.08em; }
-    .wcag-threshold { font-size: 10px; color: #52525b; font-family: 'Fira Code', monospace; }
-
-    /* ── Preview tabs ── */
-    .tab-btn {
-      padding: 10px 16px;
       font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      transition: background 0.25s, border-color 0.25s, color 0.25s;
+    }
+    .main-check.pass { background: rgba(34,197,94,0.1); border-color: rgba(34,197,94,0.3); color: #22c55e; }
+    .main-check.fail { background: rgba(239,68,68,0.1);  border-color: rgba(239,68,68,0.25); color: #ef4444; }
+
+    .check-icon { font-size: 13px; line-height: 1; }
+
+    /* Compact WCAG row */
+    .wcag-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+      flex-wrap: wrap;
+    }
+
+    .wcag-pill {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid #27272a;
+      background: #0a0a0b;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      transition: border-color 0.25s, background 0.25s;
+    }
+    .wcag-pill.pass { border-color: rgba(34,197,94,0.25); background: rgba(34,197,94,0.07); }
+    .wcag-pill.fail { border-color: rgba(239,68,68,0.2);  background: rgba(239,68,68,0.07); }
+
+    .wcag-pill-label { color: #71717a; }
+    .wcag-pill.pass .wcag-pill-icon { color: #22c55e; }
+    .wcag-pill.fail .wcag-pill-icon { color: #ef4444; }
+
+    /* ══════════════════════════════════════════
+       ROW 2 — Preview Section
+    ══════════════════════════════════════════ */
+    .preview-section {
+      width: 100%;
+      max-width: 680px;
+      background: #111113;
+      border: 1px solid #1c1c1e;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    /* Tabs */
+    .tabs-row {
+      display: flex;
+      background: #0d0d0f;
+      border-bottom: 1px solid #1c1c1e;
+      padding: 0 6px;
+    }
+
+    .tab-btn {
+      padding: 10px 14px;
+      font-size: 10px;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.1em;
@@ -215,252 +293,220 @@
       border-top: none; border-left: none; border-right: none;
       transition: color 0.2s, border-color 0.2s;
     }
-    .tab-btn:hover { color: #a1a1aa; }
-    .tab-btn.active { color: #ef4444; border-bottom-color: #ef4444; }
+    .tab-btn:hover   { color: #a1a1aa; }
+    .tab-btn.active  { color: #ef4444; border-bottom-color: #ef4444; }
 
-    /* ── Preview area ── */
-    .preview-area {
-      transition: background-color 0.25s ease, color 0.25s ease;
-      flex: 1;
+    /* Preview wrapper — equal breathing room on all sides */
+    .preview-wrap {
       padding: 40px;
       display: flex;
-      align-items: center;
       justify-content: center;
     }
+
+    .preview-area {
+      width: 100%;
+      max-width: 520px;
+      min-height: 210px;
+      border-radius: 10px;
+      padding: 32px;
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+
+    /* ── Copy toast ── */
+    .copy-toast {
+      position: fixed;
+      bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(10px);
+      background: #18181b;
+      border: 1px solid #3f3f46;
+      color: #a1a1aa;
+      padding: 7px 16px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-family: 'Fira Code', monospace;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+      z-index: 100;
+    }
+    .copy-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
     /* ── Scrollbar ── */
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-track { background: #18181b; }
     ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 3px; }
 
-    /* ── Header action buttons ── */
-    .hdr-btn {
-      display: flex; align-items: center; gap: 6px;
-      padding: 5px 14px;
-      font-family: 'BoldPixels', monospace;
-      font-size: 10px;
-      letter-spacing: 1px;
-      border: 1.5px solid #3f3f46;
-      border-radius: 6px;
-      background: transparent;
-      color: #71717a;
-      cursor: pointer;
-      transition: border-color 0.15s, color 0.15s;
-    }
-    .hdr-btn:hover { border-color: #ef4444; color: #ef4444; }
-
-    /* ── Divider ── */
-    .panel-divider {
-      width: 1px;
-      background: rgba(0,0,0,0.2);
-    }
-
     /* ── Responsive ── */
-    @media (max-width: 640px) {
-      .color-panel { min-height: 180px; padding: 14px 16px; }
-      .panel-label { top: 14px; left: 16px; }
-      .preview-area { padding: 24px 16px; }
-      .wcag-card { padding: 10px 14px; min-width: 90px; }
-      .ratio-number { letter-spacing: -1px; }
+    @media (max-width: 600px) {
+      .main-content { padding: 20px 16px 32px; gap: 14px; }
+      .color-input-col { padding: 14px 16px 12px; }
+      .ratio-strip { padding: 12px 16px; gap: 10px; }
+      .wcag-row { margin-left: 0; }
+      .preview-wrap { padding: 24px 18px; }
+      .preview-area { padding: 20px 18px; }
     }
   </style>
 </head>
 <body>
 
-<!-- ════════════════════════════════════════════════════
-     HEADER
-════════════════════════════════════════════════════ -->
+<!-- ════ HEADER ════ -->
 <header style="background:#09090b; border-bottom:1px solid #1c1c1e;"
         class="flex items-center gap-4 px-5 py-3 flex-shrink-0">
   <a href="../index.html" class="title-font text-xs text-zinc-500 hover:text-red-500 transition-colors">← Back</a>
   <div style="width:1px;height:16px;background:#27272a;"></div>
   <h1 class="title-font text-xs text-white">Color Contrast Checker</h1>
   <div class="ml-auto flex gap-2">
-    <button id="swapBtn" class="hdr-btn">⇄ Swap</button>
+    <button id="swapBtn"   class="hdr-btn">⇄ Swap</button>
     <button id="randomBtn" class="hdr-btn">⚄ Random</button>
   </div>
 </header>
 
 
-<!-- ════════════════════════════════════════════════════
-     COLOR PANELS
-════════════════════════════════════════════════════ -->
-<div style="display:flex; flex-shrink:0;">
+<!-- ════ MAIN ════ -->
+<div class="main-content">
 
-  <!-- Background Panel -->
-  <div id="bgPanel" class="color-panel">
-    <span class="panel-label" id="bgLabel">Background</span>
+  <!-- ── ROW 1: Controls Card ── -->
+  <div class="controls-card">
 
-    <div class="hex-row">
-      <div class="hex-box" id="bgHexBox">
-        <span class="hex-symbol" id="bgHashSymbol">#</span>
-        <input type="text" id="bgHexInput" class="hex-input" maxlength="6" value="112a46" spellcheck="false" />
+    <!-- Two color columns -->
+    <div class="color-inputs-row">
+
+      <!-- Background -->
+      <div class="color-input-col">
+        <div class="col-label-row">
+          <div class="color-swatch" id="bgSwatch"></div>
+          <span class="col-label-text">Background</span>
+        </div>
+        <div class="hex-field-row">
+          <div class="hex-box" id="bgHexBox">
+            <span class="hex-symbol">#</span>
+            <input type="text" id="bgHexInput" class="hex-input" maxlength="6" value="A60000" spellcheck="false" />
+          </div>
+          <div class="picker-trigger" id="bgPickerWrap" title="Pick color">
+            <div class="picker-swatch" id="bgPickerSwatch"></div>
+            <input type="color" id="bgPicker" value="#A60000" />
+          </div>
+        </div>
       </div>
 
-      <div class="picker-wrapper" title="Pick colour" id="bgPickerWrap">
-        <div class="picker-swatch" id="bgPickerSwatch"></div>
-        <input type="color" id="bgPicker" value="#112a46" />
+      <div class="col-divider"></div>
+
+      <!-- Text Color -->
+      <div class="color-input-col">
+        <div class="col-label-row">
+          <div class="color-swatch" id="textSwatch"></div>
+          <span class="col-label-text">Text Color</span>
+        </div>
+        <div class="hex-field-row">
+          <div class="hex-box" id="textHexBox">
+            <span class="hex-symbol">#</span>
+            <input type="text" id="textHexInput" class="hex-input" maxlength="6" value="FFFFFF" spellcheck="false" />
+          </div>
+          <div class="picker-trigger" id="textPickerWrap" title="Pick color">
+            <div class="picker-swatch" id="textPickerSwatch"></div>
+            <input type="color" id="textPicker" value="#FFFFFF" />
+          </div>
+        </div>
       </div>
 
-      <button class="icon-btn" id="bgCopyBtn" onclick="copyHex('bg')">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
-        </svg>
-        Copy HEX
-      </button>
+    </div><!-- /color-inputs-row -->
+
+    <!-- Ratio strip -->
+    <div class="ratio-strip">
+
+      <!-- Ratio number -->
+      <div class="ratio-block">
+        <span id="ratioDisplay" class="ratio-number">—</span>
+        <span class="ratio-label">Contrast</span>
+      </div>
+
+      <!-- Main pass/fail badge -->
+      <div class="main-check fail" id="mainCheck">
+        <span class="check-icon" id="mainCheckIcon">✖</span>
+        <span id="mainCheckLabel">AA Normal</span>
+      </div>
+
+      <!-- Compact WCAG pills -->
+      <div class="wcag-row">
+        <div class="wcag-pill" id="aaLargePill">
+          <span class="wcag-pill-icon" id="aaLargeIcon">—</span>
+          <span class="wcag-pill-label">AA Large</span>
+        </div>
+        <div class="wcag-pill" id="aaaPill">
+          <span class="wcag-pill-icon" id="aaaIcon">—</span>
+          <span class="wcag-pill-label">AAA</span>
+        </div>
+        <div class="wcag-pill" id="aaaLargePill">
+          <span class="wcag-pill-icon" id="aaaLargeIcon">—</span>
+          <span class="wcag-pill-label">AAA Large</span>
+        </div>
+      </div>
+
+    </div><!-- /ratio-strip -->
+
+  </div><!-- /controls-card -->
+
+
+  <!-- ── ROW 2: Preview Section ── -->
+  <div class="preview-section">
+
+    <!-- Tabs -->
+    <div class="tabs-row">
+      <button class="tab-btn active" data-mode="heading">Heading</button>
+      <button class="tab-btn"        data-mode="body">Body Text</button>
     </div>
 
-    <div id="bgRgbLabel" style="font-family:'Fira Code',monospace;font-size:11px;opacity:0.35;margin-top:6px;"></div>
-  </div>
-
-  <div class="panel-divider"></div>
-
-  <!-- Text Color Panel -->
-  <div id="textPanel" class="color-panel">
-    <span class="panel-label" id="textLabel">Text Color</span>
-
-    <div class="hex-row">
-      <div class="hex-box" id="textHexBox">
-        <span class="hex-symbol" id="textHashSymbol">#</span>
-        <input type="text" id="textHexInput" class="hex-input" maxlength="6" value="acc8e5" spellcheck="false" />
+    <!-- Preview — fixed width, natural height with breathing room -->
+    <div class="preview-wrap">
+      <div id="previewArea" class="preview-area">
+        <!-- populated by JS -->
       </div>
-
-      <div class="picker-wrapper" title="Pick colour" id="textPickerWrap">
-        <div class="picker-swatch" id="textPickerSwatch"></div>
-        <input type="color" id="textPicker" value="#acc8e5" />
-      </div>
-
-      <button class="icon-btn" id="textCopyBtn" onclick="copyHex('text')">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
-        </svg>
-        Copy HEX
-      </button>
     </div>
 
-    <div id="textRgbLabel" style="font-family:'Fira Code',monospace;font-size:11px;opacity:0.35;margin-top:6px;"></div>
-  </div>
+  </div><!-- /preview-section -->
 
-</div>
-
-
-<!-- ════════════════════════════════════════════════════
-     RESULTS SECTION
-════════════════════════════════════════════════════ -->
-<div style="background:#111113; border-top:1px solid #1c1c1e; border-bottom:1px solid #1c1c1e; padding:32px 24px; flex-shrink:0;">
-  <div style="max-width:600px; margin:0 auto; text-align:center;">
-
-    <!-- Ratio -->
-    <div style="margin-bottom:8px; font-size:10px; font-family:'BoldPixels',monospace; letter-spacing:3px; color:#52525b; text-transform:uppercase;">
-      Contrast Ratio
-    </div>
-    <div id="ratioDisplay" class="ratio-number" style="margin-bottom:28px;">—</div>
-
-    <!-- WCAG Cards -->
-    <div style="display:flex; justify-content:center; flex-wrap:wrap; gap:12px;">
-
-      <div class="wcag-card" id="aaSmallCard">
-        <span class="wcag-label">AA Normal</span>
-        <span class="wcag-icon" id="aaSmallIcon">—</span>
-        <span class="wcag-threshold">≥ 4.5 : 1</span>
-      </div>
-
-      <div class="wcag-card" id="aaLargeCard">
-        <span class="wcag-label">AA Large</span>
-        <span class="wcag-icon" id="aaLargeIcon">—</span>
-        <span class="wcag-threshold">≥ 3.0 : 1</span>
-      </div>
-
-      <div class="wcag-card" id="aaaCard">
-        <span class="wcag-label">AAA</span>
-        <span class="wcag-icon" id="aaaIcon">—</span>
-        <span class="wcag-threshold">≥ 7.0 : 1</span>
-      </div>
-
-      <div class="wcag-card" id="aaaLargeCard">
-        <span class="wcag-label">AAA Large</span>
-        <span class="wcag-icon" id="aaaLargeIcon">—</span>
-        <span class="wcag-threshold">≥ 4.5 : 1</span>
-      </div>
-
-    </div>
-  </div>
-</div>
-
-
-<!-- ════════════════════════════════════════════════════
-     PREVIEW SECTION
-════════════════════════════════════════════════════ -->
-<div style="display:flex; flex-direction:column; flex:1; min-height:280px;">
-
-  <!-- Tabs -->
-  <div style="display:flex; background:#09090b; border-bottom:1px solid #1c1c1e; flex-shrink:0;">
-    <button class="tab-btn active" data-mode="heading">Heading</button>
-    <button class="tab-btn" data-mode="body">Body Text</button>
-    <button class="tab-btn" data-mode="ui">UI Elements</button>
-  </div>
-
-  <!-- Preview -->
-  <div id="previewArea" class="preview-area">
-    <!-- populated by JS -->
-  </div>
-
-</div>
+</div><!-- /main-content -->
 
 
 <!-- Copy toast -->
-<div class="copy-toast" id="copyToast">Copied to clipboard!</div>
+<div class="copy-toast" id="copyToast">Copied!</div>
 
 
-<!-- ════════════════════════════════════════════════════
-     SCRIPT
-════════════════════════════════════════════════════ -->
+<!-- ════ SCRIPT ════ -->
 <script>
 'use strict';
 
 // ── State ──────────────────────────────────────────────────────
-let bgHex   = '112a46';
-let textHex = 'acc8e5';
+let bgHex      = 'a60000';
+let textHex    = 'ffffff';
 let previewMode = 'heading';
 
 // ── DOM ────────────────────────────────────────────────────────
-const bgPanel      = document.getElementById('bgPanel');
-const textPanel    = document.getElementById('textPanel');
-const bgHexInput   = document.getElementById('bgHexInput');
-const textHexInput = document.getElementById('textHexInput');
-const bgPicker     = document.getElementById('bgPicker');
-const textPicker   = document.getElementById('textPicker');
+const bgHexInput       = document.getElementById('bgHexInput');
+const textHexInput     = document.getElementById('textHexInput');
+const bgPicker         = document.getElementById('bgPicker');
+const textPicker       = document.getElementById('textPicker');
 const bgPickerSwatch   = document.getElementById('bgPickerSwatch');
 const textPickerSwatch = document.getElementById('textPickerSwatch');
-const bgRgbLabel   = document.getElementById('bgRgbLabel');
-const textRgbLabel = document.getElementById('textRgbLabel');
-const bgLabel      = document.getElementById('bgLabel');
-const textLabel    = document.getElementById('textLabel');
-const bgHashSymbol = document.getElementById('bgHashSymbol');
-const textHashSymbol = document.getElementById('textHashSymbol');
-const bgHexBox     = document.getElementById('bgHexBox');
-const textHexBox   = document.getElementById('textHexBox');
-const bgCopyBtn    = document.getElementById('bgCopyBtn');
-const textCopyBtn  = document.getElementById('textCopyBtn');
-const ratioDisplay = document.getElementById('ratioDisplay');
-const previewArea  = document.getElementById('previewArea');
-const copyToast    = document.getElementById('copyToast');
+const bgSwatch         = document.getElementById('bgSwatch');
+const textSwatch       = document.getElementById('textSwatch');
+const ratioDisplay     = document.getElementById('ratioDisplay');
+const mainCheck        = document.getElementById('mainCheck');
+const mainCheckIcon    = document.getElementById('mainCheckIcon');
+const mainCheckLabel   = document.getElementById('mainCheckLabel');
+const previewArea      = document.getElementById('previewArea');
+const copyToast        = document.getElementById('copyToast');
 
-// WCAG elements
-const aaSmallCard   = document.getElementById('aaSmallCard');
-const aaLargeCard   = document.getElementById('aaLargeCard');
-const aaaCard       = document.getElementById('aaaCard');
-const aaaLargeCard  = document.getElementById('aaaLargeCard');
-const aaSmallIcon   = document.getElementById('aaSmallIcon');
+const aaLargePill   = document.getElementById('aaLargePill');
+const aaaPill       = document.getElementById('aaaPill');
+const aaaLargePill  = document.getElementById('aaaLargePill');
 const aaLargeIcon   = document.getElementById('aaLargeIcon');
 const aaaIcon       = document.getElementById('aaaIcon');
 const aaaLargeIcon  = document.getElementById('aaaLargeIcon');
 
 
 // ── Color Math ─────────────────────────────────────────────────
-function isValidHex(h) {
-  return /^[0-9A-Fa-f]{6}$/.test(h);
-}
+function isValidHex(h) { return /^[0-9A-Fa-f]{6}$/.test(h); }
 
 function hexToRgb(hex) {
   return {
@@ -470,131 +516,51 @@ function hexToRgb(hex) {
   };
 }
 
-function rgbToHex(r, g, b) {
-  return [r, g, b]
-    .map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0'))
-    .join('');
-}
-
-/**
- * Convert sRGB channel (0-255) to linear light.
- * Uses IEC 61966-2-1 formula.
- */
 function toLinear(c) {
   c /= 255;
   return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
 }
 
-/** Relative luminance (WCAG 2.x definition). Returns 0–1. */
 function getLuminance(hex) {
   const { r, g, b } = hexToRgb(hex);
   return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
 }
 
-/** WCAG contrast ratio between two hex colors. */
 function contrastRatio(hex1, hex2) {
-  const L1 = getLuminance(hex1);
-  const L2 = getLuminance(hex2);
-  const lighter = Math.max(L1, L2);
-  const darker  = Math.min(L1, L2);
-  return (lighter + 0.05) / (darker + 0.05);
-}
-
-/**
- * Return '#000000' or '#ffffff' — whichever is more readable
- * against the given background hex.
- */
-function readableOn(hex) {
-  return getLuminance(hex) > 0.179 ? '000000' : 'ffffff';
+  const L1 = getLuminance(hex1), L2 = getLuminance(hex2);
+  return (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05);
 }
 
 function randomHex() {
-  return Math.floor(Math.random() * 0xFFFFFF)
-    .toString(16).padStart(6, '0').toUpperCase();
+  return Math.floor(Math.random() * 0xFFFFFF).toString(16).padStart(6, '0').toUpperCase();
+}
+
+function sanitizeHex(raw) {
+  let h = raw.replace(/^#/, '').toUpperCase();
+  if (/^[0-9A-F]{3}$/.test(h)) h = h.split('').map(c => c + c).join('');
+  return h;
 }
 
 
 // ── Apply Colors ───────────────────────────────────────────────
-/**
- * Central update: apply bgHex & textHex to every part of the UI.
- */
 function applyColors() {
-  // ── Panel backgrounds ──
-  bgPanel.style.backgroundColor   = '#' + bgHex;
-  textPanel.style.backgroundColor = '#' + textHex;
+  const bgCss   = '#' + bgHex;
+  const textCss = '#' + textHex;
 
-  // Swatch circles in pickers
-  bgPickerSwatch.style.backgroundColor   = '#' + bgHex;
-  textPickerSwatch.style.backgroundColor = '#' + textHex;
+  // Swatches
+  bgSwatch.style.backgroundColor         = bgCss;
+  textSwatch.style.backgroundColor       = textCss;
+  bgPickerSwatch.style.backgroundColor   = bgCss;
+  textPickerSwatch.style.backgroundColor = textCss;
 
-  // ── Adapt control colors to each panel's bg ──
-  adaptPanelUI('bg',   bgHex);
-  adaptPanelUI('text', textHex);
-
-  // ── Sync inputs ──
+  // Sync inputs
   bgHexInput.value   = bgHex.toUpperCase();
   textHexInput.value = textHex.toUpperCase();
+  bgPicker.value     = bgCss;
+  textPicker.value   = textCss;
 
-  // ── Sync native pickers ──
-  bgPicker.value   = '#' + bgHex;
-  textPicker.value = '#' + textHex;
-
-  // ── RGB labels ──
-  const bgRgb   = hexToRgb(bgHex);
-  const txtRgb  = hexToRgb(textHex);
-  bgRgbLabel.textContent   = `rgb(${bgRgb.r}, ${bgRgb.g}, ${bgRgb.b})`;
-  textRgbLabel.textContent = `rgb(${txtRgb.r}, ${txtRgb.g}, ${txtRgb.b})`;
-
-  // ── Contrast ratio & WCAG ──
   updateResults();
-
-  // ── Preview ──
   renderPreview();
-}
-
-/**
- * Adapt the controls inside a panel (labels, inputs, buttons)
- * so they're always readable against the panel's background.
- */
-function adaptPanelUI(side, hex) {
-  const onColor = readableOn(hex); // '000000' or 'ffffff'
-  const isLight = onColor === '000000';
-  const textCss = '#' + onColor;
-  const subOpacity = isLight ? 'rgba(0,0,0,0.45)' : 'rgba(255,255,255,0.45)';
-  const borderCs  = isLight ? 'rgba(0,0,0,0.18)' : 'rgba(255,255,255,0.18)';
-  const boxBg     = isLight ? 'rgba(0,0,0,0.1)'  : 'rgba(255,255,255,0.1)';
-  const pickerBorder = isLight ? 'rgba(0,0,0,0.28)' : 'rgba(255,255,255,0.28)';
-
-  // Label
-  const lbl = document.getElementById(side === 'bg' ? 'bgLabel' : 'textLabel');
-  lbl.style.color = textCss;
-
-  // Hash symbol
-  const hash = document.getElementById(side === 'bg' ? 'bgHashSymbol' : 'textHashSymbol');
-  hash.style.color = textCss;
-
-  // Hex input
-  const input = document.getElementById(side === 'bg' ? 'bgHexInput' : 'textHexInput');
-  input.style.color = textCss;
-
-  // Hex box border & bg
-  const box = document.getElementById(side === 'bg' ? 'bgHexBox' : 'textHexBox');
-  box.style.borderColor = borderCs;
-  box.style.background  = boxBg;
-
-  // Picker border
-  const pickerWrap = document.getElementById(side === 'bg' ? 'bgPickerWrap' : 'textPickerWrap');
-  pickerWrap.style.borderColor = pickerBorder;
-
-  // Copy button
-  const copyBtn = document.getElementById(side === 'bg' ? 'bgCopyBtn' : 'textCopyBtn');
-  copyBtn.style.color = textCss;
-  copyBtn.style.borderColor = borderCs;
-  copyBtn.style.background  = boxBg;
-
-  // RGB label
-  const rgbLbl = document.getElementById(side === 'bg' ? 'bgRgbLabel' : 'textRgbLabel');
-  rgbLbl.style.color = textCss;
 }
 
 
@@ -602,193 +568,95 @@ function adaptPanelUI(side, hex) {
 function updateResults() {
   const ratio = contrastRatio(bgHex, textHex);
 
-  // Ratio display
-  ratioDisplay.textContent = ratio.toFixed(2) + ':1';
-  ratioDisplay.className = 'ratio-number ' +
-    (ratio >= 7  ? 'ratio-good' :
-     ratio >= 4.5 ? 'ratio-ok'  : 'ratio-bad');
+  // Ratio number + colour
+  ratioDisplay.textContent = ratio.toFixed(2) + ' : 1';
+  ratioDisplay.className   = 'ratio-number ' +
+    (ratio >= 7 ? 'ratio-good' : ratio >= 4.5 ? 'ratio-ok' : 'ratio-bad');
 
-  // WCAG checks
-  setBadge(aaSmallCard,  aaSmallIcon,  ratio >= 4.5);
-  setBadge(aaLargeCard,  aaLargeIcon,  ratio >= 3.0);
-  setBadge(aaaCard,      aaaIcon,       ratio >= 7.0);
-  setBadge(aaaLargeCard, aaaLargeIcon,  ratio >= 4.5);
+  // Main AA Normal check (most important indicator)
+  const aaPass = ratio >= 4.5;
+  mainCheck.className    = 'main-check ' + (aaPass ? 'pass' : 'fail');
+  mainCheckIcon.textContent = aaPass ? '✔' : '✖';
+
+  // Compact pills
+  setPill(aaLargePill, aaLargeIcon, ratio >= 3.0);
+  setPill(aaaPill,     aaaIcon,     ratio >= 7.0);
+  setPill(aaaLargePill, aaaLargeIcon, ratio >= 4.5);
 }
 
-function setBadge(card, iconEl, pass) {
-  card.className  = 'wcag-card ' + (pass ? 'pass' : 'fail');
+function setPill(pill, iconEl, pass) {
+  pill.className     = 'wcag-pill ' + (pass ? 'pass' : 'fail');
   iconEl.textContent = pass ? '✔' : '✖';
 }
 
 
-// ── Preview ────────────────────────────────────────────────────
+// ── Preview Templates ──────────────────────────────────────────
 const PREVIEW_TEMPLATES = {
 
-  heading: (bg, text) => `
-    <div style="max-width:540px; width:100%; text-align:left;">
-      <p style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.45;margin-bottom:10px;font-weight:600;">Preview</p>
-      <h1 style="font-size:clamp(2rem,5vw,3.2rem);font-weight:800;line-height:1.1;margin-bottom:16px;letter-spacing:-1px;">
-        The quick brown fox jumps
-      </h1>
-      <h2 style="font-size:clamp(1.1rem,3vw,1.6rem);font-weight:600;line-height:1.3;opacity:.75;">
-        Good design is obvious. Great design is transparent.
-      </h2>
-    </div>`,
+  heading: () => `
+    <p style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.4;margin-bottom:14px;font-weight:600;">Preview</p>
+    <h1 style="font-size:clamp(1.6rem,4vw,2.6rem);font-weight:800;line-height:1.1;margin-bottom:14px;letter-spacing:-0.5px;">
+      The quick brown fox jumps
+    </h1>
+    <h2 style="font-size:clamp(1rem,2.5vw,1.35rem);font-weight:500;line-height:1.4;opacity:.75;">
+      Good design is obvious. Great design is transparent.
+    </h2>`,
 
-  body: (bg, text) => `
-    <div style="max-width:540px; width:100%; text-align:left;">
-      <p style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.45;margin-bottom:10px;font-weight:600;">Preview</p>
-      <p style="font-size:1rem;line-height:1.75;margin-bottom:14px;opacity:.9;">
-        Typography is the craft of enduring visual communication and the
-        foundation of readable, accessible design. Every choice in font,
-        weight, and spacing shapes how well users can consume your content.
-      </p>
-      <p style="font-size:.875rem;line-height:1.7;opacity:.65;">
-        WCAG 2.1 defines minimum contrast ratios to ensure text is
-        readable by people with low vision or colour blindness. AA requires
-        4.5:1 for normal text and 3:1 for large text (18pt+ or 14pt+ bold).
-      </p>
-    </div>`,
+  body: () => `
+    <p style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.4;margin-bottom:14px;font-weight:600;">Preview</p>
+    <p style="font-size:.95rem;line-height:1.75;margin-bottom:12px;opacity:.9;">
+      Typography is the craft of enduring visual communication and the
+      foundation of readable, accessible design. Every choice in font,
+      weight, and spacing shapes how well users can consume your content.
+    </p>
+    <p style="font-size:.85rem;line-height:1.7;opacity:.6;">
+      WCAG 2.1 defines minimum contrast ratios to ensure text is readable
+      by people with low vision. AA requires 4.5:1 for normal text and
+      3:1 for large text (18pt+ or 14pt+ bold).
+    </p>`,
 
-  ui: (bg, text) => `
-    <div style="max-width:540px; width:100%; display:flex; flex-direction:column; gap:24px;">
-      <p style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.45;font-weight:600;">Preview</p>
-
-      <!-- Buttons -->
-      <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:center;">
-        <button style="padding:10px 22px;border-radius:8px;font-size:.875rem;font-weight:600;
-                       border:2px solid currentColor;background:currentColor;
-                       color:${bg};cursor:pointer;">
-          Primary Button
-        </button>
-        <button style="padding:10px 22px;border-radius:8px;font-size:.875rem;font-weight:600;
-                       border:2px solid currentColor;background:transparent;
-                       color:inherit;cursor:pointer;">
-          Outline Button
-        </button>
-        <span style="padding:4px 10px;border-radius:999px;font-size:.75rem;font-weight:600;
-                     background:rgba(128,128,128,.2);letter-spacing:.05em;">
-          Badge
-        </span>
-      </div>
-
-      <!-- Input -->
-      <div style="display:flex; flex-direction:column; gap:6px;">
-        <label style="font-size:.8rem;font-weight:500;opacity:.7;">Email address</label>
-        <div style="padding:10px 14px;border-radius:8px;border:1.5px solid currentColor;
-                    font-size:.9rem;opacity:.5;pointer-events:none;">
-          hello@example.com
-        </div>
-      </div>
-
-      <!-- Link -->
-      <p style="font-size:.9rem;">
-        Read more about
-        <span style="text-decoration:underline;text-underline-offset:3px;font-weight:500;cursor:pointer;">
-          WCAG accessibility guidelines →
-        </span>
-      </p>
-    </div>`,
 };
 
 function renderPreview() {
-  const template = PREVIEW_TEMPLATES[previewMode] || PREVIEW_TEMPLATES.heading;
+  const tpl = PREVIEW_TEMPLATES[previewMode] || PREVIEW_TEMPLATES.heading;
   previewArea.style.backgroundColor = '#' + bgHex;
   previewArea.style.color           = '#' + textHex;
-  previewArea.innerHTML = template(bgHex, textHex);
+  previewArea.innerHTML = tpl();
 }
 
 
-// ── Hex Input Handling ─────────────────────────────────────────
-function sanitizeHexInput(raw) {
-  // Strip leading # if pasted
-  let hex = raw.replace(/^#/, '').toUpperCase();
-  // Expand 3-char shorthand
-  if (/^[0-9A-F]{3}$/.test(hex)) {
-    hex = hex.split('').map(c => c + c).join('');
-  }
-  return hex;
-}
-
+// ── Input Events ───────────────────────────────────────────────
 bgHexInput.addEventListener('input', () => {
-  const hex = sanitizeHexInput(bgHexInput.value);
-  if (isValidHex(hex)) {
-    bgHex = hex.toLowerCase();
-    applyColors();
-  }
+  const h = sanitizeHex(bgHexInput.value);
+  if (isValidHex(h)) { bgHex = h.toLowerCase(); applyColors(); }
 });
-
 bgHexInput.addEventListener('blur', () => {
-  // Revert if invalid on blur
-  if (!isValidHex(sanitizeHexInput(bgHexInput.value))) {
-    bgHexInput.value = bgHex.toUpperCase();
-  }
+  if (!isValidHex(sanitizeHex(bgHexInput.value))) bgHexInput.value = bgHex.toUpperCase();
 });
 
 textHexInput.addEventListener('input', () => {
-  const hex = sanitizeHexInput(textHexInput.value);
-  if (isValidHex(hex)) {
-    textHex = hex.toLowerCase();
-    applyColors();
-  }
+  const h = sanitizeHex(textHexInput.value);
+  if (isValidHex(h)) { textHex = h.toLowerCase(); applyColors(); }
 });
-
 textHexInput.addEventListener('blur', () => {
-  if (!isValidHex(sanitizeHexInput(textHexInput.value))) {
-    textHexInput.value = textHex.toUpperCase();
-  }
+  if (!isValidHex(sanitizeHex(textHexInput.value))) textHexInput.value = textHex.toUpperCase();
 });
 
-// ── Native Color Picker Sync ───────────────────────────────────
-bgPicker.addEventListener('input', () => {
-  bgHex = bgPicker.value.slice(1).toLowerCase();
-  applyColors();
-});
+bgPicker.addEventListener('input',   () => { bgHex   = bgPicker.value.slice(1).toLowerCase();   applyColors(); });
+textPicker.addEventListener('input', () => { textHex = textPicker.value.slice(1).toLowerCase(); applyColors(); });
 
-textPicker.addEventListener('input', () => {
-  textHex = textPicker.value.slice(1).toLowerCase();
-  applyColors();
-});
-
-// ── Swap ────────────────────────────────────────────────────────
+// ── Swap & Random ──────────────────────────────────────────────
 document.getElementById('swapBtn').addEventListener('click', () => {
   [bgHex, textHex] = [textHex, bgHex];
   applyColors();
 });
-
-// ── Random ──────────────────────────────────────────────────────
 document.getElementById('randomBtn').addEventListener('click', () => {
   bgHex   = randomHex().toLowerCase();
   textHex = randomHex().toLowerCase();
   applyColors();
 });
 
-// ── Copy HEX ────────────────────────────────────────────────────
-let toastTimer = null;
-
-function copyHex(side) {
-  const hex = '#' + (side === 'bg' ? bgHex : textHex).toUpperCase();
-  navigator.clipboard.writeText(hex).then(() => showToast('Copied ' + hex)).catch(() => {
-    // Fallback for non-HTTPS or older browsers
-    const ta = document.createElement('textarea');
-    ta.value = hex;
-    ta.style.position = 'fixed'; ta.style.opacity = '0';
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
-    showToast('Copied ' + hex);
-  });
-}
-
-function showToast(msg) {
-  copyToast.textContent = msg;
-  copyToast.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => copyToast.classList.remove('show'), 2000);
-}
-
-// ── Preview Tabs ────────────────────────────────────────────────
+// ── Tabs ───────────────────────────────────────────────────────
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -798,7 +666,33 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
-// ── Init ────────────────────────────────────────────────────────
+// ── Copy toast (clicking a swatch copies its hex) ──────────────
+let toastTimer = null;
+
+function showToast(msg) {
+  copyToast.textContent = msg;
+  copyToast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => copyToast.classList.remove('show'), 1800);
+}
+
+function copyHex(hex) {
+  const value = '#' + hex.toUpperCase();
+  navigator.clipboard.writeText(value)
+    .then(() => showToast('Copied ' + value))
+    .catch(() => {
+      const ta = Object.assign(document.createElement('textarea'), { value, style: 'position:fixed;opacity:0' });
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+      showToast('Copied ' + value);
+    });
+}
+
+document.getElementById('bgPickerWrap').addEventListener('dblclick',   () => copyHex(bgHex));
+document.getElementById('textPickerWrap').addEventListener('dblclick', () => copyHex(textHex));
+bgSwatch.addEventListener('click',   () => copyHex(bgHex));
+textSwatch.addEventListener('click', () => copyHex(textHex));
+
+// ── Init ───────────────────────────────────────────────────────
 applyColors();
 </script>
 </body>
