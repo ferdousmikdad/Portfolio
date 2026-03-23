@@ -17,14 +17,16 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     * { font-family: 'Fira Code', monospace; }
     .title-font { font-family: 'BoldPixels', 'Courier New', monospace; letter-spacing: 2px; }
+    .hidden { display: none !important; }
 
     html, body { height: 100%; }
     body {
       background-color: #09090b;
       color: #e4e4e7;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
+      overflow-y: auto;
     }
 
     /* ── Header ── */
@@ -38,27 +40,42 @@
       flex-shrink: 0;
     }
 
-    /* ── Two-column layout ── */
-    .tool-layout {
+    /* ── Main ── */
+    .main-content {
       flex: 1;
-      display: grid;
-      grid-template-columns: 300px 1fr;
-      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px 48px;
     }
 
-    /* ── Left: Settings panel ── */
+    /* ── One box ── */
+    .qr-box {
+      width: 100%;
+      max-width: 860px;
+      background: #111113;
+      border: 1px solid #1c1c1e;
+      border-radius: 16px;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 360px 1fr;
+    }
+
+    /* ── Left: Settings ── */
     .settings-panel {
       border-right: 1px solid #1c1c1e;
-      overflow-y: auto;
       display: flex;
       flex-direction: column;
+      gap: 0;
     }
 
-    .settings-section {
-      padding: 18px 20px;
+    .s-section {
+      padding: 20px 22px;
       border-bottom: 1px solid #1c1c1e;
     }
-    .section-label {
+    .s-section:last-child { border-bottom: none; }
+
+    .s-label {
       font-size: 9px;
       text-transform: uppercase;
       letter-spacing: 0.16em;
@@ -67,40 +84,34 @@
       margin-bottom: 12px;
     }
 
-    /* Type selector */
-    .type-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
+    /* Type buttons */
+    .type-row {
+      display: flex;
       gap: 5px;
+      flex-wrap: wrap;
     }
     .type-btn {
-      padding: 7px 4px;
+      padding: 5px 12px;
       font-size: 10px;
       font-family: 'BoldPixels', monospace;
       letter-spacing: 1px;
       border: 1.5px solid #27272a;
-      border-radius: 7px;
+      border-radius: 20px;
       background: transparent;
       color: #52525b;
       cursor: pointer;
       transition: border-color 0.15s, color 0.15s, background 0.15s;
-      text-align: center;
     }
     .type-btn:hover { border-color: #52525b; color: #a1a1aa; }
     .type-btn.active { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,0.06); }
 
-    /* Inputs */
-    .field-group {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
+    /* Input fields */
+    .field-wrap { display: flex; flex-direction: column; gap: 6px; }
     .field-label {
-      font-size: 9px;
+      font-size: 10px;
+      color: #52525b;
       text-transform: uppercase;
       letter-spacing: 0.12em;
-      color: #52525b;
-      margin-bottom: 4px;
     }
     .field-input,
     .field-textarea,
@@ -112,8 +123,8 @@
       color: #d4d4d8;
       font-size: 12px;
       padding: 9px 12px;
-      transition: border-color 0.15s;
       outline: none;
+      transition: border-color 0.15s;
     }
     .field-input:focus,
     .field-textarea:focus,
@@ -121,106 +132,74 @@
     .field-input::placeholder,
     .field-textarea::placeholder { color: #3f3f46; }
     .field-textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
-    .field-select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2352525b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 30px; }
+    .field-select {
+      cursor: pointer; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2352525b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 10px center; padding-right: 30px;
+    }
     .field-select option { background: #18181b; }
 
-    .field-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
+    .multi-field { display: flex; flex-direction: column; gap: 10px; }
+    .field-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
-    .wifi-hidden-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-top: 2px;
+    .check-row {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 11px; color: #52525b;
     }
-    .wifi-hidden-row input[type="checkbox"] { accent-color: #ef4444; cursor: pointer; }
-    .wifi-hidden-row span { font-size: 11px; color: #52525b; }
+    .check-row input[type="checkbox"] { accent-color: #ef4444; cursor: pointer; }
 
     /* Colors */
-    .color-pickers {
+    .color-pair {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
       margin-bottom: 14px;
     }
-    .color-picker-group { display: flex; flex-direction: column; gap: 6px; }
-    .color-picker-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .color-swatch-wrap {
+    .color-item { display: flex; flex-direction: column; gap: 6px; }
+    .color-picker-row { display: flex; align-items: center; gap: 8px; }
+    .color-swatch {
       width: 32px; height: 32px;
-      border-radius: 8px;
-      border: 1.5px solid #27272a;
-      overflow: hidden;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer;
-      flex-shrink: 0;
-      transition: border-color 0.15s;
+      border-radius: 8px; border: 1.5px solid #27272a;
+      overflow: hidden; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; flex-shrink: 0; transition: border-color 0.15s;
     }
-    .color-swatch-wrap:hover { border-color: #52525b; }
+    .color-swatch:hover { border-color: #52525b; }
     input[type="color"] {
       -webkit-appearance: none; border: none; padding: 0;
       background: none; cursor: pointer; width: 44px; height: 44px; margin: -6px;
     }
     input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
     input[type="color"]::-webkit-color-swatch { border: none; }
-    .color-hex-input {
-      flex: 1;
-      background: #18181b;
-      border: 1.5px solid #27272a;
-      border-radius: 6px;
-      color: #d4d4d8;
-      font-size: 11px;
-      padding: 5px 8px;
-      outline: none;
-      transition: border-color 0.15s;
+    .hex-input {
+      flex: 1; background: #18181b; border: 1.5px solid #27272a;
+      border-radius: 6px; color: #d4d4d8; font-size: 11px;
+      padding: 5px 8px; outline: none; transition: border-color 0.15s;
       font-family: 'Courier New', monospace;
     }
-    .color-hex-input:focus { border-color: #52525b; }
+    .hex-input:focus { border-color: #52525b; }
 
-    /* Color presets */
-    .color-presets {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
+    /* Presets */
+    .preset-swatches {
+      display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;
     }
-    .color-preset {
-      width: 24px; height: 24px;
-      border-radius: 6px;
-      border: 1.5px solid #27272a;
-      cursor: pointer;
+    .preset-dot {
+      width: 22px; height: 22px; border-radius: 5px;
+      border: 1.5px solid #27272a; cursor: pointer;
       transition: transform 0.12s, border-color 0.12s;
-      position: relative;
-      flex-shrink: 0;
     }
-    .color-preset:hover { transform: scale(1.15); border-color: #52525b; }
-    .color-preset.active { border-color: #ef4444; }
-
-    /* Transparent toggle */
-    .toggle-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-top: 10px;
-    }
-    .toggle-row input[type="checkbox"] { accent-color: #ef4444; cursor: pointer; }
-    .toggle-row span { font-size: 11px; color: #52525b; }
+    .preset-dot:hover { transform: scale(1.2); border-color: #52525b; }
+    .preset-dot.active { border-color: #ef4444; }
 
     /* Error correction */
-    .ec-toggle {
+    .ec-row {
       display: flex;
       border: 1px solid #27272a;
       border-radius: 8px;
       overflow: hidden;
     }
     .ec-btn {
-      flex: 1; padding: 7px 0;
-      font-size: 10px; background: transparent; color: #52525b;
+      flex: 1; padding: 7px 0; font-size: 10px;
+      background: transparent; color: #52525b;
       border: none; cursor: pointer;
       transition: background 0.15s, color 0.15s;
     }
@@ -228,71 +207,45 @@
     .ec-btn.active { background: rgba(239,68,68,0.1); color: #ef4444; }
     .ec-hint { font-size: 9px; color: #3f3f46; margin-top: 6px; }
 
-    /* Scrollbar */
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 2px; }
-
-    /* ── Right: Preview panel ── */
+    /* ── Right: Preview ── */
     .preview-panel {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 24px;
-      padding: 32px;
-      background: #09090b;
-      overflow: hidden;
+      gap: 20px;
+      padding: 36px 28px;
+      background: #0c0c0e;
     }
 
-    /* QR card */
-    .qr-card {
-      background: #111113;
-      border: 1px solid #1c1c1e;
-      border-radius: 16px;
-      padding: 28px;
+    /* QR wrapper */
+    .qr-wrap {
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 14px;
-    }
-
-    #qrCanvas {
-      display: block;
-      border-radius: 8px;
-    }
-
-    .qr-meta {
-      font-size: 10px;
-      color: #3f3f46;
-      text-align: center;
-      line-height: 1.6;
-    }
-    .qr-meta span { color: #52525b; }
-
-    /* Empty state */
-    .qr-empty {
-      width: 240px; height: 240px;
-      border: 2px dashed #27272a;
-      border-radius: 12px;
-      display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 10px;
-      color: #3f3f46;
-      font-size: 10px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
     }
 
-    /* Action buttons */
-    .action-row {
-      display: flex;
-      gap: 8px;
+    .qr-empty-state {
+      width: 220px; height: 220px;
+      border: 2px dashed #27272a; border-radius: 12px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 10px; color: #3f3f46;
+      font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
     }
-    .action-btn {
-      padding: 9px 20px;
+
+    #qrCanvas { display: block; border-radius: 6px; }
+
+    .qr-meta {
+      font-size: 10px; color: #3f3f46;
+      text-align: center; line-height: 1.8;
+    }
+    .qr-meta b { color: #52525b; font-weight: normal; }
+
+    /* Buttons */
+    .btn-row { display: flex; gap: 8px; }
+    .btn {
+      padding: 9px 18px;
       font-size: 10px;
       font-family: 'BoldPixels', monospace;
       letter-spacing: 1px;
@@ -300,39 +253,45 @@
       cursor: pointer;
       transition: background 0.15s, border-color 0.15s, color 0.15s;
     }
-    .btn-outline {
-      border: 1.5px solid #3f3f46;
-      background: transparent; color: #71717a;
-    }
+    .btn-outline { border: 1.5px solid #3f3f46; background: transparent; color: #71717a; }
     .btn-outline:hover { border-color: #ef4444; color: #ef4444; }
-    .btn-solid {
-      border: 1.5px solid #ef4444;
-      background: #ef4444; color: #fff;
-    }
+    .btn-solid { border: 1.5px solid #ef4444; background: #ef4444; color: #fff; }
     .btn-solid:hover { background: #dc2626; border-color: #dc2626; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 2px; }
+
+    @media (max-width: 680px) {
+      .qr-box { grid-template-columns: 1fr; }
+      .settings-panel { border-right: none; border-bottom: 1px solid #1c1c1e; }
+      .main-content { padding: 16px; }
+    }
   </style>
 </head>
 <body>
 
 <!-- ════ HEADER ════ -->
 <header>
-  <a href="../index.html" class="title-font" style="font-size:10px; color:#52525b; text-decoration:none;"
+  <a href="../index.html" class="title-font" style="font-size:10px;color:#52525b;text-decoration:none;"
      onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#52525b'">← Back</a>
   <div style="width:1px;height:16px;background:#27272a;"></div>
-  <h1 class="title-font" style="font-size:10px; color:#e4e4e7;">QR Code Generator</h1>
+  <h1 class="title-font" style="font-size:10px;color:#e4e4e7;">QR Code Generator</h1>
 </header>
 
 
-<!-- ════ TOOL LAYOUT ════ -->
-<div class="tool-layout">
+<!-- ════ MAIN ════ -->
+<div class="main-content">
+<div class="qr-box">
 
   <!-- ── LEFT: SETTINGS ── -->
   <div class="settings-panel">
 
     <!-- Type -->
-    <div class="settings-section">
-      <p class="section-label">Type</p>
-      <div class="type-grid">
+    <div class="s-section">
+      <p class="s-label">Type</p>
+      <div class="type-row">
         <button class="type-btn active" data-type="url">URL</button>
         <button class="type-btn" data-type="text">Text</button>
         <button class="type-btn" data-type="email">Email</button>
@@ -342,84 +301,62 @@
       </div>
     </div>
 
-    <!-- Dynamic inputs -->
-    <div class="settings-section" id="inputsSection">
+    <!-- Dynamic input -->
+    <div class="s-section">
 
-      <!-- URL -->
-      <div class="field-group" id="fields-url">
-        <div>
-          <p class="field-label">URL</p>
-          <input class="field-input" id="url-url" type="url" placeholder="https://example.com" />
-        </div>
+      <div class="field-wrap" id="fields-url">
+        <p class="field-label">URL</p>
+        <input class="field-input" id="url-val" type="url" placeholder="https://example.com" />
       </div>
 
-      <!-- Text -->
-      <div class="field-group hidden" id="fields-text">
-        <div>
-          <p class="field-label">Message</p>
-          <textarea class="field-textarea" id="text-body" placeholder="Enter any text…"></textarea>
-        </div>
+      <div class="field-wrap hidden" id="fields-text">
+        <p class="field-label">Text</p>
+        <textarea class="field-textarea" id="text-val" placeholder="Enter any text…"></textarea>
       </div>
 
-      <!-- Email -->
-      <div class="field-group hidden" id="fields-email">
-        <div>
-          <p class="field-label">Email Address</p>
-          <input class="field-input" id="email-to" type="email" placeholder="hello@example.com" />
-        </div>
-        <div>
-          <p class="field-label">Subject (optional)</p>
-          <input class="field-input" id="email-subject" type="text" placeholder="Subject line" />
-        </div>
-        <div>
-          <p class="field-label">Body (optional)</p>
-          <textarea class="field-textarea" id="email-body" placeholder="Email message…" style="min-height:60px;"></textarea>
-        </div>
+      <div class="field-wrap hidden" id="fields-email">
+        <p class="field-label">Email Address</p>
+        <input class="field-input" id="email-val" type="email" placeholder="hello@example.com" />
       </div>
 
-      <!-- Phone -->
-      <div class="field-group hidden" id="fields-phone">
-        <div>
+      <div class="field-wrap hidden" id="fields-phone">
+        <p class="field-label">Phone Number</p>
+        <input class="field-input" id="phone-val" type="tel" placeholder="+1 234 567 8900" />
+      </div>
+
+      <div class="multi-field hidden" id="fields-sms">
+        <div class="field-wrap">
           <p class="field-label">Phone Number</p>
-          <input class="field-input" id="phone-number" type="tel" placeholder="+1 234 567 8900" />
+          <input class="field-input" id="sms-num" type="tel" placeholder="+1 234 567 8900" />
         </div>
-      </div>
-
-      <!-- SMS -->
-      <div class="field-group hidden" id="fields-sms">
-        <div>
-          <p class="field-label">Phone Number</p>
-          <input class="field-input" id="sms-number" type="tel" placeholder="+1 234 567 8900" />
-        </div>
-        <div>
+        <div class="field-wrap">
           <p class="field-label">Message (optional)</p>
-          <textarea class="field-textarea" id="sms-body" placeholder="Pre-filled SMS text…" style="min-height:60px;"></textarea>
+          <textarea class="field-textarea" id="sms-msg" placeholder="Pre-filled message…" style="min-height:60px;"></textarea>
         </div>
       </div>
 
-      <!-- WiFi -->
-      <div class="field-group hidden" id="fields-wifi">
-        <div>
+      <div class="multi-field hidden" id="fields-wifi">
+        <div class="field-wrap">
           <p class="field-label">Network Name (SSID)</p>
           <input class="field-input" id="wifi-ssid" type="text" placeholder="MyNetwork" />
         </div>
-        <div>
+        <div class="field-wrap">
           <p class="field-label">Password</p>
           <input class="field-input" id="wifi-pass" type="password" placeholder="••••••••" />
         </div>
-        <div class="field-row">
-          <div>
+        <div class="field-row-2">
+          <div class="field-wrap">
             <p class="field-label">Security</p>
-            <select class="field-select" id="wifi-security">
+            <select class="field-select" id="wifi-sec">
               <option value="WPA">WPA/WPA2</option>
               <option value="WEP">WEP</option>
               <option value="nopass">None</option>
             </select>
           </div>
-          <div style="display:flex;flex-direction:column;justify-content:flex-end;">
-            <div class="wifi-hidden-row">
+          <div class="field-wrap" style="justify-content:flex-end;">
+            <div class="check-row">
               <input type="checkbox" id="wifi-hidden" />
-              <span>Hidden network</span>
+              <span>Hidden</span>
             </div>
           </div>
         </div>
@@ -428,59 +365,52 @@
     </div>
 
     <!-- Colors -->
-    <div class="settings-section">
-      <p class="section-label">Colors</p>
-
-      <div class="color-pickers">
-        <div class="color-picker-group">
+    <div class="s-section">
+      <p class="s-label">Colors</p>
+      <div class="color-pair">
+        <div class="color-item">
           <p class="field-label">Foreground</p>
           <div class="color-picker-row">
-            <div class="color-swatch-wrap">
-              <input type="color" id="fgColor" value="#000000" />
-            </div>
-            <input class="color-hex-input" id="fgHex" type="text" value="#000000" maxlength="7" />
+            <div class="color-swatch"><input type="color" id="fgColor" value="#000000" /></div>
+            <input class="hex-input" id="fgHex" type="text" value="#000000" maxlength="7" />
           </div>
         </div>
-        <div class="color-picker-group">
+        <div class="color-item">
           <p class="field-label">Background</p>
           <div class="color-picker-row">
-            <div class="color-swatch-wrap">
-              <input type="color" id="bgColor" value="#ffffff" />
-            </div>
-            <input class="color-hex-input" id="bgHex" type="text" value="#ffffff" maxlength="7" />
+            <div class="color-swatch"><input type="color" id="bgColor" value="#ffffff" /></div>
+            <input class="hex-input" id="bgHex" type="text" value="#ffffff" maxlength="7" />
           </div>
         </div>
       </div>
 
-      <!-- Presets -->
-      <p class="field-label" style="margin-bottom:8px;">Quick Presets</p>
-      <div class="color-presets">
-        <div class="color-preset active" data-fg="#000000" data-bg="#ffffff" style="background: linear-gradient(135deg, #000 50%, #fff 50%);" title="Classic"></div>
-        <div class="color-preset" data-fg="#ffffff" data-bg="#000000" style="background: linear-gradient(135deg, #fff 50%, #000 50%);" title="Inverse"></div>
-        <div class="color-preset" data-fg="#e4e4e7" data-bg="#18181b" style="background: linear-gradient(135deg, #e4e4e7 50%, #18181b 50%);" title="Dark Mode"></div>
-        <div class="color-preset" data-fg="#dc2626" data-bg="#fff7f7" style="background: linear-gradient(135deg, #dc2626 50%, #fff7f7 50%);" title="Red"></div>
-        <div class="color-preset" data-fg="#2563eb" data-bg="#eff6ff" style="background: linear-gradient(135deg, #2563eb 50%, #eff6ff 50%);" title="Blue"></div>
-        <div class="color-preset" data-fg="#16a34a" data-bg="#f0fdf4" style="background: linear-gradient(135deg, #16a34a 50%, #f0fdf4 50%);" title="Green"></div>
-        <div class="color-preset" data-fg="#7c3aed" data-bg="#faf5ff" style="background: linear-gradient(135deg, #7c3aed 50%, #faf5ff 50%);" title="Purple"></div>
-        <div class="color-preset" data-fg="#ea580c" data-bg="#fff7ed" style="background: linear-gradient(135deg, #ea580c 50%, #fff7ed 50%);" title="Orange"></div>
+      <div class="preset-swatches">
+        <div class="preset-dot active" data-fg="#000000" data-bg="#ffffff" style="background:linear-gradient(135deg,#000 50%,#fff 50%);" title="Classic"></div>
+        <div class="preset-dot" data-fg="#ffffff" data-bg="#000000" style="background:linear-gradient(135deg,#fff 50%,#000 50%);" title="Inverse"></div>
+        <div class="preset-dot" data-fg="#e4e4e7" data-bg="#18181b" style="background:linear-gradient(135deg,#e4e4e7 50%,#18181b 50%);" title="Dark Mode"></div>
+        <div class="preset-dot" data-fg="#dc2626" data-bg="#fff7f7" style="background:linear-gradient(135deg,#dc2626 50%,#fff7f7 50%);" title="Red"></div>
+        <div class="preset-dot" data-fg="#2563eb" data-bg="#eff6ff" style="background:linear-gradient(135deg,#2563eb 50%,#eff6ff 50%);" title="Blue"></div>
+        <div class="preset-dot" data-fg="#16a34a" data-bg="#f0fdf4" style="background:linear-gradient(135deg,#16a34a 50%,#f0fdf4 50%);" title="Green"></div>
+        <div class="preset-dot" data-fg="#7c3aed" data-bg="#faf5ff" style="background:linear-gradient(135deg,#7c3aed 50%,#faf5ff 50%);" title="Purple"></div>
+        <div class="preset-dot" data-fg="#ea580c" data-bg="#fff7ed" style="background:linear-gradient(135deg,#ea580c 50%,#fff7ed 50%);" title="Orange"></div>
       </div>
 
-      <div class="toggle-row">
+      <div class="check-row">
         <input type="checkbox" id="transparentBg" />
-        <span>Transparent background (PNG)</span>
+        <span>Transparent background</span>
       </div>
     </div>
 
-    <!-- Options -->
-    <div class="settings-section">
-      <p class="section-label">Error Correction</p>
-      <div class="ec-toggle">
+    <!-- Error Correction -->
+    <div class="s-section">
+      <p class="s-label">Error Correction</p>
+      <div class="ec-row">
         <button class="ec-btn" data-ec="L">L</button>
         <button class="ec-btn active" data-ec="M">M</button>
         <button class="ec-btn" data-ec="Q">Q</button>
         <button class="ec-btn" data-ec="H">H</button>
       </div>
-      <p class="ec-hint">L = 7% · M = 15% · Q = 25% · H = 30% recovery</p>
+      <p class="ec-hint">L 7% · M 15% · Q 25% · H 30% data recovery</p>
     </div>
 
   </div><!-- /settings-panel -->
@@ -489,103 +419,77 @@
   <!-- ── RIGHT: PREVIEW ── -->
   <div class="preview-panel">
 
-    <div class="qr-card">
-      <div class="qr-empty" id="qrEmpty">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3f3f46" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h.01M18 14h.01M14 18h.01M18 18h.01M14 21h.01M21 14h.01M21 18h.01M21 21h.01"/></svg>
+    <div class="qr-wrap">
+      <div class="qr-empty-state" id="qrEmpty">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3f3f46" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
         <span>Enter content</span>
       </div>
-      <canvas id="qrCanvas" style="display:none; border-radius:8px;"></canvas>
-      <div class="qr-meta" id="qrMeta" style="display:none;">
-        <span id="qrSize">—</span> &nbsp;·&nbsp; <span id="qrType">—</span>
-      </div>
+      <canvas id="qrCanvas" style="display:none;"></canvas>
     </div>
 
-    <div class="action-row">
-      <button class="action-btn btn-outline" id="copyBtn">⎘ Copy</button>
-      <button class="action-btn btn-outline" id="downloadSvgBtn">↓ SVG</button>
-      <button class="action-btn btn-solid" id="downloadPngBtn">↓ PNG</button>
+    <div class="qr-meta" id="qrMeta" style="display:none;">
+      <b id="qrTypeLabel">URL</b> · 240 × 240 px
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-outline" id="copyBtn">⎘ Copy</button>
+      <button class="btn btn-outline" id="downloadSvgBtn">↓ SVG</button>
+      <button class="btn btn-solid" id="downloadPngBtn">↓ PNG</button>
     </div>
 
   </div><!-- /preview-panel -->
 
-</div><!-- /tool-layout -->
+</div><!-- /qr-box -->
+</div><!-- /main-content -->
 
 
 <!-- ════ SCRIPT ════ -->
 <script>
 'use strict';
 
-// ── State ──────────────────────────────────────────────────────
 let currentType = 'url';
 let currentEC   = 'M';
 let fgColor     = '#000000';
 let bgColor     = '#ffffff';
-let debounceTimer = null;
+let timer       = null;
+const QR_SIZE   = 240;
 
-const QR_SIZE = 280;
-
-// ── DOM ────────────────────────────────────────────────────────
-const qrCanvas  = document.getElementById('qrCanvas');
-const qrEmpty   = document.getElementById('qrEmpty');
-const qrMeta    = document.getElementById('qrMeta');
-const qrSize    = document.getElementById('qrSize');
-const qrType    = document.getElementById('qrType');
+const qrCanvas = document.getElementById('qrCanvas');
+const qrEmpty  = document.getElementById('qrEmpty');
+const qrMeta   = document.getElementById('qrMeta');
 
 
-// ── Build QR content string ────────────────────────────────────
+// ── Build content string ───────────────────────────────────────
 function buildContent() {
   switch (currentType) {
-    case 'url':
-      return (document.getElementById('url-url').value || '').trim();
-
-    case 'text':
-      return (document.getElementById('text-body').value || '').trim();
-
-    case 'email': {
-      const to  = (document.getElementById('email-to').value    || '').trim();
-      const sub = (document.getElementById('email-subject').value || '').trim();
-      const bod = (document.getElementById('email-body').value   || '').trim();
-      if (!to) return '';
-      let uri = `mailto:${to}`;
-      const parts = [];
-      if (sub) parts.push('subject=' + encodeURIComponent(sub));
-      if (bod) parts.push('body='    + encodeURIComponent(bod));
-      if (parts.length) uri += '?' + parts.join('&');
-      return uri;
-    }
-
-    case 'phone': {
-      const num = (document.getElementById('phone-number').value || '').trim();
-      return num ? `tel:${num}` : '';
-    }
-
+    case 'url':   return (document.getElementById('url-val').value   || '').trim();
+    case 'text':  return (document.getElementById('text-val').value  || '').trim();
+    case 'phone': return (v => v ? `tel:${v}` : '')((document.getElementById('phone-val').value || '').trim());
+    case 'email': return (v => v ? `mailto:${v}` : '')((document.getElementById('email-val').value || '').trim());
     case 'sms': {
-      const num = (document.getElementById('sms-number').value || '').trim();
-      const msg = (document.getElementById('sms-body').value   || '').trim();
+      const num = (document.getElementById('sms-num').value || '').trim();
+      const msg = (document.getElementById('sms-msg').value || '').trim();
       if (!num) return '';
       return msg ? `sms:${num}?body=${encodeURIComponent(msg)}` : `sms:${num}`;
     }
-
     case 'wifi': {
-      const ssid   = (document.getElementById('wifi-ssid').value     || '').trim();
-      const pass   = (document.getElementById('wifi-pass').value     || '').trim();
-      const sec    = document.getElementById('wifi-security').value;
-      const hidden = document.getElementById('wifi-hidden').checked ? 'true' : 'false';
+      const ssid = (document.getElementById('wifi-ssid').value || '').trim();
+      const pass = (document.getElementById('wifi-pass').value || '').trim();
+      const sec  = document.getElementById('wifi-sec').value;
+      const hid  = document.getElementById('wifi-hidden').checked ? 'true' : 'false';
       if (!ssid) return '';
-      const escapedSsid = ssid.replace(/([\\;,":"])/g, '\\$1');
-      const escapedPass = pass.replace(/([\\;,":"])/g, '\\$1');
-      return `WIFI:T:${sec};S:${escapedSsid};P:${escapedPass};H:${hidden};;`;
+      const e = s => s.replace(/([\\;,":"])/g, '\\$1');
+      return `WIFI:T:${sec};S:${e(ssid)};P:${e(pass)};H:${hid};;`;
     }
-
     default: return '';
   }
 }
 
 
-// ── Generate QR ────────────────────────────────────────────────
-function scheduleGenerate() {
-  clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(generate, 350);
+// ── Generate ───────────────────────────────────────────────────
+function schedule() {
+  clearTimeout(timer);
+  timer = setTimeout(generate, 350);
 }
 
 function generate() {
@@ -598,23 +502,19 @@ function generate() {
   }
 
   const transparent = document.getElementById('transparentBg').checked;
-  const lightColor  = transparent ? '#ffffff00' : bgColor;
+  const light = transparent ? '#ffffff00' : bgColor;
 
   QRCode.toCanvas(qrCanvas, content, {
     width: QR_SIZE,
     margin: 2,
     errorCorrectionLevel: currentEC,
-    color: { dark: fgColor, light: lightColor },
+    color: { dark: fgColor, light },
   }, err => {
-    if (err) {
-      console.error(err);
-      return;
-    }
+    if (err) return;
     qrCanvas.style.display = 'block';
     qrEmpty.style.display  = 'none';
     qrMeta.style.display   = 'block';
-    qrSize.textContent = `${QR_SIZE} × ${QR_SIZE} px`;
-    qrType.textContent = currentType.toUpperCase();
+    document.getElementById('qrTypeLabel').textContent = currentType.toUpperCase();
   });
 }
 
@@ -625,26 +525,23 @@ document.querySelectorAll('.type-btn').forEach(btn => {
     document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     currentType = btn.dataset.type;
-
-    // Show correct fields
     document.querySelectorAll('[id^="fields-"]').forEach(el => el.classList.add('hidden'));
     document.getElementById('fields-' + currentType).classList.remove('hidden');
-
-    scheduleGenerate();
+    schedule();
   });
 });
 
 
 // ── Input listeners ────────────────────────────────────────────
 document.querySelectorAll('.field-input, .field-textarea, .field-select').forEach(el => {
-  el.addEventListener('input', scheduleGenerate);
-  el.addEventListener('change', scheduleGenerate);
+  el.addEventListener('input', schedule);
+  el.addEventListener('change', schedule);
 });
-document.getElementById('wifi-hidden').addEventListener('change', scheduleGenerate);
+document.getElementById('wifi-hidden').addEventListener('change', schedule);
 
 
-// ── Color pickers ──────────────────────────────────────────────
-function syncColor(type, hex) {
+// ── Color sync ─────────────────────────────────────────────────
+function applyColor(type, hex) {
   if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return;
   if (type === 'fg') {
     fgColor = hex;
@@ -655,37 +552,30 @@ function syncColor(type, hex) {
     document.getElementById('bgColor').value = hex;
     document.getElementById('bgHex').value   = hex;
   }
-  document.querySelectorAll('.color-preset').forEach(p => p.classList.remove('active'));
-  scheduleGenerate();
+  document.querySelectorAll('.preset-dot').forEach(p => p.classList.remove('active'));
+  schedule();
 }
 
-document.getElementById('fgColor').addEventListener('input', function () { syncColor('fg', this.value); });
-document.getElementById('bgColor').addEventListener('input', function () { syncColor('bg', this.value); });
+document.getElementById('fgColor').addEventListener('input', function () { applyColor('fg', this.value); });
+document.getElementById('bgColor').addEventListener('input', function () { applyColor('bg', this.value); });
+document.getElementById('fgHex').addEventListener('input',  function () { applyColor('fg', this.value); });
+document.getElementById('bgHex').addEventListener('input',  function () { applyColor('bg', this.value); });
 
-document.getElementById('fgHex').addEventListener('input', function () {
-  if (/^#[0-9a-fA-F]{6}$/.test(this.value)) syncColor('fg', this.value);
-});
-document.getElementById('bgHex').addEventListener('input', function () {
-  if (/^#[0-9a-fA-F]{6}$/.test(this.value)) syncColor('bg', this.value);
-});
-
-// Color presets
-document.querySelectorAll('.color-preset').forEach(preset => {
-  preset.addEventListener('click', () => {
-    document.querySelectorAll('.color-preset').forEach(p => p.classList.remove('active'));
-    preset.classList.add('active');
-    fgColor = preset.dataset.fg;
-    bgColor = preset.dataset.bg;
+document.querySelectorAll('.preset-dot').forEach(dot => {
+  dot.addEventListener('click', () => {
+    document.querySelectorAll('.preset-dot').forEach(p => p.classList.remove('active'));
+    dot.classList.add('active');
+    fgColor = dot.dataset.fg;
+    bgColor = dot.dataset.bg;
     document.getElementById('fgColor').value = fgColor;
     document.getElementById('fgHex').value   = fgColor;
     document.getElementById('bgColor').value = bgColor;
     document.getElementById('bgHex').value   = bgColor;
-    scheduleGenerate();
+    schedule();
   });
 });
 
-// Transparent toggle
-document.getElementById('transparentBg').addEventListener('change', scheduleGenerate);
+document.getElementById('transparentBg').addEventListener('change', schedule);
 
 
 // ── Error correction ───────────────────────────────────────────
@@ -694,17 +584,23 @@ document.querySelectorAll('.ec-btn').forEach(btn => {
     document.querySelectorAll('.ec-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     currentEC = btn.dataset.ec;
-    scheduleGenerate();
+    schedule();
   });
 });
 
 
-// ── Copy ───────────────────────────────────────────────────────
+// ── Copy SVG ───────────────────────────────────────────────────
 document.getElementById('copyBtn').addEventListener('click', function () {
-  if (qrCanvas.style.display === 'none') return;
-  qrCanvas.toBlob(blob => {
-    navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
-      .catch(() => {});
+  const content = buildContent();
+  if (!content) return;
+  const transparent = document.getElementById('transparentBg').checked;
+  QRCode.toString(content, {
+    type: 'svg', width: QR_SIZE, margin: 2,
+    errorCorrectionLevel: currentEC,
+    color: { dark: fgColor, light: transparent ? '#ffffff00' : bgColor },
+  }, (err, str) => {
+    if (err) return;
+    navigator.clipboard.writeText(str).catch(() => {});
   });
   const o = this.textContent;
   this.textContent = 'Copied!';
@@ -714,7 +610,7 @@ document.getElementById('copyBtn').addEventListener('click', function () {
 
 // ── Download PNG ───────────────────────────────────────────────
 document.getElementById('downloadPngBtn').addEventListener('click', () => {
-  if (qrCanvas.style.display === 'none') return;
+  if (!buildContent()) return;
   const a = Object.assign(document.createElement('a'), {
     href: qrCanvas.toDataURL('image/png'),
     download: `qr-${currentType}.png`,
@@ -729,28 +625,20 @@ document.getElementById('downloadSvgBtn').addEventListener('click', () => {
   if (!content) return;
   const transparent = document.getElementById('transparentBg').checked;
   QRCode.toString(content, {
-    type: 'svg',
-    width: QR_SIZE,
-    margin: 2,
+    type: 'svg', width: QR_SIZE, margin: 2,
     errorCorrectionLevel: currentEC,
     color: { dark: fgColor, light: transparent ? '#ffffff00' : bgColor },
-  }, (err, svgStr) => {
+  }, (err, str) => {
     if (err) return;
-    const blob = new Blob([svgStr], { type: 'image/svg+xml' });
+    const blob = new Blob([str], { type: 'image/svg+xml' });
     const a = Object.assign(document.createElement('a'), {
-      href: URL.createObjectURL(blob),
-      download: `qr-${currentType}.svg`,
+      href: URL.createObjectURL(blob), download: `qr-${currentType}.svg`,
     });
     a.click();
     URL.revokeObjectURL(a.href);
   });
 });
 
-
-// ── Hidden fields helper ───────────────────────────────────────
-document.querySelectorAll('[id^="fields-"]').forEach(el => {
-  if (el.id !== 'fields-url') el.classList.add('hidden');
-});
 
 // ── Init ───────────────────────────────────────────────────────
 generate();

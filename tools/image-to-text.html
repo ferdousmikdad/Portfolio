@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Image to Text — Tools</title>
+  <script>if (window.self !== window.top) document.documentElement.dataset.embed = '1';</script>
+  <style>[data-embed='1'] header { display: none !important; }</style>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    @font-face {
+      font-family: 'BoldPixels';
+      src: url('../assets/BoldPixels.otf') format('opentype');
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    * { font-family: 'Fira Code', monospace; }
+    .title-font { font-family: 'BoldPixels', 'Courier New', monospace; letter-spacing: 2px; }
+
+    html, body { height: 100%; }
+    body {
+      background-color: #09090b;
+      color: #e4e4e7;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    header {
+      background: #09090b;
+      border-bottom: 1px solid #1c1c1e;
+      display: flex; align-items: center; gap: 16px;
+      padding: 12px 20px; flex-shrink: 0;
+    }
+
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px 60px;
+    }
+
+    /* ── Card ── */
+    .card {
+      width: 100%;
+      max-width: 560px;
+      background: #111113;
+      border: 1px solid #1c1c1e;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    /* ── Drop zone ── */
+    .drop-zone {
+      padding: 48px;
+      display: flex; flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+    }
+    .drop-inner {
+      width: 100%;
+      border: 2px dashed #27272a;
+      border-radius: 12px;
+      padding: 64px 40px;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 16px;
+      transition: border-color .2s, background .2s;
+    }
+    .drop-zone:hover .drop-inner, .drop-zone.drag-over .drop-inner {
+      border-color: rgba(239,68,68,.3);
+      background: rgba(239,68,68,.04);
+    }
+    .drop-label { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: #52525b; font-family: 'BoldPixels', monospace; }
+    .drop-sub   { font-size: 11px; color: #3f3f46; }
+    .choose-btn {
+      margin-top: 4px; padding: 7px 22px;
+      border: 1.5px solid #3f3f46; border-radius: 8px;
+      font-size: 11px; font-family: 'BoldPixels', monospace;
+      letter-spacing: 1px; color: #71717a; background: transparent;
+      cursor: pointer; transition: border-color .15s, color .15s;
+    }
+    .choose-btn:hover { border-color: #ef4444; color: #ef4444; }
+
+    /* ── Ready state ── */
+    #readyState { display: none; }
+
+    .thumb-bar {
+      padding: 14px 20px;
+      border-bottom: 1px solid #1c1c1e;
+      display: flex; align-items: center; gap: 14px;
+    }
+    .thumb {
+      width: 52px; height: 52px; border-radius: 8px;
+      object-fit: cover; border: 1px solid #27272a; flex-shrink: 0;
+    }
+    .thumb-info { flex: 1; overflow: hidden; }
+    .thumb-name { font-size: 11px; color: #a1a1aa; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .thumb-meta { font-size: 10px; color: #3f3f46; margin-top: 3px; }
+    .change-btn {
+      padding: 4px 10px; font-size: 9px;
+      font-family: 'BoldPixels', monospace; letter-spacing: 1px;
+      border: 1.5px solid #27272a; border-radius: 5px;
+      background: transparent; color: #52525b;
+      cursor: pointer; transition: border-color .15s, color .15s; flex-shrink: 0;
+    }
+    .change-btn:hover { border-color: #52525b; color: #a1a1aa; }
+
+    .lang-row {
+      padding: 14px 20px;
+      border-bottom: 1px solid #1c1c1e;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    }
+    .row-label { font-size: 10px; color: #52525b; text-transform: uppercase; letter-spacing: .12em; }
+    .lang-select {
+      background: #18181b; border: 1.5px solid #27272a; border-radius: 7px;
+      color: #d4d4d8; font-size: 11px; padding: 6px 28px 6px 10px;
+      outline: none; cursor: pointer; transition: border-color .15s;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2352525b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 8px center;
+    }
+    .lang-select:focus { border-color: #52525b; }
+    .lang-select option { background: #18181b; }
+
+    .recognize-wrap { padding: 20px; }
+    .recognize-btn {
+      width: 100%; padding: 13px;
+      background: #ef4444; border: none; border-radius: 10px;
+      color: #fff; font-size: 13px;
+      font-family: 'BoldPixels', monospace; letter-spacing: 2px;
+      cursor: pointer; transition: background .15s, transform .1s;
+    }
+    .recognize-btn:hover  { background: #dc2626; }
+    .recognize-btn:active { transform: scale(.98); }
+
+    /* ── Processing state ── */
+    #processingState { display: none; padding: 36px 24px; text-align: center; }
+
+    .progress-label {
+      font-size: 10px; color: #52525b; letter-spacing: 2px;
+      text-transform: uppercase; margin-bottom: 16px;
+    }
+    .progress-track {
+      width: 100%; height: 3px;
+      background: #1c1c1e; border-radius: 2px; overflow: hidden;
+      margin-bottom: 10px;
+    }
+    .progress-bar {
+      height: 100%; background: #ef4444; border-radius: 2px;
+      width: 0%; transition: width .2s ease;
+    }
+    .progress-status { font-size: 10px; color: #3f3f46; }
+
+    /* ── Result state ── */
+    #resultState { display: none; }
+
+    .result-header {
+      padding: 12px 20px;
+      border-bottom: 1px solid #1c1c1e;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .result-label { font-size: 10px; color: #52525b; text-transform: uppercase; letter-spacing: .14em; font-weight: 600; }
+    .word-count   { font-size: 10px; color: #3f3f46; }
+
+    .text-output {
+      width: 100%;
+      min-height: 220px;
+      max-height: 340px;
+      background: #0c0c0e;
+      border: none; outline: none;
+      color: #d4d4d8;
+      font-size: 12px; line-height: 1.7;
+      padding: 18px 20px;
+      resize: vertical;
+      overflow-y: auto;
+    }
+
+    .result-actions {
+      padding: 16px 20px;
+      display: flex; gap: 8px;
+      border-top: 1px solid #1c1c1e;
+    }
+    .act-btn {
+      flex: 1; padding: 11px;
+      font-size: 11px; font-family: 'BoldPixels', monospace; letter-spacing: 1px;
+      border-radius: 8px; cursor: pointer;
+      transition: background .15s, border-color .15s, color .15s;
+    }
+    .btn-outline { border: 1.5px solid #3f3f46; background: transparent; color: #71717a; }
+    .btn-outline:hover { border-color: #ef4444; color: #ef4444; }
+    .btn-solid   { border: 1.5px solid #ef4444; background: #ef4444; color: #fff; }
+    .btn-solid:hover { background: #dc2626; border-color: #dc2626; }
+    .btn-new     { border: 1.5px solid #27272a; background: transparent; color: #52525b; flex: 0 0 auto; padding: 11px 16px; }
+    .btn-new:hover { border-color: #52525b; color: #a1a1aa; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<!-- ════ HEADER ════ -->
+<header>
+  <a href="../index.html" class="title-font" style="font-size:10px;color:#52525b;text-decoration:none;"
+     onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#52525b'">← Back</a>
+  <div style="width:1px;height:16px;background:#27272a;"></div>
+  <h1 class="title-font" style="font-size:10px;color:#e4e4e7;">Image to Text — OCR</h1>
+</header>
+
+
+<!-- ════ MAIN ════ -->
+<div class="main-content">
+<div class="card">
+
+  <!-- ── DROP ── -->
+  <div id="dropZone" class="drop-zone">
+    <div class="drop-inner">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3f3f46" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+        <polyline points="17 8 12 3 7 8"/>
+        <line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>
+      <p class="drop-label">Drop image here</p>
+      <p class="drop-sub">JPG · PNG · WebP · BMP</p>
+      <p class="drop-sub" style="color:#27272a;">or paste with Ctrl + V</p>
+      <label class="choose-btn">
+        Choose File
+        <input type="file" id="fileInput" accept="image/*" style="display:none;" />
+      </label>
+    </div>
+  </div>
+
+  <!-- ── READY ── -->
+  <div id="readyState">
+
+    <div class="thumb-bar">
+      <img id="thumbImg" class="thumb" src="" alt="" />
+      <div class="thumb-info">
+        <p class="thumb-name" id="thumbName">—</p>
+        <p class="thumb-meta" id="thumbMeta">—</p>
+      </div>
+      <button class="change-btn" id="changeBtn">⤴ Change</button>
+    </div>
+
+    <div class="lang-row">
+      <span class="row-label">Language</span>
+      <select class="lang-select" id="langSelect">
+        <option value="eng">English</option>
+        <option value="fra">French</option>
+        <option value="deu">German</option>
+        <option value="spa">Spanish</option>
+        <option value="por">Portuguese</option>
+        <option value="ita">Italian</option>
+        <option value="chi_sim">Chinese (Simplified)</option>
+        <option value="jpn">Japanese</option>
+        <option value="ara">Arabic</option>
+        <option value="hin">Hindi</option>
+      </select>
+    </div>
+
+    <div class="recognize-wrap">
+      <button class="recognize-btn" id="recognizeBtn">Recognize Text →</button>
+    </div>
+
+  </div>
+
+  <!-- ── PROCESSING ── -->
+  <div id="processingState">
+    <p class="progress-label" id="progressLabel">Loading…</p>
+    <div class="progress-track">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <p class="progress-status" id="progressStatus">Initializing OCR engine</p>
+  </div>
+
+  <!-- ── RESULT ── -->
+  <div id="resultState">
+    <div class="result-header">
+      <span class="result-label">Extracted Text</span>
+      <span class="word-count" id="wordCount">—</span>
+    </div>
+    <textarea class="text-output" id="textOutput" spellcheck="false"></textarea>
+    <div class="result-actions">
+      <button class="act-btn btn-outline" id="copyBtn">⎘ Copy</button>
+      <button class="act-btn btn-solid"   id="downloadBtn">↓ Download .txt</button>
+      <button class="act-btn btn-new"     id="newBtn">↺ New</button>
+    </div>
+  </div>
+
+</div>
+</div>
+
+
+<!-- ════ SCRIPT ════ -->
+<script>
+'use strict';
+
+let imageFile = null;
+let imageUrl  = null;
+
+const dropZone        = document.getElementById('dropZone');
+const fileInput       = document.getElementById('fileInput');
+const readyState      = document.getElementById('readyState');
+const processingState = document.getElementById('processingState');
+const resultState     = document.getElementById('resultState');
+
+
+// ── State helpers ──────────────────────────────────────────────
+function showState(name) {
+  dropZone.style.display        = name === 'drop'       ? '' : 'none';
+  readyState.style.display      = name === 'ready'      ? 'block' : 'none';
+  processingState.style.display = name === 'processing' ? 'block' : 'none';
+  resultState.style.display     = name === 'result'     ? 'block' : 'none';
+}
+
+function resetAll() {
+  if (imageUrl) URL.revokeObjectURL(imageUrl);
+  imageFile = null; imageUrl = null;
+  fileInput.value = '';
+  document.getElementById('textOutput').value = '';
+  document.getElementById('progressBar').style.width = '0%';
+  showState('drop');
+}
+
+
+// ── Load file ──────────────────────────────────────────────────
+function loadFile(file) {
+  if (!file || !file.type.startsWith('image/')) return;
+  imageFile = file;
+  if (imageUrl) URL.revokeObjectURL(imageUrl);
+  imageUrl = URL.createObjectURL(file);
+
+  document.getElementById('thumbImg').src       = imageUrl;
+  document.getElementById('thumbName').textContent = file.name;
+  document.getElementById('thumbMeta').textContent = `${formatBytes(file.size)}`;
+  showState('ready');
+}
+
+dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', ()  => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('drag-over');
+  loadFile(e.dataTransfer.files[0]);
+});
+dropZone.addEventListener('click', e => {
+  if (e.target.closest('label')) return;
+  fileInput.click();
+});
+fileInput.addEventListener('change', e => loadFile(e.target.files[0]));
+
+// Paste from clipboard (Ctrl+V or right-click paste)
+document.addEventListener('paste', e => {
+  const items = e.clipboardData?.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      const file = item.getAsFile();
+      if (file) { loadFile(file); break; }
+    }
+  }
+});
+
+document.getElementById('changeBtn').addEventListener('click', resetAll);
+document.getElementById('newBtn').addEventListener('click', resetAll);
+
+
+// ── Recognize ─────────────────────────────────────────────────
+document.getElementById('recognizeBtn').addEventListener('click', async () => {
+  if (!imageFile) return;
+  const lang = document.getElementById('langSelect').value;
+  showState('processing');
+
+  const progressBar    = document.getElementById('progressBar');
+  const progressLabel  = document.getElementById('progressLabel');
+  const progressStatus = document.getElementById('progressStatus');
+
+  const STATUS_LABELS = {
+    'loading tesseract core':        'Loading OCR engine',
+    'initializing tesseract':        'Initializing engine',
+    'loading language traineddata':  'Loading language data',
+    'initializing api':              'Starting API',
+    'recognizing text':              'Recognizing text',
+  };
+
+  try {
+    const result = await Tesseract.recognize(imageUrl, lang, {
+      logger: m => {
+        const label = STATUS_LABELS[m.status] || m.status;
+        progressStatus.textContent = label;
+        progressLabel.textContent  = label.toUpperCase();
+        if (m.progress != null) {
+          progressBar.style.width = Math.round(m.progress * 100) + '%';
+        }
+      },
+    });
+
+    const text = (result.data.text || '').trim();
+    document.getElementById('textOutput').value = text;
+
+    const words = text ? text.split(/\s+/).filter(Boolean).length : 0;
+    const chars = text.length;
+    document.getElementById('wordCount').textContent = `${words} words · ${chars} chars`;
+
+    showState('result');
+  } catch (err) {
+    progressStatus.textContent = 'Error: ' + err.message;
+    progressLabel.textContent  = 'FAILED';
+  }
+});
+
+
+// ── Copy ───────────────────────────────────────────────────────
+document.getElementById('copyBtn').addEventListener('click', function () {
+  const text = document.getElementById('textOutput').value;
+  if (!text) return;
+  navigator.clipboard.writeText(text).catch(() => {});
+  const o = this.textContent;
+  this.textContent = 'Copied!';
+  setTimeout(() => this.textContent = o, 1400);
+});
+
+
+// ── Download .txt ──────────────────────────────────────────────
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  const text = document.getElementById('textOutput').value;
+  if (!text) return;
+  const name = imageFile ? imageFile.name.replace(/\.[^.]+$/, '') : 'extracted';
+  const blob = new Blob([text], { type: 'text/plain' });
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(blob), download: `${name}-text.txt`,
+  });
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+
+// ── Helpers ────────────────────────────────────────────────────
+function formatBytes(b) {
+  if (b < 1024)    return b + ' B';
+  if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+  return (b / 1048576).toFixed(2) + ' MB';
+}
+
+showState('drop');
+</script>
+</body>
+</html>

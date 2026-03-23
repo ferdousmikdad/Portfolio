@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Image Converter — Tools</title>
+  <script>if (window.self !== window.top) document.documentElement.dataset.embed = '1';</script>
+  <style>[data-embed='1'] header { display: none !important; }</style>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    @font-face {
+      font-family: 'BoldPixels';
+      src: url('../assets/BoldPixels.otf') format('opentype');
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    * { font-family: 'Fira Code', monospace; }
+    .title-font { font-family: 'BoldPixels', 'Courier New', monospace; letter-spacing: 2px; }
+
+    html, body { height: 100%; }
+    body {
+      background-color: #09090b;
+      color: #e4e4e7;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    /* ── Header ── */
+    header {
+      background: #09090b;
+      border-bottom: 1px solid #1c1c1e;
+      display: flex; align-items: center; gap: 16px;
+      padding: 12px 20px; flex-shrink: 0;
+    }
+
+    /* ── Main ── */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px 60px;
+    }
+
+    /* ── Card ── */
+    .card {
+      width: 100%;
+      max-width: 520px;
+      background: #111113;
+      border: 1px solid #1c1c1e;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    /* ── Drop zone ── */
+    .drop-zone {
+      padding: 56px 40px;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 16px;
+      cursor: pointer;
+      border-bottom: 1px solid #1c1c1e;
+      transition: background .2s;
+    }
+    .drop-zone:hover, .drop-zone.drag-over {
+      background: rgba(239,68,68,.04);
+    }
+    .drop-label { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: #52525b; font-family: 'BoldPixels', monospace; }
+    .drop-sub   { font-size: 11px; color: #3f3f46; }
+    .choose-btn {
+      margin-top: 4px; padding: 7px 22px;
+      border: 1.5px solid #3f3f46; border-radius: 8px;
+      font-size: 11px; font-family: 'BoldPixels', monospace;
+      letter-spacing: 1px; color: #71717a; background: transparent;
+      cursor: pointer; transition: border-color .15s, color .15s;
+    }
+    .choose-btn:hover { border-color: #ef4444; color: #ef4444; }
+
+    /* ── File info bar ── */
+    .file-bar {
+      display: none;
+      padding: 12px 20px;
+      border-bottom: 1px solid #1c1c1e;
+      align-items: center; justify-content: space-between; gap: 12px;
+    }
+    .file-bar.show { display: flex; }
+    .file-name { font-size: 11px; color: #a1a1aa; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 260px; }
+    .file-meta { font-size: 10px; color: #3f3f46; white-space: nowrap; flex-shrink: 0; }
+    .change-btn {
+      padding: 4px 10px; font-size: 9px;
+      font-family: 'BoldPixels', monospace; letter-spacing: 1px;
+      border: 1.5px solid #27272a; border-radius: 5px;
+      background: transparent; color: #52525b;
+      cursor: pointer; transition: border-color .15s, color .15s; flex-shrink: 0;
+    }
+    .change-btn:hover { border-color: #52525b; color: #a1a1aa; }
+
+    /* ── Settings ── */
+    .settings {
+      display: none;
+      flex-direction: column;
+      gap: 0;
+    }
+    .settings.show { display: flex; }
+
+    .setting-row {
+      padding: 16px 20px;
+      border-bottom: 1px solid #1c1c1e;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    }
+    .setting-label { font-size: 10px; color: #52525b; text-transform: uppercase; letter-spacing: .12em; flex-shrink: 0; }
+
+    /* Format toggle */
+    .fmt-toggle { display: flex; border: 1px solid #27272a; border-radius: 8px; overflow: hidden; }
+    .fmt-btn {
+      padding: 6px 16px; font-size: 11px;
+      background: transparent; color: #52525b;
+      border: none; cursor: pointer; transition: background .15s, color .15s;
+    }
+    .fmt-btn + .fmt-btn { border-left: 1px solid #27272a; }
+    .fmt-btn.active { background: rgba(239,68,68,.1); color: #ef4444; }
+
+    /* Quality */
+    .quality-right { display: flex; align-items: center; gap: 10px; flex: 1; justify-content: flex-end; }
+    .quality-val { font-size: 11px; color: #ef4444; width: 36px; text-align: right; flex-shrink: 0; }
+    input[type="range"] {
+      -webkit-appearance: none; width: 140px; height: 3px;
+      border-radius: 2px; background: #27272a; outline: none; cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 13px; height: 13px;
+      border-radius: 50%; background: #ef4444; cursor: pointer;
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 13px; height: 13px; border-radius: 50%;
+      background: #ef4444; border: none; cursor: pointer;
+    }
+
+    /* Resize */
+    .resize-right { display: flex; align-items: center; gap: 6px; }
+    .dim-input {
+      width: 68px; background: #18181b;
+      border: 1.5px solid #27272a; border-radius: 6px;
+      color: #d4d4d8; font-size: 11px; padding: 5px 8px;
+      outline: none; transition: border-color .15s;
+      text-align: center;
+    }
+    .dim-input:focus { border-color: #52525b; }
+    .dim-sep { font-size: 10px; color: #3f3f46; }
+    .lock-btn {
+      padding: 5px 8px; font-size: 11px;
+      border: 1.5px solid #27272a; border-radius: 6px;
+      background: transparent; color: #52525b; cursor: pointer;
+      transition: border-color .15s, color .15s;
+    }
+    .lock-btn.locked { border-color: #ef4444; color: #ef4444; }
+
+    /* ── Download button ── */
+    .download-wrap {
+      display: none;
+      padding: 20px;
+    }
+    .download-wrap.show { display: block; }
+    .download-btn {
+      width: 100%;
+      padding: 14px;
+      background: #ef4444;
+      border: none; border-radius: 10px;
+      color: #fff;
+      font-size: 13px;
+      font-family: 'BoldPixels', monospace;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: background .15s, transform .1s;
+    }
+    .download-btn:hover  { background: #dc2626; }
+    .download-btn:active { transform: scale(.98); }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<!-- ════ HEADER ════ -->
+<header>
+  <a href="../index.html" class="title-font" style="font-size:10px;color:#52525b;text-decoration:none;"
+     onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#52525b'">← Back</a>
+  <div style="width:1px;height:16px;background:#27272a;"></div>
+  <h1 class="title-font" style="font-size:10px;color:#e4e4e7;">Image Converter</h1>
+</header>
+
+
+<!-- ════ MAIN ════ -->
+<div class="main-content">
+<div class="card">
+
+  <!-- Drop zone -->
+  <div id="dropZone" class="drop-zone">
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3f3f46" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+      <polyline points="17 8 12 3 7 8"/>
+      <line x1="12" y1="3" x2="12" y2="15"/>
+    </svg>
+    <p class="drop-label">Drop image here</p>
+    <p class="drop-sub">JPG · PNG · WebP · GIF</p>
+    <label class="choose-btn">
+      Choose File
+      <input type="file" id="fileInput" accept="image/*" style="display:none;" />
+    </label>
+  </div>
+
+  <!-- File info -->
+  <div class="file-bar" id="fileBar">
+    <span class="file-name" id="fileName">—</span>
+    <span class="file-meta" id="fileMeta">—</span>
+    <button class="change-btn" id="changeBtn">⤴ Change</button>
+  </div>
+
+  <!-- Settings -->
+  <div class="settings" id="settings">
+
+    <div class="setting-row">
+      <span class="setting-label">Format</span>
+      <div class="fmt-toggle">
+        <button class="fmt-btn active" data-fmt="image/png"  data-ext="png">PNG</button>
+        <button class="fmt-btn"        data-fmt="image/jpeg" data-ext="jpg">JPG</button>
+        <button class="fmt-btn"        data-fmt="image/webp" data-ext="webp">WebP</button>
+      </div>
+    </div>
+
+    <div class="setting-row" id="qualityRow">
+      <span class="setting-label">Quality</span>
+      <div class="quality-right">
+        <input type="range" id="qualitySlider" min="10" max="100" value="90" />
+        <span class="quality-val" id="qualityVal">90%</span>
+      </div>
+    </div>
+
+    <div class="setting-row">
+      <span class="setting-label">Resize</span>
+      <div class="resize-right">
+        <input class="dim-input" id="outWidth"  type="number" min="1" max="8000" placeholder="W" />
+        <span class="dim-sep">×</span>
+        <input class="dim-input" id="outHeight" type="number" min="1" max="8000" placeholder="H" />
+        <button class="lock-btn locked" id="lockBtn">⛓</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Download -->
+  <div class="download-wrap" id="downloadWrap">
+    <button class="download-btn" id="downloadBtn">↓ Download</button>
+  </div>
+
+</div>
+</div>
+
+<canvas id="offscreen" style="display:none;"></canvas>
+
+
+<!-- ════ SCRIPT ════ -->
+<script>
+'use strict';
+
+let sourceImg    = null;
+let origW = 0, origH = 0;
+let origFile     = null;
+let outputFmt    = 'image/png';
+let outputExt    = 'png';
+let quality      = 0.90;
+let aspectLocked = true;
+let fileName     = 'image';
+
+const dropZone    = document.getElementById('dropZone');
+const fileInput   = document.getElementById('fileInput');
+const fileBar     = document.getElementById('fileBar');
+const settings    = document.getElementById('settings');
+const downloadWrap = document.getElementById('downloadWrap');
+const offscreen   = document.getElementById('offscreen');
+const qualityRow  = document.getElementById('qualityRow');
+
+
+// ── Load file ──────────────────────────────────────────────────
+function loadFile(file) {
+  if (!file || !file.type.startsWith('image/')) return;
+  origFile = file;
+  fileName = file.name.replace(/\.[^.]+$/, '');
+
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    sourceImg = img;
+    origW = img.naturalWidth;
+    origH = img.naturalHeight;
+    URL.revokeObjectURL(url);
+
+    document.getElementById('outWidth').value  = origW;
+    document.getElementById('outHeight').value = origH;
+    document.getElementById('fileName').textContent = file.name;
+    document.getElementById('fileMeta').textContent = `${origW}×${origH} · ${formatBytes(file.size)}`;
+
+    dropZone.style.display = 'none';
+    fileBar.classList.add('show');
+    settings.classList.add('show');
+    downloadWrap.classList.add('show');
+  };
+  img.src = url;
+}
+
+function reset() {
+  sourceImg = null; origFile = null;
+  dropZone.style.display = '';
+  fileBar.classList.remove('show');
+  settings.classList.remove('show');
+  downloadWrap.classList.remove('show');
+  fileInput.value = '';
+}
+
+
+// ── Drag & drop ────────────────────────────────────────────────
+dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', ()  => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  loadFile(e.dataTransfer.files[0]);
+});
+dropZone.addEventListener('click', e => {
+  if (e.target.closest('label')) return;
+  fileInput.click();
+});
+fileInput.addEventListener('change', e => loadFile(e.target.files[0]));
+document.getElementById('changeBtn').addEventListener('click', reset);
+
+
+// ── Format ─────────────────────────────────────────────────────
+document.querySelectorAll('.fmt-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.fmt-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    outputFmt = btn.dataset.fmt;
+    outputExt = btn.dataset.ext;
+    qualityRow.style.opacity       = outputFmt === 'image/png' ? '0.35' : '1';
+    qualityRow.style.pointerEvents = outputFmt === 'image/png' ? 'none'  : 'auto';
+  });
+});
+
+
+// ── Quality ────────────────────────────────────────────────────
+document.getElementById('qualitySlider').addEventListener('input', function () {
+  quality = this.value / 100;
+  document.getElementById('qualityVal').textContent = this.value + '%';
+});
+
+
+// ── Resize ─────────────────────────────────────────────────────
+document.getElementById('lockBtn').addEventListener('click', function () {
+  aspectLocked = !aspectLocked;
+  this.classList.toggle('locked', aspectLocked);
+  this.textContent = aspectLocked ? '⛓' : '✂';
+});
+document.getElementById('outWidth').addEventListener('input', function () {
+  if (aspectLocked && origW && origH)
+    document.getElementById('outHeight').value = Math.round(+this.value * origH / origW) || '';
+});
+document.getElementById('outHeight').addEventListener('input', function () {
+  if (aspectLocked && origW && origH)
+    document.getElementById('outWidth').value = Math.round(+this.value * origW / origH) || '';
+});
+
+
+// ── Download ───────────────────────────────────────────────────
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  if (!sourceImg) return;
+
+  const tw = parseInt(document.getElementById('outWidth').value)  || origW;
+  const th = parseInt(document.getElementById('outHeight').value) || origH;
+
+  offscreen.width  = tw;
+  offscreen.height = th;
+  const ctx = offscreen.getContext('2d');
+
+  if (outputFmt !== 'image/png') {
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, tw, th);
+  } else {
+    ctx.clearRect(0, 0, tw, th);
+  }
+
+  ctx.drawImage(sourceImg, 0, 0, tw, th);
+
+  const q = outputFmt === 'image/png' ? undefined : quality;
+  const a = Object.assign(document.createElement('a'), {
+    href: offscreen.toDataURL(outputFmt, q),
+    download: `${fileName}-converted.${outputExt}`,
+  });
+  a.click();
+});
+
+
+// ── Helpers ────────────────────────────────────────────────────
+function formatBytes(b) {
+  if (b < 1024)    return b + ' B';
+  if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+  return (b / 1048576).toFixed(2) + ' MB';
+}
+</script>
+</body>
+</html>
