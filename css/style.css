@@ -163,6 +163,93 @@ body {
     animation: fadeIn 0.5s ease-in;
 }
 
+/* ── Skill Icons ──────────────────────────────────────────────────────────── */
+
+.skill-icon {
+    width: 28px !important;
+    height: 28px !important;
+    z-index: 3;
+    position: relative;
+    animation: skillPulse 1.2s ease-in-out infinite;
+    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.5));
+}
+
+@keyframes skillPulse {
+    0%, 100% { transform: scale(1);    filter: drop-shadow(0 0 4px rgba(255,255,255,0.4)); }
+    50%       { transform: scale(1.18); filter: drop-shadow(0 0 8px rgba(255,255,255,0.9)); }
+}
+
+/* ── Floating Message ─────────────────────────────────────────────────────── */
+
+.floating-msg {
+    position: absolute;
+    font-size: 11px;
+    font-family: 'Fira Code', monospace;
+    font-weight: 600;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 50;
+    transform: translateX(-50%);
+    animation: floatUp 1.6s ease-out forwards;
+}
+
+@keyframes floatUp {
+    0%   { opacity: 0;   transform: translateX(-50%) translateY(0);    }
+    15%  { opacity: 1;   transform: translateX(-50%) translateY(-6px);  }
+    80%  { opacity: 1;   transform: translateX(-50%) translateY(-24px); }
+    100% { opacity: 0;   transform: translateX(-50%) translateY(-32px); }
+}
+
+/* ── Figma Effect: Grid Overlay ───────────────────────────────────────────── */
+
+#gameGrid.figma-grid-overlay::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 40;
+    background-image:
+        linear-gradient(rgba(167,139,250,0.15) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(167,139,250,0.15) 1px, transparent 1px);
+    background-size:
+        calc(100% / 15) calc(100% / 10);
+    animation: figmaGridFade 2s ease forwards;
+}
+
+@keyframes figmaGridFade {
+    0%   { opacity: 0; }
+    10%  { opacity: 1; }
+    80%  { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* ── AI Power Mode: Screen Glow ───────────────────────────────────────────── */
+
+#gameGrid.ai-power-glow {
+    box-shadow: 0 0 0 2px rgba(52,211,153,0.6), 0 0 30px rgba(52,211,153,0.3);
+    animation: aiGlitch 0.15s steps(1) infinite;
+}
+
+@keyframes aiGlitch {
+    0%   { box-shadow: 0 0 0 2px rgba(52,211,153,0.6), 0 0 30px rgba(52,211,153,0.3);  }
+    33%  { box-shadow: 1px 0 0 2px rgba(52,211,153,0.5), 0 0 24px rgba(52,211,153,0.2); }
+    66%  { box-shadow: -1px 0 0 2px rgba(52,211,153,0.7), 0 0 36px rgba(52,211,153,0.4); }
+    100% { box-shadow: 0 0 0 2px rgba(52,211,153,0.6), 0 0 30px rgba(52,211,153,0.3);  }
+}
+
+/* ── After Effects: Motion Trail ──────────────────────────────────────────── */
+
+.trail-ghost {
+    position: relative;
+    z-index: 2;
+    filter: blur(1px) hue-rotate(20deg);
+    pointer-events: none;
+}
+
+.trail-pacman {
+    transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+}
+
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }

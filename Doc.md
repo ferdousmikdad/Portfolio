@@ -95,6 +95,63 @@ This is a creative portfolio website for Ferdous Mikdad, a Creative & UI/UX Desi
    - Browser autoplay policy compliance with AudioContext management
    - Sound toggle button with hover effects and proper z-index
 
+## Pacman Skill Collection Feature (Implemented)
+
+### Overview
+The Pac-Man game has been enhanced into a "skill collection experience" where collectible icons represent design skills and trigger visual effects, messages, and temporary power-ups.
+
+### Skill Icons (`assets/icons/`)
+| Type | File | Floating Message |
+|------|------|-----------------|
+| Figma | `figma-icon.svg` | `+ UI/UX Thinking Unlocked` |
+| AI/Magic | `magic-icon.svg` | `+ AI Workflow Activated` |
+| After Effects | `after-effect.svg` | `+ Motion Design Unlocked` |
+
+- 3 icons spawn randomly at game start, spaced at least 4 cells apart
+- Icons pulse with a glow animation to stand out from regular dots
+- On collision with Pacman: icon is removed, floating message fades up near Pacman
+
+### Effects Per Skill
+
+**Figma (2 seconds)**
+- Semi-transparent purple grid overlay via CSS `::after` on `#gameGrid`
+- CSS class: `figma-grid-overlay`
+
+**AI / Power Mode (3 seconds)**
+- Speed increases: `currentSpeed` drops from 100ms → 60ms
+- Magnet mode: any skill icons within 4 cells auto-collect on each move
+- Green glitch glow pulses around the game border
+- CSS class: `ai-power-glow`
+
+**After Effects (persists until reset)**
+- Motion trail: last 4 Pacman positions rendered as faded ghost images
+- Pacman gets smoother CSS easing (`cubic-bezier`)
+- State flag: `trailMode = true`
+
+### State Variables Added (`js/game.js`)
+```js
+let skillIcons   = [];   // { x, y, type, collected }
+let magnetMode   = false;
+let trailMode    = false;
+let aiPowerMode  = false;
+let currentSpeed = GAME_SPEED;
+let pacmanTrail  = [];   // last 4 positions for trail
+let effectTimers = [];   // setTimeout IDs, cleared on resetGame()
+```
+
+### CSS Classes Added (`css/style.css`)
+- `.skill-icon` — pulsing icon style
+- `.floating-msg` — floating text with `floatUp` keyframe animation
+- `#gameGrid.figma-grid-overlay::after` — purple grid overlay
+- `#gameGrid.ai-power-glow` — green glitch glow
+- `.trail-ghost` — faded/blurred trail pacman image
+- `.trail-pacman` — eased movement on Pacman during trail mode
+
+### Cleanup
+`resetGame()` clears all timers, resets all flags, and removes all effect CSS classes — safe for project switching.
+
+---
+
 ## Potential Improvements & Future Enhancements
 
 ### High Priority
