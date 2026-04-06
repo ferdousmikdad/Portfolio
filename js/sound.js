@@ -105,8 +105,8 @@ function initSound() {
 function updateSoundIcon() {
     const onIcon  = document.getElementById('soundOnIcon');
     const offIcon = document.getElementById('soundOffIcon');
-    if (onIcon)  onIcon.style.display  = soundEnabled ? 'block' : 'none';
-    if (offIcon) offIcon.style.display = soundEnabled ? 'none'  : 'block';
+    if (onIcon)  onIcon.classList.toggle('hidden',  !soundEnabled);
+    if (offIcon) offIcon.classList.toggle('hidden',  soundEnabled);
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────

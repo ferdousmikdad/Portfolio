@@ -9,6 +9,7 @@ function initNavigation() {
         item.addEventListener('click', function () {
             navigateTo(this.dataset.page);
         });
+        initDecodeEffect(item);
     });
 
     document.querySelectorAll('.nav-link').forEach(link => {
@@ -16,6 +17,52 @@ function initNavigation() {
             e.preventDefault();
             if (this.dataset.page) navigateTo(this.dataset.page);
         });
+    });
+}
+
+// ── Decode Hover Effect ───────────────────────────────────────────────────────
+
+const DECODE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%';
+
+function initDecodeEffect(el) {
+    const original = el.textContent.trim();
+    let animFrame  = null;
+
+    el.addEventListener('mouseenter', () => {
+        cancelAnimationFrame(animFrame);
+        let iteration = 0;
+        const totalSteps = original.length * 3;
+
+        let lastTime = 0;
+        const FRAME_DELAY = 35; // ms per frame — increase to slow down
+
+        function step(timestamp) {
+            if (timestamp - lastTime < FRAME_DELAY) {
+                animFrame = requestAnimationFrame(step);
+                return;
+            }
+            lastTime = timestamp;
+
+            el.textContent = original.split('').map((char, i) => {
+                if (char === ' ') return ' ';
+                if (i < Math.floor(iteration / 3)) return original[i];
+                return DECODE_CHARS[Math.floor(Math.random() * DECODE_CHARS.length)];
+            }).join('');
+
+            iteration++;
+            if (iteration <= totalSteps) {
+                animFrame = requestAnimationFrame(step);
+            } else {
+                el.textContent = original;
+            }
+        }
+
+        step();
+    });
+
+    el.addEventListener('mouseleave', () => {
+        cancelAnimationFrame(animFrame);
+        el.textContent = original;
     });
 }
 
@@ -51,24 +98,30 @@ function startComingSoonAnimation() {
     const sub = document.getElementById('comingSoonSub');
     if (!el || !sub) return;
 
-    const text    = 'Coming Soon';
-    const cursor  = '<span class="typing-cursor">|</span>';
-    el.innerHTML  = '';
-    sub.style.opacity = '0';
+    const cursor = '<span class="typing-cursor">|</span>';
+    el.innerHTML      = '';
+    sub.innerHTML     = '';
+    sub.style.opacity = '1';
 
+    typeText(el, 'Coming Soon', 100, () => {
+        setTimeout(() => typeText(sub, 'Something exciting is on the way. Stay tuned.', 40), 300);
+    });
+}
+
+function typeText(el, text, speed, onDone) {
+    const cursor = '<span class="typing-cursor">|</span>';
     let i = 0;
     const interval = setInterval(() => {
         el.innerHTML = text.slice(0, i + 1) + cursor;
         i++;
         if (i === text.length) {
             clearInterval(interval);
-            // Blink cursor briefly then remove it, reveal subtitle
             setTimeout(() => {
                 el.innerHTML = text;
-                sub.style.opacity = '1';
-            }, 800);
+                if (onDone) onDone();
+            }, 600);
         }
-    }, 100);
+    }, speed);
 }
 
 // Public API

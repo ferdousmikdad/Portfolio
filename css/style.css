@@ -158,6 +158,29 @@ body {
     background-repeat: no-repeat;
 }
 
+/* Sound Toggle Button */
+.sound-toggle-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.7;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.sound-toggle-btn:hover {
+    opacity: 1;
+    transform: scale(1.15);
+}
+
+.sound-icon {
+    width: 22px;
+    height: 22px;
+}
+
 /* Typing Cursor */
 .typing-cursor {
     display: inline-block;

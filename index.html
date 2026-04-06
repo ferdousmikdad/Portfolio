@@ -43,6 +43,10 @@
       <div class="nav-bottom-item title-font text-lg" data-page="tools">
         Tools
       </div>
+      <button id="soundToggle" class="sound-toggle-btn" title="Toggle sound">
+        <img id="soundOnIcon"  src="assets/images/soundOn.svg"  alt="Sound On"  class="sound-icon" />
+        <img id="soundOffIcon" src="assets/images/soundOff.svg" alt="Sound Off" class="sound-icon hidden" />
+      </button>
     </nav>
 
     <!-- Main Container -->
@@ -255,9 +259,8 @@
           class="page-content hidden flex items-center justify-center min-h-[600px]"
         >
           <div class="text-center p-12">
-            <p class="title-font text-sm text-red-500 tracking-widest uppercase mb-4">Shop</p>
             <h2 id="comingSoonText" class="title-font text-6xl md:text-8xl mb-6"></h2>
-            <p id="comingSoonSub" class="text-[#B0AA95] text-lg max-w-md mx-auto opacity-0 transition-opacity duration-700">Something exciting is on the way. Stay tuned.</p>
+            <p id="comingSoonSub" class="text-[#B0AA95] text-lg mx-auto whitespace-nowrap"></p>
           </div>
         </div>
 
