@@ -2,101 +2,190 @@
 
 document.addEventListener('DOMContentLoaded', initWorkGallery);
 
-// ── Public Entry Point ────────────────────────────────────────────────────────
+// ── State ─────────────────────────────────────────────────────────────────────
+
+let workImages     = [];
+let previewOverlay = null;
+
+// Cursor-following hover image
+let hoverImg      = null;
+let targetX       = 0;
+let targetY       = 0;
+let currentX      = 0;
+let currentY      = 0;
+let hoverVisible  = false;
+let rafId         = null;
+
+// ── Entry Point ───────────────────────────────────────────────────────────────
 
 function initWorkGallery() {
-    const imageGallery = document.getElementById('imageGallery');
-    if (!imageGallery) return;
-
     fetch('assets/work/work.json')
         .then(res => {
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             return res.json();
         })
         .then(data => {
-            const workPageTitle = document.getElementById('workPageTitle');
-            if (workPageTitle && data.title) workPageTitle.textContent = data.title;
-
-            if (Array.isArray(data.images)) {
-                loadGalleryImages(data.images);
-            } else {
-                imageGallery.innerHTML = '<p class="text-yellow-500 col-span-3">Invalid image data format.</p>';
-            }
+            if (Array.isArray(data.images)) workImages = data.images;
+            else loadFallbackImages();
+            buildPage();
         })
-        .catch(() => loadFallbackGallery());
+        .catch(() => { loadFallbackImages(); buildPage(); });
 }
 
-// ── Gallery Rendering ─────────────────────────────────────────────────────────
+function buildPage() {
+    initPreviewOverlay();
+    initHoverImage();
+    initWorkList();
+    initFixedRow();
+}
 
-function loadGalleryImages(images) {
-    const imageGallery = document.getElementById('imageGallery');
-    if (!imageGallery) return;
+// ── Full-Viewport Preview Overlay (fixed row hover) ───────────────────────────
 
-    imageGallery.innerHTML = '';
+function initPreviewOverlay() {
+    if (document.getElementById('workPreviewOverlay')) {
+        previewOverlay = document.getElementById('workPreviewOverlay');
+        return;
+    }
+    previewOverlay    = document.createElement('div');
+    previewOverlay.id = 'workPreviewOverlay';
+    previewOverlay.className = 'work-preview-overlay';
+    previewOverlay.innerHTML = `<img class="work-preview-img" src="" alt="">`;
+    document.body.appendChild(previewOverlay);
+}
 
-    images.forEach(image => {
+function showPreview(imgData) {
+    if (!previewOverlay) return;
+    previewOverlay.querySelector('.work-preview-img').src = imgData.src;
+    previewOverlay.querySelector('.work-preview-img').alt = imgData.alt || '';
+    previewOverlay.classList.add('active');
+}
+
+function hidePreview() {
+    if (!previewOverlay) return;
+    previewOverlay.classList.remove('active');
+}
+
+// ── Cursor-Following Hover Image (work list) ──────────────────────────────────
+
+function initHoverImage() {
+    if (document.getElementById('workHoverImg')) {
+        hoverImg = document.getElementById('workHoverImg');
+        return;
+    }
+    hoverImg    = document.createElement('img');
+    hoverImg.id = 'workHoverImg';
+    hoverImg.className = 'work-hover-img';
+    document.body.appendChild(hoverImg);
+    rafId = requestAnimationFrame(animateHover);
+}
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+function animateHover() {
+    currentX = lerp(currentX, targetX, 0.1);
+    currentY = lerp(currentY, targetY, 0.1);
+    if (hoverImg) {
+        hoverImg.style.left = (currentX + 28) + 'px';
+        hoverImg.style.top  = (currentY - 120) + 'px';
+    }
+    rafId = requestAnimationFrame(animateHover);
+}
+
+function showHoverImage(src, e) {
+    hoverImg.src = src;
+    targetX = currentX = e.clientX;
+    targetY = currentY = e.clientY;
+    hoverImg.style.left = (currentX + 28) + 'px';
+    hoverImg.style.top  = (currentY - 120) + 'px';
+    hoverVisible = true;
+    hoverImg.classList.add('visible');
+}
+
+function hideHoverImage() {
+    hoverVisible = false;
+    hoverImg.classList.remove('visible');
+}
+
+function trackHover(e) {
+    if (!hoverVisible) return;
+    targetX = e.clientX;
+    targetY = e.clientY;
+}
+
+// ── Work List (upper interactive section) ─────────────────────────────────────
+
+function initWorkList() {
+    const workPage = document.getElementById('workPage');
+    if (!workPage || document.getElementById('workList')) return;
+
+    const list    = document.createElement('div');
+    list.id       = 'workList';
+    list.className = 'work-list';
+
+    workImages.forEach((imgData, i) => {
         const item = document.createElement('div');
-        item.className = 'gallery-item relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300';
+        item.className = 'work-list-item';
 
-        const img     = createGalleryImage(image);
-        const overlay = createGalleryOverlay(image.title);
+        const num  = document.createElement('span');
+        num.className = 'work-list-num';
+        num.textContent = String(i + 1).padStart(2, '0');
 
-        item.appendChild(img);
-        item.appendChild(overlay);
-        imageGallery.appendChild(item);
-    });
-}
+        const title = document.createElement('span');
+        title.className = 'work-list-title';
+        title.textContent = imgData.title || imgData.alt || `Project ${i + 1}`;
 
-function createGalleryImage(image) {
-    const img      = document.createElement('img');
-    img.src        = image.src;
-    img.alt        = image.alt || 'Work image';
-    img.loading    = 'lazy';
-    img.className  = 'w-full h-64 object-cover cursor-pointer transition-transform duration-300 hover:scale-105';
+        item.appendChild(num);
+        item.appendChild(title);
+        list.appendChild(item);
 
-    img.addEventListener('error', function () {
-        img.style.display = 'none';
+        // Hover: show image following cursor
+        item.addEventListener('mouseenter', e => showHoverImage(imgData.src, e));
+        item.addEventListener('mousemove',  trackHover);
+        item.addEventListener('mouseleave', hideHoverImage);
 
-        const placeholder = document.createElement('div');
-        placeholder.className = 'w-full h-64 bg-zinc-900 border border-zinc-700 flex items-center justify-center text-zinc-500 text-sm';
-        placeholder.textContent = image.title || 'Image unavailable';
-        img.parentElement?.appendChild(placeholder);
+        // Staggered entrance
+        setTimeout(() => item.classList.add('work-list-item--visible'), 80 + i * 70);
     });
 
-    return img;
+    workPage.appendChild(list);
 }
 
-function createGalleryOverlay(title) {
-    const overlay    = document.createElement('div');
-    overlay.className = 'absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300';
+// ── Fixed Horizontal Row (bottom) ─────────────────────────────────────────────
 
-    const heading    = document.createElement('h3');
-    heading.className = 'text-white text-lg font-semibold text-center p-4';
-    heading.textContent = title || 'Untitled';
+function initFixedRow() {
+    const workPage = document.getElementById('workPage');
+    if (!workPage || document.getElementById('workFixedRow')) return;
 
-    overlay.appendChild(heading);
-    return overlay;
+    const row     = document.createElement('div');
+    row.id        = 'workFixedRow';
+    row.className = 'work-fixed-row';
+
+    workImages.forEach((imgData, i) => {
+        const img     = document.createElement('img');
+        img.src       = imgData.src;
+        img.alt       = imgData.alt || '';
+        img.className = 'work-fixed-img';
+
+        img.addEventListener('mouseenter', () => showPreview(imgData));
+        img.addEventListener('mouseleave', hidePreview);
+
+        row.appendChild(img);
+        setTimeout(() => img.classList.add('work-fixed-img--visible'), 120 + i * 90);
+    });
+
+    workPage.appendChild(row);
 }
 
-// ── Fallback Data ─────────────────────────────────────────────────────────────
+// ── Fallback ──────────────────────────────────────────────────────────────────
 
-function loadFallbackGallery() {
-    const imageGallery  = document.getElementById('imageGallery');
-    const workPageTitle = document.getElementById('workPageTitle');
-
-    if (workPageTitle) workPageTitle.textContent = 'Creative Work';
-
-    const fallbackImages = [
-        { id: 1, src: 'assets/work/mustofacalligraphy.webp', alt: 'Mustofa Calligraphy',  title: 'Mustofa Calligraphy'   },
-        { id: 2, src: 'assets/work/portfolio.webp',          alt: 'Portfolio Design',       title: 'Portfolio Design'      },
-        { id: 3, src: 'assets/work/summersale.webp',         alt: 'Summer Sale',            title: 'Summer Sale Campaign'  },
-        { id: 4, src: 'assets/work/zariyalogo.webp',         alt: 'Zariya Logo',            title: 'Zariya Logo Design'    },
+function loadFallbackImages() {
+    workImages = [
+        { src: 'assets/work/mustofacalligraphy.webp', alt: 'Mustofa Calligraphy',   title: 'Mustofa Calligraphy'   },
+        { src: 'assets/work/portfolio.webp',          alt: 'Portfolio Design',       title: 'Portfolio Design'      },
+        { src: 'assets/work/summersale.webp',         alt: 'Summer Sale',            title: 'Summer Sale'           },
+        { src: 'assets/work/zariyalogo.webp',         alt: 'Zariya Logo',            title: 'Zariya Logo'           },
     ];
-
-    if (imageGallery) loadGalleryImages(fallbackImages);
 }
 
-// ── Public API ────────────────────────────────────────────────────────────────
-
-window.initWorkGallery  = initWorkGallery;
-window.loadFallbackGallery = loadFallbackGallery;
+window.initWorkGallery     = initWorkGallery;
+window.loadFallbackGallery = loadFallbackImages;

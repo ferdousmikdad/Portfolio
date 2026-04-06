@@ -23,6 +23,18 @@
     <link rel="stylesheet" href="css/style.css" />
   </head>
   <body class="bg-black text-white">
+    <!-- SVG filter for pixelation effect on work cards -->
+    <svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+      <defs>
+        <filter id="pixelate" x="0" y="0" width="100%" height="100%">
+          <feFlood x="2" y="2" height="4" width="4" color-interpolation-filters="sRGB"/>
+          <feComposite width="6" height="6"/>
+          <feTile result="pixel"/>
+          <feComposite in="SourceGraphic" in2="pixel" operator="in"/>
+          <feMorphology operator="dilate" radius="2"/>
+        </filter>
+      </defs>
+    </svg>
     <!-- Bottom Navigation Bar -->
     <nav
       class="fixed bottom-8 left-0 right-0 flex items-center justify-center gap-6 z-50 bg-transparent backdrop-blur-sm px-8"
@@ -185,27 +197,7 @@
         </div>
 
         <!-- WORK PAGE -->
-        <div id="workPage" class="page-content hidden flex-col items-center">
-          <!-- Image Gallery Container -->
-          <div
-            class="w-full max-w-[1140px] rounded-lg overflow-hidden relative min-h-[500px] p-6"
-          >
-            <h2
-              id="workPageTitle"
-              class="title-font text-3xl mb-6 text-red-500"
-            >
-              Creative Work
-            </h2>
-
-            <!-- Image Gallery Grid -->
-            <div
-              id="imageGallery"
-              class="grid grid-cols-1 md:grid-cols-3 gap-4"
-            >
-              <!-- Images will be loaded here dynamically -->
-            </div>
-          </div>
-        </div>
+        <div id="workPage" class="page-content hidden flex-col items-center min-h-[600px] w-full"></div>
 
         <!-- CONTACT PAGE -->
         <div

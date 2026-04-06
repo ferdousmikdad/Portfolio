@@ -158,6 +158,239 @@ body {
     background-repeat: no-repeat;
 }
 
+/* ── Work Page ────────────────────────────────────────────────────────────── */
+
+/* Card entrance animation */
+.gallery-item {
+    position: relative;
+    overflow: hidden;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    opacity: 0;
+    transform: translateY(40px);
+    transition:
+        opacity 0.5s ease,
+        transform 0.5s ease,
+        box-shadow 0.3s ease;
+    cursor: none;
+}
+
+.gallery-item--visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Hover: lift */
+.gallery-item:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.6);
+}
+
+.gallery-img {
+    width: 100%;
+    height: 256px;
+    object-fit: cover;
+    display: block;
+    transition: filter 0.3s ease, transform 0.3s ease;
+}
+
+/* Hover: pixelation via scale trick + CSS filter */
+.gallery-item:hover .gallery-img {
+    filter: url(#pixelate) contrast(1.05);
+    image-rendering: pixelated;
+    transform: scale(1.04);
+}
+
+.gallery-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.gallery-item:hover .gallery-overlay {
+    opacity: 1;
+}
+
+
+/* Work page: full viewport, sits beneath the fixed nav (z-50) */
+#workPage {
+    position: fixed !important;
+    inset: 0;
+    z-index: 10;
+    background: transparent;
+}
+
+/* ── Work List — upper interactive section ───────────────────────────────── */
+
+.work-list {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -60%);
+    width: 100%;
+    max-width: 700px;
+    padding: 0 48px;
+}
+
+.work-list-item {
+    display: flex;
+    align-items: baseline;
+    gap: 20px;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    cursor: none;
+    opacity: 0;
+    transform: translateY(12px);
+    transition:
+        opacity  0.45s ease,
+        transform 0.45s ease,
+        color    0.2s ease;
+}
+
+.work-list-item:first-child {
+    border-top: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.work-list-item--visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.work-list-item:hover .work-list-title {
+    color: #ef4444;
+    transform: translateX(6px);
+}
+
+.work-list-num {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.75rem;
+    color: rgba(0, 0, 0, 0.35);
+    flex-shrink: 0;
+    transition: color 0.2s ease;
+}
+
+.work-list-item:hover .work-list-num {
+    color: #ef4444;
+}
+
+.work-list-title {
+    font-family: 'BoldPixels', sans-serif;
+    font-size: clamp(1.4rem, 3.5vw, 2.6rem);
+    color: #1a1a1a;
+    letter-spacing: 0.02em;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+/* ── Cursor-following hover image ────────────────────────────────────────── */
+
+.work-hover-img {
+    position: fixed;
+    z-index: 9000;
+    width: 220px;
+    height: 160px;
+    object-fit: cover;
+    border-radius: 4px;
+    pointer-events: none;
+    opacity: 0;
+    transform: scale(0.92) rotate(-2deg);
+    transition:
+        opacity   0.28s ease,
+        transform 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: transform, opacity, left, top;
+}
+
+.work-hover-img.visible {
+    opacity: 1;
+    transform: scale(1) rotate(-2deg);
+}
+
+
+/* ── Full-Viewport Preview Overlay ───────────────────────────────────────── */
+
+.work-preview-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 5;               /* below workPage (z-10), fixed row, and nav (z-50) */
+    opacity: 0;
+    pointer-events: none;     /* cursor stays visible and interactive */
+    transition: opacity 0.35s ease;
+}
+
+.work-preview-overlay.active {
+    opacity: 1;
+}
+
+.work-preview-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    display: block;
+}
+
+
+/* ── State 2 : Fixed Horizontal Row ──────────────────────────────────────── */
+
+.work-fixed-row {
+    position: absolute;
+    bottom: 96px;            /* clear the fixed nav bar */
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;   /* baseline-align all images */
+    gap: 8px;
+    z-index: 10;
+    pointer-events: auto;
+    /* allow horizontal scroll if images exceed viewport width */
+    max-width: 100vw;
+    overflow-x: auto;
+    overflow-y: visible;
+    padding: 24px 32px 4px;
+    /* hide scrollbar but keep scroll */
+    scrollbar-width: none;
+}
+.work-fixed-row::-webkit-scrollbar { display: none; }
+
+.work-fixed-img {
+    width: 56px;
+    height: 108px;
+    object-fit: cover;
+    border-radius: 4px;
+    box-shadow: none;
+    flex-shrink: 0;
+
+    /* Staggered entrance: rise up from below */
+    opacity: 0;
+    transform: translateY(28px);
+    transition:
+        opacity  0.55s ease,
+        transform 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+        box-shadow 0.28s ease;
+}
+
+.work-fixed-img--visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Hover: lift + light red border */
+.work-fixed-img--visible:hover {
+    transform: translateY(-14px) scale(1.04) !important;
+    box-shadow: none;
+    outline: 2px solid rgba(239, 68, 68, 0.5);
+    transition:
+        opacity   0.2s ease,
+        transform 0.26s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+        outline   0.2s ease;
+}
+
+
 /* Sound Toggle Button */
 .sound-toggle-btn {
     background: transparent;
