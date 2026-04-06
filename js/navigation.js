@@ -43,6 +43,32 @@ function navigateTo(page) {
 
     if (page === 'home' && window.resetGame)        window.resetGame();
     if (page === 'work' && window.initWorkGallery)  window.initWorkGallery();
+    if (page === 'shop')                            startComingSoonAnimation();
+}
+
+function startComingSoonAnimation() {
+    const el  = document.getElementById('comingSoonText');
+    const sub = document.getElementById('comingSoonSub');
+    if (!el || !sub) return;
+
+    const text    = 'Coming Soon';
+    const cursor  = '<span class="typing-cursor">|</span>';
+    el.innerHTML  = '';
+    sub.style.opacity = '0';
+
+    let i = 0;
+    const interval = setInterval(() => {
+        el.innerHTML = text.slice(0, i + 1) + cursor;
+        i++;
+        if (i === text.length) {
+            clearInterval(interval);
+            // Blink cursor briefly then remove it, reveal subtitle
+            setTimeout(() => {
+                el.innerHTML = text;
+                sub.style.opacity = '1';
+            }, 800);
+        }
+    }, 100);
 }
 
 // Public API

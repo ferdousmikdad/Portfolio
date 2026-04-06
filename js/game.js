@@ -68,6 +68,7 @@ function startGameHandler() {
         gameStarted = true;
         startOverlay.classList.add('hidden');
         initializeDots();
+        if (window.playBackground) window.playBackground();
     } else {
         resetGame();
     }
@@ -244,6 +245,35 @@ function collectSkillIcon(skill) {
 
     showFloatingMessage(skill.type);
     applySkillEffect(skill.type);
+
+    // Respawn the same icon type at a new random position after 5 seconds
+    const t = setTimeout(() => {
+        if (!gameStarted) return;
+        const pos = randomFreeCell();
+        if (pos) {
+            skillIcons.push({ x: pos.x, y: pos.y, type: skill.type, collected: false });
+            renderGame();
+        }
+    }, 10000);
+    effectTimers.push(t);
+}
+
+function randomFreeCell() {
+    const occupied = new Set();
+    occupied.add(`${pacmanPos.x},${pacmanPos.y}`);
+    skillIcons.forEach(s => { if (!s.collected) occupied.add(`${s.x},${s.y}`); });
+
+    const free = [];
+    for (let y = 0; y < GRID_ROWS; y++) {
+        for (let x = 0; x < GRID_SIZE; x++) {
+            const dot = dots.find(d => d.x === x && d.y === y);
+            if (dot && !dot.eaten && !occupied.has(`${x},${y}`)) {
+                free.push({ x, y });
+            }
+        }
+    }
+    if (!free.length) return null;
+    return free[Math.floor(Math.random() * free.length)];
 }
 
 function applySkillEffect(type) {
@@ -269,7 +299,12 @@ function applySkillEffect(type) {
         effectTimers.push(t);
 
     } else if (type === 'aftereffects') {
-        trailMode = true; // stays until reset
+        trailMode = true;
+        const t = setTimeout(() => {
+            trailMode   = false;
+            pacmanTrail = [];
+        }, 2000);
+        effectTimers.push(t);
     }
 }
 
@@ -293,27 +328,28 @@ function showFloatingMessage(type) {
     const def = SKILL_ICONS.find(d => d.type === type);
     if (!def) return;
 
-    // Find the pacman cell index to position message
-    const cellIdx = pacmanPos.y * GRID_SIZE + pacmanPos.x;
-    const cells = gameGrid.querySelectorAll('.grid-cell');
-    const anchor = cells[cellIdx];
-    if (!anchor) return;
+    const container = gameGrid.parentElement;
+    if (!container) return;
 
     const msg = document.createElement('div');
     msg.className = 'floating-msg';
     msg.textContent = def.label;
 
-    // Position relative to gameGrid
-    const gridRect   = gameGrid.getBoundingClientRect();
-    const anchorRect = anchor.getBoundingClientRect();
-    msg.style.left = (anchorRect.left - gridRect.left + anchorRect.width / 2) + 'px';
-    msg.style.top  = (anchorRect.top  - gridRect.top  - 8) + 'px';
+    // Position relative to container (gameGrid is inset-0 on it, so coords match)
+    const containerRect = container.getBoundingClientRect();
+    const cellW = gameGrid.offsetWidth  / GRID_SIZE;
+    const cellH = gameGrid.offsetHeight / GRID_ROWS;
+    const gridOffsetX = gameGrid.offsetLeft;
+    const gridOffsetY = gameGrid.offsetTop;
+
+    msg.style.left = (gridOffsetX + (pacmanPos.x + 0.5) * cellW) + 'px';
+    msg.style.top  = (gridOffsetY + pacmanPos.y * cellH - 8) + 'px';
 
     // Color by type
     const colors = { figma: '#a78bfa', ai: '#34d399', aftereffects: '#60a5fa' };
     msg.style.color = colors[type] || '#fff';
 
-    gameGrid.appendChild(msg);
+    container.appendChild(msg);
     setTimeout(() => msg.remove(), 1600);
 }
 
@@ -405,6 +441,7 @@ function handleKeyPress(e) {
             dot.eaten = true;
             dotsEaten++;
             updateProjectOpacity();
+            if (window.playSound) window.playSound('pacmaneat');
         }
     });
 

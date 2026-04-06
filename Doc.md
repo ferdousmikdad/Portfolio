@@ -123,7 +123,7 @@ The Pac-Man game has been enhanced into a "skill collection experience" where co
 - Green glitch glow pulses around the game border
 - CSS class: `ai-power-glow`
 
-**After Effects (persists until reset)**
+**After Effects (2 seconds)**
 - Motion trail: last 4 Pacman positions rendered as faded ghost images
 - Pacman gets smoother CSS easing (`cubic-bezier`)
 - State flag: `trailMode = true`

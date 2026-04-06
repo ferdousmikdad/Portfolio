@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initNavigation();
     initGame();
     initToolsNav();
+    initSound();
     navigateTo('home');
 });
 
