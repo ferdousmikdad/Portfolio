@@ -4,9 +4,10 @@ import mikdadPhoto from '@/assets/images/mikdad.jpg'
 import mikdadHeadUrl from '@/assets/icons/mikdad-head.svg?url'
 
 const socials = [
-  { label: 'LinkedIn',  href: 'https://linkedin.com/in/ferdous-mikdad' },
-  { label: 'Instagram', href: 'https://instagram.com/mikdad.ferdous' },
-  { label: 'Youtube',   href: 'https://youtube.com/@mikdadferdous' },
+  { label: 'LinkedIn',  href: 'https://www.linkedin.com/in/ferdousmikdad/' },
+  { label: 'Instagram', href: 'https://www.instagram.com/ferdousmikdad/' },
+  { label: 'Youtube',   href: 'https://www.youtube.com/@quickeven_play' },
+  { label: 'Email',     href: 'mailto:ferdousmikdad@gmail.com' },
 ]
 
 const QA = [

@@ -1,7 +1,11 @@
 import Window from '@/components/window/Window'
 import mikdadPhoto from '@/assets/images/mikdad.jpg'
 
-const socials = ['LinkedIn', 'Instagram', 'Youtube']
+const socials = [
+  { label: 'LinkedIn',  href: 'https://www.linkedin.com/in/ferdousmikdad/' },
+  { label: 'Instagram', href: 'https://www.instagram.com/ferdousmikdad/' },
+  { label: 'Email',     href: 'mailto:ferdousmikdad@gmail.com' },
+]
 
 export default function ProfileCard() {
   return (
@@ -23,7 +27,7 @@ export default function ProfileCard() {
           {/* Social buttons */}
           <div className="flex gap-2 mt-auto pt-4 pb-6 flex-wrap">
             {socials.map((s) => (
-              <button key={s} className="social-badge">{s}</button>
+              <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" className="social-badge">{s.label}</a>
             ))}
           </div>
         </div>
