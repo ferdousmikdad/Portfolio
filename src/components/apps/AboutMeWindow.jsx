@@ -81,8 +81,7 @@ export default function AboutMeWindow() {
 
   return (
     <motion.div
-      className="absolute inset-0 flex items-center justify-center overflow-y-auto window-scroll"
-
+      className="absolute inset-0 overflow-y-auto window-scroll"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -90,36 +89,40 @@ export default function AboutMeWindow() {
       onMouseMove={(e) => setYouPos({ x: e.clientX, y: e.clientY, on: true })}
       onMouseLeave={() => setYouPos((p) => ({ ...p, on: false }))}
     >
-      <div className="w-[440px] py-10 flex flex-col items-center">
+      <div className="flex flex-col items-center justify-center" style={{ minHeight: '100%', paddingBottom: '80px' }}>
+      <div className="w-[440px] flex flex-col">
 
-        {/* ── Header ── */}
-        <div className="flex flex-col items-center mb-6">
-          <div className="relative mb-1">
-            <img
-              src={mikdadHeadUrl}
-              alt="Mikdad"
-              className="about-avatar w-24 h-24 object-contain"
-            />
-            <span className="about-hey-bubble">Hey!</span>
-          </div>
-
-          <div className="flex gap-2 flex-wrap justify-center mt-4">
-            {socials.map((s) => (
-              <a
-                key={s.label}
-                href={s.href}
-                target="_blank"
-                rel="noreferrer"
-                className="social-badge"
-              >
-                {s.label}
-              </a>
-            ))}
-          </div>
+      {/* ── Header — sticks to top once scrolled ── */}
+      <div className="flex-shrink-0 flex flex-col items-center pt-8 pb-5 sticky top-0"
+        style={{ boxShadow: '0 1px 0 var(--border)', zIndex: 10 }}
+      >
+        <div className="relative mb-1">
+          <img
+            src={mikdadHeadUrl}
+            alt="Mikdad"
+            className="about-avatar w-24 h-24 object-contain"
+          />
+          <span className="about-hey-bubble">Hey!</span>
         </div>
 
-        {/* ── Chat list ── */}
-        <div className="w-full flex flex-col gap-1">
+        <div className="flex gap-2 flex-wrap justify-center mt-4">
+          {socials.map((s) => (
+            <a
+              key={s.label}
+              href={s.href}
+              target="_blank"
+              rel="noreferrer"
+              className="social-badge"
+            >
+              {s.label}
+            </a>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Chat area ── */}
+      <div className="flex-1">
+        <div className="flex flex-col gap-1 py-4">
           {QA.map((item, i) => {
             const isOpen = openIds.has(item.id)
             return (
@@ -147,7 +150,7 @@ export default function AboutMeWindow() {
                   </button>
                 </div>
 
-                {/* A row — hugs left */}
+                {/* A row — smooth grid expand */}
                 <div className={`qa-expand${isOpen ? ' open' : ''}`}>
                   <div className="qa-expand-inner">
                     <div className="flex items-start gap-2 mt-1 pr-16">
@@ -171,6 +174,9 @@ export default function AboutMeWindow() {
           })}
         </div>
       </div>
+
+      </div>{/* end w-[440px] col */}
+      </div>{/* end centering wrapper */}
 
       {/* "You" cursor tag */}
       {youPos.on && (

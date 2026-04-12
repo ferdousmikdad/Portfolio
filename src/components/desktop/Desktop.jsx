@@ -81,8 +81,8 @@ export default function Desktop() {
         )}
       </AnimatePresence>
 
-      {/* Windows layer — z-index above canvas (0) and grain (1) */}
-      <div className="absolute inset-0" style={{ zIndex: 2 }}>
+      {/* Windows layer — z-index above canvas (0), grain (1), and About Me (10) */}
+      <div className="absolute inset-0" style={{ zIndex: 20 }}>
       <AnimatePresence>
         <ProfileCard />
         <PacmanWindow />

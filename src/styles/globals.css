@@ -130,22 +130,14 @@
   }
 
   .window-shell {
+    position: relative;
     background: var(--window-bg);
+    backdrop-filter: blur(8px) saturate(1.1);
+    -webkit-backdrop-filter: blur(8px) saturate(1.1);
     border-radius: 20px;
     border: 1px solid var(--border);
     box-shadow: none;
     transition: background 0.3s ease, border-color 0.3s ease;
-    isolation: auto;
-  }
-  .window-shell::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    backdrop-filter: blur(8px) saturate(1.1);
-    -webkit-backdrop-filter: blur(8px) saturate(1.1);
-    z-index: -1;
-    pointer-events: none;
   }
 
   .window-titlebar {
