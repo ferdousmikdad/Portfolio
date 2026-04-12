@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx vite:*)",
+      "Bash(git -C \"/mnt/f/01. Me/Portfolio/website/Portfolio\" status --short)",
+      "Bash(cp -r new/src .)",
+      "Bash(cp -r new/public .)",
+      "Bash(cp new/package.json .)",
+      "Bash(cp new/package-lock.json .)",
+      "Bash(cp new/vite.config.js .)",
+      "Bash(rm -rf new/)",
+      "Bash(rm -rf assets/)",
+      "Bash(rm -rf dist/)",
+      "Bash(npm run:*)"
+    ]
+  }
+}
