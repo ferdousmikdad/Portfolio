@@ -1,14 +1,19 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { Home, User, Briefcase, ShoppingBag, FileText, Wrench } from 'lucide-react'
 import WindowControls from '@/components/window/WindowControls'
+import HomeIcon      from '@/assets/icons/nav-home.svg?react'
+import AboutIcon     from '@/assets/icons/nav-about.svg?react'
+import PortfolioIcon from '@/assets/icons/nav-portfolio.svg?react'
+import ShopIcon      from '@/assets/icons/nav-shop.svg?react'
+import NotesIcon     from '@/assets/icons/nav-notes.svg?react'
+import ToolsIcon     from '@/assets/icons/nav-tools.svg?react'
 
 const menuItems = [
-  { id: 'home',      label: 'Home',      icon: Home,        shortcut: 'Shift + H' },
-  { id: 'about',     label: 'About me',  icon: User,        shortcut: 'Shift + A' },
-  { id: 'portfolio', label: 'Portfolio', icon: Briefcase,   shortcut: 'Shift + P' },
-  { id: 'shop',      label: 'Shop',      icon: ShoppingBag, shortcut: 'Shift + S' },
-  { id: 'notes',     label: 'Notes',     icon: FileText,    shortcut: 'Shift + N' },
-  { id: 'tools',     label: 'Tools',     icon: Wrench,      shortcut: 'Shift + T' },
+  { id: 'home',      label: 'Home',      icon: HomeIcon,      shortcut: 'Shift + H' },
+  { id: 'about',     label: 'About me',  icon: AboutIcon,     shortcut: 'Shift + A' },
+  { id: 'portfolio', label: 'Portfolio', icon: PortfolioIcon, shortcut: 'Shift + P' },
+  { id: 'shop',      label: 'Shop',      icon: ShopIcon,      shortcut: 'Shift + S' },
+  { id: 'notes',     label: 'Notes',     icon: NotesIcon,     shortcut: 'Shift + N' },
+  { id: 'tools',     label: 'Tools',     icon: ToolsIcon,     shortcut: 'Shift + T' },
 ]
 
 export default function MenuWindow({ isOpen, onClose, activeId, onNavigate, menuRef }) {
@@ -32,7 +37,7 @@ export default function MenuWindow({ isOpen, onClose, activeId, onNavigate, menu
           </div>
 
           {/* Menu items */}
-          <div className="py-1.5">
+          <div className="py-1.5 px-2 flex flex-col gap-0.5">
             {menuItems.map((item) => {
               const Icon = item.icon
               const isActive = activeId === item.id
@@ -40,13 +45,17 @@ export default function MenuWindow({ isOpen, onClose, activeId, onNavigate, menu
                 <button
                   key={item.id}
                   onClick={() => { onNavigate(item.id); onClose() }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 text-left rounded-xl transition-colors group
                     ${isActive
-                      ? 'bg-brand/15 text-headline'
+                      ? 'bg-white/5 text-headline'
                       : 'text-body hover:bg-white/5 hover:text-headline'
                     }`}
                 >
-                  <Icon size={17} className={isActive ? 'text-brand' : 'text-body'} />
+                  <Icon
+                    width={17}
+                    height={17}
+                    className={`flex-shrink-0 transition-colors ${isActive ? 'text-brand' : 'text-body group-hover:text-brand'}`}
+                  />
                   <span className="flex-1 text-sm font-medium">{item.label}</span>
                   <span className="kbd-badge">{item.shortcut}</span>
                 </button>
