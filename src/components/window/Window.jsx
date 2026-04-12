@@ -6,10 +6,15 @@ import useSoundStore from '@/store/soundStore'
 import { genieOut } from '@/utils/genie'
 
 export default function Window({ id, title, children, actionLabel, hideControls, hideTitleBar, toolbar }) {
-  const { closeWindow, minimizeWindow, focusWindow, updatePosition, getWindow } = useWindowStore()
+  const { closeWindow, minimizeWindow, focusWindow, updatePosition, getWindow, toggleMaximize } = useWindowStore()
   const play   = useSoundStore((s) => s.play)
   const win    = getWindow(id)
   const winRef = useRef(null)
+
+  const handleMaximize = () => {
+    play('open')
+    toggleMaximize(id)
+  }
 
   if (!win || !win.isOpen || win.isMinimized) return null
 
@@ -62,20 +67,30 @@ export default function Window({ id, title, children, actionLabel, hideControls,
       ref={winRef}
       className="window-shell absolute"
       style={{
-        width:  win.size.width,
-        height: win.size.height,
-        zIndex: win.zIndex,
-        x: win.position.x,
-        y: win.position.y,
-        pointerEvents: 'auto',
+        width:        win.size.width,
+        height:       win.size.height,
+        zIndex:       win.zIndex,
+        x:            win.position.x,
+        y:            win.position.y,
+        pointerEvents:'auto',
+        borderRadius: win.isMaximized ? 0 : undefined,
       }}
       initial={{ opacity: 0, scale: 0.92, y: win.position.y + 20 }}
-      animate={{ opacity: 1, scale: 1,    y: win.position.y      }}
+      animate={{
+        opacity: 1,
+        scale:   1,
+        x:       win.position.x,
+        y:       win.position.y,
+        width:   win.size.width,
+        height:  win.size.height,
+        borderRadius: win.isMaximized ? 0 : 20,
+      }}
       exit={{    opacity: 0, scale: 0.88, transition: { duration: 0.15 } }}
-      drag
+      drag={!win.isMaximized}
       dragMomentum={false}
       dragElastic={0}
       onDragEnd={(_, info) => {
+        if (win.isMaximized) return
         updatePosition(id, {
           x: win.position.x + info.offset.x,
           y: win.position.y + info.offset.y,
@@ -94,7 +109,7 @@ export default function Window({ id, title, children, actionLabel, hideControls,
             <WindowControls
               onClose={() => { play('close'); closeWindow(id) }}
               onMinimize={handleMinimize}
-              onMaximize={() => {}}
+              onMaximize={handleMaximize}
             />
           )}
           {title && (

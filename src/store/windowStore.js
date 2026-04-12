@@ -144,6 +144,35 @@ const useWindowStore = create((set, get) => ({
       }),
     })),
 
+  toggleMaximize: (id) =>
+    set((state) => {
+      const vw = window.innerWidth
+      const vh = window.innerHeight
+      return {
+        windows: state.windows.map((w) => {
+          if (w.id !== id) return w
+          if (w.isMaximized) {
+            return {
+              ...w,
+              isMaximized: false,
+              position: w._savedPosition,
+              size:     w._savedSize,
+              _savedPosition: null,
+              _savedSize:     null,
+            }
+          }
+          return {
+            ...w,
+            isMaximized:    true,
+            _savedPosition: w.position,
+            _savedSize:     w.size,
+            position: { x: 0, y: 0 },
+            size:     { width: vw, height: vh },
+          }
+        }),
+      }
+    }),
+
   updatePosition: (id, position) =>
     set((state) => ({
       windows: state.windows.map((w) =>
