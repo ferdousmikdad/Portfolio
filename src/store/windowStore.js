@@ -23,7 +23,7 @@ export const TOOL_IDS = [
   'image-trace',
   'qr-code',
   'image-converter',
-  'image-compressor',
+  'print-setup',
   'image-text',
   'typing-tool',
 ]
