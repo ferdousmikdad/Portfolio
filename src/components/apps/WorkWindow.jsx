@@ -1,7 +1,9 @@
 import { useState, useMemo } from 'react'
+import useWindowStore from '@/store/windowStore'
 import { Search, Grid2X2, List, Columns3, LayoutGrid } from 'lucide-react'
 import Window from '@/components/window/Window'
 import projects, { CATEGORIES, TAGS } from '@/data/projects'
+import ProjectPreviewWindow from '@/components/apps/ProjectPreviewWindow'
 import AllIcon           from '@/assets/icons/work-all.svg?react'
 import RecentsIcon       from '@/assets/icons/work-recents.svg?react'
 import LogoIcon          from '@/assets/icons/work-logo.svg?react'
@@ -62,21 +64,18 @@ function TagRow({ tag, active, onClick }) {
 
 // ── Project card ──────────────────────────────────────────────────────────────
 
-function ProjectCard({ project }) {
+function ProjectCard({ project, onClick }) {
   return (
     <div
       className="group rounded-xl overflow-hidden cursor-pointer transition-all duration-200"
       style={{ border: '1px solid var(--border)', background: 'var(--wall-bg)' }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = 'rgba(207,5,6,0.25)'
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = ''
-      }}
+      onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(207,5,6,0.25)' }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = '' }}
+      onClick={onClick}
     >
-      <div style={{ height: 150, background: 'var(--wall-bg)' }}>
+      <div style={{ aspectRatio: '4/3', background: 'var(--wall-bg)', overflow: 'hidden' }}>
         <img
-          src={project.image}
+          src={project.thumbnail || project.image}
           alt={project.title}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
@@ -88,10 +87,13 @@ function ProjectCard({ project }) {
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function WorkWindow() {
-  const [selectedItem, setSelectedItem] = useState(null)
-  const [selectedType, setSelectedType] = useState(null)
-  const [search,       setSearch]       = useState('')
-  const [viewMode,     setViewMode]     = useState('grid')
+  const isMaximized = useWindowStore((s) => s.windows.find((w) => w.id === 'portfolio')?.isMaximized ?? false)
+
+  const [selectedItem,    setSelectedItem]    = useState(null)
+  const [selectedType,    setSelectedType]    = useState(null)
+  const [search,          setSearch]          = useState('')
+  const [viewMode,        setViewMode]        = useState('grid')
+  const [previewProject,  setPreviewProject]  = useState(null)
 
   const filtered = useMemo(() => {
     let list = projects
@@ -162,13 +164,14 @@ export default function WorkWindow() {
   )
 
   return (
+    <>
     <Window id="portfolio" title="Portfolio" toolbar={toolbar}>
       <div className="flex h-full overflow-hidden rounded-b-[20px]">
 
         {/* ── Sidebar ─────────────────────────────────────────────────────── */}
         <div
           className="flex-shrink-0 flex flex-col overflow-y-auto window-scroll py-3 gap-0.5"
-          style={{ width: 160, borderRight: '1px solid var(--border)' }}
+          style={{ width: 180, borderRight: '1px solid var(--border)' }}
         >
           {/* All */}
           <button
@@ -245,7 +248,8 @@ export default function WorkWindow() {
         </div>
 
         {/* ── Content ─────────────────────────────────────────────────────── */}
-        <div className="flex-1 overflow-y-auto window-scroll p-4">
+        <div className="flex-1 overflow-y-auto window-scroll">
+        <div className={isMaximized ? 'w-full max-w-[1140px] mx-auto p-4' : 'p-4'}>
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full gap-2" style={{ color: 'var(--body)' }}>
               <Search size={28} style={{ opacity: 0.3 }} />
@@ -262,9 +266,10 @@ export default function WorkWindow() {
                     style={{ border: '1px solid transparent' }}
                     onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--wall-bg)'; e.currentTarget.style.borderColor = 'var(--border)' }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = ''; e.currentTarget.style.borderColor = 'transparent' }}
+                    onClick={() => setPreviewProject(project)}
                   >
                     <div className="w-10 h-10 rounded-md overflow-hidden flex-shrink-0" style={{ background: 'var(--wall-bg)' }}>
-                      <img src={project.image} alt={project.title} className="w-full h-full object-cover" />
+                      <img src={project.thumbnail || project.image} alt={project.title} className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[12px] font-semibold truncate" style={{ color: 'var(--headline)' }}>{project.title}</p>
@@ -289,13 +294,20 @@ export default function WorkWindow() {
               }}
             >
               {filtered.map((project) => (
-                <ProjectCard key={project.id} project={project} />
+                <ProjectCard key={project.id} project={project} onClick={() => setPreviewProject(project)} />
               ))}
             </div>
           )}
         </div>
+        </div>
 
       </div>
     </Window>
+
+    <ProjectPreviewWindow
+      project={previewProject}
+      onClose={() => setPreviewProject(null)}
+    />
+    </>
   )
 }

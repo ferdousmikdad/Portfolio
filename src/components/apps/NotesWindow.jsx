@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, Download, Trash2, Minus } from 'lucide-react'
 import Window from '@/components/window/Window'
 import { CATEGORIES, NOTES } from '@/data/notes.js'
+import useWindowStore from '@/store/windowStore'
 
 // ── Drawing Canvas ────────────────────────────────────────────────────────────
 const COLORS  = ['#f3f0e5','#cf0506','#ffbd2e','#28c840','#3b82f6','#a78bfa','#f97316','#000000']
@@ -244,6 +245,8 @@ function NoteRow({ note, active, onClick }) {
 
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function NotesWindow() {
+  const isMaximized = useWindowStore((s) => s.windows.find((w) => w.id === 'notes')?.isMaximized ?? false)
+
   const [activeCategory, setActiveCategory] = useState('all')
   const [activeNote,     setActiveNote]     = useState(null)
   const [reading,        setReading]        = useState(false)
@@ -265,7 +268,8 @@ export default function NotesWindow() {
 
   return (
     <Window id="notes" title="Notes">
-      <div className="flex h-full">
+      <div className="flex h-full overflow-hidden">
+      <div className={`flex h-full w-full ${isMaximized ? 'max-w-[1140px] mx-auto' : ''}`}>
 
         {/* ── Sidebar ── */}
         <div
@@ -369,6 +373,7 @@ export default function NotesWindow() {
           </AnimatePresence>
         </div>
 
+      </div>
       </div>
     </Window>
   )

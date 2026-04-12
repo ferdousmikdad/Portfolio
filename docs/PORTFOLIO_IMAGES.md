@@ -6,19 +6,22 @@
 
 ## Folder structure
 
-All portfolio images live in the `public/` folder so they are served directly by the browser — no imports needed.
+Each project lives in its own subfolder inside `public/portfolio/`. Every project folder contains two images:
+
+- **`-thumbnail`** — shown in the grid (optimised, 4:3 ratio, e.g. 1024×768)
+- **full image** — shown in the lightbox/preview overlay (full resolution)
 
 ```
-new/public/portfolio/
-├── branding-logo/          ← Logo, Arabic Logo, Brand identity work
-│   ├── logo-1.png
-│   ├── logo-2.jpg
-│   ├── arabic-logo-1.svg
+public/portfolio/
+├── branding-logo/
 │   ├── brand-identity-1.svg
-│   └── brand-identity-2.svg
-└── ui-ux-design/           ← Landing pages, Dashboards, Mobile UI
-    ├── landing-1.jpg
-    ├── landing-2.png
+│   ├── brand-identity-2.svg
+│   ├── logo-1.png
+│   └── arabic-logo-1.svg
+└── ui-ux-design/
+    ├── landing-page-1/
+    │   ├── landing-page-1-thumbnail.jpg   ← grid thumbnail
+    │   └── landing-page-1.jpg             ← lightbox preview
     ├── dashboard-1.png
     ├── mobile-1.jpg
     └── mobile-2.jpg
@@ -26,14 +29,19 @@ new/public/portfolio/
 
 **Supported formats:** `.jpg` `.jpeg` `.png` `.webp` `.svg`
 
-**Naming convention:** `category-number.ext` — e.g. `logo-3.png`, `mobile-4.webp`
+**Naming convention (for new projects):**
+```
+public/portfolio/<category-folder>/<project-slug>/
+  <project-slug>-thumbnail.jpg    ← 4:3 ratio, ~1024×768
+  <project-slug>.jpg              ← full resolution
+```
 
 ---
 
 ## The only file you ever edit
 
 ```
-new/src/data/projects.js
+src/data/projects.js
 ```
 
 Everything — categories, tags, image paths — is controlled from this one file.
@@ -42,20 +50,29 @@ Everything — categories, tags, image paths — is controlled from this one fil
 
 ## Add a new project
 
-**Step 1** — Drop your image into the correct subfolder inside `public/portfolio/`.
+**Step 1** — Create a subfolder for your project inside the correct category folder:
 
-**Step 2** — Open `new/src/data/projects.js` and append a new object to the `projects` array at the bottom:
+```
+public/portfolio/ui-ux-design/my-new-project/
+  my-new-project-thumbnail.jpg
+  my-new-project.jpg
+```
+
+**Step 2** — Open `src/data/projects.js` and append a new entry to the `projects` array:
 
 ```js
 {
-  id: 10,                                              // next unique number
-  title: 'My New Project',                             // project name
-  description: 'One-line summary of the work.',        // shown in list view
-  image: '/portfolio/branding-logo/logo-2.png',        // path from public/
-  category: 'logo',                                    // see category ids below
-  tags: ['blue'],                                      // see tag ids below
+  id: 10,                                                                          // next unique number
+  title: 'My New Project',                                                         // shown in header
+  description: 'One-line summary of the work.',                                    // shown in list view
+  thumbnail: '/portfolio/ui-ux-design/my-new-project/my-new-project-thumbnail.jpg', // grid image
+  preview:   '/portfolio/ui-ux-design/my-new-project/my-new-project.jpg',           // lightbox image
+  category: 'landing-pages',                                                        // see category ids below
+  tags: ['blue'],                                                                    // see tag ids below
 },
 ```
+
+> **Single-image projects:** If you only have one image, set both `thumbnail` and `preview` to the same path.
 
 **Step 3** — Save. The grid updates instantly in dev (`npm run dev`).
 
@@ -63,14 +80,24 @@ Everything — categories, tags, image paths — is controlled from this one fil
 
 ## Replace an existing image
 
-Just overwrite the file in `public/portfolio/` with the same filename.
+Overwrite the file in `public/portfolio/` with the same filename.
 No code changes needed — the browser picks up the new file automatically.
 
 ---
 
-## Category IDs
+## How the lightbox works
 
-These are the valid values for the `category` field:
+Clicking any thumbnail in the portfolio grid opens a full-screen preview overlay:
+
+- **Title** is shown in the top-left of the overlay header
+- **Share** button copies/shares the current URL
+- **Get in Touch** button opens `mailto:ferdousmikdad@gmail.com`
+- **ESC key** or clicking the backdrop closes the overlay
+- The overlay is rendered at `z-index: 9001`, above all windows
+
+---
+
+## Category IDs
 
 | ID | Sidebar label | Folder |
 |---|---|---|
@@ -85,75 +112,24 @@ These are the valid values for the `category` field:
 
 ## Tag IDs
 
-These are the valid values inside the `tags` array. A project can have multiple tags or an empty array `[]`.
-
 | ID | Colour |
 |---|---|
-| `red` | 🔴 #FF3B30 |
-| `orange` | 🟠 #FF9500 |
-| `yellow` | 🟡 #FFCC00 |
-| `green` | 🟢 #34C759 |
-| `blue` | 🔵 #007AFF |
-| `purple` | 🟣 #AF52DE |
-| `gray` | ⚫ #8E8E93 |
-
----
-
-## Add a new category
-
-**Step 1** — Add a new item inside the relevant section in `CATEGORIES`:
-
-```js
-export const CATEGORIES = [
-  {
-    section: 'Branding & Logo',
-    items: [
-      { id: 'logo',           label: 'Logo' },
-      { id: 'arabic-logo',    label: 'Arabic Logo' },
-      { id: 'brand-identity', label: 'Brand identity', tag: 'red' },
-      { id: 'packaging',      label: 'Packaging' },   // ← new item
-    ],
-  },
-  ...
-]
-```
-
-**Step 2** — Use the new id (`packaging`) in any project's `category` field.
-
-To add a tag indicator dot next to the sidebar label, add `tag: 'colorId'` to the item (see `brand-identity` as an example).
-
----
-
-## Add a new sidebar section
-
-```js
-export const CATEGORIES = [
-  ...existing sections...
-  {
-    section: 'Motion & Video',       // section heading
-    items: [
-      { id: 'animation', label: 'Animation' },
-      { id: 'reels',     label: 'Reels' },
-    ],
-  },
-]
-```
-
-Then create a matching subfolder in `public/portfolio/` (e.g. `motion-video/`) and use the new category ids in your projects.
-
----
-
-## Remove a project
-
-Delete its object from the `projects` array in `projects.js`. You can also delete the image file from `public/portfolio/` if it is no longer used.
+| `red` | #FF3B30 |
+| `orange` | #FF9500 |
+| `yellow` | #FFCC00 |
+| `green` | #34C759 |
+| `blue` | #007AFF |
+| `purple` | #AF52DE |
+| `gray` | #8E8E93 |
 
 ---
 
 ## Quick reference
 
 ```
-Add image     →  public/portfolio/<folder>/<name>.<ext>
+Add image     →  public/portfolio/<category>/<project-slug>/<project-slug>-thumbnail.jpg
+                 public/portfolio/<category>/<project-slug>/<project-slug>.jpg
 Edit data     →  src/data/projects.js  (projects array)
 Add category  →  src/data/projects.js  (CATEGORIES array)
-Add tag       →  src/data/projects.js  (TAGS array)
+Add tag color →  src/data/projects.js  (TAGS array)
 ```

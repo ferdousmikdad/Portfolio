@@ -68,16 +68,25 @@ export const CATEGORIES = [
 //   id          — unique number (increment for each new entry)
 //   title       — project name
 //   description — one-line summary (used in list view)
-//   image       — path from public/  e.g. '/portfolio/branding-logo/logo-1.png'
+//   thumbnail   — grid card image  (use -thumbnail version, 4:3 ratio)
+//   preview     — full preview image shown in the lightbox (full resolution)
 //   category    — must match one of the item ids in CATEGORIES above
 //   tags        — array of tag ids from TAGS above (can be empty [])
+//
+// Folder convention:
+//   public/portfolio/<category-folder>/<project-slug>/
+//     <project-slug>-thumbnail.jpg   ← thumbnail (used in grid)
+//     <project-slug>.jpg             ← preview   (shown in lightbox)
+//
+// If only one image exists, set both thumbnail and preview to the same path.
 // ─────────────────────────────────────────────────────────────────────────────
 const projects = [
   {
     id: 1,
     title: 'Brand Identity',
     description: 'Complete visual identity system — logo, type, colour palette and usage guidelines.',
-    image: '/portfolio/branding-logo/brand-identity-1.svg',
+    thumbnail: '/portfolio/branding-logo/brand-identity-1.svg',
+    preview:   '/portfolio/branding-logo/brand-identity-1.svg',
     category: 'brand-identity',
     tags: ['red'],
   },
@@ -85,7 +94,8 @@ const projects = [
     id: 2,
     title: 'Logo Design',
     description: 'Minimal wordmark with strong geometric structure for a tech startup.',
-    image: '/portfolio/branding-logo/logo-1.png',
+    thumbnail: '/portfolio/branding-logo/logo-1.png',
+    preview:   '/portfolio/branding-logo/logo-1.png',
     category: 'logo',
     tags: ['blue'],
   },
@@ -93,7 +103,8 @@ const projects = [
     id: 3,
     title: 'Arabic Logo',
     description: 'Calligraphy-inspired Arabic logotype crafted for a luxury fashion label.',
-    image: '/portfolio/branding-logo/arabic-logo-1.svg',
+    thumbnail: '/portfolio/branding-logo/arabic-logo-1.svg',
+    preview:   '/portfolio/branding-logo/arabic-logo-1.svg',
     category: 'arabic-logo',
     tags: ['purple'],
   },
@@ -101,7 +112,8 @@ const projects = [
     id: 4,
     title: 'Landing Page',
     description: 'High-conversion SaaS landing page with motion and dark-mode support.',
-    image: '/portfolio/ui-ux-design/landing-1.jpg',
+    thumbnail: '/portfolio/ui-ux-design/landing-page-1/landing-page-1-thumbnail.jpg',
+    preview:   '/portfolio/ui-ux-design/landing-page-1/landing-page-1.jpg',
     category: 'landing-pages',
     tags: ['green'],
   },
@@ -109,7 +121,8 @@ const projects = [
     id: 5,
     title: 'Analytics Dashboard',
     description: 'Data-dense dashboard with chart library, filters, and dark theme.',
-    image: '/portfolio/ui-ux-design/dashboard-1.png',
+    thumbnail: '/portfolio/ui-ux-design/dashboard-1.png',
+    preview:   '/portfolio/ui-ux-design/dashboard-1.png',
     category: 'dashboards',
     tags: ['orange'],
   },
@@ -117,7 +130,8 @@ const projects = [
     id: 6,
     title: 'Mobile App UI',
     description: 'iOS-style mobile interface for a fitness tracking application.',
-    image: '/portfolio/ui-ux-design/mobile-1.jpg',
+    thumbnail: '/portfolio/ui-ux-design/mobile-1.jpg',
+    preview:   '/portfolio/ui-ux-design/mobile-1.jpg',
     category: 'mobile-ui',
     tags: ['yellow'],
   },
@@ -125,7 +139,8 @@ const projects = [
     id: 7,
     title: 'Brand Guidelines',
     description: 'Comprehensive 48-page brand manual covering all visual and tonal rules.',
-    image: '/portfolio/branding-logo/brand-identity-2.svg',
+    thumbnail: '/portfolio/branding-logo/brand-identity-2.svg',
+    preview:   '/portfolio/branding-logo/brand-identity-2.svg',
     category: 'brand-identity',
     tags: ['red', 'gray'],
   },
@@ -133,7 +148,8 @@ const projects = [
     id: 8,
     title: 'Mobile Dashboard',
     description: 'Compact analytics view optimised for one-handed mobile use.',
-    image: '/portfolio/ui-ux-design/mobile-2.jpg',
+    thumbnail: '/portfolio/ui-ux-design/mobile-2.jpg',
+    preview:   '/portfolio/ui-ux-design/mobile-2.jpg',
     category: 'mobile-ui',
     tags: ['blue', 'green'],
   },
@@ -141,7 +157,8 @@ const projects = [
     id: 9,
     title: 'E-commerce Landing',
     description: 'Product-first landing page with full-bleed imagery and cart CTA.',
-    image: '/portfolio/ui-ux-design/landing-2.png',
+    thumbnail: '/portfolio/ui-ux-design/landing-2.png',
+    preview:   '/portfolio/ui-ux-design/landing-2.png',
     category: 'landing-pages',
     tags: ['orange', 'yellow'],
   },
