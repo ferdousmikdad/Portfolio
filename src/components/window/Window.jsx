@@ -67,6 +67,7 @@ export default function Window({ id, title, children, actionLabel, hideControls,
         zIndex: win.zIndex,
         x: win.position.x,
         y: win.position.y,
+        pointerEvents: 'auto',
       }}
       initial={{ opacity: 0, scale: 0.92, y: win.position.y + 20 }}
       animate={{ opacity: 1, scale: 1,    y: win.position.y      }}
