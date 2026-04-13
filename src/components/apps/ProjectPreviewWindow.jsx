@@ -1,13 +1,22 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Share2, Mail } from 'lucide-react'
+import { X, Share2, Mail, ArrowUpRight } from 'lucide-react'
 
 export default function ProjectPreviewWindow({ project, onClose }) {
+  const scrollRef = useRef(null)
+
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
+
+  // Reset scroll position when project changes
+  useEffect(() => {
+    if (project && scrollRef.current) {
+      scrollRef.current.scrollTop = 0
+    }
+  }, [project])
 
   const handleShare = () => {
     if (navigator.share) {
@@ -17,121 +26,172 @@ export default function ProjectPreviewWindow({ project, onClose }) {
     }
   }
 
-  const stopEvents = (e) => { e.stopPropagation() }
+  const stopProp = (e) => e.stopPropagation()
 
   return (
-    <>
-      {/* Backdrop — blocks all pointer events reaching windows behind */}
-      <AnimatePresence>
-        {project && (
+    <AnimatePresence>
+      {project && (
+        <>
+          {/* Backdrop */}
           <motion.div
             key="preview-backdrop"
             className="fixed inset-0"
-            style={{ background: 'rgba(0,0,0,0.6)', zIndex: 99998, pointerEvents: 'all' }}
+            style={{ background: 'rgba(0,0,0,0.72)', zIndex: 99998, backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', pointerEvents: 'all' }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.25 }}
             onClick={onClose}
-            onMouseDown={stopEvents}
-            onMouseMove={stopEvents}
-            onMouseUp={stopEvents}
           />
-        )}
-      </AnimatePresence>
 
-      {/* Window */}
-      <AnimatePresence>
-        {project && (
+          {/* Panel */}
           <motion.div
             key="preview-panel"
-            className="window-shell fixed"
+            className="fixed"
             style={{
               top: 48,
               left: 0,
               right: 0,
-              height: 'calc(100vh - 48px)',
+              bottom: 0,
               zIndex: 99999,
-              borderRadius: 0,
               display: 'flex',
               flexDirection: 'column',
-              overflow: 'hidden',   /* ← lets flex children shrink so scroll works */
+              overflow: 'hidden',
+              background: 'var(--window-bg)',
+              borderTop: '1px solid var(--border)',
+              pointerEvents: 'all',
             }}
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 32 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 16 }}
-            transition={{ type: 'spring', stiffness: 320, damping: 30 }}
-            onMouseDown={stopEvents}
-            onClick={stopEvents}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ type: 'spring', stiffness: 340, damping: 32 }}
+            onMouseDown={stopProp}
+            onClick={stopProp}
           >
-            {/* Traffic lights */}
-            <div
-              className="window-titlebar flex-shrink-0"
-              style={{ cursor: 'default', borderBottom: '1px solid var(--border)' }}
-            >
-              <div className="flex items-center gap-1.5">
-                <button className="traffic-light traffic-light-close" onClick={onClose} />
-                <div className="traffic-light traffic-light-minimize" style={{ cursor: 'default', opacity: 0.35 }} />
-                <div className="traffic-light traffic-light-maximize" style={{ cursor: 'default', opacity: 0.35 }} />
-              </div>
-            </div>
 
-            {/* Title + actions */}
+            {/* ── Header bar ──────────────────────────────────────────────── */}
             <div
-              className="flex-shrink-0"
-              style={{ borderBottom: '1px solid var(--border)' }}
+              className="flex-shrink-0 flex items-center gap-4 px-6"
+              style={{
+                height: 52,
+                borderBottom: '1px solid var(--border)',
+                background: 'var(--titlebar-bg)',
+              }}
             >
+              {/* Traffic lights */}
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                <button
+                  className="traffic-light traffic-light-close"
+                  onClick={onClose}
+                  title="Close"
+                />
+                <div className="traffic-light traffic-light-minimize" style={{ opacity: 0.28, cursor: 'default' }} />
+                <div className="traffic-light traffic-light-maximize" style={{ opacity: 0.28, cursor: 'default' }} />
+              </div>
+
               <div
-                className="flex items-center gap-4 px-6 mx-auto"
-                style={{ maxWidth: 1140, height: 52 }}
+                className="flex-1 min-w-0 flex items-center gap-3"
+                style={{ maxWidth: 1140, margin: '0 auto' }}
               >
                 <span
-                  className="flex-1 text-[14px] font-semibold truncate"
-                  style={{ color: 'var(--headline)', fontFamily: "'SF Pro Display'" }}
+                  className="flex-1 text-[13px] font-semibold truncate"
+                  style={{ color: 'var(--headline)', fontFamily: "'SF Pro Display', sans-serif", letterSpacing: '-0.01em' }}
                 >
                   {project.title}
                 </span>
+
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <button
                     onClick={handleShare}
-                    className="flex items-center gap-1.5 px-3 h-7 rounded-md text-[12px] font-medium transition-colors"
-                    style={{ background: 'var(--wall-bg)', border: '1px solid var(--border)', color: 'var(--body)' }}
+                    className="flex items-center gap-1.5 px-3 h-7 rounded-md text-[11px] font-medium transition-colors"
+                    style={{ background: 'transparent', border: '1px solid var(--border)', color: 'var(--body)' }}
                     onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--headline)'; e.currentTarget.style.color = 'var(--headline)' }}
                     onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--body)' }}
                   >
-                    <Share2 size={11} />
+                    <Share2 size={10} />
                     Share
                   </button>
                   <a
                     href="mailto:ferdousmikdad@gmail.com"
-                    className="flex items-center gap-1.5 px-3 h-7 rounded-md text-[12px] font-medium no-underline"
+                    className="flex items-center gap-1.5 px-3 h-7 rounded-md text-[11px] font-medium no-underline transition-colors"
                     style={{ background: '#cf0506', color: '#fff', border: '1px solid #cf0506' }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = '#b00404'; e.currentTarget.style.borderColor = '#b00404' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = '#a80404'; e.currentTarget.style.borderColor = '#a80404' }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = '#cf0506'; e.currentTarget.style.borderColor = '#cf0506' }}
                   >
-                    <Mail size={11} />
+                    <Mail size={10} />
                     Get in Touch
                   </a>
+                  <button
+                    onClick={onClose}
+                    className="flex items-center justify-center w-7 h-7 rounded-md transition-colors"
+                    style={{ border: '1px solid var(--border)', color: 'var(--body)' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--headline)'; e.currentTarget.style.color = 'var(--headline)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--body)' }}
+                    title="Close (Esc)"
+                  >
+                    <X size={12} />
+                  </button>
                 </div>
               </div>
             </div>
 
-            {/* Scrollable image */}
+            {/* ── Scrollable content ───────────────────────────────────────── */}
             <div
+              ref={scrollRef}
               className="window-scroll"
-              style={{ flexGrow: 1, flexShrink: 1, flexBasis: 0, overflowY: 'auto', background: 'var(--wall-bg)' }}
+              style={{
+                flex: '1 1 0',
+                minHeight: 0,          /* ← critical: lets flex child shrink so scroll engages */
+                overflowY: 'auto',
+                overflowX: 'hidden',
+                background: 'var(--wall-bg)',
+              }}
             >
               <div style={{ maxWidth: 1140, margin: '0 auto' }}>
+
+                {/* Project image */}
                 <img
                   src={project.preview || project.image}
                   alt={project.title}
-                  style={{ display: 'block', width: '100%', height: 'auto' }}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    height: 'auto',
+                  }}
+                  draggable={false}
                 />
+
+                {/* Footer strip */}
+                <div
+                  className="flex items-center justify-between px-6 py-5"
+                  style={{ borderTop: '1px solid var(--border)' }}
+                >
+                  <div>
+                    <p className="text-[11px] font-semibold" style={{ color: 'var(--body)', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                      Project
+                    </p>
+                    <p className="text-[14px] font-semibold mt-0.5" style={{ color: 'var(--headline)', fontFamily: "'SF Pro Display', sans-serif" }}>
+                      {project.title}
+                    </p>
+                  </div>
+                  <a
+                    href="mailto:ferdousmikdad@gmail.com"
+                    className="flex items-center gap-2 px-4 h-9 rounded-lg text-[12px] font-semibold no-underline transition-colors"
+                    style={{ background: '#cf0506', color: '#fff' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = '#a80404' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = '#cf0506' }}
+                  >
+                    Hire me
+                    <ArrowUpRight size={13} />
+                  </a>
+                </div>
+
               </div>
             </div>
+
           </motion.div>
-        )}
-      </AnimatePresence>
-    </>
+        </>
+      )}
+    </AnimatePresence>
   )
 }
