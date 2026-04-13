@@ -1,37 +1,50 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// HOW TO ADD / UPDATE PORTFOLIO IMAGES
+// ADDING A NEW PROJECT — drop a folder and you're done
 // ─────────────────────────────────────────────────────────────────────────────
 //
-// 1. Drop your image into the correct folder inside:
-//      new/public/portfolio/
+// 1. Create a project folder inside the right section:
 //
-//    Use the folder that matches the category:
-//      branding-logo/     ← logos, arabic logos, brand identity work
-//      ui-ux-design/      ← landing pages, dashboards, mobile UI
+//      public/portfolio/ui-ux-design/my-project/
+//      public/portfolio/branding-logo/my-project/
 //
-//    Recommended naming: category-number.jpg  (e.g. logo-2.jpg)
-//    Supported formats : .jpg  .jpeg  .png  .webp  .svg
+// 2. Drop your images in (any image format works):
 //
-// 2. In the `projects` array below, add or edit an entry.
-//    Set `image` to the path starting with /portfolio/…
+//      my-project-thumbnail.jpg   ← grid card thumbnail
+//      my-project.jpg             ← full preview (opened on click)
 //
-//    Example — add a new logo:
-//      {
-//        id: 10,
-//        title: 'New Logo',
-//        description: 'Clean wordmark for a fintech brand.',
-//        image: '/portfolio/branding-logo/logo-2.jpg',   // ← just the path
-//        category: 'logo',
-//        tags: ['blue'],
-//      },
+//    Only one image? That's fine — it's used for both.
 //
-// 3. Save the file. The grid updates instantly (hot-reload in dev).
+// 3. Done. The portfolio updates automatically on save.
 //
-// That's it — no import lines needed, no component edits required.
+// ── How category is assigned ──────────────────────────────────────────────
+//
+//   Folder name starts with...   →  Category shown in sidebar
+//   ────────────────────────────────────────────────────────
+//   landing-page / landing       →  Landing pages
+//   dashboard                    →  Dashboards
+//   mobile                       →  Mobile UI
+//   arabic-logo / arabic         →  Arabic Logo
+//   brand-identity / brand       →  Brand identity
+//   (anything else)              →  Logo  (in branding-logo/)
+//                                →  Landing pages  (in ui-ux-design/)
+//
+// ── Optional metadata override ────────────────────────────────────────────
+//
+//   Drop a _meta.json in the project folder:
+//   {
+//     "title": "My Custom Title",
+//     "description": "One-line summary.",
+//     "category": "dashboards",
+//     "tags": ["blue", "green"]
+//   }
+//   Tag ids: red · orange · yellow · green · blue · purple · gray
 //
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Tag colour palette
+// Auto-discovered projects (powered by vite-plugin-portfolio)
+export { default } from 'virtual:portfolio-projects'
+
+// Tag colour palette — used by the sidebar tag filters
 export const TAGS = [
   { id: 'red',    label: 'Red',    color: '#FF3B30' },
   { id: 'orange', label: 'Orange', color: '#FF9500' },
@@ -42,7 +55,7 @@ export const TAGS = [
   { id: 'gray',   label: 'Gray',   color: '#8E8E93' },
 ]
 
-// Sidebar categories — edit labels here if you rename a section
+// Sidebar categories — labels only, ids must match the folder names above
 export const CATEGORIES = [
   {
     section: 'Branding & Logo',
@@ -61,107 +74,3 @@ export const CATEGORIES = [
     ],
   },
 ]
-
-// ─────────────────────────────────────────────────────────────────────────────
-// PROJECTS LIST
-// Fields:
-//   id          — unique number (increment for each new entry)
-//   title       — project name
-//   description — one-line summary (used in list view)
-//   thumbnail   — grid card image  (use -thumbnail version, 4:3 ratio)
-//   preview     — full preview image shown in the lightbox (full resolution)
-//   category    — must match one of the item ids in CATEGORIES above
-//   tags        — array of tag ids from TAGS above (can be empty [])
-//
-// Folder convention:
-//   public/portfolio/<category-folder>/<project-slug>/
-//     <project-slug>-thumbnail.jpg   ← thumbnail (used in grid)
-//     <project-slug>.jpg             ← preview   (shown in lightbox)
-//
-// If only one image exists, set both thumbnail and preview to the same path.
-// ─────────────────────────────────────────────────────────────────────────────
-const projects = [
-  {
-    id: 1,
-    title: 'Brand Identity',
-    description: 'Complete visual identity system — logo, type, colour palette and usage guidelines.',
-    thumbnail: '/portfolio/branding-logo/brand-identity-1.svg',
-    preview:   '/portfolio/branding-logo/brand-identity-1.svg',
-    category: 'brand-identity',
-    tags: ['red'],
-  },
-  {
-    id: 2,
-    title: 'Logo Design',
-    description: 'Minimal wordmark with strong geometric structure for a tech startup.',
-    thumbnail: '/portfolio/branding-logo/logo-1.png',
-    preview:   '/portfolio/branding-logo/logo-1.png',
-    category: 'logo',
-    tags: ['blue'],
-  },
-  {
-    id: 3,
-    title: 'Arabic Logo',
-    description: 'Calligraphy-inspired Arabic logotype crafted for a luxury fashion label.',
-    thumbnail: '/portfolio/branding-logo/arabic-logo-1.svg',
-    preview:   '/portfolio/branding-logo/arabic-logo-1.svg',
-    category: 'arabic-logo',
-    tags: ['purple'],
-  },
-  {
-    id: 4,
-    title: 'Landing Page',
-    description: 'High-conversion SaaS landing page with motion and dark-mode support.',
-    thumbnail: '/portfolio/ui-ux-design/landing-page-1/landing-page-1-thumbnail.jpg',
-    preview:   '/portfolio/ui-ux-design/landing-page-1/landing-page-1.jpg',
-    category: 'landing-pages',
-    tags: ['green'],
-  },
-  {
-    id: 5,
-    title: 'Analytics Dashboard',
-    description: 'Data-dense dashboard with chart library, filters, and dark theme.',
-    thumbnail: '/portfolio/ui-ux-design/dashboard-1.png',
-    preview:   '/portfolio/ui-ux-design/dashboard-1.png',
-    category: 'dashboards',
-    tags: ['orange'],
-  },
-  {
-    id: 6,
-    title: 'Mobile App UI',
-    description: 'iOS-style mobile interface for a fitness tracking application.',
-    thumbnail: '/portfolio/ui-ux-design/mobile-1.jpg',
-    preview:   '/portfolio/ui-ux-design/mobile-1.jpg',
-    category: 'mobile-ui',
-    tags: ['yellow'],
-  },
-  {
-    id: 7,
-    title: 'Brand Guidelines',
-    description: 'Comprehensive 48-page brand manual covering all visual and tonal rules.',
-    thumbnail: '/portfolio/branding-logo/brand-identity-2.svg',
-    preview:   '/portfolio/branding-logo/brand-identity-2.svg',
-    category: 'brand-identity',
-    tags: ['red', 'gray'],
-  },
-  {
-    id: 8,
-    title: 'Mobile Dashboard',
-    description: 'Compact analytics view optimised for one-handed mobile use.',
-    thumbnail: '/portfolio/ui-ux-design/mobile-2.jpg',
-    preview:   '/portfolio/ui-ux-design/mobile-2.jpg',
-    category: 'mobile-ui',
-    tags: ['blue', 'green'],
-  },
-  {
-    id: 9,
-    title: 'E-commerce Landing',
-    description: 'Product-first landing page with full-bleed imagery and cart CTA.',
-    thumbnail: '/portfolio/ui-ux-design/landing-2.png',
-    preview:   '/portfolio/ui-ux-design/landing-2.png',
-    category: 'landing-pages',
-    tags: ['orange', 'yellow'],
-  },
-]
-
-export default projects
