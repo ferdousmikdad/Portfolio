@@ -51,6 +51,7 @@
   --kbd-bg:         rgba(0, 0, 0, 0.05);
   --kbd-border:     rgba(0, 0, 0, 0.08);
   --kbd-text:       #6b6861;
+  --preview-bg:     #ffffff;
 }
 
 .dark {
@@ -72,6 +73,7 @@
   --social-hover:   rgba(255, 255, 255, 0.10);
   --kbd-bg:         rgba(255, 255, 255, 0.07);
   --kbd-border:     rgba(255, 255, 255, 0.08);
+  --preview-bg:     #0f0f0f;
   --kbd-text:       #aba795;
 }
 
