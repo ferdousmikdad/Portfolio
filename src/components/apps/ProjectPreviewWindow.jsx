@@ -117,8 +117,8 @@ export default function ProjectPreviewWindow({ project, onClose }) {
 
                 {/* ── Header — centered title, subtitle, buttons ── */}
                 <div
-                  className="flex flex-col items-center text-center px-8 py-8 gap-4"
-                  style={{ borderBottom: '1px solid var(--border)' }}
+                  className="flex flex-col items-center text-center px-8 gap-4"
+                  style={{ paddingTop: 56, paddingBottom: 32 }}
                 >
                   {/* Title */}
                   <h1
@@ -200,9 +200,11 @@ export default function ProjectPreviewWindow({ project, onClose }) {
                 </div>
 
                 {/* Sequential content — images and videos stacked vertically */}
-                {contentItems.map((item, i) => (
-                  <ContentItem key={i} item={item} title={project.title} index={i} />
-                ))}
+                <div style={{ paddingTop: 40 }}>
+                  {contentItems.map((item, i) => (
+                    <ContentItem key={i} item={item} title={project.title} index={i} />
+                  ))}
+                </div>
 
                 {/* Footer strip */}
                 <div
