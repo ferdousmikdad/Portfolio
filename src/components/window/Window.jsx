@@ -5,7 +5,7 @@ import useWindowStore from '@/store/windowStore'
 import useSoundStore from '@/store/soundStore'
 import { genieOut } from '@/utils/genie'
 
-export default function Window({ id, title, children, actionLabel, hideControls, hideTitleBar, toolbar }) {
+export default function Window({ id, title, children, actionLabel, onAction, hideControls, hideTitleBar, toolbar }) {
   const { closeWindow, minimizeWindow, focusWindow, updatePosition, getWindow, toggleMaximize } = useWindowStore()
   const play   = useSoundStore((s) => s.play)
   const win    = getWindow(id)
@@ -122,7 +122,7 @@ export default function Window({ id, title, children, actionLabel, hideControls,
           )}
           {toolbar && <div className="ml-auto flex items-center gap-2">{toolbar}</div>}
           {actionLabel && !toolbar && (
-            <span className="ml-auto text-xs text-brand font-medium cursor-pointer hover:opacity-80 transition-opacity">
+            <span className="ml-auto text-xs text-brand font-medium cursor-pointer hover:opacity-80 transition-opacity" onClick={onAction}>
               {actionLabel}
             </span>
           )}

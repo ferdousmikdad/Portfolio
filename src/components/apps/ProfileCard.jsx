@@ -1,5 +1,6 @@
 import Window from '@/components/window/Window'
 import mikdadPhoto from '@/assets/images/mikdad.jpg'
+import useWindowStore from '@/store/windowStore'
 
 const socials = [
   { label: 'LinkedIn',  href: 'https://www.linkedin.com/in/ferdousmikdad/' },
@@ -8,8 +9,10 @@ const socials = [
 ]
 
 export default function ProfileCard() {
+  const navigate = useWindowStore((s) => s.navigate)
+
   return (
-    <Window id="profile" actionLabel="Read more →">
+    <Window id="profile" actionLabel="Read more →" onAction={() => navigate('about')}>
       <div className="flex flex-col h-full">
         {/* Photo area */}
         <div className="relative flex-shrink-0 p-3">

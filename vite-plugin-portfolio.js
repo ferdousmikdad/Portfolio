@@ -14,14 +14,15 @@
  *
  * Both layouts can coexist.
  *
- * Category is inferred from the folder name using these prefix rules:
- *   landing-page / landing  → landing-pages
- *   dashboard               → dashboards
- *   mobile                  → mobile-ui
- *   arabic-logo / arabic    → arabic-logo
- *   brand-identity / brand  → brand-identity
- *   (anything else)         → logo  (inside branding-logo/)
- *                           → landing-pages  (inside ui-ux-design/)
+ * Content auto-discovery
+ * ──────────────────────
+ * Inside each project folder:
+ *   {slug}-thumbnail.{ext}   → thumbnail shown in the grid card
+ *   {slug}-1.{ext}           → first content item
+ *   {slug}-2.{ext}           → second content item (image or video)
+ *   …
+ * If no numbered files exist, any non-thumbnail file is used as the single
+ * content item (backwards-compatible with simple single-image projects).
  *
  * Override with _meta.json in the project folder:
  *   { "title": "…", "description": "…", "category": "…", "tags": ["blue"] }
@@ -32,7 +33,16 @@ import { join, extname } from 'path'
 
 const VIRTUAL_ID  = 'virtual:portfolio-projects'
 const RESOLVED_ID = '\0virtual:portfolio-projects'
-const IMAGE_EXTS  = new Set(['.jpg', '.jpeg', '.png', '.webp', '.svg', '.avif'])
+
+const IMAGE_EXTS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.svg', '.avif'])
+const VIDEO_EXTS = new Set(['.mp4', '.webm', '.mov'])
+
+function mediaType(filename) {
+  const ext = extname(filename).toLowerCase()
+  if (VIDEO_EXTS.has(ext)) return 'video'
+  if (IMAGE_EXTS.has(ext)) return 'image'
+  return null
+}
 
 // Flat category folders (folder name = category id)
 const FLAT_CATEGORIES = new Set([
@@ -67,28 +77,70 @@ function readMeta(projectPath) {
   try { return JSON.parse(readFileSync(metaFile, 'utf-8')) } catch { return {} }
 }
 
-function collectProjects(projectPath, categoryId, slug, id) {
-  const files = readdirSync(projectPath).filter(
-    (f) => IMAGE_EXTS.has(extname(f).toLowerCase())
-  )
-  if (files.length === 0) return null
+// Detect thumbnail files — handles "-thumbnail", "- thumbnail", "_thumbnail"
+const isThumb = (f) => /[\s_-]+thumbnail/i.test(f)
 
-  const thumbFile   = files.find((f) => f.includes('-thumbnail')) || files[0]
-  const previewFile = files.find((f) => !f.includes('-thumbnail')) || thumbFile
-  const base        = `/portfolio`
+/**
+ * Build a single project entry.
+ * @param {string} projectPath  — absolute disk path to the project folder
+ * @param {string} urlBase      — public URL prefix, e.g. /portfolio/branding-logo/brand-identity-1
+ * @param {string} slug         — folder name, e.g. brand-identity-1
+ * @param {number} id
+ * @param {string} categoryDefault — inferred category if _meta.json doesn't override
+ */
+function buildProject(projectPath, urlBase, slug, id, categoryDefault) {
+  const allFiles   = readdirSync(projectPath)
+  const mediaFiles = allFiles.filter((f) => mediaType(f) !== null)
+  if (mediaFiles.length === 0) return null
 
-  // Reconstruct the public URL path from the actual disk path
-  // We need the path relative to public/
   const meta = readMeta(projectPath)
+
+  // ── Thumbnail ──────────────────────────────────────────────────────────────
+  const thumbFile     = mediaFiles.find(isThumb) ?? mediaFiles[0]
+  const thumbType     = mediaType(thumbFile)
+
+  // ── Content files (everything except the thumbnail) ────────────────────────
+  const nonThumbFiles = mediaFiles.filter((f) => f !== thumbFile)
+
+  // Look for numbered files: {slug}-{N}.ext  (N is an integer)
+  // Escape the slug for use in regex (handles hyphens and numbers in slug itself)
+  const slugEsc       = slug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const numberedRe    = new RegExp(`^${slugEsc}[\\s_-]+(\\d+)\\.[a-z0-9]+$`, 'i')
+
+  const numberedFiles = nonThumbFiles
+    .filter((f) => numberedRe.test(f))
+    .sort((a, b) => {
+      const na = parseInt(a.match(numberedRe)[1], 10)
+      const nb = parseInt(b.match(numberedRe)[1], 10)
+      return na - nb
+    })
+
+  // Build content array
+  let content
+  if (numberedFiles.length > 0) {
+    // Use sorted numbered files as content
+    content = numberedFiles.map((f) => ({ url: `${urlBase}/${f}`, type: mediaType(f) }))
+  } else if (nonThumbFiles.length > 0) {
+    // Fall back to any non-thumbnail file (single-image projects like arabic-logo)
+    content = nonThumbFiles.map((f) => ({ url: `${urlBase}/${f}`, type: mediaType(f) }))
+  } else {
+    // Only a thumbnail exists — use it as content too
+    content = [{ url: `${urlBase}/${thumbFile}`, type: thumbType }]
+  }
+
+  // Preview = first image in content (for backwards-compat / list view fallback)
+  const previewItem = content.find((c) => c.type === 'image') ?? content[0]
 
   return {
     id,
-    title:       meta.title       ?? slugToTitle(slug),
-    description: meta.description ?? '',
-    thumbnail:   meta.thumbnail   ?? `${base}/${categoryId}/${slug}/${thumbFile}`,
-    preview:     meta.preview     ?? `${base}/${categoryId}/${slug}/${previewFile}`,
-    category:    meta.category    ?? categoryId,
-    tags:        meta.tags        ?? [],
+    title:         meta.title         ?? slugToTitle(slug),
+    description:   meta.description   ?? '',
+    thumbnail:     meta.thumbnail     ?? `${urlBase}/${thumbFile}`,
+    thumbnailType: thumbType,
+    preview:       meta.preview       ?? previewItem.url,
+    content,
+    category:      meta.category      ?? categoryDefault,
+    tags:          meta.tags          ?? [],
   }
 }
 
@@ -110,7 +162,8 @@ function scanPortfolio(portfolioDir) {
       for (const slug of readdirSync(topPath)) {
         const projectPath = join(topPath, slug)
         if (!statSync(projectPath).isDirectory()) continue
-        const entry = collectProjects(projectPath, topName, slug, id)
+        const urlBase = `/portfolio/${topName}/${slug}`
+        const entry   = buildProject(projectPath, urlBase, slug, id, topName)
         if (entry) { projects.push(entry); id++ }
       }
 
@@ -123,26 +176,10 @@ function scanPortfolio(portfolioDir) {
 
         const meta     = readMeta(projectPath)
         const category = meta.category ?? inferCategory(slug, sectionDefault)
+        const urlBase  = `/portfolio/${topName}/${slug}`
 
-        // Build the URL using the section folder path
-        const files = readdirSync(projectPath).filter(
-          (f) => IMAGE_EXTS.has(extname(f).toLowerCase())
-        )
-        if (files.length === 0) continue
-
-        const thumbFile   = files.find((f) => f.includes('-thumbnail')) || files[0]
-        const previewFile = files.find((f) => !f.includes('-thumbnail')) || thumbFile
-        const base        = `/portfolio/${topName}/${slug}`
-
-        projects.push({
-          id:          id++,
-          title:       meta.title       ?? slugToTitle(slug),
-          description: meta.description ?? '',
-          thumbnail:   `${base}/${thumbFile}`,
-          preview:     `${base}/${previewFile}`,
-          category,
-          tags:        meta.tags ?? [],
-        })
+        const entry = buildProject(projectPath, urlBase, slug, id, category)
+        if (entry) { projects.push(entry); id++ }
       }
     }
     // Unrecognised top-level folders are silently skipped

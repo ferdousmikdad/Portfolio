@@ -92,6 +92,9 @@ let topZ = 10
 const useWindowStore = create((set, get) => ({
   windows: defaultWindows,
   activeWindowId: 'pacman',
+  activePage: null,
+
+  navigate: (page) => set({ activePage: page }),
 
   openWindow: (id) =>
     set((state) => ({

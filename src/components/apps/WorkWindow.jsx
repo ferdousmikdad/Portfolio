@@ -65,6 +65,7 @@ function TagRow({ tag, active, onClick }) {
 // ── Project card ──────────────────────────────────────────────────────────────
 
 function ProjectCard({ project, onClick }) {
+  const isVideoThumb = project.thumbnailType === 'video'
   return (
     <div
       className="group rounded-xl overflow-hidden cursor-pointer transition-all duration-200"
@@ -74,11 +75,19 @@ function ProjectCard({ project, onClick }) {
       onClick={onClick}
     >
       <div style={{ aspectRatio: '4/3', background: 'var(--wall-bg)', overflow: 'hidden' }}>
-        <img
-          src={project.thumbnail || project.image}
-          alt={project.title}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
+        {isVideoThumb ? (
+          <video
+            src={project.thumbnail}
+            autoPlay muted loop playsInline
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <img
+            src={project.thumbnail || project.image}
+            alt={project.title}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        )}
       </div>
     </div>
   )

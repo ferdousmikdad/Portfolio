@@ -16,10 +16,10 @@ import useWindowStore, { TOOL_IDS } from '@/store/windowStore'
 import useSound from '@/hooks/useSound'
 
 export default function Desktop() {
-  const [activePage, setActivePage] = useState(null)
-  const [menuOpen,   setMenuOpen]   = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef(null)
-  const { openWindow, closeAllExcept, switchTool } = useWindowStore()
+  const { openWindow, closeAllExcept, switchTool, activePage, navigate } = useWindowStore()
+  const setActivePage = navigate
   const play = useSound()
 
   // Close menu on outside click
@@ -59,7 +59,7 @@ export default function Desktop() {
     const handler = (e) => {
       if (e.shiftKey && map[e.key]) {
         e.preventDefault()
-        setActivePage(map[e.key])
+        navigate(map[e.key])
       }
     }
     window.addEventListener('keydown', handler)

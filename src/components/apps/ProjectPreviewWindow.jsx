@@ -2,6 +2,30 @@ import { useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Share2, Mail, ArrowUpRight } from 'lucide-react'
 
+// Render one content item — image or video
+function ContentItem({ item, title, index }) {
+  if (item.type === 'video') {
+    return (
+      <video
+        src={item.url}
+        autoPlay
+        muted
+        loop
+        playsInline
+        style={{ display: 'block', width: '100%', height: 'auto' }}
+      />
+    )
+  }
+  return (
+    <img
+      src={item.url}
+      alt={`${title} ${index + 1}`}
+      style={{ display: 'block', width: '100%', height: 'auto' }}
+      draggable={false}
+    />
+  )
+}
+
 export default function ProjectPreviewWindow({ project, onClose }) {
   const scrollRef = useRef(null)
 
@@ -25,6 +49,14 @@ export default function ProjectPreviewWindow({ project, onClose }) {
       navigator.clipboard.writeText(window.location.href).catch(() => {})
     }
   }
+
+  // Resolve content: use project.content array if available, otherwise fall back
+  const contentItems = (() => {
+    if (project?.content && project.content.length > 0) return project.content
+    const fallback = project?.preview || project?.image
+    if (fallback) return [{ url: fallback, type: 'image' }]
+    return []
+  })()
 
   const stopProp = (e) => e.stopPropagation()
 
@@ -69,7 +101,7 @@ export default function ProjectPreviewWindow({ project, onClose }) {
             onClick={stopProp}
           >
 
-            {/* ── Title bar — traffic lights only ─────────────────────────── */}
+            {/* ── Title bar ───────────────────────────────────────────────── */}
             <div
               className="flex-shrink-0 flex items-center gap-1.5 px-4"
               style={{
@@ -132,13 +164,10 @@ export default function ProjectPreviewWindow({ project, onClose }) {
                   </div>
                 </div>
 
-                {/* Project image */}
-                <img
-                  src={project.preview || project.image}
-                  alt={project.title}
-                  style={{ display: 'block', width: '100%', height: 'auto' }}
-                  draggable={false}
-                />
+                {/* Sequential content — images and videos stacked vertically */}
+                {contentItems.map((item, i) => (
+                  <ContentItem key={i} item={item} title={project.title} index={i} />
+                ))}
 
                 {/* Footer strip */}
                 <div
