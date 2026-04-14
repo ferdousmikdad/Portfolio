@@ -22,7 +22,9 @@ import ProjectPreviewWindow from '@/components/apps/ProjectPreviewWindow'
 export default function Desktop() {
   const [menuOpen,   setMenuOpen]   = useState(false)
   const [mikudaOpen, setMikudaOpen] = useState(false)
-  const menuRef = useRef(null)
+  const menuRef  = useRef(null)
+  const chatRef  = useRef(null)
+  const fabRef   = useRef(null)
   const { openWindow, closeAllExcept, switchTool, activePage, navigate, previewProject, closeProjectPreview } = useWindowStore()
   const setActivePage = navigate
   const play = useSound()
@@ -36,6 +38,21 @@ export default function Desktop() {
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [menuOpen])
+
+  // Close chat on outside click (exclude the FAB toggle button)
+  useEffect(() => {
+    if (!mikudaOpen) return
+    const handler = (e) => {
+      if (
+        chatRef.current && !chatRef.current.contains(e.target) &&
+        fabRef.current  && !fabRef.current.contains(e.target)
+      ) {
+        setMikudaOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [mikudaOpen])
 
   // Open the right window when a menu item is selected
   useEffect(() => {
@@ -117,10 +134,10 @@ export default function Desktop() {
       <div style={{ position: 'absolute', inset: 0, zIndex: 60, pointerEvents: 'none' }}>
 
         {/* Chat window — absolute inside the full-screen layer */}
-        <MikudaChat isOpen={mikudaOpen} onClose={() => setMikudaOpen(false)} />
+        <MikudaChat isOpen={mikudaOpen} onClose={() => setMikudaOpen(false)} chatRef={chatRef} />
 
         {/* FAB button */}
-        <div style={{ position: 'absolute', bottom: 32, right: 20, pointerEvents: 'auto' }}>
+        <div ref={fabRef} style={{ position: 'absolute', bottom: 32, right: 20, pointerEvents: 'auto' }}>
           <motion.button
             className={`mikuda-fab ${mikudaOpen ? 'active' : ''}`}
             onClick={() => setMikudaOpen((v) => !v)}

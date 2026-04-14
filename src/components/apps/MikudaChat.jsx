@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useDragControls } from 'framer-motion'
 import { Plus, ArrowUp } from 'lucide-react'
 import useWindowStore from '@/store/windowStore'
 import mikdadHeadUrl from '@/assets/icons/mikdad-head.svg?url'
@@ -446,7 +446,7 @@ function SuggestionPill({ label, highlight, onClick }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export default function MikudaChat({ isOpen, onClose }) {
+export default function MikudaChat({ isOpen, onClose, chatRef }) {
   const navigate           = useWindowStore((s) => s.navigate)
   const openProjectPreview = useWindowStore((s) => s.openProjectPreview)
 
@@ -455,6 +455,7 @@ export default function MikudaChat({ isOpen, onClose }) {
   const [thinking,  setThinking]  = useState(false)
   const [latestId,  setLatestId]  = useState(null)
 
+  const dragControls    = useDragControls()
   const scrollRef       = useRef(null)
   const inputRef        = useRef(null)
   const nextId          = useRef(0)
@@ -564,16 +565,30 @@ export default function MikudaChat({ isOpen, onClose }) {
     <AnimatePresence>
       {isOpen && (
         <motion.div
+          ref={chatRef}
           className="mk-window"
+          drag
+          dragControls={dragControls}
+          dragListener={false}
+          dragMomentum={false}
+          dragElastic={0}
           initial={{ opacity: 0, y: 24, scale: 0.93 }}
           animate={{ opacity: 1, y: 0,  scale: 1    }}
           exit={{    opacity: 0, y: 16, scale: 0.95 }}
           transition={{ type: 'spring', stiffness: 380, damping: 30 }}
           onMouseDown={(e) => e.stopPropagation()}
         >
-          {/* Traffic lights */}
-          <div className="mk-titlebar">
-            <button className="traffic-light traffic-light-close" onClick={onClose} />
+          {/* Traffic lights — also the drag handle */}
+          <div
+            className="mk-titlebar"
+            onPointerDown={(e) => { e.preventDefault(); dragControls.start(e) }}
+            style={{ cursor: 'grab' }}
+          >
+            <button
+              className="traffic-light traffic-light-close"
+              onClick={onClose}
+              onPointerDown={(e) => e.stopPropagation()}
+            />
             <div className="traffic-light traffic-light-minimize" style={{ cursor: 'default' }} />
             <div className="traffic-light traffic-light-maximize" style={{ cursor: 'default' }} />
           </div>
