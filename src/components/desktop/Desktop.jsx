@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import TopBar from './TopBar'
+import RightControls from './RightControls'
 import Background from './Background'
 import Dock from '@/components/dock/Dock'
 import MenuWindow from '@/components/dock/MenuWindow'
@@ -106,6 +107,9 @@ export default function Desktop() {
         onNavigate={setActivePage}
         menuRef={menuRef}
       />
+
+      {/* Right-side global controls */}
+      <RightControls />
 
       {/* Tools icon dock — visible only when tools page is open */}
       <AnimatePresence>
