@@ -5,6 +5,27 @@ import useWindowStore from '@/store/windowStore'
 import mikdadHeadUrl from '@/assets/icons/mikdad-head.svg?url'
 import allProjects from '@/data/projects'
 
+// ── Contact info ──────────────────────────────────────────────────────────────
+
+const CONTACT = {
+  email: 'ferdousmikdad@gmail.com',
+  phone: '+880 1303743742',
+}
+
+// ── Social links ──────────────────────────────────────────────────────────────
+
+const SOCIAL_LINKS = [
+  { label: 'Facebook',    handle: 'ferdousmikdad',       href: 'https://www.facebook.com/ferdousmikdad/',                     icon: 'f',  color: '#1877F2' },
+  { label: 'Instagram',   handle: '@ferdousmikdad',      href: 'https://www.instagram.com/ferdousmikdad/',                    icon: '✦',  color: '#E1306C' },
+  { label: 'LinkedIn',    handle: 'ferdousmikdad',       href: 'https://www.linkedin.com/in/ferdousmikdad/',                  icon: 'in', color: '#0A66C2' },
+  { label: 'YouTube',     handle: '@ferdousmikdad',      href: 'https://www.youtube.com/@ferdousmikdad',                      icon: '▶',  color: '#FF0000' },
+  { label: 'YouTube',     handle: '@quickeven_play',     href: 'https://www.youtube.com/@quickeven_play',                     icon: '▶',  color: '#FF0000' },
+  { label: 'Dribbble',    handle: 'ferdousmikdad',       href: 'https://dribbble.com/ferdousmikdad/',                         icon: '◉',  color: '#EA4C89' },
+  { label: 'Behance',     handle: 'ferdousmikdad',       href: 'https://www.behance.net/ferdousmikdad',                       icon: 'Bē', color: '#1769FF' },
+  { label: 'Adobe Stock', handle: 'ferdous',             href: 'https://stock.adobe.com/contributor/211436302/ferdous',       icon: 'A',  color: '#FF0000' },
+  { label: 'Linktree',    handle: 'ferdousmikdad',       href: 'https://linktr.ee/ferdousmikdad',                             icon: '⬡',  color: '#43E55E' },
+]
+
 // ── Projects by category ──────────────────────────────────────────────────────
 
 const byCategory = (cat) => allProjects.filter((p) => p.category === cat)
@@ -104,15 +125,42 @@ const KB = [
     test: (t) => /\b(service|offer|provide|package|price|cost|rate|quote)\b/.test(t),
     answer: "Mikdad offers:\n• Website design & development\n• UI/UX design\n• Branding & logo design\n• Arabic logo & identity design\n\nOpen to freelance and creative projects.",
   },
+  // Social links — any platform name or "social/links/follow"
+  {
+    id: 'social',
+    test: (t) =>
+      /\b(facebook|youtube|instagram|linkedin|behance|dribbble|linktree|adobe.?stock|social|follow|links?|profiles?)\b/.test(t),
+    answer: "Here are all of Mikdad's links:",
+    socialLinks: true,
+  },
+
+  // Exact-match: user types ONLY "email"
+  {
+    id: 'just-email',
+    test: (t) => /^e?mail$/.test(t),
+    answer: '',
+    contactInfo: { email: true },
+  },
+
+  // Exact-match: user types ONLY "phone" / "mobile" / "number" / "call"
+  {
+    id: 'just-phone',
+    test: (t) => /^(phone|mobile|number|call|tel)$/.test(t),
+    answer: '',
+    contactInfo: { phone: true },
+  },
+
   {
     id: 'contact',
     test: (t) => /\b(contact|reach|email|message|talk|connect|get in touch|hire)\b/.test(t),
-    answer: "You can reach Mikdad at ferdousmikdad@gmail.com — he's always happy to discuss new projects!",
+    answer: "You can reach Mikdad here:",
+    contactInfo: { email: true, phone: true },
   },
   {
     id: 'availability',
     test: (t) => /\b(available|availability|freelance|free|busy|open for|open to)\b/.test(t),
-    answer: "Yes! Mikdad is currently open for freelance and creative projects. Drop him a message at ferdousmikdad@gmail.com.",
+    answer: "Yes! Mikdad is open for freelance and creative projects. Reach him here:",
+    contactInfo: { email: true, phone: true },
   },
   {
     id: 'web',
@@ -285,6 +333,107 @@ function ThinkingBubble() {
   )
 }
 
+function ContactBubble({ text, contactInfo, isLatest }) {
+  const { displayed, done } = useTyping(text || '', isLatest && !!text)
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+      className="flex flex-col gap-2"
+    >
+      {text && (
+        <div className="mk-bubble-ai">
+          <p className="text-[13px] leading-relaxed" style={{ color: '#e8e5dc' }}>
+            {displayed}
+            {isLatest && !done && <span className="mk-cursor" />}
+          </p>
+        </div>
+      )}
+      {(!text || done) && (
+        <motion.div
+          className="mk-contact-chips"
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: text ? 0.1 : 0 }}
+        >
+          {contactInfo.email && (
+            <a href={`mailto:${CONTACT.email}`} className="mk-contact-chip" target="_blank" rel="noreferrer">
+              <div className="mk-contact-chip-icon">✉</div>
+              <div className="flex flex-col">
+                <span className="mk-contact-chip-label">Email</span>
+                <span className="mk-contact-chip-value">{CONTACT.email}</span>
+              </div>
+            </a>
+          )}
+          {contactInfo.phone && (
+            <a href={`tel:${CONTACT.phone.replace(/\s/g, '')}`} className="mk-contact-chip" target="_blank" rel="noreferrer">
+              <div className="mk-contact-chip-icon">📞</div>
+              <div className="flex flex-col">
+                <span className="mk-contact-chip-label">Phone</span>
+                <span className="mk-contact-chip-value">{CONTACT.phone}</span>
+              </div>
+            </a>
+          )}
+        </motion.div>
+      )}
+    </motion.div>
+  )
+}
+
+function SocialBubble({ text, isLatest }) {
+  const { displayed, done } = useTyping(text, isLatest)
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+      className="flex flex-col gap-2"
+    >
+      <div className="mk-bubble-ai">
+        <p className="text-[13px] leading-relaxed" style={{ color: '#e8e5dc' }}>
+          {displayed}
+          {isLatest && !done && <span className="mk-cursor" />}
+        </p>
+      </div>
+      {done && (
+        <motion.div
+          className="mk-contact-chips"
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08 }}
+        >
+          {SOCIAL_LINKS.map((s, i) => (
+            <motion.a
+              key={s.href}
+              href={s.href}
+              target="_blank"
+              rel="noreferrer"
+              className="mk-contact-chip"
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.06 + i * 0.04 }}
+            >
+              <div
+                className="mk-contact-chip-icon"
+                style={{ background: `${s.color}22`, color: s.color, fontSize: 11, fontWeight: 700, letterSpacing: '-0.3px' }}
+              >
+                {s.icon}
+              </div>
+              <div className="flex flex-col">
+                <span className="mk-contact-chip-label">{s.label}</span>
+                <span className="mk-contact-chip-value">{s.handle}</span>
+              </div>
+            </motion.a>
+          ))}
+        </motion.div>
+      )}
+    </motion.div>
+  )
+}
+
 function SuggestionPill({ label, highlight, onClick }) {
   if (!highlight) return <button className="mk-pill" onClick={onClick}>{label}</button>
   const [before, after] = label.split(highlight)
@@ -365,6 +514,21 @@ export default function MikudaChat({ isOpen, onClose }) {
           type: 'image',
           text: entry.answer || "Here's another one from Mikdad's portfolio:",
           project,
+        }])
+      } else if (entry.socialLinks) {
+        setMessages((prev) => [...prev, {
+          id: aiId,
+          role: 'ai',
+          type: 'social',
+          text: entry.answer,
+        }])
+      } else if (entry.contactInfo) {
+        setMessages((prev) => [...prev, {
+          id: aiId,
+          role: 'ai',
+          type: 'contact',
+          text: entry.answer || '',
+          contactInfo: entry.contactInfo,
         }])
       } else {
         setMessages((prev) => [...prev, {
@@ -460,6 +624,21 @@ export default function MikudaChat({ isOpen, onClose }) {
                           text={msg.text}
                           project={msg.project}
                           onOpenProject={openProjectPreview}
+                          isLatest={msg.id === latestId}
+                        />
+                      )
+                      if (msg.type === 'social') return (
+                        <SocialBubble
+                          key={msg.id}
+                          text={msg.text}
+                          isLatest={msg.id === latestId}
+                        />
+                      )
+                      if (msg.type === 'contact') return (
+                        <ContactBubble
+                          key={msg.id}
+                          text={msg.text}
+                          contactInfo={msg.contactInfo}
                           isLatest={msg.id === latestId}
                         />
                       )

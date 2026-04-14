@@ -656,6 +656,56 @@
 }
 .mk-action-btn:hover { background: rgba(207,5,6,0.18); }
 
+/* Contact chips */
+.mk-contact-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 2px;
+}
+.mk-contact-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 11px;
+  border-radius: 10px;
+  background: #1e1e1e;
+  border: 1px solid #2e2e2e;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.14s ease, border-color 0.14s ease;
+  width: 100%;
+}
+.mk-contact-chip:hover {
+  background: #252525;
+  border-color: rgba(207,5,6,0.35);
+}
+.mk-contact-chip-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: rgba(207,5,6,0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #cf0506;
+  font-size: 13px;
+}
+.mk-contact-chip-label {
+  font-size: 10px;
+  color: #666;
+  font-weight: 500;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+.mk-contact-chip-value {
+  font-size: 12px;
+  color: #d0cdc4;
+  font-weight: 500;
+  line-height: 1;
+}
+
 /* Input bar */
 .mk-input-wrap {
   display: flex;
