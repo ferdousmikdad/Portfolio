@@ -1078,3 +1078,19 @@
   66%  { box-shadow: -1px 0 0 2px rgba(52,211,153,0.7), 0 0 36px rgba(52,211,153,0.4); }
   100% { box-shadow: 0 0 0 2px rgba(52,211,153,0.6), 0 0 30px rgba(52,211,153,0.3); }
 }
+
+/* ── Mobile responsive ───────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Chat window: don't overflow screen edges */
+  .mk-window {
+    width: calc(100vw - 32px);
+    right: 16px;
+    bottom: 80px;
+    max-height: 70svh;
+  }
+
+  /* Hide scrollbars on category pill rows */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+}

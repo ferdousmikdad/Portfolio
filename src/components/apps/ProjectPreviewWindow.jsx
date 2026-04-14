@@ -26,7 +26,7 @@ function ContentItem({ item, title, index }) {
   )
 }
 
-export default function ProjectPreviewWindow({ project, onClose }) {
+export default function ProjectPreviewWindow({ project, onClose, isMobile = false }) {
   const scrollRef   = useRef(null)
   const [copied, setCopied] = useState(false)
 
@@ -80,7 +80,7 @@ export default function ProjectPreviewWindow({ project, onClose }) {
             key="preview-panel"
             className="fixed"
             style={{
-              top: 28, left: 0, right: 0, bottom: 0,
+              top: isMobile ? 0 : 28, left: 0, right: 0, bottom: 0,
               zIndex: 99999,
               display: 'flex',
               flexDirection: 'column',
