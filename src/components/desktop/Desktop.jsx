@@ -17,12 +17,13 @@ import ToolsDock from '@/components/dock/ToolsDock'
 import useWindowStore, { TOOL_IDS } from '@/store/windowStore'
 import useSound from '@/hooks/useSound'
 import MikudaChat from '@/components/apps/MikudaChat'
+import ProjectPreviewWindow from '@/components/apps/ProjectPreviewWindow'
 
 export default function Desktop() {
   const [menuOpen,   setMenuOpen]   = useState(false)
   const [mikudaOpen, setMikudaOpen] = useState(false)
   const menuRef = useRef(null)
-  const { openWindow, closeAllExcept, switchTool, activePage, navigate } = useWindowStore()
+  const { openWindow, closeAllExcept, switchTool, activePage, navigate, previewProject, closeProjectPreview } = useWindowStore()
   const setActivePage = navigate
   const play = useSound()
 
@@ -105,6 +106,9 @@ export default function Desktop() {
         onNavigate={setActivePage}
         menuRef={menuRef}
       />
+
+      {/* Global project preview — opened from WorkWindow or MikudaChat */}
+      <ProjectPreviewWindow project={previewProject} onClose={closeProjectPreview} />
 
       {/* Bottom-left controls */}
       <RightControls />

@@ -3,7 +3,6 @@ import useWindowStore from '@/store/windowStore'
 import { Search, Grid2X2, List, Columns3, LayoutGrid } from 'lucide-react'
 import Window from '@/components/window/Window'
 import projects, { CATEGORIES, TAGS } from '@/data/projects'
-import ProjectPreviewWindow from '@/components/apps/ProjectPreviewWindow'
 import AllIcon           from '@/assets/icons/work-all.svg?react'
 import RecentsIcon       from '@/assets/icons/work-recents.svg?react'
 import LogoIcon          from '@/assets/icons/work-logo.svg?react'
@@ -96,13 +95,13 @@ function ProjectCard({ project, onClick }) {
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function WorkWindow() {
-  const isMaximized = useWindowStore((s) => s.windows.find((w) => w.id === 'portfolio')?.isMaximized ?? false)
+  const isMaximized      = useWindowStore((s) => s.windows.find((w) => w.id === 'portfolio')?.isMaximized ?? false)
+  const openProjectPreview = useWindowStore((s) => s.openProjectPreview)
 
   const [selectedItem,    setSelectedItem]    = useState(null)
   const [selectedType,    setSelectedType]    = useState(null)
   const [search,          setSearch]          = useState('')
   const [viewMode,        setViewMode]        = useState('grid')
-  const [previewProject,  setPreviewProject]  = useState(null)
 
   const filtered = useMemo(() => {
     let list = projects
@@ -275,7 +274,7 @@ export default function WorkWindow() {
                     style={{ border: '1px solid transparent' }}
                     onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--wall-bg)'; e.currentTarget.style.borderColor = 'var(--border)' }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = ''; e.currentTarget.style.borderColor = 'transparent' }}
-                    onClick={() => setPreviewProject(project)}
+                    onClick={() => openProjectPreview(project)}
                   >
                     <div className="w-10 h-10 rounded-md overflow-hidden flex-shrink-0" style={{ background: 'var(--wall-bg)' }}>
                       <img src={project.thumbnail || project.image} alt={project.title} className="w-full h-full object-cover" />
@@ -303,7 +302,7 @@ export default function WorkWindow() {
               }}
             >
               {filtered.map((project) => (
-                <ProjectCard key={project.id} project={project} onClick={() => setPreviewProject(project)} />
+                <ProjectCard key={project.id} project={project} onClick={() => openProjectPreview(project)} />
               ))}
             </div>
           )}
@@ -312,11 +311,6 @@ export default function WorkWindow() {
 
       </div>
     </Window>
-
-    <ProjectPreviewWindow
-      project={previewProject}
-      onClose={() => setPreviewProject(null)}
-    />
     </>
   )
 }
