@@ -3,219 +3,312 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Retro Dot Effect — Tools</title>
-  <script>if (window.self !== window.top) document.documentElement.dataset.embed = '1';</script>
-  <style>[data-embed='1'] header { display: none !important; }</style>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <title>Retro Dot Effect</title>
+  <script>
+    (function () {
+      if (window.self !== window.top) document.documentElement.dataset.embed = '1';
+      try {
+        if (window.parent.document.documentElement.classList.contains('dark'))
+          document.documentElement.classList.add('dark');
+      } catch (e) {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
   <style>
-    @font-face {
-      font-family: 'BoldPixels';
-      src: url('../assets/BoldPixels.otf') format('opentype');
+    /* ── Website design tokens ── */
+    :root {
+      --bg:           #F2EDD9;
+      --panel-bg:     rgba(0, 0, 0, 0.03);
+      --border:       rgba(0, 0, 0, 0.08);
+      --headline:     #1c1c1e;
+      --body:         #6b6861;
+      --social-bg:    rgba(0, 0, 0, 0.05);
+      --social-hover: rgba(0, 0, 0, 0.10);
+      --input-bg:     rgba(0, 0, 0, 0.04);
+      --input-border: rgba(0, 0, 0, 0.08);
+      --canvas-bg:    rgba(0, 0, 0, 0.04);
+      --accent:       #cf0506;
+      --scrollbar:    rgba(0, 0, 0, 0.10);
+      --slider-track: rgba(0, 0, 0, 0.12);
+    }
+    .dark {
+      --bg:           #080808;
+      --panel-bg:     rgba(255, 255, 255, 0.02);
+      --border:       rgba(255, 255, 255, 0.08);
+      --headline:     #f3f0e5;
+      --body:         #aba795;
+      --social-bg:    rgba(255, 255, 255, 0.05);
+      --social-hover: rgba(255, 255, 255, 0.10);
+      --input-bg:     rgba(255, 255, 255, 0.04);
+      --input-border: rgba(255, 255, 255, 0.08);
+      --canvas-bg:    rgba(255, 255, 255, 0.03);
+      --accent:       #cf0506;
+      --scrollbar:    rgba(255, 255, 255, 0.10);
+      --slider-track: rgba(255, 255, 255, 0.10);
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    * { font-family: 'Fira Code', monospace; }
-
-    .title-font {
-      font-family: 'BoldPixels', 'Courier New', monospace;
-      letter-spacing: 2px;
-    }
-
     html, body { height: 100%; }
+
     body {
-      background-color: #09090b;
-      color: #fff;
-      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--headline);
+      height: 100%;
       display: flex;
       flex-direction: column;
-      overflow-y: auto;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
     }
 
+    [data-embed='1'] .page-header { display: none !important; }
 
-    /* ── Header ── */
-    .hdr-btn {
-      display: flex; align-items: center; gap: 6px;
-      padding: 5px 14px;
-      font-family: 'BoldPixels', monospace;
-      font-size: 10px; letter-spacing: 1px;
-      border: 1.5px solid #3f3f46; border-radius: 6px;
-      background: transparent; color: #71717a;
+    /* ── Standalone header ── */
+    .page-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .back-link {
+      font-size: 12px; font-weight: 500;
+      color: var(--body); text-decoration: none;
+      transition: color 0.15s;
+    }
+    .back-link:hover { color: var(--accent); }
+    .hdr-sep { width: 1px; height: 14px; background: var(--border); }
+    .hdr-title { font-size: 13px; font-weight: 500; color: var(--headline); }
+
+    /* ── Toolbar ── */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-label {
+      font-size: 11px; font-weight: 500;
+      color: var(--body); opacity: 0.6;
+    }
+
+    .toolbar-sep { width: 1px; height: 14px; background: var(--border); margin: 0 2px; }
+
+    .preset-label {
+      font-size: 10px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--body); opacity: 0.45;
+    }
+
+    /* ── Shared button ── */
+    .btn {
+      height: 26px;
+      padding: 0 11px;
+      border-radius: 7px;
+      font-size: 11px; font-weight: 500;
       cursor: pointer;
-      transition: border-color 0.15s, color 0.15s;
+      border: 1px solid var(--border);
+      background: var(--social-bg);
+      color: var(--body);
+      font-family: inherit;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      white-space: nowrap;
     }
-    .hdr-btn:hover { border-color: #ef4444; color: #ef4444; }
+    .btn:hover {
+      background: var(--social-hover);
+      color: var(--headline);
+    }
+    .btn.active {
+      background: rgba(207, 5, 6, 0.09);
+      border-color: rgba(207, 5, 6, 0.3);
+      color: var(--accent);
+    }
+    .btn-solid {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .btn-solid:hover { opacity: 0.88; }
 
-    /* ── Preset Buttons ── */
-    .preset-btn {
-      padding: 4px 12px;
-      font-size: 10px;
-      font-family: 'BoldPixels', monospace;
-      letter-spacing: 1px;
-      border: 1.5px solid #3f3f46;
-      border-radius: 6px;
-      background: transparent;
-      color: #71717a;
-      cursor: pointer;
-      transition: border-color 0.15s, color 0.15s;
-    }
-    .preset-btn:hover, .preset-btn.active {
-      border-color: #ef4444;
-      color: #ef4444;
-    }
+    /* ── Presets bar (shown after upload) ── */
+    #presetsBar { display: none; }
+    #presetsBar.show { display: contents; }
 
-    /* ── Main content — centered when only drop zone visible ── */
-    .main-content {
+    /* ── Main scrollable area ── */
+    .main {
       flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 32px 24px 40px;
-      gap: 20px;
+      padding: 24px 16px 28px;
+      gap: 14px;
     }
 
-    /* ══════════════════════════════════════
-       DROP STATE (default, centered)
-    ══════════════════════════════════════ */
+    /* ── Drop state ── */
     #dropState {
       width: 100%;
-      max-width: 680px;
+      max-width: 600px;
     }
 
     .drop-card {
-      background: #111113;
-      border: 1px solid #1c1c1e;
-      border-radius: 14px;
-      padding: 48px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--social-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      padding: 36px 32px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 28px;
+      gap: 24px;
+    }
+
+    .drop-card-title {
+      font-size: 14px; font-weight: 600;
+      color: var(--headline);
+      text-align: center;
+      margin-bottom: 2px;
+    }
+
+    .drop-card-sub {
+      font-size: 12px;
+      color: var(--body);
+      text-align: center;
     }
 
     .drop-zone {
       width: 100%;
-      border: 2px dashed #27272a;
+      border: 1.5px dashed var(--border);
       border-radius: 12px;
-      padding: 64px 40px;
+      padding: 52px 32px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 16px;
+      gap: 12px;
       cursor: pointer;
       transition: border-color 0.2s, background 0.2s;
     }
-    .drop-zone:hover, .drop-zone.drag-over {
-      border-color: #ef4444;
-      background: rgba(239, 68, 68, 0.04);
+    .drop-zone:hover,
+    .drop-zone.drag-over {
+      border-color: var(--accent);
+      background: rgba(207, 5, 6, 0.04);
     }
 
+    .drop-icon { color: var(--body); opacity: 0.4; }
+
     .drop-zone-label {
-      font-size: 10px;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: #52525b;
-      font-family: 'BoldPixels', monospace;
-      margin-bottom: 2px;
+      font-size: 12px; font-weight: 600;
+      color: var(--body);
+      letter-spacing: 0.04em;
     }
 
     .drop-zone-sub {
       font-size: 11px;
-      color: #3f3f46;
+      color: var(--body);
+      opacity: 0.5;
     }
 
-    .choose-btn {
-      margin-top: 4px;
-      padding: 7px 22px;
-      border: 1.5px solid #3f3f46;
+    .choose-label {
+      margin-top: 6px;
+      display: inline-flex;
+      align-items: center;
+      height: 30px;
+      padding: 0 16px;
       border-radius: 8px;
-      font-size: 11px;
-      font-family: 'BoldPixels', monospace;
-      letter-spacing: 1px;
-      color: #71717a;
-      background: transparent;
+      font-size: 12px; font-weight: 500;
       cursor: pointer;
-      transition: border-color 0.15s, color 0.15s;
+      border: 1px solid var(--border);
+      background: var(--social-bg);
+      color: var(--body);
+      font-family: inherit;
+      transition: background 0.15s, color 0.15s;
     }
-    .choose-btn:hover { border-color: #ef4444; color: #ef4444; }
+    .choose-label:hover { background: var(--social-hover); color: var(--headline); }
+    .choose-label input { display: none; }
 
-    /* ══════════════════════════════════════
-       IMAGE STATE (hidden until upload)
-    ══════════════════════════════════════ */
+    /* ── Image state ── */
     #imageState {
       display: none;
       flex-direction: column;
       align-items: center;
-      gap: 20px;
+      gap: 14px;
       width: 100%;
-      max-width: 860px;
+      max-width: 900px;
     }
     #imageState.show { display: flex; }
 
-    /* ── Card shared ── */
+    /* ── Section card ── */
     .tool-card {
       width: 100%;
-      background: #111113;
-      border: 1px solid #1c1c1e;
-      border-radius: 14px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
       overflow: hidden;
+      background: var(--social-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
     }
 
     .card-header {
-      padding: 12px 20px;
-      border-bottom: 1px solid #1c1c1e;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 10px;
       flex-shrink: 0;
     }
 
     .card-label {
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-      color: #52525b;
-      font-weight: 600;
+      font-size: 10px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.12em;
+      color: var(--body); opacity: 0.55;
     }
 
-    /* ── Panels row ── */
+    .card-header-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    /* ── Preview panels ── */
     .panels-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
     }
 
-    .img-panel {
-      display: flex;
-      flex-direction: column;
-    }
-    .img-panel:first-child { border-right: 1px solid #1c1c1e; }
+    .img-panel { display: flex; flex-direction: column; }
+    .img-panel:first-child { border-right: 1px solid var(--border); }
 
     .img-panel-body {
-      height: 320px;
+      height: 300px;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #0c0c0e;
+      background: var(--canvas-bg);
       overflow: hidden;
       position: relative;
     }
 
     canvas {
-      max-width: 100%;
-      max-height: 100%;
-      width: auto;
-      height: auto;
+      max-width: 100%; max-height: 100%;
+      width: auto; height: auto;
       display: block;
     }
 
-    /* ── Controls card ── */
+    /* ── Controls ── */
     .controls-body {
-      padding: 20px 24px;
+      padding: 18px 20px;
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 20px 28px;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 18px 24px;
       align-items: start;
     }
 
@@ -232,25 +325,24 @@
     }
 
     .ctrl-label {
-      font-size: 10px;
-      color: #52525b;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
+      font-size: 10px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--body); opacity: 0.6;
     }
 
     .ctrl-value {
-      font-size: 10px;
-      color: #ef4444;
+      font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace;
+      font-size: 10px; font-weight: 600;
+      color: var(--accent);
       font-variant-numeric: tabular-nums;
     }
 
-    /* ── Range Sliders ── */
+    /* ── Range sliders ── */
     input[type="range"] {
       -webkit-appearance: none;
-      width: 100%;
-      height: 3px;
+      width: 100%; height: 3px;
       border-radius: 2px;
-      background: #27272a;
+      background: var(--slider-track);
       outline: none;
       cursor: pointer;
     }
@@ -258,190 +350,190 @@
       -webkit-appearance: none;
       width: 13px; height: 13px;
       border-radius: 50%;
-      background: #ef4444;
+      background: var(--accent);
       cursor: pointer;
     }
     input[type="range"]::-moz-range-thumb {
       width: 13px; height: 13px;
       border-radius: 50%;
-      background: #ef4444;
+      background: var(--accent);
       border: none; cursor: pointer;
     }
 
     /* ── Shape toggle ── */
     .shape-toggle {
       display: flex;
-      border: 1px solid #27272a;
+      border: 1px solid var(--border);
       border-radius: 8px;
       overflow: hidden;
+      background: var(--input-bg);
     }
     .shape-btn {
       flex: 1;
       padding: 7px 0;
-      font-size: 11px;
+      font-size: 11px; font-weight: 500;
       background: transparent;
-      color: #52525b;
+      color: var(--body);
       border: none;
       cursor: pointer;
+      font-family: inherit;
       transition: background 0.15s, color 0.15s;
     }
-    .shape-btn + .shape-btn { border-left: 1px solid #27272a; }
+    .shape-btn + .shape-btn { border-left: 1px solid var(--border); }
     .shape-btn.active {
-      background: rgba(239, 68, 68, 0.1);
-      color: #ef4444;
+      background: rgba(207, 5, 6, 0.09);
+      color: var(--accent);
     }
 
-    /* ── Color picker ── */
+    /* ── Color picker row ── */
     .color-picker-row {
       display: flex;
       align-items: center;
       gap: 10px;
     }
+
     .color-swatch-wrap {
-      width: 34px; height: 34px;
+      width: 32px; height: 32px;
       border-radius: 8px;
-      border: 1.5px solid #27272a;
+      border: 1px solid var(--border);
       overflow: hidden;
       flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       cursor: pointer;
-      transition: border-color 0.2s;
+      transition: border-color 0.15s, transform 0.15s;
     }
-    .color-swatch-wrap:hover { border-color: #52525b; }
+    .color-swatch-wrap:hover { border-color: var(--body); transform: scale(1.06); }
+
     input[type="color"] {
       -webkit-appearance: none;
       border: none; padding: 0; background: none; cursor: pointer;
-      width: 44px; height: 44px;
+      width: 42px; height: 42px;
       margin: -5px;
     }
     input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
     input[type="color"]::-webkit-color-swatch { border: none; }
-    .color-hex-val {
-      font-size: 11px;
-      color: #71717a;
-    }
 
-    /* ── Download buttons ── */
-    .dl-btn {
-      padding: 5px 14px;
-      font-size: 10px;
-      font-family: 'BoldPixels', monospace;
-      letter-spacing: 1px;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    .color-hex-val {
+      font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace;
+      font-size: 11px; font-weight: 500;
+      color: var(--body);
     }
-    .dl-btn-outline {
-      border: 1.5px solid #3f3f46;
-      background: transparent;
-      color: #71717a;
-    }
-    .dl-btn-outline:hover { border-color: #ef4444; color: #ef4444; }
-    .dl-btn-solid {
-      border: 1.5px solid #ef4444;
-      background: #ef4444;
-      color: #fff;
-    }
-    .dl-btn-solid:hover { background: #dc2626; border-color: #dc2626; }
 
     /* ── Reset button ── */
     .reset-btn {
       width: 100%;
       padding: 8px;
-      border: 1.5px solid #27272a;
+      border: 1px solid var(--border);
       border-radius: 8px;
       background: transparent;
-      color: #52525b;
-      font-size: 10px;
-      font-family: 'BoldPixels', monospace;
-      letter-spacing: 1px;
+      color: var(--body);
+      font-size: 11px; font-weight: 500;
       text-transform: uppercase;
+      letter-spacing: 0.08em;
       cursor: pointer;
-      transition: border-color 0.15s, color 0.15s;
-      margin-top: 4px;
+      font-family: inherit;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+      margin-top: 2px;
     }
-    .reset-btn:hover { border-color: #52525b; color: #a1a1aa; }
+    .reset-btn:hover { background: var(--social-hover); color: var(--headline); }
 
     /* ── Processing overlay ── */
     #processingOverlay {
       display: none;
       position: absolute; inset: 0;
-      background: rgba(9, 9, 11, 0.75);
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
       align-items: center; justify-content: center;
       z-index: 10;
     }
     #processingOverlay.show { display: flex; }
 
-    /* ── Scrollbar ── */
-    ::-webkit-scrollbar { width: 5px; }
-    ::-webkit-scrollbar-track { background: #18181b; }
-    ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 3px; }
+    .processing-label {
+      font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.12em;
+      color: var(--accent);
+    }
 
-    @media (max-width: 600px) {
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 4px; }
+
+    @media (max-width: 620px) {
       .panels-row { grid-template-columns: 1fr; }
-      .img-panel:first-child { border-right: none; border-bottom: 1px solid #1c1c1e; }
+      .img-panel:first-child { border-right: none; border-bottom: 1px solid var(--border); }
       .controls-body { grid-template-columns: 1fr 1fr; }
-      .main-content { padding: 20px 16px 32px; }
+      .main { padding: 16px 12px 24px; }
     }
   </style>
 </head>
 <body>
 
-<!-- ════ HEADER ════ -->
-<header style="background:#09090b; border-bottom:1px solid #1c1c1e;"
-        class="flex items-center gap-4 px-5 py-3 flex-shrink-0">
-  <a href="../index.html" class="title-font text-xs text-zinc-500 hover:text-red-500 transition-colors">← Back</a>
-  <div style="width:1px;height:16px;background:#27272a;"></div>
-  <h1 class="title-font text-xs text-white">Retro Dot Effect</h1>
+<!-- Theme sync -->
+<script>
+(function () {
+  try {
+    const ph = window.parent.document.documentElement;
+    const sync = () => document.documentElement.classList.toggle('dark', ph.classList.contains('dark'));
+    sync();
+    new MutationObserver(sync).observe(ph, { attributes: true, attributeFilter: ['class'] });
+  } catch (e) {}
+})();
+</script>
 
-  <!-- Presets — hidden until image loaded -->
-  <div id="presetsBar" class="ml-auto items-center gap-2 hidden" style="display:none; flex-wrap:wrap;">
-    <span style="font-size:10px;color:#3f3f46;letter-spacing:.08em;">Presets:</span>
-    <button class="preset-btn active" data-preset="comic">Comic</button>
-    <button class="preset-btn" data-preset="soft">Soft</button>
-    <button class="preset-btn" data-preset="heavy">Heavy Ink</button>
-    <button class="preset-btn" data-preset="blueprint">Blueprint</button>
+<!-- Standalone header -->
+<div class="page-header">
+  <a href="../index.html" class="back-link">← Back</a>
+  <div class="hdr-sep"></div>
+  <span class="hdr-title">Retro Dot Effect</span>
+</div>
+
+<!-- Toolbar -->
+<div class="toolbar">
+  <span class="toolbar-label">Retro Dot Effect</span>
+
+  <div id="presetsBar">
+    <div class="toolbar-sep"></div>
+    <span class="preset-label">Presets</span>
+    <button class="btn active" data-preset="comic">Comic</button>
+    <button class="btn" data-preset="soft">Soft</button>
+    <button class="btn" data-preset="heavy">Heavy Ink</button>
+    <button class="btn" data-preset="blueprint">Blueprint</button>
   </div>
-</header>
+</div>
 
+<!-- Main -->
+<div class="main">
 
-<!-- ════ MAIN ════ -->
-<div class="main-content">
-
-  <!-- ── DROP STATE (default) ── -->
+  <!-- Drop state -->
   <div id="dropState">
     <div class="drop-card">
-
       <div>
-        <p class="title-font" style="font-size:11px;color:#e4e4e7;text-align:center;margin-bottom:4px;">Retro Dot Effect</p>
-        <p style="font-size:11px;color:#52525b;text-align:center;">Drop your image to generate a halftone dot result</p>
+        <p class="drop-card-title">Retro Dot Effect</p>
+        <p class="drop-card-sub">Drop your image to generate a halftone dot result</p>
       </div>
 
       <div id="dropZone" class="drop-zone">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none"
-             stroke="#3f3f46" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <svg class="drop-icon" width="32" height="32" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
           <polyline points="17 8 12 3 7 8"/>
           <line x1="12" y1="3" x2="12" y2="15"/>
         </svg>
         <p class="drop-zone-label">Drop image here</p>
         <p class="drop-zone-sub">JPG · PNG · WebP</p>
-        <label class="choose-btn">
+        <label class="choose-label">
           Choose File
-          <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" class="hidden" />
+          <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" />
         </label>
       </div>
-
     </div>
-  </div><!-- /dropState -->
+  </div>
 
-
-  <!-- ── IMAGE STATE (shown after upload) ── -->
+  <!-- Image state -->
   <div id="imageState">
 
-    <!-- Row 1: Original + Halftone panels -->
+    <!-- Preview card -->
     <div class="tool-card">
       <div class="panels-row">
 
@@ -449,34 +541,34 @@
         <div class="img-panel">
           <div class="card-header">
             <span class="card-label">Original</span>
-            <button id="changeImageBtn" class="hdr-btn">⤴ Change Image</button>
+            <button id="changeImageBtn" class="btn">⤴ Change Image</button>
           </div>
           <div class="img-panel-body">
             <canvas id="originalCanvas"></canvas>
           </div>
         </div>
 
-        <!-- Halftone Result -->
+        <!-- Halftone -->
         <div class="img-panel">
           <div class="card-header">
             <span class="card-label">Halftone Result</span>
-            <div style="display:flex;gap:8px;">
-              <button id="downloadSvg" class="dl-btn dl-btn-outline">SVG</button>
-              <button id="downloadPng" class="dl-btn dl-btn-solid">↓ PNG</button>
+            <div class="card-header-actions">
+              <button id="downloadSvg" class="btn">SVG</button>
+              <button id="downloadPng" class="btn btn-solid">↓ PNG</button>
             </div>
           </div>
           <div class="img-panel-body">
             <canvas id="halftoneCanvas"></canvas>
             <div id="processingOverlay">
-              <span class="title-font" style="font-size:10px;color:#ef4444;letter-spacing:2px;">Rendering…</span>
+              <span class="processing-label">Rendering…</span>
             </div>
           </div>
         </div>
 
       </div>
-    </div><!-- /panels card -->
+    </div>
 
-    <!-- Row 2: Controls -->
+    <!-- Controls card -->
     <div class="tool-card" id="controlsCard">
       <div class="card-header">
         <span class="card-label">Controls</span>
@@ -569,23 +661,22 @@
         </div>
 
         <!-- Reset -->
-        <div class="ctrl-group" style="justify-content:flex-end;">
+        <div class="ctrl-group" style="justify-content: flex-end;">
           <button id="resetBtn" class="reset-btn">Reset Controls</button>
         </div>
 
       </div>
-    </div><!-- /controls card -->
+    </div>
 
   </div><!-- /imageState -->
 
-</div><!-- /main-content -->
+</div><!-- /main -->
 
 
-<!-- ════ SCRIPT ════ -->
 <script>
 'use strict';
 
-// ── Presets ────────────────────────────────────────────────────
+// ── Presets ──────────────────────────────────────────────────────────────────
 const PRESETS = {
   comic:     { spacing: 8,  maxSize: 95,  minSize: 0,  contrast: 30,  brightness: 0,   angle: 45, dotColor: '#000000', bgColor: '#ffffff' },
   soft:      { spacing: 14, maxSize: 68,  minSize: 5,  contrast: -10, brightness: 10,  angle: 0,  dotColor: '#1a1a1a', bgColor: '#f5f5f0' },
@@ -601,13 +692,13 @@ const DEFAULTS = {
 
 const MAX_PX = 900;
 
-// ── State ──────────────────────────────────────────────────────
+// ── State ────────────────────────────────────────────────────────────────────
 let sourcePixels  = null;
 let srcW = 0, srcH = 0;
 let dotShape      = 'circle';
 let renderPending = false;
 
-// ── DOM refs ───────────────────────────────────────────────────
+// ── DOM refs ─────────────────────────────────────────────────────────────────
 const dropZone          = document.getElementById('dropZone');
 const fileInput         = document.getElementById('fileInput');
 const originalCanvas    = document.getElementById('originalCanvas');
@@ -641,26 +732,23 @@ const lbl = {
   bgColor:    document.getElementById('bgColorVal'),
 };
 
-
-// ── State transitions ──────────────────────────────────────────
+// ── State transitions ─────────────────────────────────────────────────────────
 function showImageState() {
-  dropState.style.display  = 'none';
+  dropState.style.display = 'none';
   imageState.classList.add('show');
-  presetsBar.style.display = 'flex';
+  presetsBar.classList.add('show');
 }
 
 function showDropState() {
   imageState.classList.remove('show');
-  dropState.style.display  = '';
-  presetsBar.style.display = 'none';
+  dropState.style.display = '';
+  presetsBar.classList.remove('show');
   sourcePixels = null;
 }
 
-// "Change Image" button — back to drop zone
 document.getElementById('changeImageBtn').addEventListener('click', showDropState);
 
-
-// ── Helpers ────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 function getParams() {
   return {
     spacing:    +ctrl.spacing.value,
@@ -686,8 +774,7 @@ function updateLabels() {
   lbl.bgColor.textContent    = ctrl.bgColor.value;
 }
 
-
-// ── Image loading ──────────────────────────────────────────────
+// ── Image loading ─────────────────────────────────────────────────────────────
 function loadFile(file) {
   if (!file || !file.type.startsWith('image/')) return;
   const reader = new FileReader();
@@ -710,18 +797,15 @@ function prepareSource(img) {
   octx.drawImage(img, 0, 0, srcW, srcH);
   sourcePixels = octx.getImageData(0, 0, srcW, srcH);
 
-  // Show original
   originalCanvas.width  = srcW;
   originalCanvas.height = srcH;
   originalCanvas.getContext('2d').drawImage(img, 0, 0, srcW, srcH);
 
-  // Reveal image state
   showImageState();
   scheduleRender();
 }
 
-
-// ── Pixel math ─────────────────────────────────────────────────
+// ── Pixel math ────────────────────────────────────────────────────────────────
 function adjustChannel(v, contrast, brightness) {
   v += brightness * 2.55;
   if (contrast !== 0) {
@@ -742,8 +826,7 @@ function sampleLuminance(x, y, contrast, brightness) {
        + 0.0722 * adjustChannel(d[i + 2], contrast, brightness);
 }
 
-
-// ── Rendering ──────────────────────────────────────────────────
+// ── Rendering ─────────────────────────────────────────────────────────────────
 function drawDot(ctx, cx, cy, r, shape) {
   if (r < 0.3) return;
   ctx.beginPath();
@@ -807,8 +890,7 @@ function scheduleRender() {
   requestAnimationFrame(() => requestAnimationFrame(() => renderHalftone()));
 }
 
-
-// ── Export PNG ─────────────────────────────────────────────────
+// ── Export PNG ────────────────────────────────────────────────────────────────
 downloadPngBtn.addEventListener('click', () => {
   const a = Object.assign(document.createElement('a'), {
     download: 'halftone-dots.png',
@@ -817,8 +899,7 @@ downloadPngBtn.addEventListener('click', () => {
   a.click();
 });
 
-
-// ── Export SVG ─────────────────────────────────────────────────
+// ── Export SVG ────────────────────────────────────────────────────────────────
 downloadSvgBtn.addEventListener('click', exportSVG);
 
 function exportSVG() {
@@ -864,8 +945,7 @@ function exportSVG() {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-
-// ── Presets ────────────────────────────────────────────────────
+// ── Presets ───────────────────────────────────────────────────────────────────
 function applyPreset(name) {
   const p = PRESETS[name];
   if (!p) return;
@@ -889,8 +969,7 @@ document.querySelectorAll('.preset-btn').forEach(btn => {
   });
 });
 
-
-// ── Shape toggle ───────────────────────────────────────────────
+// ── Shape toggle ──────────────────────────────────────────────────────────────
 document.querySelectorAll('.shape-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
@@ -900,14 +979,12 @@ document.querySelectorAll('.shape-btn').forEach(btn => {
   });
 });
 
-
-// ── Sliders & color pickers ────────────────────────────────────
+// ── Sliders & color pickers ───────────────────────────────────────────────────
 Object.values(ctrl).forEach(input => {
   input.addEventListener('input', () => { updateLabels(); scheduleRender(); });
 });
 
-
-// ── Reset ──────────────────────────────────────────────────────
+// ── Reset ─────────────────────────────────────────────────────────────────────
 document.getElementById('resetBtn').addEventListener('click', () => {
   ctrl.spacing.value    = DEFAULTS.spacing;
   ctrl.maxSize.value    = DEFAULTS.maxSize;
@@ -924,23 +1001,21 @@ document.getElementById('resetBtn').addEventListener('click', () => {
   scheduleRender();
 });
 
-
-// ── Drag & drop ────────────────────────────────────────────────
+// ── Drag & drop ───────────────────────────────────────────────────────────────
 dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-dropZone.addEventListener('dragleave', ()  => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
 dropZone.addEventListener('drop', e => {
   e.preventDefault();
   dropZone.classList.remove('drag-over');
   loadFile(e.dataTransfer.files[0]);
 });
 dropZone.addEventListener('click', e => {
-  if (e.target.closest('label')) return; // label already opens the dialog natively
+  if (e.target.closest('label')) return;
   fileInput.click();
 });
 fileInput.addEventListener('change', e => loadFile(e.target.files[0]));
 
-
-// ── Init ───────────────────────────────────────────────────────
+// ── Init ──────────────────────────────────────────────────────────────────────
 updateLabels();
 </script>
 </body>

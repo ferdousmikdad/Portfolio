@@ -4,142 +4,271 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Color Palette Generator</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    (function () {
+      if (window.self !== window.top) document.documentElement.dataset.embed = '1';
+      try {
+        if (window.parent.document.documentElement.classList.contains('dark'))
+          document.documentElement.classList.add('dark');
+      } catch (e) {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Fira Code', monospace; }
-
-    body {
-      background: #09090b;
-      color: #e4e4e7;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 32px 24px;
-      overflow-x: hidden;
+    /* ── Website design tokens ── */
+    :root {
+      --bg:           #F2EDD9;
+      --card-bg:      rgba(255, 255, 255, 0.55);
+      --border:       rgba(0, 0, 0, 0.08);
+      --headline:     #1c1c1e;
+      --body:         #6b6861;
+      --social-bg:    rgba(0, 0, 0, 0.05);
+      --social-hover: rgba(0, 0, 0, 0.10);
+      --input-bg:     rgba(0, 0, 0, 0.04);
+      --input-border: rgba(0, 0, 0, 0.08);
+      --accent:       #cf0506;
+      --scrollbar:    rgba(0, 0, 0, 0.10);
+      --code-bg:      rgba(0, 0, 0, 0.04);
+    }
+    .dark {
+      --bg:           #080808;
+      --card-bg:      rgba(255, 255, 255, 0.02);
+      --border:       rgba(255, 255, 255, 0.08);
+      --headline:     #f3f0e5;
+      --body:         #aba795;
+      --social-bg:    rgba(255, 255, 255, 0.05);
+      --social-hover: rgba(255, 255, 255, 0.10);
+      --input-bg:     rgba(255, 255, 255, 0.04);
+      --input-border: rgba(255, 255, 255, 0.08);
+      --accent:       #cf0506;
+      --scrollbar:    rgba(255, 255, 255, 0.10);
+      --code-bg:      rgba(255, 255, 255, 0.03);
     }
 
-    .app { width: 100%; max-width: 1080px; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* ── Header ─────────────────────────────────────── */
-    .header { margin-bottom: 24px; }
-    .header h1 { font-size: 20px; font-weight: 700; color: #f4f4f5; letter-spacing: 0.5px; }
-    .header p { font-size: 11.5px; color: #52525b; margin-top: 4px; }
+    html, body { height: 100%; }
 
-    /* ── Input Card ─────────────────────────────────── */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--headline);
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    [data-embed='1'] .page-header { display: none !important; }
+
+    /* ── Page header (standalone only) ── */
+    .page-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .back-link {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--body);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .back-link:hover { color: var(--accent); }
+    .hdr-sep { width: 1px; height: 14px; background: var(--border); }
+    .hdr-title { font-size: 13px; font-weight: 500; color: var(--headline); }
+
+    /* ── Main scroll area ── */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 20px 40px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* ── Section title ── */
+    .tool-heading {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--headline);
+      margin-bottom: 4px;
+      letter-spacing: -0.01em;
+    }
+    .tool-sub {
+      font-size: 12px;
+      color: var(--body);
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+
+    /* ── Input row card ── */
     .input-card {
-      background: #111113;
-      border: 1px solid #27272a;
-      border-radius: 10px;
-      padding: 14px 18px;
+      padding: 16px 18px;
       display: flex;
       align-items: center;
       gap: 12px;
-      margin-bottom: 20px;
+      margin-bottom: 14px;
       flex-wrap: wrap;
     }
 
     .picker-wrap {
       position: relative;
-      width: 38px;
-      height: 38px;
-      border-radius: 7px;
-      border: 2px solid #3f3f46;
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      border: 1px solid var(--border);
       overflow: hidden;
       flex-shrink: 0;
       cursor: pointer;
+      transition: border-color 0.15s, transform 0.15s;
     }
+    .picker-wrap:hover { border-color: var(--body); transform: scale(1.06); }
     .picker-preview {
       position: absolute;
       inset: 0;
       pointer-events: none;
+      transition: background 0.2s;
     }
     .picker-wrap input[type="color"] {
       position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
+      top: -6px; left: -6px;
+      width: calc(100% + 12px);
+      height: calc(100% + 12px);
       opacity: 0;
       cursor: pointer;
       border: none;
       padding: 0;
     }
 
-    .hex-input {
-      background: #18181b;
-      border: 1px solid #3f3f46;
-      border-radius: 7px;
-      color: #e4e4e7;
-      font-family: 'Fira Code', monospace;
-      font-size: 14px;
-      padding: 7px 12px;
-      width: 130px;
-      letter-spacing: 1px;
-      transition: border-color 0.15s;
+    .hex-box {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      transition: border-color 0.2s;
     }
-    .hex-input:focus { outline: none; border-color: #71717a; }
-    .hex-input.invalid { border-color: #ef4444; }
+    .hex-box:focus-within { border-color: var(--accent); }
 
-    .input-label { font-size: 11px; color: #3f3f46; letter-spacing: 1px; }
+    .hex-pound {
+      font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--body);
+      opacity: 0.45;
+    }
 
+    .hex-input {
+      font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      width: 72px;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--headline);
+    }
+    .hex-input.invalid { color: var(--accent); }
+
+    .input-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--body);
+      opacity: 0.6;
+    }
+
+    /* ── Buttons ── */
     .btn {
-      padding: 7px 15px;
-      border-radius: 7px;
-      font-family: 'Fira Code', monospace;
+      height: 32px;
+      padding: 0 14px;
+      border-radius: 8px;
       font-size: 12px;
       font-weight: 500;
       cursor: pointer;
-      border: none;
-      transition: all 0.15s;
-      letter-spacing: 0.3px;
+      border: 1px solid transparent;
+      font-family: inherit;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
       white-space: nowrap;
     }
-    .btn-primary { background: #ef4444; color: #fff; }
-    .btn-primary:hover { background: #dc2626; }
-    .btn-ghost { background: transparent; border: 1px solid #3f3f46; color: #a1a1aa; }
-    .btn-ghost:hover { border-color: #71717a; color: #e4e4e7; }
-    .btn-subtle { background: #18181b; border: 1px solid #27272a; color: #71717a; }
-    .btn-subtle:hover { background: #1c1c1f; color: #a1a1aa; }
+    .btn-ghost {
+      background: var(--social-bg);
+      border-color: var(--border);
+      color: var(--body);
+    }
+    .btn-ghost:hover {
+      background: var(--social-hover);
+      color: var(--headline);
+      border-color: var(--headline);
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .btn-primary:hover { opacity: 0.88; }
+
     .ml-auto { margin-left: auto; }
 
-    /* ── Palette Grid ───────────────────────────────── */
+    /* ── Palette grid ── */
     .palette-grid {
       display: grid;
       grid-template-columns: repeat(10, 1fr);
-      gap: 0;
-      border-radius: 10px;
+      border-radius: 14px;
       overflow: hidden;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
+      border: 1px solid var(--border);
     }
 
     .swatch {
       position: relative;
-      aspect-ratio: 1/1;
-      min-height: 0;
+      aspect-ratio: 1 / 1.4;
       cursor: pointer;
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
       padding: 6px 5px;
-      transition: transform 0.12s, z-index 0s;
+      transition: transform 0.12s;
       overflow: hidden;
       user-select: none;
     }
-    .swatch:hover { transform: scaleY(1.05); z-index: 2; }
+    .swatch:hover { transform: scaleY(1.06); z-index: 2; }
 
     .swatch-shade {
-      font-size: 11px;
+      font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace;
+      font-size: 10px;
       font-weight: 700;
       line-height: 1;
       margin-bottom: 3px;
     }
     .swatch-hex {
-      font-size: 8.5px;
+      font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace;
+      font-size: 7.5px;
       font-weight: 400;
       text-transform: uppercase;
-      opacity: 0.8;
+      opacity: 0.75;
     }
     .swatch-copied {
       position: absolute;
@@ -151,161 +280,208 @@
       font-weight: 700;
       opacity: 0;
       transition: opacity 0.18s;
-      background: rgba(0,0,0,0.25);
-      letter-spacing: 0.5px;
+      background: rgba(0, 0, 0, 0.22);
       pointer-events: none;
     }
     .swatch-copied.show { opacity: 1; }
 
-    /* ── Action Bar ─────────────────────────────────── */
+    /* ── Action bar ── */
     .action-bar {
       display: flex;
       gap: 8px;
-      margin-bottom: 64px;
+      margin-bottom: 28px;
       flex-wrap: wrap;
     }
 
-    /* ── Section Header ─────────────────────────────── */
-    .section-header {
+    /* ── Section divider ── */
+    .section-row {
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 14px;
+      gap: 12px;
+      margin-bottom: 12px;
     }
-    .section-title {
+    .section-label {
       font-size: 10px;
       font-weight: 600;
-      color: #3f3f46;
       text-transform: uppercase;
-      letter-spacing: 2px;
+      letter-spacing: 0.12em;
+      color: var(--body);
+      opacity: 0.6;
       white-space: nowrap;
     }
-    .section-line { flex: 1; height: 1px; background: #18181b; }
+    .section-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
 
-    /* ── Pairings Matrix ────────────────────────────── */
-    .matrix-wrap { margin-bottom: 40px; }
+    /* ── Matrix ── */
+    .matrix-hint {
+      font-size: 11px;
+      color: var(--body);
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+    .matrix-hint .aaa { color: #22c55e; font-weight: 600; }
+    .matrix-hint .aa  { color: #f59e0b; font-weight: 600; }
+
+    .matrix-wrap {
+      overflow-x: auto;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      margin-bottom: 40px;
+    }
+
     .matrix {
       display: grid;
-      width: 100%;
       gap: 2px;
+      padding: 10px;
+      min-width: max-content;
     }
+
     .matrix-header-cell {
-      padding: 4px 6px;
+      padding: 3px 5px;
+      font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace;
       font-size: 9px;
       font-weight: 600;
-      color: #52525b;
+      color: var(--body);
+      opacity: 0.6;
       text-align: center;
-      letter-spacing: 0.5px;
     }
     .matrix-row-label {
-      padding: 4px 8px;
+      padding: 3px 8px 3px 3px;
+      font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace;
       font-size: 9px;
       font-weight: 600;
-      color: #52525b;
+      color: var(--body);
+      opacity: 0.6;
       display: flex;
       align-items: center;
       justify-content: flex-end;
-      letter-spacing: 0.5px;
     }
     .matrix-cell {
       width: 100%;
-      height: 34px;
-      border-radius: 4px;
+      height: 32px;
+      border-radius: 5px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 9.5px;
+      font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace;
+      font-size: 9px;
       font-weight: 600;
       cursor: default;
       transition: transform 0.1s;
       position: relative;
     }
-    .matrix-cell:hover { transform: scale(1.12); z-index: 3; }
-    .matrix-cell.same { background: #18181b; }
-    .cell-aaa { background: rgba(34,197,94,0.18); color: #4ade80; }
-    .cell-aa  { background: rgba(234,179,8,0.15); color: #fbbf24; }
-    .cell-fail{ background: rgba(239,68,68,0.08); color: #52525b; }
+    .matrix-cell:hover { transform: scale(1.14); z-index: 3; }
+    .matrix-cell.same {
+      background: var(--social-bg);
+      color: var(--body);
+      opacity: 0.4;
+    }
 
-    /* ── Export Modal ───────────────────────────────── */
+    /* ── Export Modal ── */
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.75);
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       display: none;
       align-items: center;
       justify-content: center;
-      z-index: 100;
+      z-index: 200;
       padding: 20px;
     }
     .modal-overlay.open { display: flex; }
 
     .modal {
-      background: #111113;
-      border: 1px solid #27272a;
-      border-radius: 12px;
+      background: var(--card-bg);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
       width: 100%;
-      max-width: 580px;
-      max-height: 85vh;
+      max-width: 560px;
+      max-height: 88vh;
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.3);
     }
+
     .modal-head {
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 14px 18px;
-      border-bottom: 1px solid #1a1a1d;
+      border-bottom: 1px solid var(--border);
       flex-shrink: 0;
     }
-    .modal-title { font-size: 13px; font-weight: 600; color: #e4e4e7; }
+    .modal-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--headline);
+    }
     .modal-close {
       background: none;
       border: none;
-      color: #52525b;
-      font-size: 16px;
+      color: var(--body);
+      font-size: 15px;
       cursor: pointer;
       padding: 2px 6px;
-      border-radius: 4px;
+      border-radius: 5px;
       transition: color 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    .modal-close:hover { color: #a1a1aa; }
+    .modal-close:hover { color: var(--headline); }
 
     .modal-tabs {
       display: flex;
-      border-bottom: 1px solid #1a1a1d;
+      border-bottom: 1px solid var(--border);
       flex-shrink: 0;
       overflow-x: auto;
+      padding: 0 6px;
     }
     .modal-tab {
-      padding: 9px 14px;
+      padding: 10px 13px;
       font-size: 11px;
-      color: #52525b;
+      font-weight: 500;
+      color: var(--body);
       cursor: pointer;
       border: none;
-      background: none;
-      font-family: 'Fira Code', monospace;
-      border-bottom: 2px solid transparent;
+      border-bottom: 1.5px solid transparent;
       margin-bottom: -1px;
-      transition: all 0.15s;
+      background: none;
+      font-family: inherit;
+      transition: color 0.15s, border-color 0.15s;
       white-space: nowrap;
     }
-    .modal-tab:hover { color: #a1a1aa; }
-    .modal-tab.active { color: #ef4444; border-bottom-color: #ef4444; }
+    .modal-tab:hover { color: var(--headline); }
+    .modal-tab.active { color: var(--headline); border-bottom-color: var(--accent); }
 
-    .modal-body { padding: 16px 18px; overflow-y: auto; flex: 1; }
+    .modal-body {
+      padding: 16px 18px;
+      overflow-y: auto;
+      flex: 1;
+    }
 
     .export-code {
-      background: #0a0a0b;
-      border: 1px solid #1a1a1d;
-      border-radius: 7px;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
       padding: 14px;
+      font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace;
       font-size: 12px;
-      color: #a1a1aa;
-      line-height: 1.75;
+      color: var(--body);
+      line-height: 1.8;
       white-space: pre;
       overflow-x: auto;
-      margin-bottom: 0;
       tab-size: 2;
     }
 
@@ -314,62 +490,96 @@
       gap: 8px;
       align-items: center;
       padding: 12px 18px;
-      border-top: 1px solid #1a1a1d;
+      border-top: 1px solid var(--border);
       flex-shrink: 0;
     }
 
-    /* ── Responsive ─────────────────────────────────── */
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 4px; }
+
     @media (max-width: 680px) {
       .palette-grid { grid-template-columns: repeat(5, 1fr); }
+      .main { padding: 18px 14px 32px; }
     }
   </style>
 </head>
 <body>
-<div class="app">
 
-  <!-- Header -->
-  <div class="header">
-    <h1>Color Palette Generator</h1>
-    <p>Generate a full Tailwind-style color scale from any base color — copy, export, and check contrast</p>
-  </div>
-
-  <!-- Input -->
-  <div class="input-card">
-    <div class="picker-wrap" id="pickerWrap">
-      <div class="picker-preview" id="pickerPreview"></div>
-      <input type="color" id="colorPicker" value="#3b82f6" />
-    </div>
-    <input type="text" class="hex-input" id="hexInput" value="#3b82f6" maxlength="7" spellcheck="false" autocomplete="off" />
-    <span class="input-label">Base color</span>
-    <button class="btn btn-ghost" id="randomBtn">⚄ Random</button>
-    <button class="btn btn-primary ml-auto" id="exportBtn">Export ▾</button>
-  </div>
-
-  <!-- Palette -->
-  <div class="palette-grid" id="paletteGrid"></div>
-
-  <!-- Actions -->
-  <div class="action-bar">
-    <button class="btn btn-subtle" id="copyAllBtn">Copy All HEX</button>
-    <button class="btn btn-subtle" id="copySvgBtn">Copy as SVG</button>
-  </div>
-
-  <!-- Pairings Matrix -->
-  <div class="section-header">
-    <span class="section-title">Palette Pairings Matrix</span>
-    <div class="section-line"></div>
-  </div>
-  <p style="font-size:10px;color:#3f3f46;margin-bottom:12px;">Text shade (row) on background shade (col) — <span style="color:#4ade80">green = AAA</span> · <span style="color:#fbbf24">yellow = AA</span> · dim = fail</p>
-  <div class="matrix-wrap"><div class="matrix" id="matrix"></div></div>
-
+<!-- Page header (hidden when embedded) -->
+<div class="page-header">
+  <a href="../index.html" class="back-link">← Back</a>
+  <div class="hdr-sep"></div>
+  <span class="hdr-title">Color Palette Generator</span>
 </div>
 
-<!-- Export Modal -->
+<div class="main">
+<div class="app">
+
+  <!-- Tool heading (visible in both modes) -->
+  <p class="tool-heading">Color Palette Generator</p>
+  <p class="tool-sub">Generate a full Tailwind-style scale from any base color — copy, export, and check contrast pairings.</p>
+
+  <!-- Input card -->
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="input-card">
+
+      <!-- Color picker -->
+      <div class="picker-wrap" id="pickerWrap">
+        <div class="picker-preview" id="pickerPreview"></div>
+        <input type="color" id="colorPicker" value="#3b82f6" />
+      </div>
+
+      <!-- Hex field -->
+      <div class="hex-box">
+        <span class="hex-pound">#</span>
+        <input type="text" class="hex-input" id="hexInput" value="3b82f6" maxlength="6" spellcheck="false" autocomplete="off" />
+      </div>
+
+      <span class="input-label">Base color</span>
+
+      <button class="btn btn-ghost" id="randomBtn">⚄ Random</button>
+      <button class="btn btn-primary ml-auto" id="exportBtn">Export ▾</button>
+    </div>
+  </div>
+
+  <!-- Palette swatches -->
+  <div class="palette-grid" id="paletteGrid"></div>
+
+  <!-- Action bar -->
+  <div class="action-bar">
+    <button class="btn btn-ghost" id="copyAllBtn">Copy All HEX</button>
+    <button class="btn btn-ghost" id="copySvgBtn">Copy as SVG</button>
+  </div>
+
+  <!-- Pairings matrix -->
+  <div class="section-row">
+    <span class="section-label">Palette Pairings Matrix</span>
+    <div class="section-line"></div>
+  </div>
+  <p class="matrix-hint">
+    Text shade (row) on background shade (col) —
+    <span class="aaa">green = AAA (7:1)</span> ·
+    <span class="aa">yellow = AA (4.5:1)</span> · dim = fail
+  </p>
+  <div class="matrix-wrap">
+    <div class="matrix" id="matrix"></div>
+  </div>
+
+</div>
+</div>
+
+<!-- Export modal -->
 <div class="modal-overlay" id="exportModal">
   <div class="modal">
     <div class="modal-head">
       <span class="modal-title">Export Palette</span>
-      <button class="modal-close" id="modalClose">✕</button>
+      <button class="modal-close" id="modalClose">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
     </div>
     <div class="modal-tabs" id="modalTabs">
       <button class="modal-tab active" data-fmt="tailwind">Tailwind</button>
@@ -391,7 +601,19 @@
 </div>
 
 <script>
-// ── Color Math ──────────────────────────────────────────────────────────────
+'use strict';
+
+// ── Theme sync from parent frame ─────────────────────────────────────────────
+(function () {
+  try {
+    const parentHtml = window.parent.document.documentElement;
+    const sync = () => document.documentElement.classList.toggle('dark', parentHtml.classList.contains('dark'));
+    sync();
+    new MutationObserver(sync).observe(parentHtml, { attributes: true, attributeFilter: ['class'] });
+  } catch (e) {}
+})();
+
+// ── Color Math ───────────────────────────────────────────────────────────────
 
 function hexToRgb(hex) {
   hex = hex.replace(/^#/, '');
@@ -436,7 +658,7 @@ function hslToRgb(h, s, l) {
   return {
     r: Math.round(hue2rgb(p, q, h + 1/3) * 255),
     g: Math.round(hue2rgb(p, q, h) * 255),
-    b: Math.round(hue2rgb(p, q, h - 1/3) * 255)
+    b: Math.round(hue2rgb(p, q, h - 1/3) * 255),
   };
 }
 
@@ -455,8 +677,7 @@ function luminance(hex) {
 
 function contrastRatio(h1, h2) {
   const l1 = luminance(h1), l2 = luminance(h2);
-  const lighter = Math.max(l1, l2), darker = Math.min(l1, l2);
-  return (lighter + 0.05) / (darker + 0.05);
+  return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
 }
 
 function hexToOklch(hex) {
@@ -465,20 +686,20 @@ function hexToOklch(hex) {
   const l_ = Math.cbrt(0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb);
   const m_ = Math.cbrt(0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb);
   const s_ = Math.cbrt(0.0883024619 * lr + 0.2817188376 * lg + 0.6299787005 * lb);
-  const L = 0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_;
-  const a = 1.9779984951 * l_ - 2.4285922050 * m_ + 0.4505937099 * s_;
+  const L  = 0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_;
+  const a  = 1.9779984951 * l_ - 2.4285922050 * m_ + 0.4505937099 * s_;
   const bk = 0.0259040371 * l_ + 0.7827717662 * m_ - 0.8086757660 * s_;
-  const C = Math.sqrt(a * a + bk * bk);
+  const C  = Math.sqrt(a * a + bk * bk);
   let H = Math.atan2(bk, a) * 180 / Math.PI;
   if (H < 0) H += 360;
   return { l: L, c: C, h: H };
 }
 
-// ── Palette Generation ──────────────────────────────────────────────────────
+// ── Palette Generation ───────────────────────────────────────────────────────
 
-const SHADES   = [50,  100, 200, 300, 400, 500, 600, 700, 800, 900];
-const LIGHTS   = [97,  93,  85,  72,  57,  45,  35,  26,  18,  11];
-const SAT_MULT = [0.22,0.35,0.55,0.72,0.88,1.0, 1.0, 0.96,0.90,0.82];
+const SHADES   = [50,   100,  200,  300,  400,  500,  600,  700,  800,  900];
+const LIGHTS   = [97,   93,   85,   72,   57,   45,   35,   26,   18,   11];
+const SAT_MULT = [0.22, 0.35, 0.55, 0.72, 0.88, 1.0,  1.0,  0.96, 0.90, 0.82];
 
 function generatePalette(baseHex) {
   const { h, s } = hexToHsl(baseHex);
@@ -489,22 +710,22 @@ function generatePalette(baseHex) {
   });
 }
 
-// ── Helpers ─────────────────────────────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
 function bestText(bgHex) {
-  return contrastRatio(bgHex, '#ffffff') > contrastRatio(bgHex, '#000000')
-    ? '#ffffff' : '#000000';
+  return contrastRatio(bgHex, '#ffffff') > contrastRatio(bgHex, '#000000') ? '#ffffff' : '#000000';
 }
 
-function isValidHex(v) { return /^#[0-9a-fA-F]{6}$/.test(v); }
+function isValidHex(v) {
+  const h = v.replace(/^#/, '');
+  return /^[0-9a-fA-F]{6}$/.test(h);
+}
 
 function randomHex() {
   return '#' + Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0');
 }
 
-function copyText(text) {
-  return navigator.clipboard.writeText(text).catch(() => {});
-}
+function copyText(text) { return navigator.clipboard.writeText(text).catch(() => {}); }
 
 function flashBtn(btn, label) {
   const orig = btn.textContent;
@@ -541,15 +762,13 @@ function renderPalette(palette) {
 function renderMatrix(palette) {
   const container = document.getElementById('matrix');
   const n = palette.length;
-  container.style.gridTemplateColumns = `40px repeat(${n}, 1fr)`;
+  container.style.gridTemplateColumns = `36px repeat(${n}, 1fr)`;
   container.innerHTML = '';
 
   // Top-left corner
-  container.appendChild(Object.assign(document.createElement('div'), {
-    className: 'matrix-header-cell', textContent: ''
-  }));
+  container.appendChild(Object.assign(document.createElement('div'), { className: 'matrix-header-cell', textContent: '' }));
 
-  // Column headers (bg shades)
+  // Column headers
   palette.forEach(({ shade }) => {
     const el = document.createElement('div');
     el.className = 'matrix-header-cell';
@@ -557,9 +776,8 @@ function renderMatrix(palette) {
     container.appendChild(el);
   });
 
-  // Rows: text shade → bg shade
+  // Rows
   palette.forEach(({ shade: textShade, hex: textHex }) => {
-    // Row label
     const label = document.createElement('div');
     label.className = 'matrix-row-label';
     label.textContent = textShade;
@@ -573,14 +791,13 @@ function renderMatrix(palette) {
         cell.textContent = '—';
       } else {
         const ratio = contrastRatio(textHex, bgHex);
-        const cls = ratio >= 7 ? 'cell-aaa' : ratio >= 4.5 ? 'cell-aa' : 'cell-fail';
-        cell.classList.add(cls);
-        cell.style.color = ratio >= 4.5 ? '' : '#3f3f46';
-        cell.textContent = ratio.toFixed(1);
         cell.style.background = bgHex;
         cell.style.color = textHex;
-        // Overlay tint for pass/fail
+        cell.textContent = ratio.toFixed(1);
         cell.title = `${textShade} on ${bgShade}: ${ratio.toFixed(2)}:1`;
+        // Subtle AAA/AA/fail overlay via box-shadow tint
+        if (ratio >= 7)   cell.style.boxShadow = 'inset 0 0 0 2px rgba(34,197,94,0.5)';
+        else if (ratio >= 4.5) cell.style.boxShadow = 'inset 0 0 0 2px rgba(245,158,11,0.4)';
       }
       container.appendChild(cell);
     });
@@ -594,23 +811,14 @@ const FORMATTERS = {
     const inner = p.map(({ shade, hex }) => `    ${shade}: "${hex}",`).join('\n');
     return `colors: {\n  primary: {\n${inner}\n  }\n}`;
   },
-  css: p => `:root {\n${p.map(({ shade, hex }) => `  --color-${shade}: ${hex};`).join('\n')}\n}`,
-  hex:  p => p.map(({ shade, hex }) => `${shade}: ${hex}`).join('\n'),
-  rgb:  p => p.map(({ shade, hex }) => {
-    const { r, g, b } = hexToRgb(hex);
-    return `${shade}: rgb(${r}, ${g}, ${b})`;
-  }).join('\n'),
-  hsl:  p => p.map(({ shade, hex }) => {
-    const { h, s, l } = hexToHsl(hex);
-    return `${shade}: hsl(${Math.round(h)}, ${Math.round(s)}%, ${Math.round(l)}%)`;
-  }).join('\n'),
-  oklch: p => p.map(({ shade, hex }) => {
-    const { l, c, h } = hexToOklch(hex);
-    return `${shade}: oklch(${(l * 100).toFixed(2)}% ${c.toFixed(4)} ${Math.round(h)})`;
-  }).join('\n'),
+  css:    p => `:root {\n${p.map(({ shade, hex }) => `  --color-${shade}: ${hex};`).join('\n')}\n}`,
+  hex:    p => p.map(({ shade, hex }) => `${shade}: ${hex}`).join('\n'),
+  rgb:    p => p.map(({ shade, hex }) => { const { r, g, b } = hexToRgb(hex); return `${shade}: rgb(${r}, ${g}, ${b})`; }).join('\n'),
+  hsl:    p => p.map(({ shade, hex }) => { const { h, s, l } = hexToHsl(hex); return `${shade}: hsl(${Math.round(h)}, ${Math.round(s)}%, ${Math.round(l)}%)`; }).join('\n'),
+  oklch:  p => p.map(({ shade, hex }) => { const { l, c, h } = hexToOklch(hex); return `${shade}: oklch(${(l * 100).toFixed(2)}% ${c.toFixed(4)} ${Math.round(h)})`; }).join('\n'),
 };
 
-let currentFmt = 'tailwind';
+let currentFmt     = 'tailwind';
 let currentPalette = [];
 
 function updateExportCode() {
@@ -620,8 +828,7 @@ function updateExportCode() {
 // ── SVG Builder ──────────────────────────────────────────────────────────────
 
 function buildSvg(palette) {
-  const W = 80, H = 120;
-  const totalW = palette.length * W;
+  const W = 80, H = 120, totalW = palette.length * W;
   const rects = palette.map(({ shade, hex, lightness }, i) => {
     const tc = lightness > 55 ? '#000000' : '#ffffff';
     return `  <rect x="${i * W}" y="0" width="${W}" height="${H}" fill="${hex}"/>
@@ -653,23 +860,23 @@ function syncPreview(hex) {
 
 picker.addEventListener('input', () => {
   const hex = picker.value;
-  hexInp.value = hex;
+  hexInp.value = hex.slice(1).toUpperCase();
   hexInp.classList.remove('invalid');
   syncPreview(hex);
   generate(hex);
 });
 
 hexInp.addEventListener('input', () => {
-  let v = hexInp.value.trim();
-  if (!v.startsWith('#')) v = '#' + v;
-  const valid = isValidHex(v);
+  let v = hexInp.value.trim().replace(/^#/, '');
+  const full = '#' + v;
+  const valid = isValidHex(full);
   hexInp.classList.toggle('invalid', !valid && v.length >= 4);
-  if (valid) { syncPreview(v); generate(v); }
+  if (valid) { syncPreview(full); generate(full); }
 });
 
 document.getElementById('randomBtn').addEventListener('click', () => {
   const hex = randomHex();
-  hexInp.value = hex;
+  hexInp.value = hex.slice(1).toUpperCase();
   hexInp.classList.remove('invalid');
   syncPreview(hex);
   generate(hex);
@@ -719,9 +926,7 @@ document.getElementById('copyExportBtn').addEventListener('click', function () {
 
 document.getElementById('downloadTxt').addEventListener('click', () => {
   const blob = new Blob([document.getElementById('exportCode').textContent], { type: 'text/plain' });
-  const a = Object.assign(document.createElement('a'), {
-    href: URL.createObjectURL(blob), download: `palette-${currentFmt}.txt`
-  });
+  const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: `palette-${currentFmt}.txt` });
   a.click(); URL.revokeObjectURL(a.href);
 });
 
@@ -729,9 +934,7 @@ document.getElementById('downloadJson').addEventListener('click', () => {
   const obj = {};
   currentPalette.forEach(({ shade, hex }) => obj[shade] = hex);
   const blob = new Blob([JSON.stringify({ primary: obj }, null, 2)], { type: 'application/json' });
-  const a = Object.assign(document.createElement('a'), {
-    href: URL.createObjectURL(blob), download: 'palette.json'
-  });
+  const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'palette.json' });
   a.click(); URL.revokeObjectURL(a.href);
 });
 

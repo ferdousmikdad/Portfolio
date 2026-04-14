@@ -3,430 +3,458 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Color Contrast Checker — Tools</title>
-  <script>if (window.self !== window.top) document.documentElement.dataset.embed = '1';</script>
-  <style>[data-embed='1'] header { display: none !important; }</style>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet" />
+  <title>Color Contrast Checker</title>
+  <script>
+    (function () {
+      if (window.self !== window.top) document.documentElement.dataset.embed = '1';
+      try {
+        if (window.parent.document.documentElement.classList.contains('dark'))
+          document.documentElement.classList.add('dark');
+      } catch (e) {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
   <style>
-    @font-face {
-      font-family: 'BoldPixels';
-      src: url('../assets/BoldPixels.otf') format('opentype');
+    :root {
+      --bg:           #F2EDD9;
+      --border:       rgba(0, 0, 0, 0.08);
+      --headline:     #1c1c1e;
+      --body:         #6b6861;
+      --social-bg:    rgba(0, 0, 0, 0.05);
+      --social-hover: rgba(0, 0, 0, 0.10);
+      --input-bg:     rgba(0, 0, 0, 0.04);
+      --input-border: rgba(0, 0, 0, 0.08);
+      --divider:      rgba(0, 0, 0, 0.06);
+      --accent:       #cf0506;
+      --scrollbar:    rgba(0, 0, 0, 0.10);
+    }
+    .dark {
+      --bg:           #080808;
+      --border:       rgba(255, 255, 255, 0.08);
+      --headline:     #f3f0e5;
+      --body:         #aba795;
+      --social-bg:    rgba(255, 255, 255, 0.05);
+      --social-hover: rgba(255, 255, 255, 0.10);
+      --input-bg:     rgba(255, 255, 255, 0.04);
+      --input-border: rgba(255, 255, 255, 0.08);
+      --divider:      rgba(255, 255, 255, 0.05);
+      --accent:       #cf0506;
+      --scrollbar:    rgba(255, 255, 255, 0.10);
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
 
     body {
-      font-family: 'Inter', sans-serif;
-      background-color: #0a0a0b;
-      color: #fff;
-      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--headline);
+      height: 100%;
       display: flex;
       flex-direction: column;
-      overflow-y: auto;
-    }
-
-
-    .title-font { font-family: 'BoldPixels', 'Courier New', monospace; letter-spacing: 2px; }
-    .mono       { font-family: 'Fira Code', monospace; }
-
-    /* ── Header ── */
-    .hdr-btn {
-      display: flex; align-items: center; gap: 6px;
-      padding: 5px 14px;
-      font-family: 'BoldPixels', monospace;
-      font-size: 10px; letter-spacing: 1px;
-      border: 1.5px solid #3f3f46; border-radius: 6px;
-      background: transparent; color: #71717a;
-      cursor: pointer;
-      transition: border-color 0.15s, color 0.15s;
-    }
-    .hdr-btn:hover { border-color: #ef4444; color: #ef4444; }
-
-    /* ── Main layout ── */
-    .main-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 32px 24px;
-      gap: 20px;
-    }
-
-    /* ══════════════════════════════════════════
-       ROW 1 — Controls Card
-    ══════════════════════════════════════════ */
-    .controls-card {
-      width: 100%;
-      max-width: 680px;
-      background: #111113;
-      border: 1px solid #1c1c1e;
-      border-radius: 14px;
       overflow: hidden;
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* Two color columns */
-    .color-inputs-row {
-      display: grid;
-      grid-template-columns: 1fr 1px 1fr;
-    }
+    [data-embed='1'] .page-header { display: none !important; }
 
-    .col-divider {
-      background: #1c1c1e;
-      align-self: stretch;
-    }
-
-    .color-input-col {
-      padding: 18px 22px 16px;
+    /* ── Standalone header ── */
+    .page-header {
       display: flex;
-      flex-direction: column;
+      align-items: center;
       gap: 10px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
     }
+    .back-link {
+      font-size: 12px; font-weight: 500;
+      color: var(--body); text-decoration: none;
+      transition: color 0.15s;
+    }
+    .back-link:hover { color: var(--accent); }
+    .hdr-sep { width: 1px; height: 14px; background: var(--border); }
+    .hdr-title { font-size: 13px; font-weight: 500; color: var(--headline); }
 
-    /* Small label row */
-    .col-label-row {
+    /* ── Toolbar ── */
+    .toolbar {
       display: flex;
       align-items: center;
       gap: 8px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
     }
 
-    .col-label-text {
+    .toolbar-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--body);
+      opacity: 0.6;
+      margin-right: 4px;
+    }
+
+    .btn {
+      height: 28px;
+      padding: 0 12px;
+      border-radius: 7px;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--social-bg);
+      color: var(--body);
+      font-family: inherit;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      white-space: nowrap;
+    }
+    .btn:hover {
+      background: var(--social-hover);
+      color: var(--headline);
+      border-color: rgba(0,0,0,0.2);
+    }
+    .dark .btn:hover { border-color: rgba(255,255,255,0.2); }
+
+    /* ── Main two-panel layout ── */
+    .panels {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    /* ── Left panel ── */
+    .left-panel {
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    /* Color row — background */
+    .color-row {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 20px 20px;
+      gap: 10px;
+    }
+
+    .color-row + .color-row {
+      border-top: 1px solid var(--divider);
+    }
+
+    .row-label {
       font-size: 10px;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.12em;
-      color: #52525b;
+      color: var(--body);
+      opacity: 0.55;
+      display: flex;
+      align-items: center;
+      gap: 7px;
     }
 
-    /* Color swatch circle */
-    .color-swatch {
-      width: 14px; height: 14px;
+    .swatch-dot {
+      width: 9px; height: 9px;
       border-radius: 50%;
-      border: 1.5px solid rgba(255,255,255,0.15);
+      border: 1.5px solid var(--border);
       flex-shrink: 0;
-      transition: background-color 0.25s;
+      cursor: pointer;
+      transition: transform 0.15s;
     }
+    .swatch-dot:hover { transform: scale(1.3); }
 
-    /* Hex input row */
-    .hex-field-row {
+    /* Hex field row */
+    .field-row {
       display: flex;
       align-items: center;
       gap: 8px;
     }
 
     .hex-box {
+      flex: 1;
       display: flex;
       align-items: center;
       gap: 3px;
-      background: #0a0a0b;
-      border: 1.5px solid #27272a;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
       border-radius: 8px;
-      padding: 7px 10px;
-      flex: 1;
+      padding: 9px 11px;
       transition: border-color 0.2s;
     }
-    .hex-box:focus-within { border-color: #3f3f46; }
+    .hex-box:focus-within { border-color: var(--accent); }
 
-    .hex-symbol {
-      font-family: 'Fira Code', monospace;
-      font-size: 13px;
-      font-weight: 600;
-      color: #52525b;
+    .hex-pound {
+      font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace;
+      font-size: 12px; font-weight: 600;
+      color: var(--body); opacity: 0.4;
     }
 
     .hex-input {
-      font-family: 'Fira Code', monospace;
-      font-size: 13px;
-      font-weight: 600;
+      font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace;
+      font-size: 14px; font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 1px;
-      width: 64px;
+      letter-spacing: 1.5px;
+      width: 100%;
       background: transparent;
-      border: none;
-      outline: none;
-      color: #e4e4e7;
+      border: none; outline: none;
+      color: var(--headline);
     }
-    .hex-input::selection { background: rgba(255,255,255,0.2); }
 
-    /* Native color picker trigger */
-    .picker-trigger {
-      width: 30px; height: 30px;
-      border-radius: 8px;
-      border: 1.5px solid #27272a;
+    .picker-btn {
+      width: 36px; height: 36px;
+      border-radius: 9px;
+      border: 1px solid var(--border);
       overflow: hidden;
       position: relative;
       cursor: pointer;
       flex-shrink: 0;
-      transition: border-color 0.2s;
+      transition: border-color 0.15s, transform 0.15s;
     }
-    .picker-trigger:hover { border-color: #52525b; }
+    .picker-btn:hover { border-color: var(--body); transform: scale(1.06); }
 
     .picker-swatch {
       position: absolute; inset: 0;
       pointer-events: none;
-      transition: background-color 0.25s;
+      transition: background 0.2s;
     }
 
     input[type="color"] {
       position: absolute;
       top: -6px; left: -6px;
-      width: 44px; height: 44px;
+      width: calc(100% + 12px);
+      height: calc(100% + 12px);
       opacity: 0; cursor: pointer;
+      border: none; padding: 0;
     }
 
-    /* ── Bottom of card: ratio + WCAG ── */
+    /* ── Ratio strip (bottom of left panel) ── */
     .ratio-strip {
-      border-top: 1px solid #1c1c1e;
-      padding: 14px 22px;
+      border-top: 1px solid var(--border);
+      padding: 12px 20px;
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 10px;
       flex-wrap: wrap;
+      flex-shrink: 0;
     }
 
     .ratio-block {
       display: flex;
       align-items: baseline;
-      gap: 8px;
+      gap: 5px;
     }
 
     .ratio-number {
-      font-family: 'Fira Code', monospace;
-      font-size: 1.75rem;
+      font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace;
+      font-size: 1.45rem;
       font-weight: 700;
-      letter-spacing: -1px;
+      letter-spacing: -0.5px;
       line-height: 1;
-      transition: color 0.3s;
-      font-variant-numeric: tabular-nums;
+      transition: color 0.25s;
     }
     .ratio-good { color: #22c55e; }
     .ratio-ok   { color: #f59e0b; }
-    .ratio-bad  { color: #ef4444; }
+    .ratio-bad  { color: var(--accent); }
 
     .ratio-label {
-      font-size: 10px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: #3f3f46;
+      font-size: 10px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.12em;
+      color: var(--body); opacity: 0.4;
     }
 
-    /* Main checkmark badge */
-    .main-check {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 5px 12px;
+    .main-badge {
+      display: flex; align-items: center; gap: 5px;
+      padding: 3px 9px;
       border-radius: 999px;
-      border: 1.5px solid transparent;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-      transition: background 0.25s, border-color 0.25s, color 0.25s;
+      border: 1px solid transparent;
+      font-size: 10px; font-weight: 600;
+      letter-spacing: 0.04em;
+      transition: all 0.25s;
     }
-    .main-check.pass { background: rgba(34,197,94,0.1); border-color: rgba(34,197,94,0.3); color: #22c55e; }
-    .main-check.fail { background: rgba(239,68,68,0.1);  border-color: rgba(239,68,68,0.25); color: #ef4444; }
+    .main-badge.pass { background: rgba(34,197,94,0.10); border-color: rgba(34,197,94,0.25); color: #22c55e; }
+    .main-badge.fail { background: rgba(207,5,6,0.08);  border-color: rgba(207,5,6,0.20);  color: var(--accent); }
 
-    .check-icon { font-size: 13px; line-height: 1; }
-
-    /* Compact WCAG row */
+    /* WCAG pills row */
     .wcag-row {
+      width: 100%;
       display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-left: auto;
+      gap: 5px;
       flex-wrap: wrap;
+      margin-top: 2px;
     }
 
     .wcag-pill {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      padding: 4px 10px;
+      display: flex; align-items: center; gap: 4px;
+      padding: 3px 8px;
       border-radius: 6px;
-      border: 1px solid #27272a;
-      background: #0a0a0b;
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 0.06em;
-      transition: border-color 0.25s, background 0.25s;
+      border: 1px solid var(--border);
+      background: var(--social-bg);
+      font-size: 10px; font-weight: 600;
+      letter-spacing: 0.04em;
+      transition: all 0.25s;
     }
     .wcag-pill.pass { border-color: rgba(34,197,94,0.25); background: rgba(34,197,94,0.07); }
-    .wcag-pill.fail { border-color: rgba(239,68,68,0.2);  background: rgba(239,68,68,0.07); }
-
-    .wcag-pill-label { color: #71717a; }
+    .wcag-pill.fail { border-color: rgba(207,5,6,0.15);  background: rgba(207,5,6,0.05); }
+    .wcag-pill-label { color: var(--body); opacity: 0.65; }
     .wcag-pill.pass .wcag-pill-icon { color: #22c55e; }
-    .wcag-pill.fail .wcag-pill-icon { color: #ef4444; }
+    .wcag-pill.fail .wcag-pill-icon { color: var(--accent); }
 
-    /* ══════════════════════════════════════════
-       ROW 2 — Preview Section
-    ══════════════════════════════════════════ */
-    .preview-section {
-      width: 100%;
-      max-width: 680px;
-      background: #111113;
-      border: 1px solid #1c1c1e;
-      border-radius: 14px;
+    /* ── Right panel ── */
+    .right-panel {
+      display: flex;
+      flex-direction: column;
       overflow: hidden;
     }
 
-    /* Tabs */
     .tabs-row {
       display: flex;
-      background: #0d0d0f;
-      border-bottom: 1px solid #1c1c1e;
       padding: 0 6px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
     }
 
     .tab-btn {
       padding: 10px 14px;
-      font-size: 10px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
+      font-size: 11px; font-weight: 500;
+      letter-spacing: 0.02em;
       cursor: pointer;
-      border-bottom: 2px solid transparent;
-      color: #52525b;
+      border: none;
+      border-bottom: 1.5px solid transparent;
+      margin-bottom: -1px;
+      color: var(--body);
       background: none;
-      border-top: none; border-left: none; border-right: none;
-      transition: color 0.2s, border-color 0.2s;
+      font-family: inherit;
+      transition: color 0.15s, border-color 0.15s;
     }
-    .tab-btn:hover   { color: #a1a1aa; }
-    .tab-btn.active  { color: #ef4444; border-bottom-color: #ef4444; }
+    .tab-btn:hover { color: var(--headline); }
+    .tab-btn.active { color: var(--headline); border-bottom-color: var(--accent); }
 
-    /* Preview wrapper — equal breathing room on all sides */
+    /* Preview fill */
     .preview-wrap {
-      padding: 40px;
+      flex: 1;
+      overflow: hidden;
       display: flex;
-      justify-content: center;
+      align-items: stretch;
     }
 
     .preview-area {
-      width: 100%;
-      max-width: 520px;
-      min-height: 210px;
-      border-radius: 10px;
-      padding: 32px;
-      transition: background-color 0.25s ease, color 0.25s ease;
+      flex: 1;
+      padding: 36px 32px;
+      transition: background 0.25s, color 0.25s;
+      overflow-y: auto;
     }
 
-    /* ── Copy toast ── */
-    .copy-toast {
+    /* ── Toast ── */
+    .toast {
       position: fixed;
-      bottom: 24px; left: 50%;
-      transform: translateX(-50%) translateY(10px);
-      background: #18181b;
-      border: 1px solid #3f3f46;
-      color: #a1a1aa;
-      padding: 7px 16px;
+      bottom: 18px; left: 50%;
+      transform: translateX(-50%) translateY(8px);
+      background: var(--input-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      color: var(--headline);
+      padding: 6px 14px;
       border-radius: 8px;
-      font-size: 11px;
-      font-family: 'Fira Code', monospace;
-      opacity: 0;
-      pointer-events: none;
+      font-size: 12px; font-weight: 500;
+      opacity: 0; pointer-events: none;
       transition: opacity 0.2s, transform 0.2s;
       z-index: 100;
     }
-    .copy-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-    /* ── Scrollbar ── */
-    ::-webkit-scrollbar { width: 5px; }
-    ::-webkit-scrollbar-track { background: #18181b; }
-    ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 3px; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 4px; }
 
-    /* ── Responsive ── */
+    /* ── Mobile stack ── */
     @media (max-width: 600px) {
-      .main-content { padding: 20px 16px 32px; gap: 14px; }
-      .color-input-col { padding: 14px 16px 12px; }
-      .ratio-strip { padding: 12px 16px; gap: 10px; }
-      .wcag-row { margin-left: 0; }
-      .preview-wrap { padding: 24px 18px; }
-      .preview-area { padding: 20px 18px; }
+      body { overflow-y: auto; }
+      .panels {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+        overflow: visible;
+      }
+      .left-panel { border-right: none; border-bottom: 1px solid var(--border); }
+      .right-panel { min-height: 260px; }
+      .preview-area { padding: 24px 20px; }
     }
   </style>
 </head>
 <body>
 
-<!-- ════ HEADER ════ -->
-<header style="background:#09090b; border-bottom:1px solid #1c1c1e;"
-        class="flex items-center gap-4 px-5 py-3 flex-shrink-0">
-  <a href="../index.html" class="title-font text-xs text-zinc-500 hover:text-red-500 transition-colors">← Back</a>
-  <div style="width:1px;height:16px;background:#27272a;"></div>
-  <h1 class="title-font text-xs text-white">Color Contrast Checker</h1>
-  <div class="ml-auto flex gap-2">
-    <button id="swapBtn"   class="hdr-btn">⇄ Swap</button>
-    <button id="randomBtn" class="hdr-btn">⚄ Random</button>
-  </div>
-</header>
+<!-- Standalone header -->
+<div class="page-header">
+  <a href="../index.html" class="back-link">← Back</a>
+  <div class="hdr-sep"></div>
+  <span class="hdr-title">Color Contrast Checker</span>
+</div>
 
+<!-- Toolbar -->
+<div class="toolbar">
+  <span class="toolbar-label">Color Contrast Checker</span>
+  <button id="swapBtn" class="btn">⇄ Swap</button>
+  <button id="randomBtn" class="btn">⚄ Random</button>
+</div>
 
-<!-- ════ MAIN ════ -->
-<div class="main-content">
+<!-- Two-panel layout -->
+<div class="panels">
 
-  <!-- ── ROW 1: Controls Card ── -->
-  <div class="controls-card">
+  <!-- ── Left: color inputs ── -->
+  <div class="left-panel">
 
-    <!-- Two color columns -->
-    <div class="color-inputs-row">
-
-      <!-- Background -->
-      <div class="color-input-col">
-        <div class="col-label-row">
-          <div class="color-swatch" id="bgSwatch"></div>
-          <span class="col-label-text">Background</span>
+    <!-- Background row -->
+    <div class="color-row">
+      <div class="row-label">
+        <div class="swatch-dot" id="bgSwatch" title="Click to copy"></div>
+        Background
+      </div>
+      <div class="field-row">
+        <div class="hex-box">
+          <span class="hex-pound">#</span>
+          <input type="text" id="bgHexInput" class="hex-input" maxlength="6" value="A60000" spellcheck="false" autocomplete="off" />
         </div>
-        <div class="hex-field-row">
-          <div class="hex-box" id="bgHexBox">
-            <span class="hex-symbol">#</span>
-            <input type="text" id="bgHexInput" class="hex-input" maxlength="6" value="A60000" spellcheck="false" />
-          </div>
-          <div class="picker-trigger" id="bgPickerWrap" title="Pick color">
-            <div class="picker-swatch" id="bgPickerSwatch"></div>
-            <input type="color" id="bgPicker" value="#A60000" />
-          </div>
+        <div class="picker-btn" id="bgPickerWrap" title="Pick (dbl-click to copy)">
+          <div class="picker-swatch" id="bgPickerSwatch"></div>
+          <input type="color" id="bgPicker" value="#A60000" />
         </div>
       </div>
+    </div>
 
-      <div class="col-divider"></div>
-
-      <!-- Text Color -->
-      <div class="color-input-col">
-        <div class="col-label-row">
-          <div class="color-swatch" id="textSwatch"></div>
-          <span class="col-label-text">Text Color</span>
+    <!-- Text row -->
+    <div class="color-row">
+      <div class="row-label">
+        <div class="swatch-dot" id="textSwatch" title="Click to copy"></div>
+        Text Color
+      </div>
+      <div class="field-row">
+        <div class="hex-box">
+          <span class="hex-pound">#</span>
+          <input type="text" id="textHexInput" class="hex-input" maxlength="6" value="FFFFFF" spellcheck="false" autocomplete="off" />
         </div>
-        <div class="hex-field-row">
-          <div class="hex-box" id="textHexBox">
-            <span class="hex-symbol">#</span>
-            <input type="text" id="textHexInput" class="hex-input" maxlength="6" value="FFFFFF" spellcheck="false" />
-          </div>
-          <div class="picker-trigger" id="textPickerWrap" title="Pick color">
-            <div class="picker-swatch" id="textPickerSwatch"></div>
-            <input type="color" id="textPicker" value="#FFFFFF" />
-          </div>
+        <div class="picker-btn" id="textPickerWrap" title="Pick (dbl-click to copy)">
+          <div class="picker-swatch" id="textPickerSwatch"></div>
+          <input type="color" id="textPicker" value="#FFFFFF" />
         </div>
       </div>
+    </div>
 
-    </div><!-- /color-inputs-row -->
-
-    <!-- Ratio strip -->
+    <!-- Ratio + WCAG -->
     <div class="ratio-strip">
-
-      <!-- Ratio number -->
       <div class="ratio-block">
-        <span id="ratioDisplay" class="ratio-number">—</span>
-        <span class="ratio-label">Contrast</span>
+        <span id="ratioDisplay" class="ratio-number ratio-bad">—</span>
+        <span class="ratio-label">Ratio</span>
       </div>
-
-      <!-- Main pass/fail badge -->
-      <div class="main-check fail" id="mainCheck">
-        <span class="check-icon" id="mainCheckIcon">✖</span>
-        <span id="mainCheckLabel">AA Normal</span>
+      <div class="main-badge fail" id="mainBadge">
+        <span id="mainBadgeIcon">✖</span>
+        <span>AA Normal</span>
       </div>
-
-      <!-- Compact WCAG pills -->
       <div class="wcag-row">
         <div class="wcag-pill" id="aaLargePill">
           <span class="wcag-pill-icon" id="aaLargeIcon">—</span>
@@ -441,259 +469,188 @@
           <span class="wcag-pill-label">AAA Large</span>
         </div>
       </div>
+    </div>
 
-    </div><!-- /ratio-strip -->
+  </div>
 
-  </div><!-- /controls-card -->
+  <!-- ── Right: preview ── -->
+  <div class="right-panel">
 
-
-  <!-- ── ROW 2: Preview Section ── -->
-  <div class="preview-section">
-
-    <!-- Tabs -->
     <div class="tabs-row">
       <button class="tab-btn active" data-mode="heading">Heading</button>
-      <button class="tab-btn"        data-mode="body">Body Text</button>
+      <button class="tab-btn" data-mode="body">Body Text</button>
     </div>
 
-    <!-- Preview — fixed width, natural height with breathing room -->
     <div class="preview-wrap">
-      <div id="previewArea" class="preview-area">
-        <!-- populated by JS -->
-      </div>
+      <div id="previewArea" class="preview-area"></div>
     </div>
 
-  </div><!-- /preview-section -->
+  </div>
 
-</div><!-- /main-content -->
+</div>
 
+<!-- Toast -->
+<div class="toast" id="toast"></div>
 
-<!-- Copy toast -->
-<div class="copy-toast" id="copyToast">Copied!</div>
-
-
-<!-- ════ SCRIPT ════ -->
 <script>
 'use strict';
 
-// ── State ──────────────────────────────────────────────────────
-let bgHex      = 'a60000';
-let textHex    = 'ffffff';
-let previewMode = 'heading';
+// ── Theme sync ───────────────────────────────────────────────────────────────
+(function () {
+  try {
+    const ph = window.parent.document.documentElement;
+    const sync = () => document.documentElement.classList.toggle('dark', ph.classList.contains('dark'));
+    sync();
+    new MutationObserver(sync).observe(ph, { attributes: true, attributeFilter: ['class'] });
+  } catch (e) {}
+})();
 
-// ── DOM ────────────────────────────────────────────────────────
-const bgHexInput       = document.getElementById('bgHexInput');
-const textHexInput     = document.getElementById('textHexInput');
-const bgPicker         = document.getElementById('bgPicker');
-const textPicker       = document.getElementById('textPicker');
-const bgPickerSwatch   = document.getElementById('bgPickerSwatch');
-const textPickerSwatch = document.getElementById('textPickerSwatch');
-const bgSwatch         = document.getElementById('bgSwatch');
-const textSwatch       = document.getElementById('textSwatch');
-const ratioDisplay     = document.getElementById('ratioDisplay');
-const mainCheck        = document.getElementById('mainCheck');
-const mainCheckIcon    = document.getElementById('mainCheckIcon');
-const mainCheckLabel   = document.getElementById('mainCheckLabel');
-const previewArea      = document.getElementById('previewArea');
-const copyToast        = document.getElementById('copyToast');
+// ── State ────────────────────────────────────────────────────────────────────
+let bgHex   = 'a60000';
+let textHex = 'ffffff';
+let mode    = 'heading';
 
-const aaLargePill   = document.getElementById('aaLargePill');
-const aaaPill       = document.getElementById('aaaPill');
-const aaaLargePill  = document.getElementById('aaaLargePill');
-const aaLargeIcon   = document.getElementById('aaLargeIcon');
-const aaaIcon       = document.getElementById('aaaIcon');
-const aaaLargeIcon  = document.getElementById('aaaLargeIcon');
+// ── DOM ──────────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
 
+const bgHexInput       = $('bgHexInput');
+const textHexInput     = $('textHexInput');
+const bgPicker         = $('bgPicker');
+const textPicker       = $('textPicker');
+const bgSwatch         = $('bgSwatch');
+const textSwatch       = $('textSwatch');
+const bgPickerSwatch   = $('bgPickerSwatch');
+const textPickerSwatch = $('textPickerSwatch');
+const ratioDisplay     = $('ratioDisplay');
+const mainBadge        = $('mainBadge');
+const mainBadgeIcon    = $('mainBadgeIcon');
+const previewArea      = $('previewArea');
+const toast            = $('toast');
 
-// ── Color Math ─────────────────────────────────────────────────
-function isValidHex(h) { return /^[0-9A-Fa-f]{6}$/.test(h); }
+// ── Color math ───────────────────────────────────────────────────────────────
+const isHex    = h  => /^[0-9A-Fa-f]{6}$/.test(h);
+const toRgb    = h  => ({ r: parseInt(h.slice(0,2),16), g: parseInt(h.slice(2,4),16), b: parseInt(h.slice(4,6),16) });
+const toLinear = c  => { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
+const lum      = h  => { const {r,g,b} = toRgb(h); return 0.2126*toLinear(r) + 0.7152*toLinear(g) + 0.0722*toLinear(b); };
+const contrast = (a,b) => { const L1=lum(a), L2=lum(b); return (Math.max(L1,L2)+0.05)/(Math.min(L1,L2)+0.05); };
+const randHex  = () => Math.floor(Math.random()*0xFFFFFF).toString(16).padStart(6,'0').toUpperCase();
+const cleanHex = raw => { let h=raw.replace(/^#/,'').toUpperCase(); if(/^[0-9A-F]{3}$/.test(h)) h=h.split('').map(c=>c+c).join(''); return h; };
 
-function hexToRgb(hex) {
-  return {
-    r: parseInt(hex.slice(0, 2), 16),
-    g: parseInt(hex.slice(2, 4), 16),
-    b: parseInt(hex.slice(4, 6), 16),
-  };
-}
-
-function toLinear(c) {
-  c /= 255;
-  return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
-}
-
-function getLuminance(hex) {
-  const { r, g, b } = hexToRgb(hex);
-  return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
-}
-
-function contrastRatio(hex1, hex2) {
-  const L1 = getLuminance(hex1), L2 = getLuminance(hex2);
-  return (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05);
-}
-
-function randomHex() {
-  return Math.floor(Math.random() * 0xFFFFFF).toString(16).padStart(6, '0').toUpperCase();
-}
-
-function sanitizeHex(raw) {
-  let h = raw.replace(/^#/, '').toUpperCase();
-  if (/^[0-9A-F]{3}$/.test(h)) h = h.split('').map(c => c + c).join('');
-  return h;
-}
-
-
-// ── Apply Colors ───────────────────────────────────────────────
-function applyColors() {
-  const bgCss   = '#' + bgHex;
-  const textCss = '#' + textHex;
-
-  // Swatches
-  bgSwatch.style.backgroundColor         = bgCss;
-  textSwatch.style.backgroundColor       = textCss;
-  bgPickerSwatch.style.backgroundColor   = bgCss;
-  textPickerSwatch.style.backgroundColor = textCss;
-
-  // Sync inputs
-  bgHexInput.value   = bgHex.toUpperCase();
-  textHexInput.value = textHex.toUpperCase();
-  bgPicker.value     = bgCss;
-  textPicker.value   = textCss;
-
-  updateResults();
-  renderPreview();
-}
-
-
-// ── Results ────────────────────────────────────────────────────
-function updateResults() {
-  const ratio = contrastRatio(bgHex, textHex);
-
-  // Ratio number + colour
-  ratioDisplay.textContent = ratio.toFixed(2) + ' : 1';
-  ratioDisplay.className   = 'ratio-number ' +
-    (ratio >= 7 ? 'ratio-good' : ratio >= 4.5 ? 'ratio-ok' : 'ratio-bad');
-
-  // Main AA Normal check (most important indicator)
-  const aaPass = ratio >= 4.5;
-  mainCheck.className    = 'main-check ' + (aaPass ? 'pass' : 'fail');
-  mainCheckIcon.textContent = aaPass ? '✔' : '✖';
-
-  // Compact pills
-  setPill(aaLargePill, aaLargeIcon, ratio >= 3.0);
-  setPill(aaaPill,     aaaIcon,     ratio >= 7.0);
-  setPill(aaaLargePill, aaaLargeIcon, ratio >= 4.5);
-}
-
-function setPill(pill, iconEl, pass) {
-  pill.className     = 'wcag-pill ' + (pass ? 'pass' : 'fail');
+// ── WCAG pill helper ─────────────────────────────────────────────────────────
+function setPill(pillEl, iconEl, pass) {
+  pillEl.className   = 'wcag-pill ' + (pass ? 'pass' : 'fail');
   iconEl.textContent = pass ? '✔' : '✖';
 }
 
-
-// ── Preview Templates ──────────────────────────────────────────
-const PREVIEW_TEMPLATES = {
-
+// ── Preview templates ────────────────────────────────────────────────────────
+const TEMPLATES = {
   heading: () => `
-    <p style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.4;margin-bottom:14px;font-weight:600;">Preview</p>
-    <h1 style="font-size:clamp(1.6rem,4vw,2.6rem);font-weight:800;line-height:1.1;margin-bottom:14px;letter-spacing:-0.5px;">
-      The quick brown fox jumps
+    <p style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.35;margin-bottom:20px;font-weight:600;font-family:inherit;">Preview</p>
+    <h1 style="font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:700;line-height:1.15;margin-bottom:14px;letter-spacing:-0.025em;font-family:inherit;">
+      The quick brown fox jumps over the lazy dog
     </h1>
-    <h2 style="font-size:clamp(1rem,2.5vw,1.35rem);font-weight:500;line-height:1.4;opacity:.75;">
+    <h2 style="font-size:clamp(.95rem,2vw,1.2rem);font-weight:500;line-height:1.5;opacity:.75;font-family:inherit;">
       Good design is obvious. Great design is transparent.
     </h2>`,
 
   body: () => `
-    <p style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.4;margin-bottom:14px;font-weight:600;">Preview</p>
-    <p style="font-size:.95rem;line-height:1.75;margin-bottom:12px;opacity:.9;">
+    <p style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.35;margin-bottom:20px;font-weight:600;font-family:inherit;">Preview</p>
+    <p style="font-size:.9rem;line-height:1.8;margin-bottom:14px;opacity:.9;font-family:inherit;">
       Typography is the craft of enduring visual communication and the
       foundation of readable, accessible design. Every choice in font,
       weight, and spacing shapes how well users can consume your content.
     </p>
-    <p style="font-size:.85rem;line-height:1.7;opacity:.6;">
-      WCAG 2.1 defines minimum contrast ratios to ensure text is readable
-      by people with low vision. AA requires 4.5:1 for normal text and
-      3:1 for large text (18pt+ or 14pt+ bold).
+    <p style="font-size:.8rem;line-height:1.7;opacity:.55;font-family:inherit;">
+      WCAG 2.1 requires 4.5:1 contrast for normal text and 3:1 for large
+      text (18pt+ or 14pt bold). AAA requires 7:1 for normal text.
     </p>`,
-
 };
 
-function renderPreview() {
-  const tpl = PREVIEW_TEMPLATES[previewMode] || PREVIEW_TEMPLATES.heading;
-  previewArea.style.backgroundColor = '#' + bgHex;
-  previewArea.style.color           = '#' + textHex;
-  previewArea.innerHTML = tpl();
+// ── Apply ────────────────────────────────────────────────────────────────────
+function apply() {
+  const bg = '#' + bgHex, tx = '#' + textHex;
+
+  bgSwatch.style.background         = bg;
+  textSwatch.style.background       = tx;
+  bgPickerSwatch.style.background   = bg;
+  textPickerSwatch.style.background = tx;
+  bgHexInput.value   = bgHex.toUpperCase();
+  textHexInput.value = textHex.toUpperCase();
+  bgPicker.value     = bg;
+  textPicker.value   = tx;
+
+  const ratio  = contrast(bgHex, textHex);
+  ratioDisplay.textContent = ratio.toFixed(2) + ':1';
+  ratioDisplay.className   = 'ratio-number ' + (ratio >= 7 ? 'ratio-good' : ratio >= 4.5 ? 'ratio-ok' : 'ratio-bad');
+
+  const aaPass = ratio >= 4.5;
+  mainBadge.className       = 'main-badge ' + (aaPass ? 'pass' : 'fail');
+  mainBadgeIcon.textContent = aaPass ? '✔' : '✖';
+
+  setPill($('aaLargePill'),  $('aaLargeIcon'),  ratio >= 3.0);
+  setPill($('aaaPill'),      $('aaaIcon'),       ratio >= 7.0);
+  setPill($('aaaLargePill'), $('aaaLargeIcon'), ratio >= 4.5);
+
+  previewArea.style.background = bg;
+  previewArea.style.color      = tx;
+  previewArea.innerHTML        = (TEMPLATES[mode] || TEMPLATES.heading)();
 }
 
-
-// ── Input Events ───────────────────────────────────────────────
+// ── Inputs ───────────────────────────────────────────────────────────────────
 bgHexInput.addEventListener('input', () => {
-  const h = sanitizeHex(bgHexInput.value);
-  if (isValidHex(h)) { bgHex = h.toLowerCase(); applyColors(); }
+  const h = cleanHex(bgHexInput.value);
+  if (isHex(h)) { bgHex = h.toLowerCase(); apply(); }
 });
 bgHexInput.addEventListener('blur', () => {
-  if (!isValidHex(sanitizeHex(bgHexInput.value))) bgHexInput.value = bgHex.toUpperCase();
+  if (!isHex(cleanHex(bgHexInput.value))) bgHexInput.value = bgHex.toUpperCase();
 });
 
 textHexInput.addEventListener('input', () => {
-  const h = sanitizeHex(textHexInput.value);
-  if (isValidHex(h)) { textHex = h.toLowerCase(); applyColors(); }
+  const h = cleanHex(textHexInput.value);
+  if (isHex(h)) { textHex = h.toLowerCase(); apply(); }
 });
 textHexInput.addEventListener('blur', () => {
-  if (!isValidHex(sanitizeHex(textHexInput.value))) textHexInput.value = textHex.toUpperCase();
+  if (!isHex(cleanHex(textHexInput.value))) textHexInput.value = textHex.toUpperCase();
 });
 
-bgPicker.addEventListener('input',   () => { bgHex   = bgPicker.value.slice(1).toLowerCase();   applyColors(); });
-textPicker.addEventListener('input', () => { textHex = textPicker.value.slice(1).toLowerCase(); applyColors(); });
+bgPicker.addEventListener('input',   () => { bgHex   = bgPicker.value.slice(1).toLowerCase();   apply(); });
+textPicker.addEventListener('input', () => { textHex = textPicker.value.slice(1).toLowerCase(); apply(); });
 
-// ── Swap & Random ──────────────────────────────────────────────
-document.getElementById('swapBtn').addEventListener('click', () => {
-  [bgHex, textHex] = [textHex, bgHex];
-  applyColors();
-});
-document.getElementById('randomBtn').addEventListener('click', () => {
-  bgHex   = randomHex().toLowerCase();
-  textHex = randomHex().toLowerCase();
-  applyColors();
-});
+// ── Controls ─────────────────────────────────────────────────────────────────
+$('swapBtn').addEventListener('click',   () => { [bgHex, textHex] = [textHex, bgHex]; apply(); });
+$('randomBtn').addEventListener('click', () => { bgHex = randHex().toLowerCase(); textHex = randHex().toLowerCase(); apply(); });
 
-// ── Tabs ───────────────────────────────────────────────────────
+// ── Tabs ─────────────────────────────────────────────────────────────────────
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    previewMode = btn.dataset.mode;
-    renderPreview();
+    mode = btn.dataset.mode;
+    apply();
   });
 });
 
-// ── Copy toast (clicking a swatch copies its hex) ──────────────
+// ── Copy ─────────────────────────────────────────────────────────────────────
 let toastTimer = null;
-
 function showToast(msg) {
-  copyToast.textContent = msg;
-  copyToast.classList.add('show');
+  toast.textContent = msg;
+  toast.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => copyToast.classList.remove('show'), 1800);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
 }
-
 function copyHex(hex) {
-  const value = '#' + hex.toUpperCase();
-  navigator.clipboard.writeText(value)
-    .then(() => showToast('Copied ' + value))
-    .catch(() => {
-      const ta = Object.assign(document.createElement('textarea'), { value, style: 'position:fixed;opacity:0' });
-      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
-      showToast('Copied ' + value);
-    });
+  navigator.clipboard.writeText('#' + hex.toUpperCase())
+    .then(() => showToast('Copied #' + hex.toUpperCase()))
+    .catch(() => {});
 }
 
-document.getElementById('bgPickerWrap').addEventListener('dblclick',   () => copyHex(bgHex));
-document.getElementById('textPickerWrap').addEventListener('dblclick', () => copyHex(textHex));
-bgSwatch.addEventListener('click',   () => copyHex(bgHex));
-textSwatch.addEventListener('click', () => copyHex(textHex));
+bgSwatch.addEventListener('click',           () => copyHex(bgHex));
+textSwatch.addEventListener('click',         () => copyHex(textHex));
+$('bgPickerWrap').addEventListener('dblclick',   () => copyHex(bgHex));
+$('textPickerWrap').addEventListener('dblclick', () => copyHex(textHex));
 
-// ── Init ───────────────────────────────────────────────────────
-applyColors();
+// ── Init ─────────────────────────────────────────────────────────────────────
+apply();
 </script>
 </body>
 </html>
