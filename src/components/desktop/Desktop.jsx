@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import RightControls from './RightControls'
+import TopBar from './TopBar'
 import Background from './Background'
 import Dock from '@/components/dock/Dock'
 import MenuWindow from '@/components/dock/MenuWindow'
@@ -69,13 +69,16 @@ export default function Desktop() {
   return (
     <div className="relative w-full h-full overflow-hidden" style={{ background: 'var(--bg)' }}>
 
+      {/* macOS-style top menu bar */}
+      <TopBar />
+
       {/* Animated background — canvas + noise grain */}
       <Background />
 
       {/* About Me — full-desktop view, no window chrome */}
       <AnimatePresence>
         {activePage === 'about' && (
-          <div className="absolute inset-0" style={{ zIndex: 10 }}>
+          <div className="absolute inset-0" style={{ zIndex: 10, paddingTop: 28 }}>
             <AboutMeWindow key="about" />
           </div>
         )}
@@ -103,9 +106,6 @@ export default function Desktop() {
         onNavigate={setActivePage}
         menuRef={menuRef}
       />
-
-      {/* Right-side global controls */}
-      <RightControls />
 
       {/* Tools icon dock — visible only when tools page is open */}
       <AnimatePresence>

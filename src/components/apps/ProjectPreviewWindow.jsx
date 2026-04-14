@@ -81,7 +81,7 @@ export default function ProjectPreviewWindow({ project, onClose }) {
             key="preview-panel"
             className="fixed"
             style={{
-              top: 48,
+              top: 28,
               left: 0,
               right: 0,
               bottom: 0,
