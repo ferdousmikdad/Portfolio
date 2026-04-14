@@ -16,43 +16,45 @@
     })();
   </script>
   <style>
-    /* ── Website design tokens ── */
+    @font-face { font-family:'SF Pro Display'; src:url('../fonts/SF-Pro-Display-Regular.otf') format('opentype'); font-weight:400; }
+    @font-face { font-family:'SF Pro Display'; src:url('../fonts/SF-Pro-Display-Medium.otf')  format('opentype'); font-weight:500; }
+    @font-face { font-family:'SF Pro Display'; src:url('../fonts/SF-Pro-Display-Semibold.otf') format('opentype'); font-weight:600; }
+    @font-face { font-family:'SF Pro Display'; src:url('../fonts/SF-Pro-Display-Bold.otf')    format('opentype'); font-weight:700; }
+
     :root {
       --bg:           #F2EDD9;
-      --panel-bg:     rgba(0, 0, 0, 0.03);
-      --border:       rgba(0, 0, 0, 0.08);
+      --border:       rgba(0,0,0,0.08);
       --headline:     #1c1c1e;
       --body:         #6b6861;
-      --social-bg:    rgba(0, 0, 0, 0.05);
-      --social-hover: rgba(0, 0, 0, 0.10);
-      --input-bg:     rgba(0, 0, 0, 0.04);
-      --input-border: rgba(0, 0, 0, 0.08);
-      --canvas-bg:    rgba(0, 0, 0, 0.04);
+      --social-bg:    rgba(0,0,0,0.05);
+      --social-hover: rgba(0,0,0,0.10);
+      --input-bg:     rgba(0,0,0,0.04);
+      --input-border: rgba(0,0,0,0.08);
+      --canvas-bg:    rgba(0,0,0,0.04);
       --accent:       #cf0506;
-      --scrollbar:    rgba(0, 0, 0, 0.10);
-      --slider-track: rgba(0, 0, 0, 0.12);
+      --scrollbar:    rgba(0,0,0,0.10);
+      --slider-track: rgba(0,0,0,0.12);
     }
     .dark {
       --bg:           #080808;
-      --panel-bg:     rgba(255, 255, 255, 0.02);
-      --border:       rgba(255, 255, 255, 0.08);
+      --border:       rgba(255,255,255,0.08);
       --headline:     #f3f0e5;
       --body:         #aba795;
-      --social-bg:    rgba(255, 255, 255, 0.05);
-      --social-hover: rgba(255, 255, 255, 0.10);
-      --input-bg:     rgba(255, 255, 255, 0.04);
-      --input-border: rgba(255, 255, 255, 0.08);
-      --canvas-bg:    rgba(255, 255, 255, 0.03);
+      --social-bg:    rgba(255,255,255,0.05);
+      --social-hover: rgba(255,255,255,0.10);
+      --input-bg:     rgba(255,255,255,0.04);
+      --input-border: rgba(255,255,255,0.08);
+      --canvas-bg:    rgba(255,255,255,0.03);
       --accent:       #cf0506;
-      --scrollbar:    rgba(255, 255, 255, 0.10);
-      --slider-track: rgba(255, 255, 255, 0.10);
+      --scrollbar:    rgba(255,255,255,0.10);
+      --slider-track: rgba(255,255,255,0.10);
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+      font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
       background: var(--bg);
       color: var(--headline);
       height: 100%;
@@ -66,268 +68,154 @@
 
     /* ── Standalone header ── */
     .page-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+      display: flex; align-items: center; gap: 10px;
       padding: 10px 16px;
       border-bottom: 1px solid var(--border);
       flex-shrink: 0;
     }
-    .back-link {
-      font-size: 12px; font-weight: 500;
-      color: var(--body); text-decoration: none;
-      transition: color 0.15s;
-    }
-    .back-link:hover { color: var(--accent); }
-    .hdr-sep { width: 1px; height: 14px; background: var(--border); }
-    .hdr-title { font-size: 13px; font-weight: 500; color: var(--headline); }
+    .back-link { font-size:12px; font-weight:500; color:var(--body); text-decoration:none; transition:color .15s; }
+    .back-link:hover { color:var(--accent); }
+    .hdr-sep { width:1px; height:14px; background:var(--border); }
+    .hdr-title { font-size:13px; font-weight:500; color:var(--headline); }
 
-    /* ── Toolbar ── */
-    .toolbar {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 16px;
-      border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
-      flex-wrap: wrap;
-    }
-
-    .toolbar-label {
-      font-size: 11px; font-weight: 500;
-      color: var(--body); opacity: 0.6;
-    }
-
-    .toolbar-sep { width: 1px; height: 14px; background: var(--border); margin: 0 2px; }
-
-    .preset-label {
-      font-size: 10px; font-weight: 600;
-      text-transform: uppercase; letter-spacing: 0.1em;
-      color: var(--body); opacity: 0.45;
-    }
-
-    /* ── Shared button ── */
-    .btn {
-      height: 26px;
-      padding: 0 11px;
-      border-radius: 7px;
-      font-size: 11px; font-weight: 500;
-      cursor: pointer;
-      border: 1px solid var(--border);
-      background: var(--social-bg);
-      color: var(--body);
-      font-family: inherit;
-      transition: background 0.15s, color 0.15s, border-color 0.15s;
-      white-space: nowrap;
-    }
-    .btn:hover {
-      background: var(--social-hover);
-      color: var(--headline);
-    }
-    .btn.active {
-      background: rgba(207, 5, 6, 0.09);
-      border-color: rgba(207, 5, 6, 0.3);
-      color: var(--accent);
-    }
-    .btn-solid {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #fff;
-    }
-    .btn-solid:hover { opacity: 0.88; }
-
-    /* ── Presets bar (shown after upload) ── */
-    #presetsBar { display: none; }
-    #presetsBar.show { display: contents; }
-    .toolbar:not(:has(#presetsBar.show)) { display: none; }
-
-    /* ── Main scrollable area ── */
+    /* ── Main area ── */
     .main {
       flex: 1;
-      overflow-y: auto;
-      overflow-x: hidden;
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 0;
-      gap: 14px;
+      overflow: hidden;
       min-height: 0;
     }
 
-    /* ── Drop state ── */
+    /* ══════════════════════════════════════
+       DROP STATE
+    ══════════════════════════════════════ */
     #dropState {
-      width: 100%;
-      flex: 1;
-      display: flex;
-      align-items: stretch;
+      width: 100%; flex: 1;
+      display: flex; align-items: stretch;
       padding: 120px;
       min-height: 0;
     }
-
-    .drop-zone {
-      width: 100%;
-      height: 100%;
-      border: none;
-      border-radius: 14px;
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      cursor: pointer;
-      transition: border-color 0.2s, background 0.2s;
-    }
-    .drop-zone:hover,
-    .drop-zone.drag-over {
-      background-color: rgba(207, 5, 6, 0.03);
-    }
-
-    .drop-icon { opacity: 0.35; }
-
-    .drop-zone-label {
-      font-size: 12px; font-weight: 500;
-      color: var(--body);
-      opacity: 0.55;
-    }
-
-    .drop-zone input { display: none; }
-
     :root .drop-zone {
       background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='14' ry='14' stroke='rgba(0,0,0,0.18)' stroke-width='1.5' stroke-dasharray='6 6' stroke-linecap='square'/%3e%3c/svg%3e");
     }
     .dark .drop-zone {
       background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='14' ry='14' stroke='rgba(255,255,255,0.12)' stroke-width='1.5' stroke-dasharray='6 6' stroke-linecap='square'/%3e%3c/svg%3e");
     }
-    .drop-zone:hover,
-    .drop-zone.drag-over {
-      background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='14' ry='14' stroke='rgba(207,5,6,0.5)' stroke-width='1.5' stroke-dasharray='6 6' stroke-linecap='square'/%3e%3c/svg%3e");
+    .drop-zone {
+      width: 100%; height: 100%;
+      border: none; border-radius: 14px; position: relative;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 12px; cursor: pointer;
+      transition: background-color 0.2s;
     }
+    .drop-zone:hover, .drop-zone.drag-over {
+      background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='14' ry='14' stroke='rgba(207,5,6,0.5)' stroke-width='1.5' stroke-dasharray='6 6' stroke-linecap='square'/%3e%3c/svg%3e");
+      background-color: rgba(207,5,6,0.03);
+    }
+    .drop-icon { opacity: 0.35; }
+    .drop-zone-label { font-size:12px; font-weight:500; color:var(--body); opacity:.55; }
+    .drop-zone input { display:none; }
 
-    /* ── Image state ── */
+    /* ══════════════════════════════════════
+       IMAGE STATE — two-column layout
+    ══════════════════════════════════════ */
     #imageState {
       display: none;
-      flex-direction: column;
-      align-items: center;
-      gap: 14px;
-      width: 100%;
-      max-width: 900px;
+      width: 100%; height: 100%;
+      overflow: hidden;
     }
     #imageState.show { display: flex; }
 
-    /* ── Section card ── */
-    .tool-card {
-      width: 100%;
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      overflow: hidden;
-      background: var(--social-bg);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-    }
-
-    .card-header {
-      padding: 10px 16px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
+    /* ── Left controls column ── */
+    .ctrl-col {
+      width: 270px;
       flex-shrink: 0;
-    }
-
-    .card-label {
-      font-size: 10px; font-weight: 600;
-      text-transform: uppercase; letter-spacing: 0.12em;
-      color: var(--body); opacity: 0.55;
-    }
-
-    .card-header-actions {
-      display: flex;
-      gap: 6px;
-    }
-
-    /* ── Preview panels ── */
-    .panels-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-    }
-
-    .img-panel { display: flex; flex-direction: column; }
-    .img-panel:first-child { border-right: 1px solid var(--border); }
-
-    .img-panel-body {
-      height: 300px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--canvas-bg);
-      overflow: hidden;
-      position: relative;
-    }
-
-    canvas {
-      max-width: 100%; max-height: 100%;
-      width: auto; height: auto;
-      display: block;
-    }
-
-    /* ── Controls ── */
-    .controls-body {
-      padding: 18px 20px;
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-      gap: 18px 24px;
-      align-items: start;
-    }
-
-    .ctrl-group {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 12px;
+      gap: 0;
     }
+
+    .ctrl-panel {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .ctrl-panel-header {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .ctrl-panel-title {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.14em;
+      color: var(--body); opacity: 0.5;
+    }
+
+    .ctrl-panel-body {
+      padding: 16px 14px;
+      display: flex; flex-direction: column;
+      gap: 20px;
+    }
+
+    /* divider inside panel */
+    .ctrl-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 2px 0;
+    }
+
+    /* ── Control group ── */
+    .ctrl-group { display: flex; flex-direction: column; gap: 7px; }
 
     .ctrl-label-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      display: flex; align-items: center; justify-content: space-between;
     }
-
     .ctrl-label {
       font-size: 10px; font-weight: 600;
       text-transform: uppercase; letter-spacing: 0.1em;
       color: var(--body); opacity: 0.6;
     }
-
     .ctrl-value {
-      font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace;
+      font-family: 'SF Mono','Fira Code',ui-monospace,monospace;
       font-size: 10px; font-weight: 600;
       color: var(--accent);
-      font-variant-numeric: tabular-nums;
     }
 
-    /* ── Range sliders ── */
+    /* side-by-side pair */
+    .ctrl-pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    /* ── Sliders ── */
     input[type="range"] {
       -webkit-appearance: none;
       width: 100%; height: 3px;
       border-radius: 2px;
       background: var(--slider-track);
-      outline: none;
-      cursor: pointer;
+      outline: none; cursor: pointer;
     }
     input[type="range"]::-webkit-slider-thumb {
       -webkit-appearance: none;
-      width: 13px; height: 13px;
+      width: 12px; height: 12px;
       border-radius: 50%;
       background: var(--accent);
       cursor: pointer;
+      box-shadow: 0 0 0 2px var(--bg);
     }
     input[type="range"]::-moz-range-thumb {
-      width: 13px; height: 13px;
+      width: 12px; height: 12px;
       border-radius: 50%;
       background: var(--accent);
-      border: none; cursor: pointer;
+      cursor: pointer; border: none;
     }
 
     /* ── Shape toggle ── */
@@ -336,105 +224,243 @@
       border: 1px solid var(--border);
       border-radius: 8px;
       overflow: hidden;
-      background: var(--input-bg);
     }
     .shape-btn {
-      flex: 1;
-      padding: 7px 0;
-      font-size: 11px; font-weight: 500;
+      flex: 1; height: 28px;
       background: transparent;
-      color: var(--body);
-      border: none;
-      cursor: pointer;
+      border: none; cursor: pointer;
       font-family: inherit;
-      transition: background 0.15s, color 0.15s;
+      font-size: 10px; font-weight: 600;
+      color: var(--body);
+      transition: background .15s, color .15s;
+      display: flex; align-items: center; justify-content: center; gap: 4px;
     }
     .shape-btn + .shape-btn { border-left: 1px solid var(--border); }
     .shape-btn.active {
-      background: rgba(207, 5, 6, 0.09);
+      background: rgba(207,5,6,0.09);
       color: var(--accent);
     }
 
-    /* ── Color picker row ── */
-    .color-picker-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+    /* ── Color picker rows ── */
+    .color-ctrl-row {
+      display: flex; gap: 10px;
     }
-
-    .color-swatch-wrap {
-      width: 32px; height: 32px;
-      border-radius: 8px;
+    .color-ctrl-item {
+      flex: 1; display: flex; flex-direction: column; gap: 5px;
+    }
+    .color-swatch-btn {
+      width: 100%; height: 32px;
+      border-radius: 7px;
       border: 1px solid var(--border);
-      overflow: hidden;
-      flex-shrink: 0;
       cursor: pointer;
-      transition: border-color 0.15s, transform 0.15s;
+      transition: border-color .15s, transform .15s;
+      flex-shrink: 0;
     }
-    .color-swatch-wrap:hover { border-color: var(--body); transform: scale(1.06); }
-
-    input[type="color"] {
-      -webkit-appearance: none;
-      border: none; padding: 0; background: none; cursor: pointer;
-      width: 42px; height: 42px;
-      margin: -5px;
-    }
-    input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
-    input[type="color"]::-webkit-color-swatch { border: none; }
+    .color-swatch-btn:hover { border-color: var(--body); transform: scale(1.04); }
 
     .color-hex-val {
-      font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace;
-      font-size: 11px; font-weight: 500;
+      font-family: 'SF Mono','Fira Code',ui-monospace,monospace;
+      font-size: 10px; font-weight: 600;
       color: var(--body);
+      text-transform: uppercase;
+      text-align: center;
     }
 
     /* ── Reset button ── */
     .reset-btn {
-      width: 100%;
-      padding: 8px;
+      width: 100%; height: 34px;
       border: 1px solid var(--border);
       border-radius: 8px;
       background: transparent;
       color: var(--body);
-      font-size: 11px; font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      cursor: pointer;
       font-family: inherit;
-      transition: border-color 0.15s, color 0.15s, background 0.15s;
-      margin-top: 2px;
+      font-size: 11px; font-weight: 500;
+      cursor: pointer;
+      transition: background .15s, color .15s, border-color .15s;
     }
     .reset-btn:hover { background: var(--social-hover); color: var(--headline); }
 
-    /* ── Processing overlay ── */
+    /* ── Right preview column ── */
+    .preview-col {
+      flex: 1;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      padding: 12px 12px 12px 0;
+      gap: 20px;
+      min-width: 0;
+    }
+
+    /* presets row */
+    .presets-row {
+      display: flex; align-items: center; gap: 6px;
+      flex-shrink: 0;
+    }
+    .presets-label {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.14em;
+      color: var(--body); opacity: 0.5;
+      margin-right: 2px;
+    }
+    .preset-btn {
+      height: 32px; padding: 0 14px;
+      border-radius: 8px;
+      font-size: 12px; font-weight: 500;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--social-bg);
+      color: var(--body);
+      font-family: inherit;
+      transition: background .15s, color .15s, border-color .15s;
+      white-space: nowrap;
+    }
+    .preset-btn:hover { background: var(--social-hover); color: var(--headline); }
+    .preset-btn.active {
+      background: rgba(207,5,6,0.09);
+      border-color: rgba(207,5,6,0.3);
+      color: var(--accent);
+    }
+
+    /* images row */
+    .images-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .img-pane {
+      display: flex; flex-direction: column; gap: 8px;
+      min-height: 0;
+    }
+    .img-pane-label {
+      font-size: 10px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.12em;
+      color: var(--body); opacity: 0.5;
+      flex-shrink: 0;
+    }
+    .img-pane-body {
+      aspect-ratio: 1 / 1;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--canvas-bg);
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; position: relative;
+      padding: 10px;
+      width: 100%;
+    }
+    .img-pane-body canvas {
+      max-width: 100%; max-height: 100%;
+      width: auto; height: auto;
+      display: block;
+    }
+
+    /* processing overlay */
     #processingOverlay {
-      display: none;
-      position: absolute; inset: 0;
-      background: rgba(0, 0, 0, 0.45);
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
-      align-items: center; justify-content: center;
-      z-index: 10;
+      display: none; position: absolute; inset: 0;
+      background: rgba(0,0,0,0.45);
+      backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+      align-items: center; justify-content: center; z-index: 10;
+      border-radius: 10px;
     }
     #processingOverlay.show { display: flex; }
-
     .processing-label {
-      font-size: 11px; font-weight: 600;
+      font-size: 10px; font-weight: 700;
       text-transform: uppercase; letter-spacing: 0.12em;
       color: var(--accent);
     }
 
-    /* ── Scrollbar ── */
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 4px; }
-
-    @media (max-width: 620px) {
-      .panels-row { grid-template-columns: 1fr; }
-      .img-panel:first-child { border-right: none; border-bottom: 1px solid var(--border); }
-      .controls-body { grid-template-columns: 1fr 1fr; }
-      .main { padding: 16px 12px 24px; }
+    /* action buttons row */
+    .actions-row {
+      display: flex; align-items: center; gap: 8px;
+      flex-shrink: 0;
     }
+    .action-btn {
+      height: 32px; padding: 0 16px;
+      border-radius: 8px;
+      font-size: 12px; font-weight: 600;
+      cursor: pointer; font-family: inherit;
+      transition: background .15s, opacity .15s, color .15s;
+      white-space: nowrap;
+    }
+    .action-btn-ghost {
+      border: 1px solid var(--border);
+      background: var(--social-bg);
+      color: var(--body);
+    }
+    .action-btn-ghost:hover { background: var(--social-hover); color: var(--headline); }
+    .action-btn-solid {
+      border: none;
+      background: var(--accent);
+      color: #fff;
+    }
+    .action-btn-solid:hover { opacity: 0.88; }
+
+    /* ══════════════════════════════════════
+       CUSTOM COLOR PICKER POPUP
+    ══════════════════════════════════════ */
+    .cpop {
+      position: fixed; z-index: 300;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.28), 0 4px 16px rgba(0,0,0,0.14);
+      width: 220px;
+      display: none; flex-direction: column; gap: 10px;
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    }
+    .cpop.open { display: flex; }
+    .cpop-gradient {
+      width: 100%; height: 130px;
+      border-radius: 9px; position: relative;
+      cursor: crosshair; overflow: hidden; flex-shrink: 0;
+    }
+    .cpop-gradient canvas { display:block; width:100%; height:100%; border-radius:9px; }
+    .cpop-cursor {
+      position: absolute;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      border: 2px solid #fff;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.35), 0 1px 4px rgba(0,0,0,0.4);
+      transform: translate(-50%,-50%);
+      pointer-events: none;
+    }
+    .cpop-hue {
+      width: 100%; height: 12px; border-radius: 999px;
+      position: relative; cursor: pointer; flex-shrink: 0;
+      background: linear-gradient(to right,#ff0000,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff,#ff0000);
+    }
+    .cpop-hue-thumb {
+      position: absolute; top: 50%;
+      transform: translate(-50%,-50%);
+      width: 14px; height: 14px; border-radius: 50%;
+      border: 2px solid #fff;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.3), 0 1px 4px rgba(0,0,0,0.3);
+      pointer-events: none;
+    }
+    .cpop-hex-row { display:flex; align-items:center; gap:8px; }
+    .cpop-hex-box {
+      flex: 1; display:flex; align-items:center; gap:3px;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 8px; padding: 0 10px; height: 34px;
+      transition: border-color .2s;
+    }
+    .cpop-hex-box:focus-within { border-color: var(--accent); }
+    .cpop-hex-pound { font-family:'SF Mono','Fira Code',ui-monospace,monospace; font-size:11px; font-weight:600; color:var(--body); opacity:.4; }
+    .cpop-hex-input {
+      font-family:'SF Mono','Fira Code',ui-monospace,monospace;
+      font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:1px;
+      width:100%; background:transparent; border:none; outline:none; color:var(--headline);
+    }
+    .cpop-preview {
+      width:34px; height:34px; border-radius:8px;
+      border:1px solid var(--border); flex-shrink:0; transition:background .15s;
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width:4px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:var(--scrollbar); border-radius:4px; }
   </style>
 </head>
 <body>
@@ -458,22 +484,10 @@
   <span class="hdr-title">Retro Dot Effect</span>
 </div>
 
-<!-- Toolbar -->
-<div class="toolbar">
-  <div id="presetsBar">
-    <div class="toolbar-sep"></div>
-    <span class="preset-label">Presets</span>
-    <button class="btn active" data-preset="comic">Comic</button>
-    <button class="btn" data-preset="soft">Soft</button>
-    <button class="btn" data-preset="heavy">Heavy Ink</button>
-    <button class="btn" data-preset="blueprint">Blueprint</button>
-  </div>
-</div>
-
 <!-- Main -->
 <div class="main">
 
-  <!-- Drop state -->
+  <!-- ── Drop state ── -->
   <div id="dropState">
     <label id="dropZone" class="drop-zone">
       <svg class="drop-icon" width="36" height="36" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -485,155 +499,176 @@
     </label>
   </div>
 
-  <!-- Image state -->
+  <!-- ── Image state ── -->
   <div id="imageState">
 
-    <!-- Preview card -->
-    <div class="tool-card">
-      <div class="panels-row">
+    <!-- Left: Controls panel -->
+    <div class="ctrl-col">
+      <div class="ctrl-panel">
 
-        <!-- Original -->
-        <div class="img-panel">
-          <div class="card-header">
-            <span class="card-label">Original</span>
-            <button id="changeImageBtn" class="btn">⤴ Change Image</button>
+        <div class="ctrl-panel-header">
+          <span class="ctrl-panel-title">Controls</span>
+          <button id="changeImageBtn" style="background:none;border:none;cursor:pointer;font-size:10px;font-weight:600;color:var(--body);font-family:inherit;letter-spacing:0.04em;opacity:0.6;transition:opacity .15s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.6">⤴ Change</button>
+        </div>
+
+        <div class="ctrl-panel-body">
+
+          <!-- Dot Shape -->
+          <div class="ctrl-group">
+            <span class="ctrl-label">Dot Shape</span>
+            <div class="shape-toggle">
+              <button class="shape-btn active" data-shape="circle">● Circle</button>
+              <button class="shape-btn" data-shape="square">■ Square</button>
+            </div>
           </div>
-          <div class="img-panel-body">
+
+          <div class="ctrl-divider"></div>
+
+          <!-- Dot Spacing -->
+          <div class="ctrl-group">
+            <div class="ctrl-label-row">
+              <span class="ctrl-label">Dot Spacing</span>
+              <span id="spacingVal" class="ctrl-value">10px</span>
+            </div>
+            <input type="range" id="spacing" min="4" max="40" value="10" />
+          </div>
+
+          <!-- Max Dot & Min Dot side by side -->
+          <div class="ctrl-pair">
+            <div class="ctrl-group">
+              <div class="ctrl-label-row">
+                <span class="ctrl-label">Max Dot</span>
+                <span id="maxSizeVal" class="ctrl-value">90%</span>
+              </div>
+              <input type="range" id="maxSize" min="10" max="100" value="90" />
+            </div>
+            <div class="ctrl-group">
+              <div class="ctrl-label-row">
+                <span class="ctrl-label">Min Dot</span>
+                <span id="minSizeVal" class="ctrl-value">0%</span>
+              </div>
+              <input type="range" id="minSize" min="0" max="50" value="0" />
+            </div>
+          </div>
+
+          <!-- Contrast -->
+          <div class="ctrl-group">
+            <div class="ctrl-label-row">
+              <span class="ctrl-label">Contrast</span>
+              <span id="contrastVal" class="ctrl-value">0</span>
+            </div>
+            <input type="range" id="contrast" min="-100" max="100" value="0" />
+          </div>
+
+          <div class="ctrl-divider"></div>
+
+          <!-- Color Pickers -->
+          <div class="ctrl-group">
+            <div class="color-ctrl-row">
+              <div class="color-ctrl-item">
+                <span class="ctrl-label">Dot Color</span>
+                <button class="color-swatch-btn" id="dotColorSwatch" title="Pick dot color"></button>
+                <span id="dotColorVal" class="color-hex-val">#000000</span>
+              </div>
+              <div class="color-ctrl-item">
+                <span class="ctrl-label">BG Color</span>
+                <button class="color-swatch-btn" id="bgColorSwatch" title="Pick background color"></button>
+                <span id="bgColorVal" class="color-hex-val">#FFFFFF</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="ctrl-divider"></div>
+
+          <!-- Brightness & Rotation side by side -->
+          <div class="ctrl-pair">
+            <div class="ctrl-group">
+              <div class="ctrl-label-row">
+                <span class="ctrl-label">Brightness</span>
+                <span id="brightnessVal" class="ctrl-value">0</span>
+              </div>
+              <input type="range" id="brightness" min="-100" max="100" value="0" />
+            </div>
+            <div class="ctrl-group">
+              <div class="ctrl-label-row">
+                <span class="ctrl-label">Rotation</span>
+                <span id="angleVal" class="ctrl-value">0°</span>
+              </div>
+              <input type="range" id="angle" min="0" max="90" value="0" />
+            </div>
+          </div>
+
+          <!-- Reset CTA -->
+          <button id="resetBtn" class="reset-btn">Reset Controls</button>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Preview -->
+    <div class="preview-col">
+
+      <!-- Presets -->
+      <div class="presets-row">
+        <span class="presets-label">Presets</span>
+        <button class="preset-btn active" data-preset="cosmic">Cosmic</button>
+        <button class="preset-btn" data-preset="soft">Soft</button>
+        <button class="preset-btn" data-preset="heavy">Heavy Ink</button>
+        <button class="preset-btn" data-preset="blueprint">Blueprint</button>
+      </div>
+
+      <!-- Images -->
+      <div class="images-row">
+        <div class="img-pane">
+          <span class="img-pane-label">Original</span>
+          <div class="img-pane-body">
             <canvas id="originalCanvas"></canvas>
           </div>
         </div>
-
-        <!-- Halftone -->
-        <div class="img-panel">
-          <div class="card-header">
-            <span class="card-label">Halftone Result</span>
-            <div class="card-header-actions">
-              <button id="downloadSvg" class="btn">SVG</button>
-              <button id="downloadPng" class="btn btn-solid">↓ PNG</button>
-            </div>
-          </div>
-          <div class="img-panel-body">
+        <div class="img-pane">
+          <span class="img-pane-label">Retro Dot</span>
+          <div class="img-pane-body">
             <canvas id="halftoneCanvas"></canvas>
-            <div id="processingOverlay">
-              <span class="processing-label">Rendering…</span>
-            </div>
+            <div id="processingOverlay"><span class="processing-label">Rendering…</span></div>
           </div>
         </div>
-
       </div>
+
+      <!-- Actions -->
+      <div class="actions-row">
+        <button id="svgBtn" class="action-btn action-btn-ghost">SVG</button>
+        <button id="downloadBtn" class="action-btn action-btn-solid">↓ Download</button>
+      </div>
+
     </div>
-
-    <!-- Controls card -->
-    <div class="tool-card" id="controlsCard">
-      <div class="card-header">
-        <span class="card-label">Controls</span>
-      </div>
-      <div class="controls-body">
-
-        <!-- Dot Shape -->
-        <div class="ctrl-group">
-          <span class="ctrl-label">Dot Shape</span>
-          <div class="shape-toggle">
-            <button class="shape-btn active" data-shape="circle">● Circle</button>
-            <button class="shape-btn" data-shape="square">■ Square</button>
-          </div>
-        </div>
-
-        <!-- Dot Spacing -->
-        <div class="ctrl-group">
-          <div class="ctrl-label-row">
-            <span class="ctrl-label">Dot Spacing</span>
-            <span id="spacingVal" class="ctrl-value">10px</span>
-          </div>
-          <input type="range" id="spacing" min="4" max="40" value="10" />
-        </div>
-
-        <!-- Max Dot Size -->
-        <div class="ctrl-group">
-          <div class="ctrl-label-row">
-            <span class="ctrl-label">Max Dot Size</span>
-            <span id="maxSizeVal" class="ctrl-value">90%</span>
-          </div>
-          <input type="range" id="maxSize" min="10" max="100" value="90" />
-        </div>
-
-        <!-- Min Dot Size -->
-        <div class="ctrl-group">
-          <div class="ctrl-label-row">
-            <span class="ctrl-label">Min Dot Size</span>
-            <span id="minSizeVal" class="ctrl-value">0%</span>
-          </div>
-          <input type="range" id="minSize" min="0" max="50" value="0" />
-        </div>
-
-        <!-- Contrast -->
-        <div class="ctrl-group">
-          <div class="ctrl-label-row">
-            <span class="ctrl-label">Contrast</span>
-            <span id="contrastVal" class="ctrl-value">0</span>
-          </div>
-          <input type="range" id="contrast" min="-100" max="100" value="0" />
-        </div>
-
-        <!-- Brightness -->
-        <div class="ctrl-group">
-          <div class="ctrl-label-row">
-            <span class="ctrl-label">Brightness</span>
-            <span id="brightnessVal" class="ctrl-value">0</span>
-          </div>
-          <input type="range" id="brightness" min="-100" max="100" value="0" />
-        </div>
-
-        <!-- Rotation -->
-        <div class="ctrl-group">
-          <div class="ctrl-label-row">
-            <span class="ctrl-label">Rotation</span>
-            <span id="angleVal" class="ctrl-value">0°</span>
-          </div>
-          <input type="range" id="angle" min="0" max="90" value="0" />
-        </div>
-
-        <!-- Dot Color -->
-        <div class="ctrl-group">
-          <span class="ctrl-label">Dot Color</span>
-          <div class="color-picker-row">
-            <div class="color-swatch-wrap">
-              <input type="color" id="dotColor" value="#000000" />
-            </div>
-            <span id="dotColorVal" class="color-hex-val">#000000</span>
-          </div>
-        </div>
-
-        <!-- Background Color -->
-        <div class="ctrl-group">
-          <span class="ctrl-label">Background</span>
-          <div class="color-picker-row">
-            <div class="color-swatch-wrap">
-              <input type="color" id="bgColor" value="#ffffff" />
-            </div>
-            <span id="bgColorVal" class="color-hex-val">#ffffff</span>
-          </div>
-        </div>
-
-        <!-- Reset -->
-        <div class="ctrl-group" style="justify-content: flex-end;">
-          <button id="resetBtn" class="reset-btn">Reset Controls</button>
-        </div>
-
-      </div>
-    </div>
-
   </div><!-- /imageState -->
 
 </div><!-- /main -->
 
+<!-- Custom color picker popup -->
+<div class="cpop" id="cpop">
+  <div class="cpop-gradient" id="cpopGradient">
+    <canvas id="cpopCanvas"></canvas>
+    <div class="cpop-cursor" id="cpopCursor"></div>
+  </div>
+  <div class="cpop-hue" id="cpopHue">
+    <div class="cpop-hue-thumb" id="cpopHueThumb"></div>
+  </div>
+  <div class="cpop-hex-row">
+    <div class="cpop-hex-box">
+      <span class="cpop-hex-pound">#</span>
+      <input type="text" id="cpopHexInput" class="cpop-hex-input" maxlength="6" spellcheck="false" autocomplete="off" />
+    </div>
+    <div class="cpop-preview" id="cpopPreview"></div>
+  </div>
+</div>
 
 <script>
 'use strict';
 
-// ── Presets ──────────────────────────────────────────────────────────────────
+// ── Presets ───────────────────────────────────────────────────────────────────
 const PRESETS = {
-  comic:     { spacing: 8,  maxSize: 95,  minSize: 0,  contrast: 30,  brightness: 0,   angle: 45, dotColor: '#000000', bgColor: '#ffffff' },
+  cosmic:    { spacing: 8,  maxSize: 95,  minSize: 0,  contrast: 30,  brightness: 0,   angle: 45, dotColor: '#000000', bgColor: '#ffffff' },
   soft:      { spacing: 14, maxSize: 68,  minSize: 5,  contrast: -10, brightness: 10,  angle: 0,  dotColor: '#1a1a1a', bgColor: '#f5f5f0' },
   heavy:     { spacing: 6,  maxSize: 100, minSize: 0,  contrast: 55,  brightness: -10, angle: 45, dotColor: '#000000', bgColor: '#ffffff' },
   blueprint: { spacing: 10, maxSize: 80,  minSize: 0,  contrast: 20,  brightness: 0,   angle: 0,  dotColor: '#dce8ff', bgColor: '#0a2463' },
@@ -647,77 +682,59 @@ const DEFAULTS = {
 
 const MAX_PX = 900;
 
-// ── State ────────────────────────────────────────────────────────────────────
+// ── State ─────────────────────────────────────────────────────────────────────
 let sourcePixels  = null;
 let srcW = 0, srcH = 0;
 let dotShape      = 'circle';
 let renderPending = false;
+let dotColorHex   = '000000';
+let bgColorHex    = 'ffffff';
 
-// ── DOM refs ─────────────────────────────────────────────────────────────────
-const dropZone          = document.getElementById('dropZone');
-const fileInput         = document.getElementById('fileInput');
-const originalCanvas    = document.getElementById('originalCanvas');
-const halftoneCanvas    = document.getElementById('halftoneCanvas');
-const processingOverlay = document.getElementById('processingOverlay');
-const downloadPngBtn    = document.getElementById('downloadPng');
-const downloadSvgBtn    = document.getElementById('downloadSvg');
-const dropState         = document.getElementById('dropState');
-const imageState        = document.getElementById('imageState');
-const presetsBar        = document.getElementById('presetsBar');
+// ── DOM refs ──────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const dropZone       = $('dropZone');
+const fileInput      = $('fileInput');
+const originalCanvas = $('originalCanvas');
+const halftoneCanvas = $('halftoneCanvas');
+const procOverlay    = $('processingOverlay');
+const dropState      = $('dropState');
+const imageState     = $('imageState');
+const dotSwatchBtn   = $('dotColorSwatch');
+const bgSwatchBtn    = $('bgColorSwatch');
+const dotColorVal    = $('dotColorVal');
+const bgColorVal     = $('bgColorVal');
 
 const ctrl = {
-  spacing:    document.getElementById('spacing'),
-  maxSize:    document.getElementById('maxSize'),
-  minSize:    document.getElementById('minSize'),
-  contrast:   document.getElementById('contrast'),
-  brightness: document.getElementById('brightness'),
-  angle:      document.getElementById('angle'),
-  dotColor:   document.getElementById('dotColor'),
-  bgColor:    document.getElementById('bgColor'),
+  spacing:    $('spacing'),
+  maxSize:    $('maxSize'),
+  minSize:    $('minSize'),
+  contrast:   $('contrast'),
+  brightness: $('brightness'),
+  angle:      $('angle'),
 };
 
 const lbl = {
-  spacing:    document.getElementById('spacingVal'),
-  maxSize:    document.getElementById('maxSizeVal'),
-  minSize:    document.getElementById('minSizeVal'),
-  contrast:   document.getElementById('contrastVal'),
-  brightness: document.getElementById('brightnessVal'),
-  angle:      document.getElementById('angleVal'),
-  dotColor:   document.getElementById('dotColorVal'),
-  bgColor:    document.getElementById('bgColorVal'),
+  spacing:    $('spacingVal'),
+  maxSize:    $('maxSizeVal'),
+  minSize:    $('minSizeVal'),
+  contrast:   $('contrastVal'),
+  brightness: $('brightnessVal'),
+  angle:      $('angleVal'),
 };
 
 // ── State transitions ─────────────────────────────────────────────────────────
 function showImageState() {
   dropState.style.display = 'none';
   imageState.classList.add('show');
-  presetsBar.classList.add('show');
 }
-
 function showDropState() {
   imageState.classList.remove('show');
   dropState.style.display = '';
-  presetsBar.classList.remove('show');
   sourcePixels = null;
 }
+$('changeImageBtn').addEventListener('click', showDropState);
 
-document.getElementById('changeImageBtn').addEventListener('click', showDropState);
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-function getParams() {
-  return {
-    spacing:    +ctrl.spacing.value,
-    maxSize:    +ctrl.maxSize.value / 100,
-    minSize:    +ctrl.minSize.value / 100,
-    contrast:   +ctrl.contrast.value,
-    brightness: +ctrl.brightness.value,
-    angle:      +ctrl.angle.value * Math.PI / 180,
-    dotColor:   ctrl.dotColor.value,
-    bgColor:    ctrl.bgColor.value,
-    shape:      dotShape,
-  };
-}
-
+// ── Labels ────────────────────────────────────────────────────────────────────
 function updateLabels() {
   lbl.spacing.textContent    = ctrl.spacing.value    + 'px';
   lbl.maxSize.textContent    = ctrl.maxSize.value    + '%';
@@ -725,8 +742,10 @@ function updateLabels() {
   lbl.contrast.textContent   = ctrl.contrast.value;
   lbl.brightness.textContent = ctrl.brightness.value;
   lbl.angle.textContent      = ctrl.angle.value      + '°';
-  lbl.dotColor.textContent   = ctrl.dotColor.value;
-  lbl.bgColor.textContent    = ctrl.bgColor.value;
+  dotColorVal.textContent    = '#' + dotColorHex.toUpperCase();
+  bgColorVal.textContent     = '#' + bgColorHex.toUpperCase();
+  dotSwatchBtn.style.background = '#' + dotColorHex;
+  bgSwatchBtn.style.background  = '#' + bgColorHex;
 }
 
 // ── Image loading ─────────────────────────────────────────────────────────────
@@ -745,17 +764,12 @@ function prepareSource(img) {
   const scale = Math.min(1, MAX_PX / Math.max(img.naturalWidth, img.naturalHeight));
   srcW = Math.round(img.naturalWidth  * scale);
   srcH = Math.round(img.naturalHeight * scale);
-
   const offscreen = document.createElement('canvas');
   offscreen.width = srcW; offscreen.height = srcH;
-  const octx = offscreen.getContext('2d');
-  octx.drawImage(img, 0, 0, srcW, srcH);
-  sourcePixels = octx.getImageData(0, 0, srcW, srcH);
-
-  originalCanvas.width  = srcW;
-  originalCanvas.height = srcH;
+  offscreen.getContext('2d').drawImage(img, 0, 0, srcW, srcH);
+  sourcePixels = offscreen.getContext('2d').getImageData(0, 0, srcW, srcH);
+  originalCanvas.width  = srcW; originalCanvas.height = srcH;
   originalCanvas.getContext('2d').drawImage(img, 0, 0, srcW, srcH);
-
   showImageState();
   scheduleRender();
 }
@@ -769,7 +783,6 @@ function adjustChannel(v, contrast, brightness) {
   }
   return v < 0 ? 0 : v > 255 ? 255 : v;
 }
-
 function sampleLuminance(x, y, contrast, brightness) {
   x = Math.round(x); y = Math.round(y);
   if (x < 0) x = 0; else if (x >= srcW) x = srcW - 1;
@@ -782,46 +795,41 @@ function sampleLuminance(x, y, contrast, brightness) {
 }
 
 // ── Rendering ─────────────────────────────────────────────────────────────────
+function getParams() {
+  return {
+    spacing:    +ctrl.spacing.value,
+    maxSize:    +ctrl.maxSize.value / 100,
+    minSize:    +ctrl.minSize.value / 100,
+    contrast:   +ctrl.contrast.value,
+    brightness: +ctrl.brightness.value,
+    angle:      +ctrl.angle.value * Math.PI / 180,
+    dotColor:   '#' + dotColorHex,
+    bgColor:    '#' + bgColorHex,
+    shape:      dotShape,
+  };
+}
+
 function drawDot(ctx, cx, cy, r, shape) {
   if (r < 0.3) return;
   ctx.beginPath();
-  if (shape === 'circle') {
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-  } else {
-    ctx.rect(cx - r, cy - r, r * 2, r * 2);
-  }
+  if (shape === 'circle') ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  else ctx.rect(cx - r, cy - r, r * 2, r * 2);
   ctx.fill();
 }
 
 function renderHalftone() {
   renderPending = false;
   if (!sourcePixels) return;
-
-  const p    = getParams();
-  const sp   = p.spacing;
-  const maxR = sp * 0.5 * p.maxSize;
-  const minR = sp * 0.5 * p.minSize;
-  const cosA = Math.cos(p.angle);
-  const sinA = Math.sin(p.angle);
-  const W = srcW, H = srcH;
-  const cx = W / 2, cy = H / 2;
-
-  halftoneCanvas.width  = W;
-  halftoneCanvas.height = H;
+  const p = getParams();
+  const sp = p.spacing, maxR = sp * 0.5 * p.maxSize, minR = sp * 0.5 * p.minSize;
+  const cosA = Math.cos(p.angle), sinA = Math.sin(p.angle);
+  const W = srcW, H = srcH, cx = W / 2, cy = H / 2;
+  halftoneCanvas.width = W; halftoneCanvas.height = H;
   const ctx = halftoneCanvas.getContext('2d');
-
-  ctx.fillStyle = p.bgColor;
-  ctx.fillRect(0, 0, W, H);
-
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(0, 0, W, H);
-  ctx.clip();
+  ctx.fillStyle = p.bgColor; ctx.fillRect(0, 0, W, H);
+  ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip();
   ctx.fillStyle = p.dotColor;
-
-  const diag  = Math.ceil(Math.sqrt(W * W + H * H));
-  const steps = Math.ceil(diag / sp) + 1;
-
+  const steps = Math.ceil(Math.sqrt(W * W + H * H) / sp) + 1;
   for (let i = -steps; i <= steps; i++) {
     for (let j = -steps; j <= steps; j++) {
       const gx = j * sp, gy = i * sp;
@@ -833,41 +841,35 @@ function renderHalftone() {
       drawDot(ctx, sx, sy, minR + t * (maxR - minR), p.shape);
     }
   }
-
   ctx.restore();
-  processingOverlay.classList.remove('show');
+  procOverlay.classList.remove('show');
 }
 
 function scheduleRender() {
   if (!sourcePixels || renderPending) return;
   renderPending = true;
-  processingOverlay.classList.add('show');
+  procOverlay.classList.add('show');
   requestAnimationFrame(() => requestAnimationFrame(() => renderHalftone()));
 }
 
 // ── Export PNG ────────────────────────────────────────────────────────────────
-downloadPngBtn.addEventListener('click', () => {
+$('downloadBtn').addEventListener('click', () => {
   const a = Object.assign(document.createElement('a'), {
-    download: 'halftone-dots.png',
+    download: 'retro-dot.png',
     href: halftoneCanvas.toDataURL('image/png'),
   });
   a.click();
 });
 
-// ── Export SVG ────────────────────────────────────────────────────────────────
-downloadSvgBtn.addEventListener('click', exportSVG);
-
-function exportSVG() {
+// ── Export SVG (copy to clipboard + show "Copied") ────────────────────────────
+$('svgBtn').addEventListener('click', () => {
   if (!sourcePixels) return;
-  const p    = getParams();
-  const sp   = p.spacing;
-  const maxR = sp * 0.5 * p.maxSize;
-  const minR = sp * 0.5 * p.minSize;
+  const p = getParams();
+  const sp = p.spacing, maxR = sp * 0.5 * p.maxSize, minR = sp * 0.5 * p.minSize;
   const cosA = Math.cos(p.angle), sinA = Math.sin(p.angle);
   const W = srcW, H = srcH, cx = W / 2, cy = H / 2;
   const steps = Math.ceil(Math.sqrt(W * W + H * H) / sp) + 1;
   let shapes = '';
-
   for (let i = -steps; i <= steps; i++) {
     for (let j = -steps; j <= steps; j++) {
       const gx = j * sp, gy = i * sp;
@@ -877,13 +879,11 @@ function exportSVG() {
       const lum = sampleLuminance(sx, sy, p.contrast, p.brightness);
       const r   = minR + (1 - lum / 255) * (maxR - minR);
       if (r < 0.3) continue;
-      const rx = sx.toFixed(2), ry = sy.toFixed(2), rv = r.toFixed(2);
       shapes += p.shape === 'circle'
-        ? `<circle cx="${rx}" cy="${ry}" r="${rv}"/>`
+        ? `<circle cx="${sx.toFixed(2)}" cy="${sy.toFixed(2)}" r="${r.toFixed(2)}"/>`
         : `<rect x="${(sx-r).toFixed(2)}" y="${(sy-r).toFixed(2)}" width="${(r*2).toFixed(2)}" height="${(r*2).toFixed(2)}"/>`;
     }
   }
-
   const svg = [
     `<?xml version="1.0" encoding="UTF-8"?>`,
     `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`,
@@ -893,12 +893,19 @@ function exportSVG() {
     `</svg>`,
   ].join('\n');
 
-  const blob = new Blob([svg], { type: 'image/svg+xml' });
-  const url  = URL.createObjectURL(blob);
-  const a    = Object.assign(document.createElement('a'), { download: 'halftone-dots.svg', href: url });
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
+  const btn = $('svgBtn');
+  navigator.clipboard.writeText(svg).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    btn.style.color = '#22c55e';
+    btn.style.borderColor = 'rgba(34,197,94,0.35)';
+    setTimeout(() => {
+      btn.textContent = orig;
+      btn.style.color = '';
+      btn.style.borderColor = '';
+    }, 1800);
+  }).catch(() => {});
+});
 
 // ── Presets ───────────────────────────────────────────────────────────────────
 function applyPreset(name) {
@@ -910,12 +917,11 @@ function applyPreset(name) {
   ctrl.contrast.value   = p.contrast;
   ctrl.brightness.value = p.brightness;
   ctrl.angle.value      = p.angle;
-  ctrl.dotColor.value   = p.dotColor;
-  ctrl.bgColor.value    = p.bgColor;
+  dotColorHex = p.dotColor.replace('#', '');
+  bgColorHex  = p.bgColor.replace('#', '');
   updateLabels();
   scheduleRender();
 }
-
 document.querySelectorAll('.preset-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
@@ -934,23 +940,23 @@ document.querySelectorAll('.shape-btn').forEach(btn => {
   });
 });
 
-// ── Sliders & color pickers ───────────────────────────────────────────────────
+// ── Sliders ───────────────────────────────────────────────────────────────────
 Object.values(ctrl).forEach(input => {
   input.addEventListener('input', () => { updateLabels(); scheduleRender(); });
 });
 
 // ── Reset ─────────────────────────────────────────────────────────────────────
-document.getElementById('resetBtn').addEventListener('click', () => {
+$('resetBtn').addEventListener('click', () => {
   ctrl.spacing.value    = DEFAULTS.spacing;
   ctrl.maxSize.value    = DEFAULTS.maxSize;
   ctrl.minSize.value    = DEFAULTS.minSize;
   ctrl.contrast.value   = DEFAULTS.contrast;
   ctrl.brightness.value = DEFAULTS.brightness;
   ctrl.angle.value      = DEFAULTS.angle;
-  ctrl.dotColor.value   = DEFAULTS.dotColor;
-  ctrl.bgColor.value    = DEFAULTS.bgColor;
+  dotColorHex = DEFAULTS.dotColor.replace('#','');
+  bgColorHex  = DEFAULTS.bgColor.replace('#','');
   dotShape = DEFAULTS.shape;
-  document.querySelectorAll('.shape-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
+  document.querySelectorAll('.shape-btn').forEach((b,i) => b.classList.toggle('active', i === 0));
   document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
   updateLabels();
   scheduleRender();
@@ -965,6 +971,141 @@ dropZone.addEventListener('drop', e => {
   loadFile(e.dataTransfer.files[0]);
 });
 fileInput.addEventListener('change', e => loadFile(e.target.files[0]));
+
+// ══════════════════════════════════════════════════════════════════════════════
+// CUSTOM COLOR PICKER
+// ══════════════════════════════════════════════════════════════════════════════
+const cpop         = $('cpop');
+const cpopCanvas   = $('cpopCanvas');
+const cpopCursor   = $('cpopCursor');
+const cpopHue      = $('cpopHue');
+const cpopHueThumb = $('cpopHueThumb');
+const cpopHexInp   = $('cpopHexInput');
+const cpopPreview  = $('cpopPreview');
+const cpCtx        = cpopCanvas.getContext('2d');
+
+let cpopTarget = null; // 'dot' | 'bg'
+let cpopH = 0, cpopS = 1, cpopV = 1;
+let cpopSX = 1, cpopSY = 0;
+
+const isHex    = h => /^[0-9A-Fa-f]{6}$/.test(h);
+const cleanHex = r => { let h = r.replace(/^#/,'').toUpperCase(); if (/^[0-9A-F]{3}$/.test(h)) h = h.split('').map(c=>c+c).join(''); return h; };
+
+function hsvToHex(h,s,v) {
+  let r,g,b;
+  const i=Math.floor(h/60)%6, f=h/60-Math.floor(h/60);
+  const p=v*(1-s), q=v*(1-f*s), t=v*(1-(1-f)*s);
+  [r,g,b]=[[v,t,p],[q,v,p],[p,v,t],[p,q,v],[t,p,v],[v,p,q]][i];
+  return [r,g,b].map(x=>Math.round(x*255).toString(16).padStart(2,'0')).join('');
+}
+function hexToHsv(hex) {
+  const r=parseInt(hex.slice(0,2),16)/255, g=parseInt(hex.slice(2,4),16)/255, b=parseInt(hex.slice(4,6),16)/255;
+  const max=Math.max(r,g,b), min=Math.min(r,g,b), d=max-min;
+  let h=0;
+  if(d>0){if(max===r)h=60*(((g-b)/d)%6);else if(max===g)h=60*((b-r)/d+2);else h=60*((r-g)/d+4);}
+  if(h<0)h+=360;
+  return {h, s:max===0?0:d/max, v:max};
+}
+
+function drawCpGradient() {
+  const W=cpopCanvas.width, H=cpopCanvas.height;
+  cpCtx.clearRect(0,0,W,H);
+  cpCtx.fillStyle=`hsl(${cpopH},100%,50%)`;
+  cpCtx.fillRect(0,0,W,H);
+  const wg=cpCtx.createLinearGradient(0,0,W,0);
+  wg.addColorStop(0,'rgba(255,255,255,1)'); wg.addColorStop(1,'rgba(255,255,255,0)');
+  cpCtx.fillStyle=wg; cpCtx.fillRect(0,0,W,H);
+  const bg=cpCtx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'rgba(0,0,0,0)'); bg.addColorStop(1,'rgba(0,0,0,1)');
+  cpCtx.fillStyle=bg; cpCtx.fillRect(0,0,W,H);
+  cpopCursor.style.left=(cpopSX*100)+'%';
+  cpopCursor.style.top=(cpopSY*100)+'%';
+}
+
+function updateFromHSV(silent) {
+  const hex = hsvToHex(cpopH, cpopS, cpopV);
+  cpopHexInp.value = hex.toUpperCase();
+  cpopPreview.style.background = '#'+hex;
+  if (!silent) {
+    if (cpopTarget==='dot') { dotColorHex=hex; }
+    else                    { bgColorHex=hex; }
+    updateLabels();
+    scheduleRender();
+  }
+}
+
+function posToSV(x,y,rect) {
+  cpopSX=Math.max(0,Math.min(1,x/rect.width));
+  cpopSY=Math.max(0,Math.min(1,y/rect.height));
+  cpopS=cpopSX; cpopV=1-cpopSY;
+}
+
+let draggingGrad=false, draggingHue=false;
+cpopCanvas.addEventListener('mousedown', e => {
+  draggingGrad=true;
+  const r=cpopCanvas.getBoundingClientRect();
+  posToSV(e.clientX-r.left, e.clientY-r.top, r);
+  drawCpGradient(); updateFromHSV();
+});
+document.addEventListener('mousemove', e => {
+  if (draggingGrad) { const r=cpopCanvas.getBoundingClientRect(); posToSV(e.clientX-r.left,e.clientY-r.top,r); drawCpGradient(); updateFromHSV(); }
+  if (draggingHue)  { setHueFromEvent(e); }
+});
+document.addEventListener('mouseup', () => { draggingGrad=false; draggingHue=false; });
+
+function setHueFromEvent(e) {
+  const r=cpopHue.getBoundingClientRect();
+  const pct=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));
+  cpopH=pct*360;
+  cpopHueThumb.style.left=(pct*100)+'%';
+  drawCpGradient(); updateFromHSV();
+}
+cpopHue.addEventListener('mousedown', e => { draggingHue=true; setHueFromEvent(e); });
+
+cpopHexInp.addEventListener('input', () => {
+  const h=cleanHex(cpopHexInp.value);
+  if (!isHex(h)) return;
+  const hsv=hexToHsv(h);
+  cpopH=hsv.h; cpopS=hsv.s; cpopV=hsv.v;
+  cpopSX=cpopS; cpopSY=1-cpopV;
+  cpopHueThumb.style.left=(cpopH/360*100)+'%';
+  drawCpGradient();
+  cpopPreview.style.background='#'+h;
+  if (cpopTarget==='dot') { dotColorHex=h.toLowerCase(); }
+  else                    { bgColorHex=h.toLowerCase(); }
+  updateLabels(); scheduleRender();
+});
+
+function openCpop(target, anchorEl) {
+  cpopTarget = target;
+  const currentHex = target==='dot' ? dotColorHex : bgColorHex;
+  const hsv = hexToHsv(currentHex);
+  cpopH=hsv.h; cpopS=hsv.s; cpopV=hsv.v;
+  cpopSX=cpopS; cpopSY=1-cpopV;
+  cpopCanvas.width=192; cpopCanvas.height=130;
+  cpopHueThumb.style.left=(cpopH/360*100)+'%';
+  drawCpGradient(); updateFromHSV(true);
+  cpop.classList.add('open');
+  const rect=anchorEl.getBoundingClientRect();
+  let top=rect.bottom+8, left=rect.left;
+  if (left+220>window.innerWidth-8) left=window.innerWidth-228;
+  if (top+230>window.innerHeight-8) top=rect.top-238;
+  cpop.style.top=top+'px'; cpop.style.left=left+'px';
+}
+function closeCpop() { cpop.classList.remove('open'); cpopTarget=null; }
+
+dotSwatchBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  if (cpop.classList.contains('open') && cpopTarget==='dot') { closeCpop(); return; }
+  openCpop('dot', dotSwatchBtn);
+});
+bgSwatchBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  if (cpop.classList.contains('open') && cpopTarget==='bg') { closeCpop(); return; }
+  openCpop('bg', bgSwatchBtn);
+});
+cpop.addEventListener('click', e => e.stopPropagation());
+document.addEventListener('click', closeCpop);
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 updateLabels();
