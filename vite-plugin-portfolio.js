@@ -71,10 +71,59 @@ function slugToTitle(slug) {
   return slug.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 }
 
+// Convert a human title → URL-safe slug
+// "Design a High-Converting agency website" → "design-a-high-converting-agency-website"
+function titleToSlug(title) {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+}
+
 function readMeta(projectPath) {
   const metaFile = join(projectPath, '_meta.json')
   if (!existsSync(metaFile)) return {}
   try { return JSON.parse(readFileSync(metaFile, 'utf-8')) } catch { return {} }
+}
+
+/**
+ * Parse a {slug}.md file for title and subtitle.
+ * Expected format:
+ *   # Title
+ *   Subtitle (optional, first non-heading line after the title)
+ *
+ * Returns { title, subtitle } — each key is only present if found.
+ */
+function readMarkdown(projectPath, slug) {
+  const mdFile = join(projectPath, `${slug}.md`)
+  if (!existsSync(mdFile)) return {}
+  try {
+    const lines = readFileSync(mdFile, 'utf-8')
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean)
+
+    let title    = null
+    let subtitle = null
+
+    for (const line of lines) {
+      if (!title && line.startsWith('# ')) {
+        title = line.slice(2).trim()
+      } else if (title && !subtitle && !line.startsWith('#')) {
+        subtitle = line.trim()
+        break
+      }
+    }
+
+    return {
+      ...(title    ? { title }    : {}),
+      ...(subtitle ? { subtitle } : {}),
+    }
+  } catch {
+    return {}
+  }
 }
 
 // Detect thumbnail files — handles "-thumbnail", "- thumbnail", "_thumbnail"
@@ -94,6 +143,7 @@ function buildProject(projectPath, urlBase, slug, id, categoryDefault) {
   if (mediaFiles.length === 0) return null
 
   const meta = readMeta(projectPath)
+  const md   = readMarkdown(projectPath, slug)
 
   // ── Thumbnail ──────────────────────────────────────────────────────────────
   const thumbFile     = mediaFiles.find(isThumb) ?? mediaFiles[0]
@@ -131,9 +181,20 @@ function buildProject(projectPath, urlBase, slug, id, categoryDefault) {
   // Preview = first image in content (for backwards-compat / list view fallback)
   const previewItem = content.find((c) => c.type === 'image') ?? content[0]
 
+  // Title priority: .md > _meta.json > folder-name
+  const title    = md.title    ?? meta.title    ?? slugToTitle(slug)
+  const subtitle = md.subtitle ?? meta.subtitle ?? null
+
+  // Preferred slug: slugified .md title (if .md present) or folder name
+  // Conflict resolution happens in scanPortfolio after all projects are built
+  const preferredSlug = md.title ? titleToSlug(md.title) : slug
+
   return {
     id,
-    title:         meta.title         ?? slugToTitle(slug),
+    slug:          preferredSlug,   // may be overridden by scanPortfolio
+    _folderSlug:   slug,            // always the raw folder name (internal, stripped before export)
+    title,
+    ...(subtitle ? { subtitle } : {}),
     description:   meta.description   ?? '',
     thumbnail:     meta.thumbnail     ?? `${urlBase}/${thumbFile}`,
     thumbnailType: thumbType,
@@ -185,7 +246,18 @@ function scanPortfolio(portfolioDir) {
     // Unrecognised top-level folders are silently skipped
   }
 
-  return projects
+  // Resolve slug conflicts: if two projects share a preferred slug,
+  // append -1, -2, … to later ones (folder slug always wins if it was the source)
+  const usedSlugs = new Map() // slug → count
+  for (const p of projects) {
+    const base  = p.slug
+    const count = usedSlugs.get(base) ?? 0
+    usedSlugs.set(base, count + 1)
+    p.slug = count === 0 ? base : `${base}-${count}`
+  }
+
+  // Remove internal field before export
+  return projects.map(({ _folderSlug, ...rest }) => rest)
 }
 
 export default function portfolioPlugin() {

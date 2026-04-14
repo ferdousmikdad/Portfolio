@@ -18,6 +18,7 @@ import useWindowStore, { TOOL_IDS } from '@/store/windowStore'
 import useSound from '@/hooks/useSound'
 import MikudaChat from '@/components/apps/MikudaChat'
 import ProjectPreviewWindow from '@/components/apps/ProjectPreviewWindow'
+import allProjects from '@/data/projects'
 
 export default function Desktop() {
   const [menuOpen,   setMenuOpen]   = useState(false)
@@ -25,9 +26,18 @@ export default function Desktop() {
   const menuRef  = useRef(null)
   const chatRef  = useRef(null)
   const fabRef   = useRef(null)
-  const { openWindow, closeAllExcept, switchTool, activePage, navigate, previewProject, closeProjectPreview } = useWindowStore()
+  const { openWindow, closeAllExcept, switchTool, activePage, navigate, previewProject, closeProjectPreview, openProjectPreview } = useWindowStore()
   const setActivePage = navigate
   const play = useSound()
+
+  // On mount: open a project directly if the URL hash is #project/<slug>
+  useEffect(() => {
+    const match = window.location.hash.match(/^#project\/(.+)$/)
+    if (match) {
+      const project = allProjects.find((p) => p.slug === match[1])
+      if (project) openProjectPreview(project)
+    }
+  }, [])
 
   // Close menu on outside click
   useEffect(() => {

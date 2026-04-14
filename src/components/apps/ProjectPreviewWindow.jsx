@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Share2, Mail, ArrowUpRight } from 'lucide-react'
+import { ArrowUpRight } from 'lucide-react'
 
 // Render one content item — image or video
 function ContentItem({ item, title, index }) {
@@ -27,7 +27,8 @@ function ContentItem({ item, title, index }) {
 }
 
 export default function ProjectPreviewWindow({ project, onClose }) {
-  const scrollRef = useRef(null)
+  const scrollRef   = useRef(null)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose() }
@@ -35,22 +36,20 @@ export default function ProjectPreviewWindow({ project, onClose }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
-  // Reset scroll position when project changes
+  // Reset scroll + copied state when project changes
   useEffect(() => {
-    if (project && scrollRef.current) {
-      scrollRef.current.scrollTop = 0
-    }
+    if (project && scrollRef.current) scrollRef.current.scrollTop = 0
+    setCopied(false)
   }, [project])
 
   const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({ title: project?.title, url: window.location.href }).catch(() => {})
-    } else {
-      navigator.clipboard.writeText(window.location.href).catch(() => {})
-    }
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }).catch(() => {})
   }
 
-  // Resolve content: use project.content array if available, otherwise fall back
+  // Resolve content array
   const contentItems = (() => {
     if (project?.content && project.content.length > 0) return project.content
     const fallback = project?.preview || project?.image
@@ -81,10 +80,7 @@ export default function ProjectPreviewWindow({ project, onClose }) {
             key="preview-panel"
             className="fixed"
             style={{
-              top: 28,
-              left: 0,
-              right: 0,
-              bottom: 0,
+              top: 28, left: 0, right: 0, bottom: 0,
               zIndex: 99999,
               display: 'flex',
               flexDirection: 'column',
@@ -104,11 +100,7 @@ export default function ProjectPreviewWindow({ project, onClose }) {
             {/* ── Title bar ───────────────────────────────────────────────── */}
             <div
               className="flex-shrink-0 flex items-center gap-1.5 px-4"
-              style={{
-                height: 40,
-                borderBottom: '1px solid var(--border)',
-                background: 'var(--titlebar-bg)',
-              }}
+              style={{ height: 40, borderBottom: '1px solid var(--border)', background: 'var(--titlebar-bg)' }}
             >
               <button className="traffic-light traffic-light-close" onClick={onClose} title="Close (Esc)" />
               <div className="traffic-light traffic-light-minimize" style={{ opacity: 0.28, cursor: 'default' }} />
@@ -119,46 +111,89 @@ export default function ProjectPreviewWindow({ project, onClose }) {
             <div
               ref={scrollRef}
               className="window-scroll"
-              style={{
-                flex: '1 1 0',
-                minHeight: 0,
-                overflowY: 'auto',
-                overflowX: 'hidden',
-                background: 'var(--preview-bg)',
-              }}
+              style={{ flex: '1 1 0', minHeight: 0, overflowY: 'auto', overflowX: 'hidden', background: 'var(--preview-bg)' }}
             >
               <div style={{ maxWidth: 1140, margin: '0 auto' }}>
 
-                {/* Content header — title + actions */}
+                {/* ── Header — centered title, subtitle, buttons ── */}
                 <div
-                  className="flex items-center gap-4 px-6"
-                  style={{ height: 64, borderBottom: '1px solid var(--border)', background: 'var(--preview-bg)' }}
+                  className="flex flex-col items-center text-center px-8 py-8 gap-4"
+                  style={{ borderBottom: '1px solid var(--border)' }}
                 >
-                  <span
-                    className="flex-1 text-[20px] font-semibold truncate"
-                    style={{ color: 'var(--headline)', fontFamily: "'SF Pro Display', sans-serif", letterSpacing: '-0.02em' }}
+                  {/* Title */}
+                  <h1
+                    style={{
+                      margin: 0,
+                      fontSize: 32,
+                      fontWeight: 700,
+                      lineHeight: 1.25,
+                      letterSpacing: '-0.02em',
+                      color: 'var(--headline)',
+                      fontFamily: "'SF Pro Display', sans-serif",
+                      maxWidth: 720,
+                    }}
                   >
                     {project.title}
-                  </span>
-                  <div className="flex items-center gap-2 flex-shrink-0">
+                  </h1>
+
+                  {/* Subtitle */}
+                  {project.subtitle && (
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: 13,
+                        lineHeight: 1.65,
+                        color: 'var(--body)',
+                        opacity: 0.65,
+                        maxWidth: 640,
+                      }}
+                    >
+                      {project.subtitle}
+                    </p>
+                  )}
+
+                  {/* Action buttons */}
+                  <div className="flex items-center gap-2 mt-1">
                     <button
                       onClick={handleShare}
-                      className="flex items-center gap-1.5 px-3 h-7 rounded-md text-[11px] font-medium transition-colors"
-                      style={{ background: 'transparent', border: '1px solid var(--border)', color: 'var(--body)' }}
-                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--headline)'; e.currentTarget.style.color = 'var(--headline)' }}
-                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--body)' }}
+                      style={{
+                        height: 32,
+                        padding: '0 16px',
+                        borderRadius: 8,
+                        fontSize: 12,
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        border: '1px solid var(--border)',
+                        background: copied ? 'var(--headline)' : 'transparent',
+                        color: copied ? 'var(--preview-bg)' : 'var(--body)',
+                        transition: 'background 0.15s, color 0.15s, border-color 0.15s',
+                        minWidth: 80,
+                      }}
+                      onMouseEnter={(e) => { if (!copied) { e.currentTarget.style.borderColor = 'var(--headline)'; e.currentTarget.style.color = 'var(--headline)' } }}
+                      onMouseLeave={(e) => { if (!copied) { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--body)' } }}
                     >
-                      <Share2 size={10} />
-                      Share
+                      {copied ? 'Copied' : 'Share'}
                     </button>
+
                     <a
                       href="mailto:ferdousmikdad@gmail.com"
-                      className="flex items-center gap-1.5 px-3 h-7 rounded-md text-[11px] font-medium no-underline transition-colors"
-                      style={{ background: '#cf0506', color: '#fff', border: '1px solid #cf0506' }}
-                      onMouseEnter={(e) => { e.currentTarget.style.background = '#a80404'; e.currentTarget.style.borderColor = '#a80404' }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = '#cf0506'; e.currentTarget.style.borderColor = '#cf0506' }}
+                      style={{
+                        height: 32,
+                        padding: '0 16px',
+                        borderRadius: 8,
+                        fontSize: 12,
+                        fontWeight: 500,
+                        textDecoration: 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        background: 'var(--headline)',
+                        color: 'var(--bg)',
+                        border: '1px solid var(--headline)',
+                        transition: 'background 0.15s',
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.85' }}
+                      onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
                     >
-                      <Mail size={10} />
                       Get in Touch
                     </a>
                   </div>

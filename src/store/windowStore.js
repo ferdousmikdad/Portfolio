@@ -97,8 +97,19 @@ const useWindowStore = create((set, get) => ({
 
   navigate: (page) => set({ activePage: page }),
 
-  openProjectPreview: (project) => set({ previewProject: project }),
-  closeProjectPreview: ()        => set({ previewProject: null }),
+  openProjectPreview: (project) => {
+    if (project?.slug) {
+      window.history.replaceState(null, '', `#project/${project.slug}`)
+    }
+    set({ previewProject: project })
+  },
+  closeProjectPreview: () => {
+    window.history.replaceState(
+      null, '',
+      window.location.pathname + window.location.search
+    )
+    set({ previewProject: null })
+  },
 
   openWindow: (id) =>
     set((state) => ({
