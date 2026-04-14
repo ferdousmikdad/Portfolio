@@ -19,7 +19,7 @@ export default function RightControls() {
   const { isEnabled, toggleSound } = useSoundStore()
 
   return (
-    <div className="absolute right-5 bottom-8 flex flex-col items-center gap-5 z-30">
+    <div className="absolute left-5 bottom-8 flex flex-col items-center gap-5 z-30">
       <button className="control-icon" title="Notifications">
         <Bell size={18} />
       </button>

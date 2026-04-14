@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Sparkles } from 'lucide-react'
 import TopBar from './TopBar'
 import RightControls from './RightControls'
 import Background from './Background'
@@ -15,9 +16,11 @@ import ToolWindow from '@/components/apps/ToolWindow'
 import ToolsDock from '@/components/dock/ToolsDock'
 import useWindowStore, { TOOL_IDS } from '@/store/windowStore'
 import useSound from '@/hooks/useSound'
+import MikudaChat from '@/components/apps/MikudaChat'
 
 export default function Desktop() {
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [menuOpen,   setMenuOpen]   = useState(false)
+  const [mikudaOpen, setMikudaOpen] = useState(false)
   const menuRef = useRef(null)
   const { openWindow, closeAllExcept, switchTool, activePage, navigate } = useWindowStore()
   const setActivePage = navigate
@@ -27,15 +30,13 @@ export default function Desktop() {
   useEffect(() => {
     if (!menuOpen) return
     const handler = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setMenuOpen(false)
-      }
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [menuOpen])
 
-  // Open the right window when a menu item is selected, closing all others first
+  // Open the right window when a menu item is selected
   useEffect(() => {
     if (!activePage) return
     play('open')
@@ -46,8 +47,8 @@ export default function Desktop() {
     } else if (activePage === 'about') {
       closeAllExcept([])
     } else if (activePage === 'tools') {
-      closeAllExcept(TOOL_IDS)   // close non-tool windows, preserve minimized tools
-      switchTool('color-contrast') // open first tool by default
+      closeAllExcept(TOOL_IDS)
+      switchTool('color-contrast')
     } else {
       closeAllExcept([activePage])
       openWindow(activePage)
@@ -58,10 +59,7 @@ export default function Desktop() {
   useEffect(() => {
     const map = { H: 'home', A: 'about', P: 'portfolio', S: 'shop', N: 'notes', T: 'tools' }
     const handler = (e) => {
-      if (e.shiftKey && map[e.key]) {
-        e.preventDefault()
-        navigate(map[e.key])
-      }
+      if (e.shiftKey && map[e.key]) { e.preventDefault(); navigate(map[e.key]) }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
@@ -70,13 +68,13 @@ export default function Desktop() {
   return (
     <div className="relative w-full h-full overflow-hidden" style={{ background: 'var(--bg)' }}>
 
-      {/* macOS-style top menu bar */}
+      {/* Top menu bar */}
       <TopBar />
 
-      {/* Animated background — canvas + noise grain */}
+      {/* Animated background */}
       <Background />
 
-      {/* About Me — full-desktop view, no window chrome */}
+      {/* About Me — full-desktop view */}
       <AnimatePresence>
         {activePage === 'about' && (
           <div className="absolute inset-0" style={{ zIndex: 10, paddingTop: 28 }}>
@@ -85,18 +83,18 @@ export default function Desktop() {
         )}
       </AnimatePresence>
 
-      {/* Windows layer — z-index above canvas (0), grain (1), and About Me (10) */}
+      {/* Windows layer */}
       <div className="absolute inset-0" style={{ zIndex: 20, pointerEvents: 'none' }}>
-      <AnimatePresence>
-        <ProfileCard />
-        <PacmanWindow />
-        <WorkWindow />
-        <ComingSoonWindow id="shop" />
-        <NotesWindow />
-        {TOOL_IDS.map((toolId) => (
-          <ToolWindow key={toolId} toolId={toolId} />
-        ))}
-      </AnimatePresence>
+        <AnimatePresence>
+          <ProfileCard />
+          <PacmanWindow />
+          <WorkWindow />
+          <ComingSoonWindow id="shop" />
+          <NotesWindow />
+          {TOOL_IDS.map((toolId) => (
+            <ToolWindow key={toolId} toolId={toolId} />
+          ))}
+        </AnimatePresence>
       </div>
 
       {/* Menu window */}
@@ -108,16 +106,60 @@ export default function Desktop() {
         menuRef={menuRef}
       />
 
-      {/* Right-side global controls */}
+      {/* Bottom-left controls */}
       <RightControls />
 
-      {/* Tools icon dock — visible only when tools page is open */}
+      {/* Mikuda AI — own layer so pointer events aren't blocked */}
+      <div style={{ position: 'absolute', inset: 0, zIndex: 60, pointerEvents: 'none' }}>
+
+        {/* Chat window — absolute inside the full-screen layer */}
+        <MikudaChat isOpen={mikudaOpen} onClose={() => setMikudaOpen(false)} />
+
+        {/* FAB button */}
+        <div style={{ position: 'absolute', bottom: 32, right: 20, pointerEvents: 'auto' }}>
+          <motion.button
+            className={`mikuda-fab ${mikudaOpen ? 'active' : ''}`}
+            onClick={() => setMikudaOpen((v) => !v)}
+            whileTap={{ scale: 0.92 }}
+            title="Ask Mikuda"
+          >
+            <AnimatePresence mode="wait">
+              {mikudaOpen ? (
+                <motion.span
+                  key="close"
+                  initial={{ rotate: -45, opacity: 0 }}
+                  animate={{ rotate: 0,   opacity: 1 }}
+                  exit={{    rotate: 45,  opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                  style={{ display: 'flex' }}
+                >
+                  <Sparkles size={18} style={{ color: '#cf0506' }} />
+                </motion.span>
+              ) : (
+                <motion.span
+                  key="open"
+                  initial={{ rotate: 45,  opacity: 0 }}
+                  animate={{ rotate: 0,   opacity: 1 }}
+                  exit={{    rotate: -45, opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                  style={{ display: 'flex' }}
+                >
+                  <Sparkles size={18} />
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </motion.button>
+        </div>
+
+      </div>
+
+      {/* Tools icon dock */}
       <AnimatePresence>
         {activePage === 'tools' && (
           <motion.div
             style={{ position: 'absolute', bottom: 84, left: '50%', zIndex: 45 }}
             initial={{ x: '-50%', opacity: 0, y: 16, scale: 0.94 }}
-            animate={{ x: '-50%', opacity: 1, y: 0,  scale: 1  }}
+            animate={{ x: '-50%', opacity: 1, y: 0,  scale: 1   }}
             exit={{    x: '-50%', opacity: 0, y: 12, scale: 0.92 }}
             transition={{ type: 'spring', stiffness: 420, damping: 30 }}
           >
