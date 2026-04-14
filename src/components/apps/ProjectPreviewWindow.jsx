@@ -102,9 +102,32 @@ export default function ProjectPreviewWindow({ project, onClose, isMobile = fals
               className="flex-shrink-0 flex items-center gap-1.5 px-4"
               style={{ height: 40, borderBottom: '1px solid var(--border)', background: 'var(--titlebar-bg)' }}
             >
-              <button className="traffic-light traffic-light-close" onClick={onClose} title="Close (Esc)" />
-              <div className="traffic-light traffic-light-minimize" style={{ opacity: 0.28, cursor: 'default' }} />
-              <div className="traffic-light traffic-light-maximize" style={{ opacity: 0.28, cursor: 'default' }} />
+              {isMobile ? (
+                <div style={{ display: 'flex', width: '100%', justifyContent: 'flex-end' }}>
+                  <button
+                    onClick={onClose}
+                    title="Close"
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--body)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      cursor: 'pointer',
+                      padding: 4,
+                    }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <button className="traffic-light traffic-light-close" onClick={onClose} title="Close (Esc)" />
+                  <div className="traffic-light traffic-light-minimize" style={{ opacity: 0.28, cursor: 'default' }} />
+                  <div className="traffic-light traffic-light-maximize" style={{ opacity: 0.28, cursor: 'default' }} />
+                </>
+              )}
             </div>
 
             {/* ── Scrollable content ───────────────────────────────────────── */}

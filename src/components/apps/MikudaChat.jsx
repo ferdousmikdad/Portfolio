@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence, useDragControls } from 'framer-motion'
 import { Plus, ArrowUp } from 'lucide-react'
 import useWindowStore from '@/store/windowStore'
+import useIsMobile from '@/hooks/useIsMobile'
 import mikdadHeadUrl from '@/assets/icons/mikdad-head.svg?url'
 import allProjects from '@/data/projects'
 
@@ -422,7 +423,7 @@ function AiBubble({ text, action, actionLabel, onAction, isLatest }) {
       className="flex flex-col gap-2"
     >
       <div className="mk-bubble-ai">
-        <p className="text-[13px] leading-relaxed" style={{ color: '#e8e5dc' }}>
+        <p className="text-[13px] leading-relaxed mk-bubble-ai-text">
           {lines.map((line, i) => (
             <span key={i}>{line}{i < lines.length - 1 && <br />}</span>
           ))}
@@ -457,7 +458,7 @@ function ImageBubble({ text, project, onOpenProject, isLatest }) {
       {/* Text label */}
       {text && (
         <div className="mk-bubble-ai">
-          <p className="text-[13px] leading-relaxed" style={{ color: '#e8e5dc' }}>
+          <p className="text-[13px] leading-relaxed mk-bubble-ai-text">
             {displayed}
             {isLatest && !done && <span className="mk-cursor" />}
           </p>
@@ -538,7 +539,7 @@ function ContactBubble({ text, contactInfo, isLatest }) {
     >
       {text && (
         <div className="mk-bubble-ai">
-          <p className="text-[13px] leading-relaxed" style={{ color: '#e8e5dc' }}>
+          <p className="text-[13px] leading-relaxed mk-bubble-ai-text">
             {displayed}
             {isLatest && !done && <span className="mk-cursor" />}
           </p>
@@ -587,7 +588,7 @@ function SocialBubble({ text, filter, isLatest }) {
       className="flex flex-col gap-2"
     >
       <div className="mk-bubble-ai">
-        <p className="text-[13px] leading-relaxed" style={{ color: '#e8e5dc' }}>
+        <p className="text-[13px] leading-relaxed mk-bubble-ai-text">
           {displayed}
           {isLatest && !done && <span className="mk-cursor" />}
         </p>
@@ -643,6 +644,7 @@ function SuggestionPill({ label, highlight, onClick }) {
 export default function MikudaChat({ isOpen, onClose, chatRef }) {
   const navigate           = useWindowStore((s) => s.navigate)
   const openProjectPreview = useWindowStore((s) => s.openProjectPreview)
+  const isMobile           = useIsMobile()
 
   const [messages,  setMessages]  = useState([])
   const [input,     setInput]     = useState('')
@@ -773,19 +775,42 @@ export default function MikudaChat({ isOpen, onClose, chatRef }) {
           transition={{ type: 'spring', stiffness: 380, damping: 30 }}
           onMouseDown={(e) => e.stopPropagation()}
         >
-          {/* Traffic lights — also the drag handle */}
+          {/* Titlebar — drag handle on desktop, close icon on mobile */}
           <div
             className="mk-titlebar"
             onPointerDown={(e) => { e.preventDefault(); dragControls.start(e) }}
-            style={{ cursor: 'grab' }}
+            style={{ cursor: isMobile ? 'default' : 'grab' }}
           >
-            <button
-              className="traffic-light traffic-light-close"
-              onClick={onClose}
-              onPointerDown={(e) => e.stopPropagation()}
-            />
-            <div className="traffic-light traffic-light-minimize" style={{ cursor: 'default' }} />
-            <div className="traffic-light traffic-light-maximize" style={{ cursor: 'default' }} />
+            {isMobile ? (
+              <div style={{ display: 'flex', width: '100%', justifyContent: 'flex-end' }}>
+                <button
+                  onClick={onClose}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'rgba(255,255,255,0.5)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer',
+                    padding: 4,
+                  }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                </button>
+              </div>
+            ) : (
+              <>
+                <button
+                  className="traffic-light traffic-light-close"
+                  onClick={onClose}
+                  onPointerDown={(e) => e.stopPropagation()}
+                />
+                <div className="traffic-light traffic-light-minimize" style={{ cursor: 'default' }} />
+                <div className="traffic-light traffic-light-maximize" style={{ cursor: 'default' }} />
+              </>
+            )}
           </div>
 
           {/* Body */}

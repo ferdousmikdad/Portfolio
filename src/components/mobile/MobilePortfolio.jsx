@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import allProjects, { CATEGORIES } from '@/data/projects'
 import useWindowStore from '@/store/windowStore'
@@ -8,13 +8,12 @@ const ALL_PILLS = [
   ...CATEGORIES.flatMap((c) => c.items),
 ]
 
-function ProjectCard({ project, onOpen }) {
+function ProjectCard({ project, onOpen, index }) {
   return (
     <motion.button
       initial={{ opacity: 0, y: 12 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-40px' }}
-      transition={{ duration: 0.35 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.04, duration: 0.3 }}
       onClick={() => onOpen(project)}
       style={{
         display: 'block',
@@ -49,27 +48,10 @@ function ProjectCard({ project, onOpen }) {
 
       {/* Info */}
       <div style={{ padding: '10px 12px 12px' }}>
-        <p
-          style={{
-            margin: 0,
-            fontSize: 13,
-            fontWeight: 600,
-            color: 'var(--headline)',
-            lineHeight: 1.35,
-            letterSpacing: '-0.01em',
-          }}
-        >
+        <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--headline)', lineHeight: 1.35, letterSpacing: '-0.01em' }}>
           {project.title}
         </p>
-        <p
-          style={{
-            margin: '4px 0 0',
-            fontSize: 11,
-            color: 'var(--body)',
-            opacity: 0.6,
-            textTransform: 'capitalize',
-          }}
-        >
+        <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--body)', opacity: 0.6, textTransform: 'capitalize' }}>
           {project.category?.replace(/-/g, ' ')}
         </p>
       </div>
@@ -80,45 +62,26 @@ function ProjectCard({ project, onOpen }) {
 export default function MobilePortfolio() {
   const [activeCategory, setActiveCategory] = useState('all')
   const openProjectPreview = useWindowStore((s) => s.openProjectPreview)
-  const pillsRef = useRef(null)
 
   const filtered = activeCategory === 'all'
     ? allProjects
     : allProjects.filter((p) => p.category === activeCategory)
 
   return (
-    <section id="m-portfolio" style={{ padding: '64px 0 64px' }}>
+    <div style={{ minHeight: '100svh', padding: '60px 0 80px' }}>
+
       {/* Heading */}
-      <div style={{ padding: '0 20px', marginBottom: 24 }}>
-        <p style={{ margin: 0, fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', color: 'var(--body)', opacity: 0.5, textTransform: 'uppercase', marginBottom: 6 }}>
+      <div style={{ padding: '0 20px', marginBottom: 20 }}>
+        <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', color: 'var(--body)', opacity: 0.5, textTransform: 'uppercase' }}>
           Work
         </p>
-        <h2
-          style={{
-            margin: 0,
-            fontSize: 28,
-            fontWeight: 800,
-            letterSpacing: '-0.03em',
-            color: 'var(--headline)',
-            fontFamily: "'SF Pro Display', sans-serif",
-          }}
-        >
+        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--headline)', fontFamily: "'SF Pro Display', sans-serif" }}>
           Portfolio
-        </h2>
+        </h1>
       </div>
 
       {/* Category pills — horizontal scroll */}
-      <div
-        ref={pillsRef}
-        style={{
-          display: 'flex',
-          gap: 8,
-          overflowX: 'auto',
-          padding: '0 20px 16px',
-          scrollbarWidth: 'none',
-          WebkitOverflowScrolling: 'touch',
-        }}
-      >
+      <div style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '0 20px 16px', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
         {ALL_PILLS.map((pill) => (
           <button
             key={pill.id}
@@ -145,22 +108,17 @@ export default function MobilePortfolio() {
       </div>
 
       {/* Project grid — 2 columns */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 12,
-          padding: '0 20px',
-        }}
-      >
-        {filtered.map((project) => (
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, padding: '0 20px' }}>
+        {filtered.map((project, i) => (
           <ProjectCard
             key={project.id}
             project={project}
             onOpen={openProjectPreview}
+            index={i}
           />
         ))}
       </div>
-    </section>
+
+    </div>
   )
 }

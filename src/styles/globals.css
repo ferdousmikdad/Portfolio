@@ -33,6 +33,36 @@
 :root {
   /* Light mode */
   --bg:             #F2EDD9;
+  /* Mikuda chat — light */
+  --mk-bg:              #ffffff;
+  --mk-border-color:    rgba(0,0,0,0.09);
+  --mk-shadow:          0 24px 64px rgba(0,0,0,0.14), 0 4px 20px rgba(0,0,0,0.08);
+  --mk-heading:         #1c1c1e;
+  --mk-subtitle:        #6b6861;
+  --mk-pill-bg:         rgba(0,0,0,0.05);
+  --mk-pill-bg-hover:   rgba(0,0,0,0.09);
+  --mk-pill-text:       #3a3a3a;
+  --mk-bubble-ai-bg:    rgba(0,0,0,0.05);
+  --mk-bubble-ai-text:  #1c1c1e;
+  --mk-cursor-color:    #1c1c1e;
+  --mk-dots-color:      #9a9690;
+  --mk-card-bg:         rgba(0,0,0,0.04);
+  --mk-card-border:     rgba(0,0,0,0.08);
+  --mk-card-wrap-bg:    rgba(0,0,0,0.06);
+  --mk-skeleton-a:      #e8e5dc;
+  --mk-skeleton-b:      #f0ede4;
+  --mk-card-title:      #6b6861;
+  --mk-chip-bg:         rgba(0,0,0,0.04);
+  --mk-chip-border:     rgba(0,0,0,0.08);
+  --mk-chip-bg-hover:   rgba(0,0,0,0.08);
+  --mk-chip-label:      #9a9690;
+  --mk-chip-value:      #1c1c1e;
+  --mk-plus-bg:         rgba(0,0,0,0.06);
+  --mk-plus-color:      #6b6861;
+  --mk-plus-bg-hover:   rgba(0,0,0,0.10);
+  --mk-plus-hover-text: #1c1c1e;
+  --mk-input-color:     #1c1c1e;
+  --mk-input-ph:        #9a9690;
   --window-bg:      rgba(255, 255, 255, 0.55);
   --titlebar-bg:    rgba(0, 0, 0, 0.01);
   --dock-bg:        rgba(255, 255, 255, 0.45);
@@ -59,6 +89,36 @@
 
 .dark {
   --bg:             #080808;
+  /* Mikuda chat — dark */
+  --mk-bg:              #111111;
+  --mk-border-color:    rgba(255,255,255,0.08);
+  --mk-shadow:          0 24px 64px rgba(0,0,0,0.55), 0 4px 20px rgba(0,0,0,0.35);
+  --mk-heading:         #f0ede4;
+  --mk-subtitle:        #6b6861;
+  --mk-pill-bg:         #1e1e1e;
+  --mk-pill-bg-hover:   #272727;
+  --mk-pill-text:       #d6d3ca;
+  --mk-bubble-ai-bg:    #1e1e1e;
+  --mk-bubble-ai-text:  #d0cdc4;
+  --mk-cursor-color:    #e8e5dc;
+  --mk-dots-color:      #6b6861;
+  --mk-card-bg:         #1e1e1e;
+  --mk-card-border:     rgba(255,255,255,0.07);
+  --mk-card-wrap-bg:    #2a2a2a;
+  --mk-skeleton-a:      #222222;
+  --mk-skeleton-b:      #2e2e2e;
+  --mk-card-title:      #9a9690;
+  --mk-chip-bg:         #1e1e1e;
+  --mk-chip-border:     #2e2e2e;
+  --mk-chip-bg-hover:   #252525;
+  --mk-chip-label:      #666666;
+  --mk-chip-value:      #d0cdc4;
+  --mk-plus-bg:         #2a2a2a;
+  --mk-plus-color:      #8a8880;
+  --mk-plus-bg-hover:   #333333;
+  --mk-plus-hover-text: #d0cdc4;
+  --mk-input-color:     #d0cdc4;
+  --mk-input-ph:        #4a4845;
   --window-bg:      rgba(255, 255, 255, 0.01);
   --titlebar-bg:    rgba(255, 255, 255, 0.01);
   --dock-bg:        rgba(255, 255, 255, 0.03);
@@ -421,14 +481,16 @@
   right: 20px;
   width: 280px;
   height: 380px;
-  background: #111111;
-  border: 1px solid rgba(255,255,255,0.08);
+  background: var(--dock-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-dock);
   border-radius: 16px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   pointer-events: auto;
-  box-shadow: 0 24px 64px rgba(0,0,0,0.55), 0 4px 20px rgba(0,0,0,0.35);
+  box-shadow: var(--mk-shadow);
 }
 
 /* Title bar */
@@ -463,7 +525,7 @@
 .mk-heading {
   font-size: 22px;
   font-weight: 700;
-  color: #f0ede4;
+  color: var(--mk-heading);
   line-height: 1.2;
   margin-bottom: 8px;
   font-family: 'SF Pro Display', sans-serif;
@@ -474,7 +536,7 @@
 .mk-subtitle {
   font-size: 13px;
   line-height: 1.55;
-  color: #6b6861;
+  color: var(--mk-subtitle);
   margin-bottom: 16px;
   flex-shrink: 0;
 }
@@ -494,14 +556,14 @@
   border-radius: 10px;
   font-size: 14px;
   font-weight: 500;
-  color: #d6d3ca;
-  background: #1e1e1e;
+  color: var(--mk-pill-text);
+  background: var(--mk-pill-bg);
   border: none;
   cursor: pointer;
   transition: background 0.15s ease;
   font-family: 'SF Pro Text', sans-serif;
 }
-.mk-pill:hover { background: #272727; }
+.mk-pill:hover { background: var(--mk-pill-bg-hover); }
 
 /* Chat messages area */
 .mk-messages {
@@ -514,9 +576,15 @@
   padding-right: 2px;
 }
 
+/* AI bubble text color utility */
+.mk-bubble-ai-text {
+  color: var(--mk-bubble-ai-text);
+}
+
 /* AI bubble */
 .mk-bubble-ai {
-  background: #1e1e1e;
+  background: var(--mk-bubble-ai-bg);
+  color: var(--mk-bubble-ai-text);
   border-radius: 4px 12px 12px 12px;
   padding: 10px 13px;
   max-width: 220px;
@@ -538,7 +606,7 @@
   display: inline-block;
   width: 2px;
   height: 12px;
-  background: #e8e5dc;
+  background: var(--mk-cursor-color);
   border-radius: 1px;
   margin-left: 2px;
   vertical-align: middle;
@@ -560,7 +628,7 @@
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: #6b6861;
+  background: var(--mk-dots-color);
   animation: mkDot 1.2s ease-in-out infinite;
 }
 .mk-dots span:nth-child(2) { animation-delay: 0.2s; }
@@ -575,8 +643,8 @@
   width: 200px;
   border-radius: 10px;
   overflow: hidden;
-  background: #1e1e1e;
-  border: 1px solid rgba(255,255,255,0.07);
+  background: var(--mk-card-bg);
+  border: 1px solid var(--mk-card-border);
 }
 
 .mk-image-wrap {
@@ -584,13 +652,13 @@
   aspect-ratio: 4/3;
   position: relative;
   overflow: hidden;
-  background: #2a2a2a;
+  background: var(--mk-card-wrap-bg);
 }
 
 .mk-image-skeleton {
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, #222 25%, #2e2e2e 50%, #222 75%);
+  background: linear-gradient(90deg, var(--mk-skeleton-a) 25%, var(--mk-skeleton-b) 50%, var(--mk-skeleton-a) 75%);
   background-size: 200% 100%;
   animation: mkSkeleton 1.4s ease-in-out infinite;
 }
@@ -618,7 +686,7 @@
 .mk-image-title {
   font-size: 11px;
   font-weight: 500;
-  color: #9a9690;
+  color: var(--mk-card-title);
   truncate: ellipsis;
   overflow: hidden;
   white-space: nowrap;
@@ -669,15 +737,15 @@
   gap: 8px;
   padding: 8px 11px;
   border-radius: 10px;
-  background: #1e1e1e;
-  border: 1px solid #2e2e2e;
+  background: var(--mk-chip-bg);
+  border: 1px solid var(--mk-chip-border);
   text-decoration: none;
   cursor: pointer;
   transition: background 0.14s ease, border-color 0.14s ease;
   width: 100%;
 }
 .mk-contact-chip:hover {
-  background: #252525;
+  background: var(--mk-chip-bg-hover);
   border-color: rgba(207,5,6,0.35);
 }
 .mk-contact-chip-icon {
@@ -694,14 +762,14 @@
 }
 .mk-contact-chip-label {
   font-size: 10px;
-  color: #666;
+  color: var(--mk-chip-label);
   font-weight: 500;
   line-height: 1;
   margin-bottom: 2px;
 }
 .mk-contact-chip-value {
   font-size: 12px;
-  color: #d0cdc4;
+  color: var(--mk-chip-value);
   font-weight: 500;
   line-height: 1;
 }
@@ -719,9 +787,9 @@
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background: #2a2a2a;
+  background: var(--mk-plus-bg);
   border: none;
-  color: #8a8880;
+  color: var(--mk-plus-color);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -729,7 +797,7 @@
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
 }
-.mk-plus-btn:hover { background: #333; color: #d0cdc4; }
+.mk-plus-btn:hover { background: var(--mk-plus-bg-hover); color: var(--mk-plus-hover-text); }
 
 .mk-input {
   flex: 1;
@@ -737,11 +805,11 @@
   border: none;
   outline: none;
   font-size: 13px;
-  color: #d0cdc4;
+  color: var(--mk-input-color);
   font-family: 'SF Pro Text', sans-serif;
   caret-color: #cf0506;
 }
-.mk-input::placeholder { color: #4a4845; }
+.mk-input::placeholder { color: var(--mk-input-ph); }
 
 .mk-send-btn {
   width: 26px;
@@ -1079,13 +1147,78 @@
   100% { box-shadow: 0 0 0 2px rgba(52,211,153,0.6), 0 0 30px rgba(52,211,153,0.3); }
 }
 
+/* ── Mobile floating controls ────────────────────────────────────────────── */
+
+/* Row pinned to bottom — left group + right pill */
+.m-controls {
+  position: fixed;
+  bottom: 20px;
+  left: 16px;
+  right: 16px;
+  z-index: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+/* Left cluster */
+.m-controls-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+/* Icon-only circle — theme toggle */
+.m-ctrl-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 100px;
+  background: var(--dock-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-dock);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--body);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+.m-ctrl-icon:hover { color: var(--headline); }
+
+/* Pill — "Ask me" and "Menu" */
+.m-ctrl-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  padding: 0 18px;
+  border-radius: 100px;
+  background: var(--dock-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-dock);
+  color: var(--headline);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: opacity 0.15s ease;
+  font-family: 'SF Pro Display', sans-serif;
+}
+.m-ctrl-pill:hover  { opacity: 0.8; }
+.m-ctrl-pill.active { opacity: 0.8; }
+
 /* ── Mobile responsive ───────────────────────────────────────────────────── */
 @media (max-width: 767px) {
   /* Chat window: don't overflow screen edges */
   .mk-window {
     width: calc(100vw - 32px);
     right: 16px;
-    bottom: 80px;
+    bottom: 76px;
     max-height: 70svh;
   }
 

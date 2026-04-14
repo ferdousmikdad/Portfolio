@@ -18,36 +18,27 @@ const SOCIALS = [
 
 export default function MobileContact() {
   return (
-    <section id="m-contact" style={{ padding: '64px 20px 100px' }}>
-      {/* Label */}
+    <div style={{ minHeight: '100svh', padding: '60px 20px 80px' }}>
+
+      {/* Heading */}
       <p style={{ margin: '0 0 6px', fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', color: 'var(--body)', opacity: 0.5, textTransform: 'uppercase' }}>
         Contact
       </p>
-      <h2
-        style={{
-          margin: '0 0 8px',
-          fontSize: 28,
-          fontWeight: 800,
-          letterSpacing: '-0.03em',
-          color: 'var(--headline)',
-          fontFamily: "'SF Pro Display', sans-serif",
-        }}
-      >
+      <h1 style={{ margin: '0 0 8px', fontSize: 28, fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--headline)', fontFamily: "'SF Pro Display', sans-serif" }}>
         Let's Work Together
-      </h2>
+      </h1>
       <p style={{ margin: '0 0 32px', fontSize: 14, color: 'var(--body)', opacity: 0.65, lineHeight: 1.65, maxWidth: 300 }}>
         Open to freelance projects, collaborations, and full-time creative roles.
       </p>
 
       {/* Contact info cards */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 32 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 28 }}>
         {CONTACT.map((c, i) => (
           <motion.a
             key={c.label}
             href={c.href}
             initial={{ opacity: 0, x: -12 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
+            animate={{ opacity: 1, x: 0 }}
             transition={{ delay: i * 0.08, duration: 0.3 }}
             style={{
               display: 'flex',
@@ -108,6 +99,7 @@ export default function MobileContact() {
           </a>
         ))}
       </div>
-    </section>
+
+    </div>
   )
 }
