@@ -139,6 +139,7 @@
     /* ── Presets bar (shown after upload) ── */
     #presetsBar { display: none; }
     #presetsBar.show { display: contents; }
+    .toolbar:not(:has(#presetsBar.show)) { display: none; }
 
     /* ── Main scrollable area ── */
     .main {
@@ -149,91 +150,60 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 24px 16px 28px;
+      padding: 0;
       gap: 14px;
+      min-height: 0;
     }
 
     /* ── Drop state ── */
     #dropState {
       width: 100%;
-      max-width: 600px;
-    }
-
-    .drop-card {
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      background: var(--social-bg);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      padding: 36px 32px;
+      flex: 1;
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 24px;
-    }
-
-    .drop-card-title {
-      font-size: 14px; font-weight: 600;
-      color: var(--headline);
-      text-align: center;
-      margin-bottom: 2px;
-    }
-
-    .drop-card-sub {
-      font-size: 12px;
-      color: var(--body);
-      text-align: center;
+      align-items: stretch;
+      padding: 120px;
+      min-height: 0;
     }
 
     .drop-zone {
       width: 100%;
-      border: 1.5px dashed var(--border);
-      border-radius: 12px;
-      padding: 52px 32px;
+      height: 100%;
+      border: none;
+      border-radius: 14px;
+      position: relative;
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
       gap: 12px;
       cursor: pointer;
       transition: border-color 0.2s, background 0.2s;
     }
     .drop-zone:hover,
     .drop-zone.drag-over {
-      border-color: var(--accent);
-      background: rgba(207, 5, 6, 0.04);
+      background-color: rgba(207, 5, 6, 0.03);
     }
 
-    .drop-icon { color: var(--body); opacity: 0.4; }
+    .drop-icon { opacity: 0.35; }
 
     .drop-zone-label {
-      font-size: 12px; font-weight: 600;
-      color: var(--body);
-      letter-spacing: 0.04em;
-    }
-
-    .drop-zone-sub {
-      font-size: 11px;
-      color: var(--body);
-      opacity: 0.5;
-    }
-
-    .choose-label {
-      margin-top: 6px;
-      display: inline-flex;
-      align-items: center;
-      height: 30px;
-      padding: 0 16px;
-      border-radius: 8px;
       font-size: 12px; font-weight: 500;
-      cursor: pointer;
-      border: 1px solid var(--border);
-      background: var(--social-bg);
       color: var(--body);
-      font-family: inherit;
-      transition: background 0.15s, color 0.15s;
+      opacity: 0.55;
     }
-    .choose-label:hover { background: var(--social-hover); color: var(--headline); }
-    .choose-label input { display: none; }
+
+    .drop-zone input { display: none; }
+
+    :root .drop-zone {
+      background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='14' ry='14' stroke='rgba(0,0,0,0.18)' stroke-width='1.5' stroke-dasharray='6 6' stroke-linecap='square'/%3e%3c/svg%3e");
+    }
+    .dark .drop-zone {
+      background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='14' ry='14' stroke='rgba(255,255,255,0.12)' stroke-width='1.5' stroke-dasharray='6 6' stroke-linecap='square'/%3e%3c/svg%3e");
+    }
+    .drop-zone:hover,
+    .drop-zone.drag-over {
+      background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='14' ry='14' stroke='rgba(207,5,6,0.5)' stroke-width='1.5' stroke-dasharray='6 6' stroke-linecap='square'/%3e%3c/svg%3e");
+    }
 
     /* ── Image state ── */
     #imageState {
@@ -490,8 +460,6 @@
 
 <!-- Toolbar -->
 <div class="toolbar">
-  <span class="toolbar-label">Retro Dot Effect</span>
-
   <div id="presetsBar">
     <div class="toolbar-sep"></div>
     <span class="preset-label">Presets</span>
@@ -507,27 +475,14 @@
 
   <!-- Drop state -->
   <div id="dropState">
-    <div class="drop-card">
-      <div>
-        <p class="drop-card-title">Retro Dot Effect</p>
-        <p class="drop-card-sub">Drop your image to generate a halftone dot result</p>
-      </div>
-
-      <div id="dropZone" class="drop-zone">
-        <svg class="drop-icon" width="32" height="32" viewBox="0 0 24 24" fill="none"
-             stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-          <polyline points="17 8 12 3 7 8"/>
-          <line x1="12" y1="3" x2="12" y2="15"/>
-        </svg>
-        <p class="drop-zone-label">Drop image here</p>
-        <p class="drop-zone-sub">JPG · PNG · WebP</p>
-        <label class="choose-label">
-          Choose File
-          <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" />
-        </label>
-      </div>
-    </div>
+    <label id="dropZone" class="drop-zone">
+      <svg class="drop-icon" width="36" height="36" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M25.1363 14.3633C24.8188 14.3633 24.5144 14.4895 24.2899 14.7139C24.0654 14.9384 23.9393 15.2429 23.9393 15.5603V20.6031C23.9384 21.4876 23.5866 22.3355 22.9612 22.9609C22.3358 23.5863 21.4878 23.9381 20.6034 23.9391H5.72988C4.84542 23.9381 3.99746 23.5863 3.37206 22.9609C2.74665 22.3355 2.39488 21.4876 2.39393 20.6031V15.5603C2.39393 15.2429 2.26782 14.9384 2.04335 14.7139C1.81887 14.4895 1.51442 14.3633 1.19697 14.3633C0.879511 14.3633 0.575058 14.4895 0.350583 14.7139C0.126109 14.9384 0 15.2429 0 15.5603V20.6031C0.00158429 22.1223 0.605775 23.5788 1.67999 24.653C2.75421 25.7272 4.21071 26.3314 5.72988 26.333H20.6034C22.1225 26.3314 23.579 25.7272 24.6533 24.653C25.7275 23.5788 26.3317 22.1223 26.3333 20.6031V15.5603C26.3333 15.2429 26.2071 14.9384 25.9827 14.7139C25.7582 14.4895 25.4537 14.3633 25.1363 14.3633Z" fill="currentColor"/>
+        <path d="M6.83125 9.22476L11.9698 4.08619V19.1512C11.9698 19.4687 12.0959 19.7731 12.3204 19.9976C12.5449 20.2221 12.8493 20.3482 13.1668 20.3482C13.4842 20.3482 13.7887 20.2221 14.0132 19.9976C14.2376 19.7731 14.3638 19.4687 14.3638 19.1512V4.08619L19.5023 9.22476C19.7281 9.4428 20.0304 9.56344 20.3443 9.56072C20.6581 9.55799 20.9583 9.43211 21.1803 9.21018C21.4022 8.98825 21.5281 8.68804 21.5308 8.3742C21.5335 8.06036 21.4129 7.758 21.1948 7.53225L14.013 0.350455C13.7886 0.126059 13.4842 0 13.1668 0C12.8494 0 12.545 0.126059 12.3205 0.350455L5.13874 7.53225C4.9207 7.758 4.80005 8.06036 4.80278 8.3742C4.80551 8.68804 4.93139 8.98825 5.15332 9.21018C5.37525 9.43211 5.67546 9.55799 5.9893 9.56072C6.30314 9.56344 6.6055 9.4428 6.83125 9.22476Z" fill="currentColor"/>
+      </svg>
+      <p class="drop-zone-label">Click to select or drop an image</p>
+      <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" />
+    </label>
   </div>
 
   <!-- Image state -->
@@ -1008,10 +963,6 @@ dropZone.addEventListener('drop', e => {
   e.preventDefault();
   dropZone.classList.remove('drag-over');
   loadFile(e.dataTransfer.files[0]);
-});
-dropZone.addEventListener('click', e => {
-  if (e.target.closest('label')) return;
-  fileInput.click();
 });
 fileInput.addEventListener('change', e => loadFile(e.target.files[0]));
 

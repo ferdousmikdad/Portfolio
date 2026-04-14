@@ -16,6 +16,32 @@
     })();
   </script>
   <style>
+    @font-face {
+      font-family: 'SF Pro Display';
+      src: url('../fonts/SF-Pro-Display-Regular.otf') format('opentype');
+      font-weight: 400;
+    }
+    @font-face {
+      font-family: 'SF Pro Display';
+      src: url('../fonts/SF-Pro-Display-Medium.otf') format('opentype');
+      font-weight: 500;
+    }
+    @font-face {
+      font-family: 'SF Pro Display';
+      src: url('../fonts/SF-Pro-Display-Semibold.otf') format('opentype');
+      font-weight: 600;
+    }
+    @font-face {
+      font-family: 'SF Pro Display';
+      src: url('../fonts/SF-Pro-Display-Bold.otf') format('opentype');
+      font-weight: 700;
+    }
+    @font-face {
+      font-family: 'SF Pro Text';
+      src: url('../fonts/SF-Pro-Text-Regular.otf') format('opentype');
+      font-weight: 400;
+    }
+
     :root {
       --bg:           #F2EDD9;
       --border:       rgba(0, 0, 0, 0.08);
@@ -25,7 +51,7 @@
       --social-hover: rgba(0, 0, 0, 0.10);
       --input-bg:     rgba(0, 0, 0, 0.04);
       --input-border: rgba(0, 0, 0, 0.08);
-      --divider:      rgba(0, 0, 0, 0.06);
+      --divider:      rgba(0, 0, 0, 0.08);
       --accent:       #cf0506;
       --scrollbar:    rgba(0, 0, 0, 0.10);
     }
@@ -38,7 +64,7 @@
       --social-hover: rgba(255, 255, 255, 0.10);
       --input-bg:     rgba(255, 255, 255, 0.04);
       --input-border: rgba(255, 255, 255, 0.08);
-      --divider:      rgba(255, 255, 255, 0.05);
+      --divider:      rgba(255, 255, 255, 0.08);
       --accent:       #cf0506;
       --scrollbar:    rgba(255, 255, 255, 0.10);
     }
@@ -47,7 +73,7 @@
     html, body { height: 100%; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+      font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
       background: var(--bg);
       color: var(--headline);
       height: 100%;
@@ -77,28 +103,39 @@
     .hdr-sep { width: 1px; height: 14px; background: var(--border); }
     .hdr-title { font-size: 13px; font-weight: 500; color: var(--headline); }
 
-    /* ── Toolbar ── */
-    .toolbar {
+    /* ── Main two-panel layout ── */
+    .panels {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    /* ── Left panel ── */
+    .left-panel {
       display: flex;
-      align-items: center;
+      flex-direction: column;
+      overflow: hidden;
+      margin: 12px 4px 12px 12px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      gap: 22px;
+    }
+
+    /* ── Top buttons row ── */
+    .btn-row {
+      display: flex;
       gap: 8px;
-      padding: 10px 16px;
-      border-bottom: 1px solid var(--border);
       flex-shrink: 0;
     }
 
-    .toolbar-label {
-      font-size: 11px;
-      font-weight: 500;
-      color: var(--body);
-      opacity: 0.6;
-      margin-right: 4px;
-    }
-
     .btn {
-      height: 28px;
-      padding: 0 12px;
-      border-radius: 7px;
+      flex: 1;
+      height: 40px;
+      padding: 0 10px;
+      border-radius: 8px;
       font-size: 11px;
       font-weight: 500;
       cursor: pointer;
@@ -108,68 +145,39 @@
       font-family: inherit;
       transition: background 0.15s, color 0.15s, border-color 0.15s;
       white-space: nowrap;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
     }
     .btn:hover {
       background: var(--social-hover);
       color: var(--headline);
-      border-color: rgba(0,0,0,0.2);
+      border-color: rgba(0,0,0,0.18);
     }
-    .dark .btn:hover { border-color: rgba(255,255,255,0.2); }
+    .dark .btn:hover { border-color: rgba(255,255,255,0.18); }
 
-    /* ── Main two-panel layout ── */
-    .panels {
-      flex: 1;
-      display: grid;
-      grid-template-columns: 320px 1fr;
-      min-height: 0;
-      overflow: hidden;
+    .btn-icon {
+      font-size: 12px;
+      line-height: 1;
     }
 
-    /* ── Left panel ── */
-    .left-panel {
+    /* ── Color input blocks ── */
+    .color-block {
       display: flex;
       flex-direction: column;
-      border-right: 1px solid var(--border);
-      overflow: hidden;
-    }
-
-    /* Color row — background */
-    .color-row {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding: 20px 20px;
-      gap: 10px;
-    }
-
-    .color-row + .color-row {
-      border-top: 1px solid var(--divider);
-    }
-
-    .row-label {
-      font-size: 10px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: var(--body);
-      opacity: 0.55;
-      display: flex;
-      align-items: center;
       gap: 7px;
     }
 
-    .swatch-dot {
-      width: 9px; height: 9px;
-      border-radius: 50%;
-      border: 1.5px solid var(--border);
-      flex-shrink: 0;
-      cursor: pointer;
-      transition: transform 0.15s;
+    .block-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--body);
+      opacity: 0.55;
     }
-    .swatch-dot:hover { transform: scale(1.3); }
 
-    /* Hex field row */
     .field-row {
       display: flex;
       align-items: center;
@@ -184,7 +192,8 @@
       background: var(--input-bg);
       border: 1px solid var(--input-border);
       border-radius: 8px;
-      padding: 9px 11px;
+      height: 40px;
+      padding: 0 10px;
       transition: border-color 0.2s;
     }
     .hex-box:focus-within { border-color: var(--accent); }
@@ -197,7 +206,7 @@
 
     .hex-input {
       font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace;
-      font-size: 14px; font-weight: 600;
+      font-size: 13px; font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 1.5px;
       width: 100%;
@@ -207,8 +216,8 @@
     }
 
     .picker-btn {
-      width: 36px; height: 36px;
-      border-radius: 9px;
+      width: 40px; height: 40px;
+      border-radius: 8px;
       border: 1px solid var(--border);
       overflow: hidden;
       position: relative;
@@ -224,35 +233,129 @@
       transition: background 0.2s;
     }
 
-    input[type="color"] {
+    /* ── Custom color picker popup ── */
+    .cpop {
+      position: fixed;
+      z-index: 200;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.28), 0 4px 16px rgba(0,0,0,0.14);
+      width: 220px;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+    .cpop.open { display: flex; }
+
+    .cpop-gradient {
+      width: 100%;
+      height: 140px;
+      border-radius: 9px;
+      position: relative;
+      cursor: crosshair;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .cpop-gradient canvas { display: block; width: 100%; height: 100%; border-radius: 9px; }
+    .cpop-cursor {
       position: absolute;
-      top: -6px; left: -6px;
-      width: calc(100% + 12px);
-      height: calc(100% + 12px);
-      opacity: 0; cursor: pointer;
-      border: none; padding: 0;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      border: 2px solid #fff;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.35), 0 1px 4px rgba(0,0,0,0.4);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
     }
 
-    /* ── Ratio strip (bottom of left panel) ── */
-    .ratio-strip {
-      border-top: 1px solid var(--border);
-      padding: 12px 20px;
+    .cpop-hue {
+      width: 100%;
+      height: 12px;
+      border-radius: 999px;
+      position: relative;
+      cursor: pointer;
+      background: linear-gradient(to right,
+        #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);
+      flex-shrink: 0;
+    }
+    .cpop-hue-thumb {
+      position: absolute;
+      top: 50%; transform: translate(-50%, -50%);
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      border: 2px solid #fff;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.3), 0 1px 4px rgba(0,0,0,0.3);
+      pointer-events: none;
+    }
+
+    .cpop-hex-row {
       display: flex;
       align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .cpop-hex-box {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 8px;
+      padding: 0 10px;
+      height: 34px;
+      transition: border-color 0.2s;
+    }
+    .cpop-hex-box:focus-within { border-color: var(--accent); }
+    .cpop-hex-pound {
+      font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace;
+      font-size: 11px; font-weight: 600;
+      color: var(--body); opacity: 0.4;
+    }
+    .cpop-hex-input {
+      font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace;
+      font-size: 12px; font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      width: 100%;
+      background: transparent;
+      border: none; outline: none;
+      color: var(--headline);
+    }
+    .cpop-preview {
+      width: 34px; height: 34px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+
+    /* ── Divider ── */
+    .divider {
+      width: 100%;
+      height: 1px;
+      background: var(--divider);
       flex-shrink: 0;
     }
 
+    /* ── Ratio & WCAG block ── */
     .ratio-block {
       display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .ratio-top {
+      display: flex;
       align-items: baseline;
-      gap: 5px;
+      gap: 8px;
     }
 
     .ratio-number {
       font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace;
-      font-size: 1.45rem;
+      font-size: 1.6rem;
       font-weight: 700;
       letter-spacing: -0.5px;
       line-height: 1;
@@ -266,14 +369,15 @@
       font-size: 10px; font-weight: 600;
       text-transform: uppercase; letter-spacing: 0.12em;
       color: var(--body); opacity: 0.4;
+      align-self: center;
     }
 
     .main-badge {
-      display: flex; align-items: center; gap: 5px;
-      padding: 3px 9px;
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 6px 12px;
       border-radius: 999px;
       border: 1px solid transparent;
-      font-size: 10px; font-weight: 600;
+      font-size: 11px; font-weight: 600;
       letter-spacing: 0.04em;
       transition: all 0.25s;
     }
@@ -282,20 +386,18 @@
 
     /* WCAG pills row */
     .wcag-row {
-      width: 100%;
       display: flex;
       gap: 5px;
       flex-wrap: wrap;
-      margin-top: 2px;
     }
 
     .wcag-pill {
       display: flex; align-items: center; gap: 4px;
-      padding: 3px 8px;
-      border-radius: 6px;
+      padding: 6px 12px;
+      border-radius: 8px;
       border: 1px solid var(--border);
       background: var(--social-bg);
-      font-size: 10px; font-weight: 600;
+      font-size: 11px; font-weight: 600;
       letter-spacing: 0.04em;
       transition: all 0.25s;
     }
@@ -308,46 +410,34 @@
     /* ── Right panel ── */
     .right-panel {
       display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    .tabs-row {
-      display: flex;
-      padding: 0 6px;
-      border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
-    }
-
-    .tab-btn {
-      padding: 10px 14px;
-      font-size: 11px; font-weight: 500;
-      letter-spacing: 0.02em;
-      cursor: pointer;
-      border: none;
-      border-bottom: 1.5px solid transparent;
-      margin-bottom: -1px;
-      color: var(--body);
-      background: none;
-      font-family: inherit;
-      transition: color 0.15s, border-color 0.15s;
-    }
-    .tab-btn:hover { color: var(--headline); }
-    .tab-btn.active { color: var(--headline); border-bottom-color: var(--accent); }
-
-    /* Preview fill */
-    .preview-wrap {
-      flex: 1;
-      overflow: hidden;
-      display: flex;
       align-items: stretch;
+      padding: 16px 16px 16px 4px;
+      overflow: hidden;
     }
 
-    .preview-area {
+    .preview-card {
       flex: 1;
-      padding: 36px 32px;
+      border-radius: 14px;
+      padding: 44px 40px;
       transition: background 0.25s, color 0.25s;
       overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .preview-heading {
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 700;
+      line-height: 1.15;
+      margin-bottom: 20px;
+      letter-spacing: -0.03em;
+    }
+
+    .preview-body {
+      font-size: clamp(0.85rem, 1.5vw, 1rem);
+      line-height: 1.7;
+      opacity: 0.8;
     }
 
     /* ── Toast ── */
@@ -383,7 +473,6 @@
       }
       .left-panel { border-right: none; border-bottom: 1px solid var(--border); }
       .right-panel { min-height: 260px; }
-      .preview-area { padding: 24px 20px; }
     }
   </style>
 </head>
@@ -396,64 +485,62 @@
   <span class="hdr-title">Color Contrast Checker</span>
 </div>
 
-<!-- Toolbar -->
-<div class="toolbar">
-  <span class="toolbar-label">Color Contrast Checker</span>
-  <button id="swapBtn" class="btn">⇄ Swap</button>
-  <button id="randomBtn" class="btn">⚄ Random</button>
-</div>
-
 <!-- Two-panel layout -->
 <div class="panels">
 
-  <!-- ── Left: color inputs ── -->
+  <!-- ── Left: controls ── -->
   <div class="left-panel">
 
-    <!-- Background row -->
-    <div class="color-row">
-      <div class="row-label">
-        <div class="swatch-dot" id="bgSwatch" title="Click to copy"></div>
-        Background
-      </div>
-      <div class="field-row">
-        <div class="hex-box">
-          <span class="hex-pound">#</span>
-          <input type="text" id="bgHexInput" class="hex-input" maxlength="6" value="A60000" spellcheck="false" autocomplete="off" />
-        </div>
-        <div class="picker-btn" id="bgPickerWrap" title="Pick (dbl-click to copy)">
-          <div class="picker-swatch" id="bgPickerSwatch"></div>
-          <input type="color" id="bgPicker" value="#A60000" />
-        </div>
-      </div>
+    <!-- Buttons -->
+    <div class="btn-row">
+      <button id="swapBtn" class="btn">
+        <span class="btn-icon">⇄</span> Swap color
+      </button>
+      <button id="randomBtn" class="btn">
+        <span class="btn-icon">⚄</span> Random
+      </button>
     </div>
 
-    <!-- Text row -->
-    <div class="color-row">
-      <div class="row-label">
-        <div class="swatch-dot" id="textSwatch" title="Click to copy"></div>
-        Text Color
-      </div>
+    <!-- Text Color -->
+    <div class="color-block">
+      <span class="block-label">Text Color</span>
       <div class="field-row">
         <div class="hex-box">
           <span class="hex-pound">#</span>
           <input type="text" id="textHexInput" class="hex-input" maxlength="6" value="FFFFFF" spellcheck="false" autocomplete="off" />
         </div>
-        <div class="picker-btn" id="textPickerWrap" title="Pick (dbl-click to copy)">
+        <div class="picker-btn" id="textPickerWrap" title="Click to pick color">
           <div class="picker-swatch" id="textPickerSwatch"></div>
-          <input type="color" id="textPicker" value="#FFFFFF" />
         </div>
       </div>
     </div>
 
+    <!-- Background Color -->
+    <div class="color-block">
+      <span class="block-label">Background Color</span>
+      <div class="field-row">
+        <div class="hex-box">
+          <span class="hex-pound">#</span>
+          <input type="text" id="bgHexInput" class="hex-input" maxlength="6" value="A60000" spellcheck="false" autocomplete="off" />
+        </div>
+        <div class="picker-btn" id="bgPickerWrap" title="Click to pick color">
+          <div class="picker-swatch" id="bgPickerSwatch"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="divider"></div>
+
     <!-- Ratio + WCAG -->
-    <div class="ratio-strip">
-      <div class="ratio-block">
+    <div class="ratio-block">
+      <div class="ratio-top">
         <span id="ratioDisplay" class="ratio-number ratio-bad">—</span>
         <span class="ratio-label">Ratio</span>
-      </div>
-      <div class="main-badge fail" id="mainBadge">
-        <span id="mainBadgeIcon">✖</span>
-        <span>AA Normal</span>
+        <div class="main-badge fail" id="mainBadge">
+          <span id="mainBadgeIcon">✖</span>
+          <span>AA Normal</span>
+        </div>
       </div>
       <div class="wcag-row">
         <div class="wcag-pill" id="aaLargePill">
@@ -475,18 +562,30 @@
 
   <!-- ── Right: preview ── -->
   <div class="right-panel">
-
-    <div class="tabs-row">
-      <button class="tab-btn active" data-mode="heading">Heading</button>
-      <button class="tab-btn" data-mode="body">Body Text</button>
+    <div id="previewCard" class="preview-card">
+      <p id="previewHeading" class="preview-heading">The quick brown fox jumps over the lazy dog</p>
+      <p id="previewBody" class="preview-body">Designing digital experiences that blend creativity with usability. 5+ years in branding, web, and product design — crafting interfaces that look great and work beautifully.</p>
     </div>
-
-    <div class="preview-wrap">
-      <div id="previewArea" class="preview-area"></div>
-    </div>
-
   </div>
 
+</div>
+
+<!-- Custom color picker popup -->
+<div class="cpop" id="cpop">
+  <div class="cpop-gradient" id="cpopGradient">
+    <canvas id="cpopCanvas"></canvas>
+    <div class="cpop-cursor" id="cpopCursor"></div>
+  </div>
+  <div class="cpop-hue" id="cpopHue">
+    <div class="cpop-hue-thumb" id="cpopHueThumb"></div>
+  </div>
+  <div class="cpop-hex-row">
+    <div class="cpop-hex-box">
+      <span class="cpop-hex-pound">#</span>
+      <input type="text" id="cpopHexInput" class="cpop-hex-input" maxlength="6" spellcheck="false" autocomplete="off" />
+    </div>
+    <div class="cpop-preview" id="cpopPreview"></div>
+  </div>
 </div>
 
 <!-- Toast -->
@@ -508,23 +607,18 @@
 // ── State ────────────────────────────────────────────────────────────────────
 let bgHex   = 'a60000';
 let textHex = 'ffffff';
-let mode    = 'heading';
 
 // ── DOM ──────────────────────────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
 
 const bgHexInput       = $('bgHexInput');
 const textHexInput     = $('textHexInput');
-const bgPicker         = $('bgPicker');
-const textPicker       = $('textPicker');
-const bgSwatch         = $('bgSwatch');
-const textSwatch       = $('textSwatch');
 const bgPickerSwatch   = $('bgPickerSwatch');
 const textPickerSwatch = $('textPickerSwatch');
 const ratioDisplay     = $('ratioDisplay');
 const mainBadge        = $('mainBadge');
 const mainBadgeIcon    = $('mainBadgeIcon');
-const previewArea      = $('previewArea');
+const previewCard      = $('previewCard');
 const toast            = $('toast');
 
 // ── Color math ───────────────────────────────────────────────────────────────
@@ -536,48 +630,45 @@ const contrast = (a,b) => { const L1=lum(a), L2=lum(b); return (Math.max(L1,L2)+
 const randHex  = () => Math.floor(Math.random()*0xFFFFFF).toString(16).padStart(6,'0').toUpperCase();
 const cleanHex = raw => { let h=raw.replace(/^#/,'').toUpperCase(); if(/^[0-9A-F]{3}$/.test(h)) h=h.split('').map(c=>c+c).join(''); return h; };
 
+// ── HSV <-> RGB helpers ───────────────────────────────────────────────────────
+function hsvToHex(h, s, v) {
+  let r, g, b;
+  const i = Math.floor(h / 60) % 6;
+  const f = h / 60 - Math.floor(h / 60);
+  const p = v * (1 - s), q = v * (1 - f * s), t = v * (1 - (1 - f) * s);
+  [r, g, b] = [[v,t,p],[q,v,p],[p,v,t],[p,q,v],[t,p,v],[v,p,q]][i];
+  return [r,g,b].map(x => Math.round(x*255).toString(16).padStart(2,'0')).join('');
+}
+
+function hexToHsv(hex) {
+  const {r,g,b} = toRgb(hex);
+  const rn = r/255, gn = g/255, bn = b/255;
+  const max = Math.max(rn,gn,bn), min = Math.min(rn,gn,bn), d = max - min;
+  let h = 0;
+  if (d > 0) {
+    if (max === rn)      h = 60 * (((gn - bn) / d) % 6);
+    else if (max === gn) h = 60 * ((bn - rn) / d + 2);
+    else                 h = 60 * ((rn - gn) / d + 4);
+  }
+  if (h < 0) h += 360;
+  const s = max === 0 ? 0 : d / max;
+  return { h, s, v: max };
+}
+
 // ── WCAG pill helper ─────────────────────────────────────────────────────────
 function setPill(pillEl, iconEl, pass) {
   pillEl.className   = 'wcag-pill ' + (pass ? 'pass' : 'fail');
   iconEl.textContent = pass ? '✔' : '✖';
 }
 
-// ── Preview templates ────────────────────────────────────────────────────────
-const TEMPLATES = {
-  heading: () => `
-    <p style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.35;margin-bottom:20px;font-weight:600;font-family:inherit;">Preview</p>
-    <h1 style="font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:700;line-height:1.15;margin-bottom:14px;letter-spacing:-0.025em;font-family:inherit;">
-      The quick brown fox jumps over the lazy dog
-    </h1>
-    <h2 style="font-size:clamp(.95rem,2vw,1.2rem);font-weight:500;line-height:1.5;opacity:.75;font-family:inherit;">
-      Good design is obvious. Great design is transparent.
-    </h2>`,
-
-  body: () => `
-    <p style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.35;margin-bottom:20px;font-weight:600;font-family:inherit;">Preview</p>
-    <p style="font-size:.9rem;line-height:1.8;margin-bottom:14px;opacity:.9;font-family:inherit;">
-      Typography is the craft of enduring visual communication and the
-      foundation of readable, accessible design. Every choice in font,
-      weight, and spacing shapes how well users can consume your content.
-    </p>
-    <p style="font-size:.8rem;line-height:1.7;opacity:.55;font-family:inherit;">
-      WCAG 2.1 requires 4.5:1 contrast for normal text and 3:1 for large
-      text (18pt+ or 14pt bold). AAA requires 7:1 for normal text.
-    </p>`,
-};
-
 // ── Apply ────────────────────────────────────────────────────────────────────
 function apply() {
   const bg = '#' + bgHex, tx = '#' + textHex;
 
-  bgSwatch.style.background         = bg;
-  textSwatch.style.background       = tx;
   bgPickerSwatch.style.background   = bg;
   textPickerSwatch.style.background = tx;
   bgHexInput.value   = bgHex.toUpperCase();
   textHexInput.value = textHex.toUpperCase();
-  bgPicker.value     = bg;
-  textPicker.value   = tx;
 
   const ratio  = contrast(bgHex, textHex);
   ratioDisplay.textContent = ratio.toFixed(2) + ':1';
@@ -591,12 +682,11 @@ function apply() {
   setPill($('aaaPill'),      $('aaaIcon'),       ratio >= 7.0);
   setPill($('aaaLargePill'), $('aaaLargeIcon'), ratio >= 4.5);
 
-  previewArea.style.background = bg;
-  previewArea.style.color      = tx;
-  previewArea.innerHTML        = (TEMPLATES[mode] || TEMPLATES.heading)();
+  previewCard.style.background = bg;
+  previewCard.style.color      = tx;
 }
 
-// ── Inputs ───────────────────────────────────────────────────────────────────
+// ── Hex inputs ───────────────────────────────────────────────────────────────
 bgHexInput.addEventListener('input', () => {
   const h = cleanHex(bgHexInput.value);
   if (isHex(h)) { bgHex = h.toLowerCase(); apply(); }
@@ -613,24 +703,11 @@ textHexInput.addEventListener('blur', () => {
   if (!isHex(cleanHex(textHexInput.value))) textHexInput.value = textHex.toUpperCase();
 });
 
-bgPicker.addEventListener('input',   () => { bgHex   = bgPicker.value.slice(1).toLowerCase();   apply(); });
-textPicker.addEventListener('input', () => { textHex = textPicker.value.slice(1).toLowerCase(); apply(); });
-
 // ── Controls ─────────────────────────────────────────────────────────────────
 $('swapBtn').addEventListener('click',   () => { [bgHex, textHex] = [textHex, bgHex]; apply(); });
 $('randomBtn').addEventListener('click', () => { bgHex = randHex().toLowerCase(); textHex = randHex().toLowerCase(); apply(); });
 
-// ── Tabs ─────────────────────────────────────────────────────────────────────
-document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    mode = btn.dataset.mode;
-    apply();
-  });
-});
-
-// ── Copy ─────────────────────────────────────────────────────────────────────
+// ── Toast ─────────────────────────────────────────────────────────────────────
 let toastTimer = null;
 function showToast(msg) {
   toast.textContent = msg;
@@ -638,16 +715,154 @@ function showToast(msg) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
 }
-function copyHex(hex) {
-  navigator.clipboard.writeText('#' + hex.toUpperCase())
-    .then(() => showToast('Copied #' + hex.toUpperCase()))
-    .catch(() => {});
+
+// ── Custom Color Picker ───────────────────────────────────────────────────────
+const cpop        = $('cpop');
+const cpopCanvas  = $('cpopCanvas');
+const cpopCursor  = $('cpopCursor');
+const cpopHue     = $('cpopHue');
+const cpopHueThumb= $('cpopHueThumb');
+const cpopHexInp  = $('cpopHexInput');
+const cpopPreview = $('cpopPreview');
+const ctx         = cpopCanvas.getContext('2d');
+
+let cpopTarget = null; // 'text' or 'bg'
+let cpopH = 0, cpopS = 1, cpopV = 1;
+let cpopSX = 1, cpopSY = 0; // cursor position ratio
+
+function drawGradient() {
+  const W = cpopCanvas.width, H = cpopCanvas.height;
+  // Hue base fill
+  const hueColor = `hsl(${cpopH}, 100%, 50%)`;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = hueColor;
+  ctx.fillRect(0, 0, W, H);
+  // White gradient left→right
+  const wGrad = ctx.createLinearGradient(0, 0, W, 0);
+  wGrad.addColorStop(0, 'rgba(255,255,255,1)');
+  wGrad.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = wGrad;
+  ctx.fillRect(0, 0, W, H);
+  // Black gradient top→bottom
+  const bGrad = ctx.createLinearGradient(0, 0, 0, H);
+  bGrad.addColorStop(0, 'rgba(0,0,0,0)');
+  bGrad.addColorStop(1, 'rgba(0,0,0,1)');
+  ctx.fillStyle = bGrad;
+  ctx.fillRect(0, 0, W, H);
+  // Cursor
+  cpopCursor.style.left = (cpopSX * 100) + '%';
+  cpopCursor.style.top  = ((1 - cpopV / (cpopS === 0 ? 1 : 1)) * 100) + '%';
+  // recalc cursor from SV
+  cpopCursor.style.left = (cpopSX * 100) + '%';
+  cpopCursor.style.top  = (cpopSY * 100) + '%';
 }
 
-bgSwatch.addEventListener('click',           () => copyHex(bgHex));
-textSwatch.addEventListener('click',         () => copyHex(textHex));
-$('bgPickerWrap').addEventListener('dblclick',   () => copyHex(bgHex));
-$('textPickerWrap').addEventListener('dblclick', () => copyHex(textHex));
+function updateFromHSV(silent) {
+  const hex = hsvToHex(cpopH, cpopS, cpopV);
+  cpopHexInp.value = hex.toUpperCase();
+  cpopPreview.style.background = '#' + hex;
+  if (!silent) {
+    if (cpopTarget === 'text') { textHex = hex; }
+    else                       { bgHex   = hex; }
+    apply();
+  }
+}
+
+function posToSV(x, y, rect) {
+  cpopSX = Math.max(0, Math.min(1, x / rect.width));
+  cpopSY = Math.max(0, Math.min(1, y / rect.height));
+  cpopS  = cpopSX;
+  cpopV  = 1 - cpopSY;
+}
+
+// Gradient drag
+let draggingGrad = false;
+cpopCanvas.addEventListener('mousedown', e => {
+  draggingGrad = true;
+  const r = cpopCanvas.getBoundingClientRect();
+  posToSV(e.clientX - r.left, e.clientY - r.top, r);
+  drawGradient(); updateFromHSV();
+});
+document.addEventListener('mousemove', e => {
+  if (!draggingGrad) return;
+  const r = cpopCanvas.getBoundingClientRect();
+  posToSV(e.clientX - r.left, e.clientY - r.top, r);
+  drawGradient(); updateFromHSV();
+});
+document.addEventListener('mouseup', () => { draggingGrad = false; });
+
+// Hue drag
+let draggingHue = false;
+function setHueFromEvent(e) {
+  const r = cpopHue.getBoundingClientRect();
+  const pct = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+  cpopH = pct * 360;
+  cpopHueThumb.style.left = (pct * 100) + '%';
+  drawGradient(); updateFromHSV();
+}
+cpopHue.addEventListener('mousedown', e => { draggingHue = true; setHueFromEvent(e); });
+document.addEventListener('mousemove', e => { if (draggingHue) setHueFromEvent(e); });
+document.addEventListener('mouseup',   () => { draggingHue = false; });
+
+// Hex input inside picker
+cpopHexInp.addEventListener('input', () => {
+  const h = cleanHex(cpopHexInp.value);
+  if (!isHex(h)) return;
+  const hsv = hexToHsv(h);
+  cpopH = hsv.h; cpopS = hsv.s; cpopV = hsv.v;
+  cpopSX = cpopS; cpopSY = 1 - cpopV;
+  cpopHueThumb.style.left = (cpopH / 360 * 100) + '%';
+  drawGradient();
+  cpopPreview.style.background = '#' + h;
+  if (cpopTarget === 'text') { textHex = h.toLowerCase(); }
+  else                       { bgHex   = h.toLowerCase(); }
+  apply();
+});
+
+function openPicker(target, anchorEl) {
+  cpopTarget = target;
+  const currentHex = target === 'text' ? textHex : bgHex;
+  const hsv = hexToHsv(currentHex);
+  cpopH = hsv.h; cpopS = hsv.s; cpopV = hsv.v;
+  cpopSX = cpopS; cpopSY = 1 - cpopV;
+
+  // Size canvas
+  const W = 192, H = 140;
+  cpopCanvas.width = W; cpopCanvas.height = H;
+
+  cpopHueThumb.style.left = (cpopH / 360 * 100) + '%';
+  drawGradient();
+  updateFromHSV(true);
+
+  // Position popup near the swatch button
+  const rect = anchorEl.getBoundingClientRect();
+  cpop.classList.add('open');
+
+  // Calculate position
+  let top  = rect.bottom + 8;
+  let left = rect.left;
+  const popW = 220, popH = 240;
+  if (left + popW > window.innerWidth - 8)  left = window.innerWidth - popW - 8;
+  if (top + popH  > window.innerHeight - 8) top  = rect.top - popH - 8;
+  cpop.style.top  = top  + 'px';
+  cpop.style.left = left + 'px';
+}
+
+function closePicker() { cpop.classList.remove('open'); cpopTarget = null; }
+
+$('textPickerWrap').addEventListener('click', e => {
+  e.stopPropagation();
+  if (cpop.classList.contains('open') && cpopTarget === 'text') { closePicker(); return; }
+  openPicker('text', $('textPickerWrap'));
+});
+$('bgPickerWrap').addEventListener('click', e => {
+  e.stopPropagation();
+  if (cpop.classList.contains('open') && cpopTarget === 'bg') { closePicker(); return; }
+  openPicker('bg', $('bgPickerWrap'));
+});
+
+cpop.addEventListener('click', e => e.stopPropagation());
+document.addEventListener('click', closePicker);
 
 // ── Init ─────────────────────────────────────────────────────────────────────
 apply();
