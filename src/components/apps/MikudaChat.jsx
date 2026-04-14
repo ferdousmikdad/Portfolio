@@ -228,7 +228,7 @@ export default function MikudaChat({ isOpen, onClose }) {
       const res  = getResponse(trimmed)
       const aiId = nextId.current++
       setThinking(false)
-      setMessages((prev) => [...prev, { id: aiId, role: 'ai', ...res }])
+      setMessages((prev) => [...prev, { id: aiId, role: 'ai', text: res.answer, action: res.action, actionLabel: res.actionLabel }])
       setLatestId(aiId)
     }, 700 + Math.random() * 400)
   }, [input, thinking])
