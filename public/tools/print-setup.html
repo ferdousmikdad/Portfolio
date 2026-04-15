@@ -8,11 +8,8 @@
   <script>if (window.self !== window.top) document.documentElement.dataset.embed = '1';</script>
   <style>[data-embed='1'] .tool-header { display: none !important; }</style>
 
-  <!-- PDF.js — for canvas preview only -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <!-- pdf-lib — for true vector PDF export (embeds original pages as PDF XObjects) -->
   <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
 
@@ -22,12 +19,12 @@
     :root {
       --bg:      #0a0a0b;
       --surface: #111113;
-      --border:  #1c1c1e;
+      --border:  #1e1e20;
       --border2: #2a2a2e;
       --text:    #e4e4e7;
       --muted:   #71717a;
-      --accent:  #6c63ff;
-      --accent2: #8b5cf6;
+      --red:     #e03535;
+      --red2:    #c42020;
     }
 
     body {
@@ -42,158 +39,237 @@
 
     /* ── Header ── */
     .tool-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+      display: flex; align-items: center; gap: 10px;
       padding: 14px 20px;
       border-bottom: 1px solid var(--border);
       flex-shrink: 0;
     }
-    .tool-header svg { color: var(--accent); flex-shrink: 0; }
-    .tool-header h1  { font-size: 13px; font-weight: 600; }
-    .tool-header p   { font-size: 11px; color: var(--muted); }
+    .tool-header h1 { font-size: 13px; font-weight: 600; }
+    .tool-header p  { font-size: 11px; color: var(--muted); }
 
     /* ── Layout ── */
     .app-body {
       flex: 1;
       display: grid;
-      grid-template-columns: 272px 1fr;
+      grid-template-columns: 264px 1fr;
       overflow: hidden;
     }
 
-    /* ── Left panel ── */
+    /* ── Left Panel ── */
     .panel-left {
       border-right: 1px solid var(--border);
       display: flex;
       flex-direction: column;
       overflow-y: auto;
     }
-    .section {
-      padding: 14px 16px;
-      border-bottom: 1px solid var(--border);
-    }
-    .section-title {
-      font-size: 9.5px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--muted);
-      margin-bottom: 11px;
-    }
 
-    /* Drop zone */
+    /* ── Upload ── */
+    .upload-wrap { padding: 14px 14px 12px; }
+
     .drop-zone {
       border: 1.5px dashed var(--border2);
-      border-radius: 9px;
-      padding: 18px 14px;
+      border-radius: 8px;
+      padding: 14px 12px;
       text-align: center;
       cursor: pointer;
-      transition: border-color 0.2s, background 0.2s;
+      transition: border-color .2s, background .2s;
     }
     .drop-zone:hover, .drop-zone.drag-over {
-      border-color: var(--accent);
-      background: rgba(108,99,255,0.05);
+      border-color: var(--red);
+      background: rgba(224,53,53,.04);
     }
-    .drop-zone svg { margin: 0 auto 7px; display: block; color: var(--muted); }
-    .drop-zone p   { font-size: 11px; color: var(--muted); line-height: 1.5; }
-    .drop-zone em  { font-style: normal; color: var(--accent); font-weight: 500; }
+    .drop-zone svg   { margin: 0 auto 5px; display: block; color: var(--muted); }
+    .drop-zone p     { font-size: 11px; color: var(--muted); line-height: 1.5; }
 
-    /* File chip */
-    .file-chip {
+    /* ── File Card ── */
+    .file-card {
       display: none;
-      margin-top: 9px;
-      background: rgba(108,99,255,0.08);
-      border: 1px solid rgba(108,99,255,0.2);
-      border-radius: 7px;
-      padding: 9px 11px;
-      font-size: 11px;
-    }
-    .file-chip.show { display: block; }
-    .file-chip .name { font-weight: 500; color: var(--text); word-break: break-all; margin-bottom: 2px; }
-    .file-chip .meta { color: var(--muted); }
-
-    /* Buttons */
-    .btn {
-      display: flex; align-items: center; justify-content: center; gap: 6px;
-      width: 100%; padding: 9px 14px;
-      border-radius: 8px;
-      font-family: inherit; font-size: 12px; font-weight: 500;
-      cursor: pointer; border: none;
-      transition: opacity 0.15s, transform 0.1s, background 0.15s;
-      position: relative;
-    }
-    .btn:active:not(:disabled) { transform: scale(0.98); }
-    .btn:disabled { opacity: 0.32; cursor: not-allowed; }
-
-    .btn-primary { background: var(--accent); color: #fff; margin-top: 9px; }
-    .btn-primary:hover:not(:disabled) { background: var(--accent2); }
-
-    .btn-export {
-      background: var(--surface);
+      margin: 0 14px 0;
+      background: #16161a;
       border: 1px solid var(--border2);
-      color: var(--text);
-      margin-top: 7px;
+      border-radius: 8px;
+      padding: 9px 10px;
+      align-items: center;
+      gap: 9px;
     }
-    .btn-export:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    .file-card.show { display: flex; }
 
-    /* Loading state */
-    .spin {
-      width: 12px; height: 12px;
-      border: 2px solid rgba(255,255,255,0.25);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: rotate 0.65s linear infinite;
-      display: none; flex-shrink: 0;
+    .fc-icon {
+      width: 30px; height: 30px;
+      background: var(--red);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
     }
-    .btn.busy .spin    { display: block; }
-    .btn.busy .lbl     { display: none; }
-    .btn.busy .btn-ico { display: none; }
-    @keyframes rotate { to { transform: rotate(360deg); } }
+    .fc-icon svg { color: #fff; }
 
-    /* Progress */
+    .fc-info { flex: 1; min-width: 0; }
+    .fc-name {
+      font-size: 11.5px; font-weight: 500; color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      margin-bottom: 2px;
+    }
+    .fc-meta { font-size: 10px; color: var(--muted); }
+
+    .fc-remove {
+      background: rgba(255,255,255,.07); border: none; border-radius: 50%;
+      width: 20px; height: 20px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; flex-shrink: 0;
+      transition: background .15s;
+    }
+    .fc-remove:hover { background: rgba(255,255,255,.14); }
+    .fc-remove svg { color: var(--muted); }
+
+    /* ── Progress ── */
     .prog-wrap {
-      display: none; margin-top: 9px;
-      background: var(--border); border-radius: 4px; height: 3px; overflow: hidden;
+      display: none;
+      margin: 8px 14px 0;
+      background: var(--border2); border-radius: 4px; height: 2px; overflow: hidden;
     }
     .prog-wrap.show { display: block; }
     .prog-bar {
-      height: 100%;
-      background: linear-gradient(90deg, var(--accent), var(--accent2));
-      width: 0%; border-radius: 4px;
-      transition: width 0.18s;
+      height: 100%; background: var(--red); width: 0%;
+      border-radius: 4px; transition: width .18s;
     }
 
-    /* Sheet thumbnails */
-    .sheet-nav { display: none; }
-    .sheet-nav.show { display: block; }
-    .sheet-counter { font-size: 11px; color: var(--muted); margin-bottom: 8px; }
-    .thumb-row { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
+    /* ── Sheet Panel ── */
+    .sheet-panel {
+      display: none;
+      padding: 14px 14px 12px;
+      border-top: 1px solid var(--border);
+      margin-top: 12px;
+    }
+    .sheet-panel.show { display: block; }
+
+    .sheet-header {
+      font-size: 11px; font-weight: 500; color: var(--text);
+      margin-bottom: 9px;
+    }
+
+    .thumb-row {
+      display: flex; gap: 5px;
+      overflow-x: auto; padding-bottom: 3px;
+    }
     .thumb-item {
-      flex-shrink: 0; width: 68px; height: 50px;
+      flex-shrink: 0; width: 58px; height: 43px;
       border-radius: 5px; border: 1.5px solid var(--border2);
-      overflow: hidden; cursor: pointer; transition: border-color 0.15s;
-      background: #fff;
+      overflow: hidden; cursor: pointer; background: #fff;
+      transition: border-color .15s;
     }
-    .thumb-item.active { border-color: var(--accent); }
-    .thumb-item img    { width: 100%; height: 100%; object-fit: contain; }
+    .thumb-item.active { border-color: var(--red); }
+    .thumb-item img { width: 100%; height: 100%; object-fit: contain; }
 
-    /* Vector badge */
-    .vec-badge {
-      display: flex; align-items: center; gap: 6px;
-      background: rgba(34,197,94,0.08);
-      border: 1px solid rgba(34,197,94,0.2);
-      border-radius: 7px; padding: 8px 10px;
-      margin-bottom: 8px; font-size: 11px; color: #4ade80;
+    /* ── Settings ── */
+    .settings-section {
+      padding: 14px 14px;
+      border-top: 1px solid var(--border);
+      display: flex; flex-direction: column; gap: 14px;
     }
 
-    /* Specs */
-    .specs { font-size: 11px; color: var(--muted); line-height: 1.8; }
-    .specs strong { color: var(--text); }
+    .s-label {
+      display: block;
+      font-size: 10px; font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase; letter-spacing: .07em;
+      margin-bottom: 7px;
+    }
 
-    /* ── Preview panel ── */
+    .s-input {
+      width: 100%;
+      background: #16161a;
+      border: 1px solid var(--border2);
+      border-radius: 7px;
+      padding: 8px 10px;
+      font-family: inherit; font-size: 12px; color: var(--text);
+      outline: none; transition: border-color .15s;
+    }
+    .s-input::placeholder { color: var(--muted); }
+    .s-input:focus { border-color: var(--red); }
+
+    /* Layout options */
+    .layout-row {
+      display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    }
+
+    /* Checkbox */
+    .chk-label {
+      display: flex; align-items: center; gap: 7px;
+      cursor: pointer; user-select: none;
+    }
+    .chk-label input[type=checkbox] { display: none; }
+    .chk-box {
+      width: 20px; height: 20px;
+      border: 1.5px solid var(--border2);
+      border-radius: 5px; background: transparent;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: background .15s, border-color .15s;
+    }
+    .chk-label input:checked + .chk-box {
+      background: var(--red); border-color: var(--red);
+    }
+    .chk-box svg { display: none; }
+    .chk-label input:checked + .chk-box svg { display: block; }
+    .chk-label .chk-text { font-size: 12px; color: var(--text); }
+
+    /* Toggle */
+    .tog-label {
+      display: flex; align-items: center; gap: 8px;
+      cursor: pointer; user-select: none;
+    }
+    .tog-label input[type=checkbox] { display: none; }
+    .tog-track {
+      width: 32px; height: 18px;
+      background: var(--border2); border-radius: 9px;
+      position: relative; transition: background .2s; flex-shrink: 0;
+    }
+    .tog-label input:checked ~ .tog-track { background: var(--red); }
+    .tog-thumb {
+      position: absolute;
+      width: 14px; height: 14px;
+      background: #fff; border-radius: 50%;
+      top: 2px; left: 2px; transition: left .2s;
+    }
+    .tog-label input:checked ~ .tog-track .tog-thumb { left: 16px; }
+    .tog-text { font-size: 12px; color: var(--text); }
+
+    /* ── Download ── */
+    .download-wrap {
+      margin-top: auto;
+      padding: 14px 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .btn-dl {
+      width: 100%; background: var(--red); color: #fff;
+      border: none; border-radius: 8px;
+      padding: 10px 14px;
+      font-family: inherit; font-size: 13px; font-weight: 500;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      transition: background .15s, transform .1s;
+      position: relative;
+    }
+    .btn-dl:hover:not(:disabled) { background: var(--red2); }
+    .btn-dl:active:not(:disabled) { transform: scale(.98); }
+    .btn-dl:disabled { opacity: .3; cursor: not-allowed; }
+
+    .spin {
+      width: 12px; height: 12px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff; border-radius: 50%;
+      animation: rot .65s linear infinite;
+      display: none; flex-shrink: 0;
+    }
+    .btn-dl.busy .spin    { display: block; }
+    .btn-dl.busy .dl-ico  { display: none; }
+    .btn-dl.busy .dl-lbl  { display: none; }
+    @keyframes rot { to { transform: rotate(360deg); } }
+
+    /* ── Right Panel ── */
     .panel-right {
       display: flex; flex-direction: column;
-      overflow: hidden; background: #0d0d0f;
+      overflow: hidden; background: #0c0c0e;
     }
     .preview-bar {
       display: flex; align-items: center; justify-content: space-between;
@@ -205,39 +281,32 @@
       border-radius: 6px; padding: 5px 9px; color: var(--muted);
       cursor: pointer; font-size: 11px; font-family: inherit;
       display: flex; align-items: center; gap: 4px;
-      transition: border-color 0.15s, color 0.15s;
+      transition: border-color .15s, color .15s;
     }
-    .icon-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
-    .icon-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .icon-btn:hover:not(:disabled) { border-color: var(--red); color: var(--red); }
+    .icon-btn:disabled { opacity: .3; cursor: not-allowed; }
 
     .preview-area {
       flex: 1; overflow: auto;
-      display: flex; align-items: center; justify-content: center;
-      padding: 20px;
+      display: flex; align-items: center; justify-content: center; padding: 20px;
     }
     .preview-empty { text-align: center; color: var(--muted); }
-    .preview-empty svg   { margin: 0 auto 12px; display: block; opacity: 0.25; }
-    .preview-empty p     { font-size: 12px; line-height: 1.7; }
+    .preview-empty svg { margin: 0 auto 12px; display: block; opacity: .18; }
+    .preview-empty p { font-size: 12px; line-height: 1.7; }
     .preview-empty strong { color: var(--text); }
 
     #previewCanvas {
       max-width: 100%; border-radius: 6px; display: none;
-      box-shadow: 0 0 0 1px var(--border), 0 10px 40px rgba(0,0,0,0.7);
+      box-shadow: 0 0 0 1px var(--border), 0 10px 40px rgba(0,0,0,.7);
     }
 
-    /* ── macOS-style minimal scrollbars ── */
+    /* Scrollbars */
     ::-webkit-scrollbar              { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track        { background: transparent; }
-    ::-webkit-scrollbar-thumb        {
-      background: rgba(255,255,255,0.12);
-      border-radius: 10px;
-      transition: background 0.2s;
-    }
-    ::-webkit-scrollbar-thumb:hover  { background: rgba(255,255,255,0.22); }
+    ::-webkit-scrollbar-thumb        { background: rgba(255,255,255,.11); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover  { background: rgba(255,255,255,.2); }
     ::-webkit-scrollbar-corner       { background: transparent; }
-
-    /* Firefox */
-    * { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.12) transparent; }
+    *                                { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.11) transparent; }
 
     /* Toast */
     .toast {
@@ -247,11 +316,11 @@
       font-size: 11.5px; color: var(--text);
       z-index: 9999; pointer-events: none;
       transform: translateY(50px); opacity: 0;
-      transition: transform 0.22s, opacity 0.22s;
+      transition: transform .22s, opacity .22s;
     }
-    .toast.show    { transform: none; opacity: 1; }
-    .toast.ok      { border-color: rgba(34,197,94,0.4); color: #4ade80; }
-    .toast.err     { border-color: rgba(239,68,68,0.4); color: #f87171; }
+    .toast.show { transform: none; opacity: 1; }
+    .toast.ok   { border-color: rgba(34,197,94,.4); color: #4ade80; }
+    .toast.err  { border-color: rgba(239,68,68,.4); color: #f87171; }
   </style>
 </head>
 <body>
@@ -263,95 +332,107 @@
     <rect x="7" y="14" width="10" height="7" rx="1"/>
   </svg>
   <div>
-    <h1>Book Print Setup</h1>
-    <p>8 pages / sheet · True vector PDF output</p>
+    <h1>Print Setup</h1>
+    <p>8 pages / sheet · Vector PDF output</p>
   </div>
 </header>
 
 <div class="app-body">
 
-  <!-- ── Left panel ── -->
+  <!-- ── Left Panel ── -->
   <aside class="panel-left">
 
     <!-- Upload -->
-    <div class="section">
-      <div class="section-title">Upload PDF</div>
+    <div class="upload-wrap">
       <div class="drop-zone" id="dropZone">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke-linecap="round"/>
           <polyline points="17 8 12 3 7 8" stroke-linecap="round" stroke-linejoin="round"/>
           <line x1="12" y1="3" x2="12" y2="15" stroke-linecap="round"/>
         </svg>
-        <p>Drop a PDF here<br/><em>or click to browse</em></p>
+        <p>Click to select or drop a PDF</p>
         <input type="file" id="fileInput" accept=".pdf" style="display:none" />
-      </div>
-
-      <div class="file-chip" id="fileChip">
-        <div class="name" id="chipName"></div>
-        <div class="meta" id="chipMeta"></div>
-      </div>
-
-      <button class="btn btn-primary" id="processBtn" disabled>
-        <div class="spin"></div>
-        <span class="lbl">Place PDF</span>
-      </button>
-
-      <div class="prog-wrap" id="progWrap">
-        <div class="prog-bar" id="progBar"></div>
       </div>
     </div>
 
-    <!-- Sheet nav -->
-    <div class="section sheet-nav" id="sheetNav">
-      <div class="section-title">Sheets</div>
-      <div class="sheet-counter" id="sheetCounter"></div>
+    <!-- File Card -->
+    <div class="file-card" id="fileCard">
+      <div class="fc-icon">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+      </div>
+      <div class="fc-info">
+        <div class="fc-name" id="fcName"></div>
+        <div class="fc-meta" id="fcMeta">Uploading…</div>
+      </div>
+      <button class="fc-remove" id="removeBtn" title="Remove">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Progress -->
+    <div class="prog-wrap" id="progWrap">
+      <div class="prog-bar" id="progBar"></div>
+    </div>
+
+    <!-- Sheet Panel -->
+    <div class="sheet-panel" id="sheetPanel">
+      <div class="sheet-header" id="sheetHeader">Sheet 1 of 1</div>
       <div class="thumb-row" id="thumbRow"></div>
     </div>
 
-    <!-- Export -->
-    <div class="section">
-      <div class="section-title">Export</div>
+    <!-- Settings -->
+    <div class="settings-section">
 
-      <div class="vec-badge">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <polyline points="20 6 9 17 4 12"/>
-        </svg>
-        True vector PDF — text stays as outlines
+      <div>
+        <label class="s-label" for="bookNameInput">Book Name</label>
+        <input type="text" class="s-input" id="bookNameInput" placeholder="Type your book name…" />
       </div>
 
-      <button class="btn btn-export" id="exportVecBtn" disabled>
-        <svg class="btn-ico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <div>
+        <label class="s-label">Select preferred layout</label>
+        <div class="layout-row">
+
+          <label class="chk-label">
+            <input type="checkbox" id="printMarkCheck" checked />
+            <span class="chk-box">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </span>
+            <span class="chk-text">Print Mark</span>
+          </label>
+
+          <label class="tog-label">
+            <input type="checkbox" id="outlineTextCheck" />
+            <span class="tog-track"><span class="tog-thumb"></span></span>
+            <span class="tog-text">Outline text</span>
+          </label>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Download -->
+    <div class="download-wrap">
+      <button class="btn-dl" id="downloadBtn" disabled>
+        <div class="spin"></div>
+        <svg class="dl-ico" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
           <path d="M12 10v6m0 0l-3-3m3 3l3-3" stroke-linecap="round"/>
           <path d="M20 17v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2" stroke-linecap="round"/>
         </svg>
-        <div class="spin"></div>
-        <span class="lbl">Download Vector PDF</span>
-      </button>
-
-      <button class="btn btn-export" id="exportPngBtn" disabled>
-        <svg class="btn-ico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="3" width="18" height="18" rx="2"/>
-          <circle cx="8.5" cy="8.5" r="1.5"/>
-          <polyline points="21 15 16 10 5 21"/>
-        </svg>
-        <div class="spin"></div>
-        <span class="lbl">Download Sheet (PNG preview)</span>
+        <span class="dl-lbl">Download pdf</span>
       </button>
     </div>
 
-    <!-- Specs -->
-    <div class="section" style="flex:1">
-      <div class="section-title">Specs</div>
-      <div class="specs">
-        Artboard: <strong>23″ × 18″</strong><br/>
-        Pages / sheet: <strong>8</strong> (4 col × 2 row)<br/>
-        Max pages: <strong>160</strong><br/>
-        Export: <strong>pdf-lib vector</strong>
-      </div>
-    </div>
   </aside>
 
-  <!-- ── Preview panel ── -->
+  <!-- ── Right Panel ── -->
   <main class="panel-right">
     <div class="preview-bar">
       <span id="previewLabel">No document loaded</span>
@@ -359,10 +440,9 @@
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
         </svg>
-        Fit
+        Full
       </button>
     </div>
-
     <div class="preview-area" id="previewArea">
       <div class="preview-empty" id="previewEmpty">
         <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.9">
@@ -370,74 +450,76 @@
           <path d="M14 5h3a1 1 0 0 1 1 1v10H4V6a1 1 0 0 1 1-1h1" stroke-linecap="round"/>
           <rect x="7" y="14" width="10" height="7" rx="1"/>
         </svg>
-        <p>Upload a PDF and click <strong>Place PDF</strong><br/>to preview print-ready artboards.<br/>Export as a true <strong>vector PDF</strong> — no quality loss.</p>
+        <p>Upload a PDF to preview<br/>print-ready artboards.</p>
       </div>
       <canvas id="previewCanvas"></canvas>
     </div>
   </main>
+
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────
 // CONFIG
-// ─────────────────────────────────────────────────────────────────────────────
-const COLS          = 4;
-const ROWS          = 2;
-const PAGES_PER_SHEET = COLS * ROWS;   // 8
-const MAX_PAGES     = 160;
+// ─────────────────────────────────────────────────────────────────────────
+const COLS           = 4;
+const ROWS           = 2;
+const PPS            = COLS * ROWS;   // pages per sheet = 8
+const MAX_PAGES      = 160;
+const SHEET_W_PT     = 23 * 72;      // 1656 pt
+const SHEET_H_PT     = 18 * 72;      // 1296 pt
+const CELL_W_PT      = SHEET_W_PT / COLS;   // 414 pt
+const CELL_H_PT      = SHEET_H_PT / ROWS;   // 648 pt
+const CELL_PAD       = 6;            // pt padding inside cell
+const MARK_LEN       = 10;           // crop mark length (pt)
+const MARK_OFF       = 4;            // crop mark offset from edge (pt)
+const LBL_X_FROM_R   = 6.5 * 72;    // 468 pt from right edge
+const LBL_Y_FROM_B   = 0.15 * 72;   // ~10.8 pt from bottom edge
 
-// Sheet dimensions in PDF points (1 pt = 1/72 inch)
-const SHEET_W_PT    = 23 * 72;   // 1656 pt
-const SHEET_H_PT    = 18 * 72;   // 1296 pt
-const CELL_W_PT     = SHEET_W_PT / COLS;   // 414 pt
-const CELL_H_PT     = SHEET_H_PT / ROWS;   // 648 pt
-const CELL_PAD_PT   = 6;                   // padding inside each cell
-const MARK_PT       = 8;                   // print mark length
-
-// Preview canvas uses same aspect — rendered at 72 DPI (1px per pt)
-const PREVIEW_PX_PER_PT = 1;
-
-// ─────────────────────────────────────────────────────────────────────────────
-// STATE
-// ─────────────────────────────────────────────────────────────────────────────
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-let pdfBytes     = null;   // Uint8Array — kept for pdf-lib vector export
-let pdfJsDoc     = null;   // PDFDocumentProxy — used for canvas preview
-let previewSheets = [];    // Array<HTMLCanvasElement> — preview canvases
+// ─────────────────────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────────────────────
+let pdfBytes      = null;
+let pdfJsDoc      = null;
+let cachedPages   = [];   // rendered page canvases — re-used when settings change
+let previewSheets = [];
 let currentSheet  = 0;
 let totalPages    = 0;
 let totalSheets   = 0;
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DOM
-// ─────────────────────────────────────────────────────────────────────────────
-const dropZone     = document.getElementById('dropZone');
-const fileInput    = document.getElementById('fileInput');
-const fileChip     = document.getElementById('fileChip');
-const chipName     = document.getElementById('chipName');
-const chipMeta     = document.getElementById('chipMeta');
-const processBtn   = document.getElementById('processBtn');
-const progWrap     = document.getElementById('progWrap');
-const progBar      = document.getElementById('progBar');
-const sheetNav     = document.getElementById('sheetNav');
-const sheetCounter = document.getElementById('sheetCounter');
-const thumbRow     = document.getElementById('thumbRow');
-const exportVecBtn = document.getElementById('exportVecBtn');
-const exportPngBtn = document.getElementById('exportPngBtn');
-const previewCanvas= document.getElementById('previewCanvas');
-const previewEmpty = document.getElementById('previewEmpty');
-const previewLabel = document.getElementById('previewLabel');
-const previewArea  = document.getElementById('previewArea');
-const fitBtn       = document.getElementById('fitBtn');
-const toastEl      = document.getElementById('toast');
+// ─────────────────────────────────────────────────────────────────────────
+// DOM REFS
+// ─────────────────────────────────────────────────────────────────────────
+const dropZone       = document.getElementById('dropZone');
+const fileInput      = document.getElementById('fileInput');
+const fileCard       = document.getElementById('fileCard');
+const fcName         = document.getElementById('fcName');
+const fcMeta         = document.getElementById('fcMeta');
+const removeBtn      = document.getElementById('removeBtn');
+const progWrap       = document.getElementById('progWrap');
+const progBar        = document.getElementById('progBar');
+const sheetPanel     = document.getElementById('sheetPanel');
+const sheetHeader    = document.getElementById('sheetHeader');
+const thumbRow       = document.getElementById('thumbRow');
+const bookNameInput  = document.getElementById('bookNameInput');
+const printMarkCheck = document.getElementById('printMarkCheck');
+const outlineCheck   = document.getElementById('outlineTextCheck');
+const downloadBtn    = document.getElementById('downloadBtn');
+const previewCanvas  = document.getElementById('previewCanvas');
+const previewEmpty   = document.getElementById('previewEmpty');
+const previewLabel   = document.getElementById('previewLabel');
+const previewArea    = document.getElementById('previewArea');
+const fitBtn         = document.getElementById('fitBtn');
+const toastEl        = document.getElementById('toast');
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────
 // TOAST
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────
 let toastT;
 function toast(msg, cls = '') {
   clearTimeout(toastT);
@@ -446,192 +528,259 @@ function toast(msg, cls = '') {
   toastT = setTimeout(() => { toastEl.className = 'toast'; }, 3200);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// FILE LOAD
-// ─────────────────────────────────────────────────────────────────────────────
-dropZone.addEventListener('click', () => fileInput.click());
-dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+// ─────────────────────────────────────────────────────────────────────────
+// FILE EVENTS
+// ─────────────────────────────────────────────────────────────────────────
+dropZone.addEventListener('click',    () => fileInput.click());
+dropZone.addEventListener('dragover', e  => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave',()  => dropZone.classList.remove('drag-over'));
 dropZone.addEventListener('drop', e => {
-  e.preventDefault();
-  dropZone.classList.remove('drag-over');
+  e.preventDefault(); dropZone.classList.remove('drag-over');
   const f = e.dataTransfer.files[0];
   if (f?.type === 'application/pdf') pickFile(f);
   else toast('Please drop a PDF file', 'err');
 });
 fileInput.addEventListener('change', e => { if (e.target.files[0]) pickFile(e.target.files[0]); });
+removeBtn.addEventListener('click',  resetTool);
 
-async function pickFile(file) {
-  try {
-    const ab  = await file.arrayBuffer();
-    pdfBytes  = new Uint8Array(ab.slice(0));   // independent copy — PDF.js may detach the original buffer
-    pdfJsDoc  = await pdfjsLib.getDocument({ data: ab }).promise;  // PDF.js consumes ab, pdfBytes stays intact
-    totalPages  = Math.min(pdfJsDoc.numPages, MAX_PAGES);
-    totalSheets = Math.ceil(totalPages / PAGES_PER_SHEET);
-
-    chipName.textContent = file.name;
-    chipMeta.textContent = `${totalPages} page${totalPages !== 1 ? 's' : ''} → ${totalSheets} sheet${totalSheets !== 1 ? 's' : ''}`;
-    fileChip.classList.add('show');
-    processBtn.disabled = false;
-
-    // Reset
-    previewSheets  = [];
-    currentSheet   = 0;
-    sheetNav.classList.remove('show');
-    previewCanvas.style.display = 'none';
-    previewEmpty.style.display  = '';
-    exportVecBtn.disabled = true;
-    exportPngBtn.disabled = true;
-    fitBtn.disabled       = true;
-    previewLabel.textContent = file.name;
-
-    toast(`Loaded ${totalPages} pages — ${totalSheets} sheet${totalSheets !== 1 ? 's' : ''}`);
-  } catch (err) {
-    toast('Could not open PDF: ' + err.message, 'err');
-    console.error(err);
-  }
+function resetTool() {
+  pdfBytes = null; pdfJsDoc = null;
+  cachedPages = []; previewSheets = [];
+  currentSheet = 0; totalPages = 0; totalSheets = 0;
+  fileCard.classList.remove('show');
+  progWrap.classList.remove('show');
+  sheetPanel.classList.remove('show');
+  previewCanvas.style.display = 'none';
+  previewEmpty.style.display  = '';
+  downloadBtn.disabled        = true;
+  fitBtn.disabled             = true;
+  previewLabel.textContent    = 'No document loaded';
+  fileInput.value             = '';
+  thumbRow.innerHTML          = '';
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// BUILD PREVIEW CANVASES  (PDF.js renders for visual only)
-// ─────────────────────────────────────────────────────────────────────────────
-processBtn.addEventListener('click', buildPreviews);
-
-async function buildPreviews() {
-  if (!pdfJsDoc) return;
-  setBusy(processBtn, true);
+// ─────────────────────────────────────────────────────────────────────────
+// PICK FILE → AUTO PROCESS
+// ─────────────────────────────────────────────────────────────────────────
+async function pickFile(file) {
+  // Show card immediately with "Uploading…"
+  fcName.textContent = file.name;
+  fcMeta.textContent = 'Uploading…';
+  fileCard.classList.add('show');
   progWrap.classList.add('show');
   setProgress(0);
-  previewSheets = [];
+
+  // Reset state
+  cachedPages = []; previewSheets = [];
+  sheetPanel.classList.remove('show');
+  previewCanvas.style.display = 'none';
+  previewEmpty.style.display  = '';
+  downloadBtn.disabled        = true;
+  fitBtn.disabled             = true;
 
   try {
-    // Measure from first page to pick render scale
-    const firstVp = (await pdfJsDoc.getPage(1)).getViewport({ scale: 1 });
-    const availW  = (CELL_W_PT - CELL_PAD_PT * 2) * PREVIEW_PX_PER_PT;
-    const availH  = (CELL_H_PT - CELL_PAD_PT * 2) * PREVIEW_PX_PER_PT;
-    const scale   = Math.min(availW / firstVp.width, availH / firstVp.height) * 0.96;
+    const ab = await file.arrayBuffer();
+    pdfBytes = new Uint8Array(ab.slice(0));
+    pdfJsDoc = await pdfjsLib.getDocument({ data: ab }).promise;
+    totalPages  = Math.min(pdfJsDoc.numPages, MAX_PAGES);
+    totalSheets = Math.ceil(totalPages / PPS);
 
-    // Render pages
-    const pages = [];
-    for (let p = 1; p <= totalPages; p++) {
-      pages.push(await renderPageToCanvas(pdfJsDoc, p, scale));
-      setProgress((p / totalPages) * 55);
-    }
+    fcMeta.textContent    = `${fmtSize(file.size)}  ·  ${totalPages} pages`;
+    previewLabel.textContent = file.name;
 
-    // Compose sheet canvases
-    for (let s = 0; s < totalSheets; s++) {
-      previewSheets.push(buildSheetCanvas(pages, s));
-      setProgress(55 + ((s + 1) / totalSheets) * 45);
-    }
-
-    setProgress(100);
-    setTimeout(() => progWrap.classList.remove('show'), 500);
-
-    currentSheet = 0;
-    showPreview(currentSheet);
-    buildThumbs();
-    sheetNav.classList.add('show');
-    exportVecBtn.disabled = false;
-    exportPngBtn.disabled = false;
-    fitBtn.disabled       = false;
-    toast('Ready — download as vector PDF for print quality', 'ok');
+    await buildAll(true);
   } catch (err) {
-    toast('Processing failed: ' + err.message, 'err');
-    console.error(err);
+    toast('Could not open PDF: ' + err.message, 'err');
+    fcMeta.textContent = 'Error loading file';
     progWrap.classList.remove('show');
-  } finally {
-    setBusy(processBtn, false);
+    console.error(err);
   }
 }
 
-async function renderPageToCanvas(doc, pageNum, scale) {
-  const page     = await doc.getPage(pageNum);
-  const viewport = page.getViewport({ scale });
-  const cv       = document.createElement('canvas');
-  cv.width       = viewport.width;
-  cv.height      = viewport.height;
-  await page.render({ canvasContext: cv.getContext('2d'), viewport }).promise;
+function fmtSize(b) {
+  return b < 1048576 ? (b / 1024).toFixed(1) + ' KB' : (b / 1048576).toFixed(1) + ' MB';
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// BUILD ALL (render pages + compose sheets)
+// renderPages=true on first load; false when only settings changed
+// ─────────────────────────────────────────────────────────────────────────
+async function buildAll(renderPages = false) {
+  if (!pdfJsDoc) return;
+
+  if (renderPages) {
+    // Determine render scale from first page
+    const vp0  = (await pdfJsDoc.getPage(1)).getViewport({ scale: 1 });
+    const avW  = CELL_W_PT - CELL_PAD * 2;
+    const avH  = CELL_H_PT - CELL_PAD * 2;
+    const scale = Math.min(avW / vp0.width, avH / vp0.height) * 0.96;
+
+    cachedPages = [];
+    for (let p = 1; p <= totalPages; p++) {
+      cachedPages.push(await renderPage(pdfJsDoc, p, scale));
+      setProgress((p / totalPages) * 55);
+    }
+  }
+
+  // Compose sheet canvases
+  previewSheets = [];
+  for (let s = 0; s < totalSheets; s++) {
+    previewSheets.push(buildSheetCanvas(s));
+    if (renderPages) setProgress(55 + ((s + 1) / totalSheets) * 45);
+  }
+
+  if (renderPages) {
+    setProgress(100);
+    setTimeout(() => progWrap.classList.remove('show'), 400);
+  }
+
+  const prev = currentSheet < previewSheets.length ? currentSheet : 0;
+  currentSheet = prev;
+  showPreview(prev);
+  buildThumbs();
+  sheetPanel.classList.add('show');
+  sheetHeader.textContent = `Sheet ${currentSheet + 1} of ${totalSheets}`;
+  downloadBtn.disabled    = false;
+  fitBtn.disabled         = false;
+
+  if (renderPages) toast(`${totalPages} pages → ${totalSheets} sheet${totalSheets !== 1 ? 's' : ''}`, 'ok');
+}
+
+async function renderPage(doc, pageNum, scale) {
+  const page = await doc.getPage(pageNum);
+  const vp   = page.getViewport({ scale });
+  const cv   = document.createElement('canvas');
+  cv.width   = vp.width;
+  cv.height  = vp.height;
+  await page.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise;
   return cv;
 }
 
-function buildSheetCanvas(pages, sheetIdx) {
-  const W  = SHEET_W_PT * PREVIEW_PX_PER_PT;
-  const H  = SHEET_H_PT * PREVIEW_PX_PER_PT;
-  const CW = CELL_W_PT  * PREVIEW_PX_PER_PT;
-  const CH = CELL_H_PT  * PREVIEW_PX_PER_PT;
+// ─────────────────────────────────────────────────────────────────────────
+// BUILD SHEET CANVAS
+// ─────────────────────────────────────────────────────────────────────────
+function buildSheetCanvas(sheetIdx) {
+  const W = SHEET_W_PT, H = SHEET_H_PT;
+  const CW = CELL_W_PT,  CH = CELL_H_PT;
 
   const cv  = document.createElement('canvas');
-  cv.width  = W;
-  cv.height = H;
+  cv.width  = W; cv.height = H;
   const ctx = cv.getContext('2d');
 
   // White background
   ctx.fillStyle = '#fff';
   ctx.fillRect(0, 0, W, H);
 
-  // Artboard border
-  ctx.strokeStyle = '#ccc';
+  // Artboard outline
+  ctx.strokeStyle = '#ddd';
   ctx.lineWidth   = 0.5;
   ctx.strokeRect(0.5, 0.5, W - 1, H - 1);
 
-  // Print marks
-  drawCanvasMarks(ctx, 0, 0, W, H);
-
-  for (let pi = 0; pi < PAGES_PER_SHEET; pi++) {
-    const globalIdx = sheetIdx * PAGES_PER_SHEET + pi;
-    if (globalIdx >= pages.length) break;
+  // Place pages and collect their rects
+  const pageRects = [];
+  for (let pi = 0; pi < PPS; pi++) {
+    const gi   = sheetIdx * PPS + pi;
+    if (gi >= cachedPages.length) break;
 
     const col  = pi % COLS;
-    const row  = Math.floor(pi / ROWS);
-    const cellX = col * CW;
-    const cellY = row * CH;
-
-    const src = pages[globalIdx];
-    const pad = CELL_PAD_PT * PREVIEW_PX_PER_PT;
-    const fitS = Math.min((CW - pad * 2) / src.width, (CH - pad * 2) / src.height);
-    const dw   = src.width  * fitS;
-    const dh   = src.height * fitS;
-    const dx   = cellX + (CW - dw) / 2;
-    const dy   = cellY + (CH - dh) / 2;
-
-    // Cell BG
-    ctx.fillStyle = '#f8f8f8';
-    ctx.fillRect(cellX + 1, cellY + 1, CW - 2, CH - 2);
+    const row  = Math.floor(pi / COLS);
+    const cx   = col * CW;
+    const cy   = row * CH;
+    const src  = cachedPages[gi];
+    const pad  = CELL_PAD;
+    const fit  = Math.min((CW - pad * 2) / src.width, (CH - pad * 2) / src.height);
+    const dw   = src.width  * fit;
+    const dh   = src.height * fit;
+    const dx   = cx + (CW - dw) / 2;
+    const dy   = cy + (CH - dh) / 2;
 
     ctx.drawImage(src, dx, dy, dw, dh);
 
-    // Cell border
-    ctx.strokeStyle = '#e8e8e8';
-    ctx.lineWidth   = 0.5;
-    ctx.strokeRect(cellX + 0.5, cellY + 0.5, CW - 1, CH - 1);
+    // Cell divider
+    ctx.strokeStyle = '#e4e4e4';
+    ctx.lineWidth   = 0.4;
+    ctx.strokeRect(cx, cy, CW, CH);
 
-    // Page number
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.font      = '8px sans-serif';
-    ctx.textAlign = 'right';
-    ctx.fillText(`p.${globalIdx + 1}`, cellX + CW - 4, cellY + CH - 4);
-    ctx.textAlign = 'left';
+    pageRects.push({ x: dx, y: dy, w: dw, h: dh });
   }
+
+  // Print marks
+  if (printMarkCheck.checked) {
+    drawCanvasSheetMarks(ctx, 0, 0, W, H);
+    for (const r of pageRects) drawCanvasPageMarks(ctx, r.x, r.y, r.w, r.h);
+  }
+
+  // Book name + Forma label
+  const bookName = bookNameInput.value.trim();
+  const fNum     = String(Math.floor(sheetIdx / 2) + 1).padStart(2, '0');
+  const fSide    = sheetIdx % 2 === 0 ? 'Front' : 'Back';
+  const lblText  = (bookName ? bookName + '   ' : '') + `Forma ${fNum} ${fSide}`;
+  const lblX     = W - LBL_X_FROM_R;
+  const lblY     = H - LBL_Y_FROM_B - 7;  // 7pt font, from top of canvas
+
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.font      = '7px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(lblText, lblX, lblY);
 
   return cv;
 }
 
-function drawCanvasMarks(ctx, x, y, w, h) {
+// Sheet-level corner marks (L-shapes at 4 corners, pointing inward)
+function drawCanvasSheetMarks(ctx, x, y, w, h) {
   ctx.save();
   ctx.strokeStyle = '#000';
-  ctx.lineWidth   = 0.5;
-  const o = 4, m = MARK_PT;
-  const corners = [[x,y,1,1],[x+w,y,-1,1],[x,y+h,1,-1],[x+w,y+h,-1,-1]];
-  for (const [cx,cy,sx,sy] of corners) {
-    ctx.beginPath(); ctx.moveTo(cx+sx*o, cy); ctx.lineTo(cx+sx*(o+m), cy); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(cx, cy+sy*o); ctx.lineTo(cx, cy+sy*(o+m)); ctx.stroke();
+  ctx.lineWidth   = 0.7;
+  const o = MARK_OFF, m = MARK_LEN;
+  const corners = [
+    [x,   y,   +1, +1],  // top-left
+    [x+w, y,   -1, +1],  // top-right
+    [x,   y+h, +1, -1],  // bottom-left
+    [x+w, y+h, -1, -1],  // bottom-right
+  ];
+  for (const [cx, cy, hd, vd] of corners) {
+    ctx.beginPath(); ctx.moveTo(cx + hd*o, cy); ctx.lineTo(cx + hd*(o+m), cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, cy + vd*o); ctx.lineTo(cx, cy + vd*(o+m)); ctx.stroke();
+  }
+  // Center tick marks on each edge
+  drawCanvasTick(ctx, w/2, 0,   0, +1);
+  drawCanvasTick(ctx, w/2, h,   0, -1);
+  drawCanvasTick(ctx, 0,   h/2, +1, 0);
+  drawCanvasTick(ctx, w,   h/2, -1, 0);
+  ctx.restore();
+}
+
+function drawCanvasTick(ctx, x, y, hd, vd) {
+  const o = MARK_OFF, m = MARK_LEN;
+  if (hd !== 0) {
+    ctx.beginPath(); ctx.moveTo(x + hd*o, y); ctx.lineTo(x + hd*(o+m), y); ctx.stroke();
+  } else {
+    ctx.beginPath(); ctx.moveTo(x, y + vd*o); ctx.lineTo(x, y + vd*(o+m)); ctx.stroke();
+  }
+}
+
+// Per-page crop marks: L-shapes at corners of each placed page rect
+function drawCanvasPageMarks(ctx, px, py, pw, ph) {
+  ctx.save();
+  ctx.strokeStyle = '#555';
+  ctx.lineWidth   = 0.45;
+  const m = 7;
+  const corners = [
+    [px,    py,    +1, +1],
+    [px+pw, py,    -1, +1],
+    [px,    py+ph, +1, -1],
+    [px+pw, py+ph, -1, -1],
+  ];
+  for (const [cx, cy, hd, vd] of corners) {
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + hd*m, cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, cy + vd*m); ctx.stroke();
   }
   ctx.restore();
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────
 // PREVIEW UI
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────
 function showPreview(idx) {
   if (!previewSheets[idx]) return;
   const src  = previewSheets[idx];
@@ -645,20 +794,20 @@ function showPreview(idx) {
   previewCanvas.style.display = 'block';
   previewEmpty.style.display  = 'none';
   previewLabel.textContent    = `Sheet ${idx + 1} of ${totalSheets}`;
-  sheetCounter.textContent    = `Sheet ${idx + 1} of ${totalSheets}`;
+  sheetHeader.textContent     = `Sheet ${idx + 1} of ${totalSheets}`;
 }
 
 function buildThumbs() {
   thumbRow.innerHTML = '';
   previewSheets.forEach((src, i) => {
-    const item = document.createElement('div');
-    item.className = 'thumb-item' + (i === 0 ? ' active' : '');
-    const tc   = document.createElement('canvas');
-    tc.width   = 136;
-    tc.height  = Math.round(136 * src.height / src.width);
+    const item  = document.createElement('div');
+    item.className = 'thumb-item' + (i === currentSheet ? ' active' : '');
+    const tc    = document.createElement('canvas');
+    tc.width    = 116;
+    tc.height   = Math.round(116 * src.height / src.width);
     tc.getContext('2d').drawImage(src, 0, 0, tc.width, tc.height);
-    const img  = document.createElement('img');
-    img.src    = tc.toDataURL('image/jpeg', 0.7);
+    const img   = document.createElement('img');
+    img.src     = tc.toDataURL('image/jpeg', 0.72);
     item.appendChild(img);
     item.addEventListener('click', () => {
       currentSheet = i;
@@ -671,161 +820,206 @@ function buildThumbs() {
 
 fitBtn.addEventListener('click', () => showPreview(currentSheet));
 
-// ─────────────────────────────────────────────────────────────────────────────
-// VECTOR PDF EXPORT  (pdf-lib — embeds original pages as PDF XObjects)
-// ─────────────────────────────────────────────────────────────────────────────
-exportVecBtn.addEventListener('click', async () => {
+// Rebuild sheets (not pages) when settings change
+printMarkCheck.addEventListener('change', () => { if (cachedPages.length) buildAll(false); });
+
+let rebuildTimer;
+bookNameInput.addEventListener('input', () => {
+  clearTimeout(rebuildTimer);
+  rebuildTimer = setTimeout(() => { if (cachedPages.length) buildAll(false); }, 400);
+});
+
+// ─────────────────────────────────────────────────────────────────────────
+// VECTOR PDF EXPORT
+// ─────────────────────────────────────────────────────────────────────────
+downloadBtn.addEventListener('click', exportPdf);
+
+async function exportPdf() {
   if (!pdfBytes) return;
-  setBusy(exportVecBtn, true);
-  toast('Building vector PDF…');
+  setBusy(true);
+  toast('Building PDF…');
 
   try {
     const { PDFDocument, rgb, StandardFonts } = PDFLib;
+    const srcPdf    = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+    const outPdf    = await PDFDocument.create();
+    const font      = await outPdf.embedFont(StandardFonts.Helvetica);
+    const pageCount = Math.min(srcPdf.getPageCount(), MAX_PAGES);
+    const useMarks  = printMarkCheck.checked;
+    const useOutline = outlineCheck.checked;
+    const bookName  = bookNameInput.value.trim();
 
-    // Load source and create output
-    const srcPdf = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
-    const outPdf = await PDFDocument.create();
-    const font   = await outPdf.embedFont(StandardFonts.Helvetica);
+    // Embed source pages
+    let embedded   = null;
+    let rasterData = null;
 
-    // Embed ALL source pages as PDF XObjects (preserves full vector content)
-    const pageCount   = Math.min(srcPdf.getPageCount(), MAX_PAGES);
-    const pageIndices = Array.from({ length: pageCount }, (_, i) => i);
-    const embedded    = await outPdf.embedPdf(srcPdf, pageIndices);
-
-    const sheetCount = Math.ceil(pageCount / PAGES_PER_SHEET);
-
-    for (let s = 0; s < sheetCount; s++) {
-      // New output page at artboard size (landscape 23" × 18")
-      const outPage = outPdf.addPage([SHEET_W_PT, SHEET_H_PT]);
-
-      // Artboard outline
-      outPage.drawRectangle({
-        x: 0, y: 0, width: SHEET_W_PT, height: SHEET_H_PT,
-        borderColor: rgb(0.8, 0.8, 0.8), borderWidth: 0.4,
-      });
-
-      // Print marks (pdf coords: origin bottom-left, Y up)
-      drawPdfMarks(outPage, 0, 0, SHEET_W_PT, SHEET_H_PT, rgb);
-
-      // Sheet label
-      outPage.drawText(`Sheet ${s + 1} / ${sheetCount}`, {
-        x: 4, y: 3, size: 5,
-        font, color: rgb(0.6, 0.6, 0.6),
-      });
-
-      // Place pages
-      for (let pi = 0; pi < PAGES_PER_SHEET; pi++) {
-        const globalIdx = s * PAGES_PER_SHEET + pi;
-        if (globalIdx >= embedded.length) break;
-
-        const col = pi % COLS;
-        const row = Math.floor(pi / ROWS);
-
-        // PDF Y-axis is bottom-up: row 0 = top = SHEET_H - CELL_H
-        const cellX = col * CELL_W_PT;
-        const cellY = SHEET_H_PT - (row + 1) * CELL_H_PT;
-
-        // Cell guide border
-        outPage.drawRectangle({
-          x: cellX, y: cellY, width: CELL_W_PT, height: CELL_H_PT,
-          borderColor: rgb(0.92, 0.92, 0.92), borderWidth: 0.3,
-        });
-
-        // Scale embedded page to fit cell with padding
-        const ep   = embedded[globalIdx];
-        const epSz = ep.size();
-        const avW  = CELL_W_PT - CELL_PAD_PT * 2;
-        const avH  = CELL_H_PT - CELL_PAD_PT * 2;
-        const s_   = Math.min(avW / epSz.width, avH / epSz.height);
-        const dw   = epSz.width  * s_;
-        const dh   = epSz.height * s_;
-        const dx   = cellX + (CELL_W_PT - dw) / 2;
-        const dy   = cellY + (CELL_H_PT - dh) / 2;
-
-        // drawPage preserves all vector content from the source PDF page
-        outPage.drawPage(ep, { x: dx, y: dy, width: dw, height: dh });
-
-        // Page number label
-        outPage.drawText(String(globalIdx + 1), {
-          x: cellX + CELL_W_PT - 14,
-          y: cellY + 3,
-          size: 5, font,
-          color: rgb(0.55, 0.55, 0.55),
-        });
-      }
+    if (useOutline) {
+      toast('Rasterizing pages for text outline…');
+      rasterData = await rasterizeAll(pdfJsDoc, pageCount);
+    } else {
+      const idx = Array.from({ length: pageCount }, (_, i) => i);
+      embedded  = await outPdf.embedPdf(srcPdf, idx);
     }
 
-    // Save and trigger download
-    const outBytes = await outPdf.save();
-    downloadBytes(outBytes, 'book-print-setup.pdf', 'application/pdf');
-    toast(`Vector PDF ready — ${sheetCount} sheet${sheetCount !== 1 ? 's' : ''}`, 'ok');
+    const sheetCount = Math.ceil(pageCount / PPS);
+
+    for (let s = 0; s < sheetCount; s++) {
+      const pg = outPdf.addPage([SHEET_W_PT, SHEET_H_PT]);
+
+      // Artboard outline
+      pg.drawRectangle({
+        x: 0, y: 0, width: SHEET_W_PT, height: SHEET_H_PT,
+        borderColor: rgb(0.85, 0.85, 0.85), borderWidth: 0.4,
+      });
+
+      const pageRects = [];
+
+      for (let pi = 0; pi < PPS; pi++) {
+        const gi  = s * PPS + pi;
+        if (gi >= pageCount) break;
+
+        const col  = pi % COLS;
+        const row  = Math.floor(pi / COLS);
+        const cellX = col * CELL_W_PT;
+        // PDF Y-axis is bottom-up; row 0 = top = SHEET_H - CELL_H
+        const cellY = SHEET_H_PT - (row + 1) * CELL_H_PT;
+
+        // Cell guide
+        pg.drawRectangle({
+          x: cellX, y: cellY, width: CELL_W_PT, height: CELL_H_PT,
+          borderColor: rgb(0.9, 0.9, 0.9), borderWidth: 0.3,
+        });
+
+        let epW, epH;
+        if (useOutline && rasterData) {
+          epW = rasterData[gi].origW;
+          epH = rasterData[gi].origH;
+        } else {
+          const sz = embedded[gi].size();
+          epW = sz.width; epH = sz.height;
+        }
+
+        const avW = CELL_W_PT - CELL_PAD * 2;
+        const avH = CELL_H_PT - CELL_PAD * 2;
+        const sc  = Math.min(avW / epW, avH / epH);
+        const dw  = epW * sc, dh  = epH * sc;
+        const dx  = cellX + (CELL_W_PT - dw) / 2;
+        const dy  = cellY + (CELL_H_PT - dh) / 2;
+
+        if (useOutline && rasterData) {
+          const img = await outPdf.embedPng(rasterData[gi].bytes);
+          pg.drawImage(img, { x: dx, y: dy, width: dw, height: dh });
+        } else {
+          pg.drawPage(embedded[gi], { x: dx, y: dy, width: dw, height: dh });
+        }
+
+        pageRects.push({ x: dx, y: dy, w: dw, h: dh });
+      }
+
+      // Print marks
+      if (useMarks) {
+        drawPdfSheetMarks(pg, 0, 0, SHEET_W_PT, SHEET_H_PT, rgb);
+        for (const r of pageRects) drawPdfPageMarks(pg, r.x, r.y, r.w, r.h, rgb);
+      }
+
+      // Book name + Forma label
+      const fNum  = String(Math.floor(s / 2) + 1).padStart(2, '0');
+      const fSide = s % 2 === 0 ? 'Front' : 'Back';
+      const lbl   = (bookName ? bookName + '   ' : '') + `Forma ${fNum} ${fSide}`;
+      pg.drawText(lbl, {
+        x: SHEET_W_PT - LBL_X_FROM_R,
+        y: LBL_Y_FROM_B,
+        size: 6, font,
+        color: rgb(0.35, 0.35, 0.35),
+      });
+    }
+
+    const bytes = await outPdf.save();
+    dlBytes(bytes, 'print-setup.pdf', 'application/pdf');
+    toast(`PDF ready — ${sheetCount} sheet${sheetCount !== 1 ? 's' : ''}`, 'ok');
   } catch (err) {
     toast('Export failed: ' + err.message, 'err');
     console.error(err);
   } finally {
-    setBusy(exportVecBtn, false);
-  }
-});
-
-// Print marks using pdf-lib drawing (PDF coords: origin bottom-left, Y up)
-function drawPdfMarks(page, x, y, w, h, rgb) {
-  const o = 4, m = MARK_PT, lw = 0.5;
-  const black = rgb(0, 0, 0);
-  const corners = [
-    [x,   y+h, +1, -1],   // top-left
-    [x+w, y+h, -1, -1],   // top-right
-    [x,   y,   +1, +1],   // bottom-left
-    [x+w, y,   -1, +1],   // bottom-right
-  ];
-  for (const [cx, cy, hd, vd] of corners) {
-    page.drawLine({ start:{x:cx+hd*o, y:cy},     end:{x:cx+hd*(o+m), y:cy},     thickness:lw, color:black });
-    page.drawLine({ start:{x:cx,      y:cy+vd*o}, end:{x:cx,          y:cy+vd*(o+m)}, thickness:lw, color:black });
+    setBusy(false);
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PNG EXPORT (current preview sheet — for proofing only)
-// ─────────────────────────────────────────────────────────────────────────────
-exportPngBtn.addEventListener('click', () => {
-  const src = previewSheets[currentSheet];
-  if (!src) return;
-  setBusy(exportPngBtn, true);
-  try {
-    downloadBytes(
-      dataURLtoBytes(src.toDataURL('image/png')),
-      `sheet-${currentSheet + 1}-preview.png`,
-      'image/png'
-    );
-    toast('PNG downloaded (preview only — use Vector PDF for print)', 'ok');
-  } catch (err) {
-    toast('PNG export failed', 'err');
-  } finally {
-    setBusy(exportPngBtn, false);
+// PDF sheet corner marks + center tick marks (pdf-lib, Y-up coords)
+function drawPdfSheetMarks(pg, x, y, w, h, rgb) {
+  const blk = rgb(0, 0, 0);
+  const o = MARK_OFF, m = MARK_LEN, lw = 0.7;
+  // Corners: [cx, cy, hDir, vDir]  — Y up, so top = y+h
+  const corners = [
+    [x,   y+h, +1, -1],  // top-left
+    [x+w, y+h, -1, -1],  // top-right
+    [x,   y,   +1, +1],  // bottom-left
+    [x+w, y,   -1, +1],  // bottom-right
+  ];
+  for (const [cx, cy, hd, vd] of corners) {
+    pg.drawLine({ start:{x:cx+hd*o,y:cy},     end:{x:cx+hd*(o+m),y:cy},     thickness:lw, color:blk });
+    pg.drawLine({ start:{x:cx,y:cy+vd*o},     end:{x:cx,y:cy+vd*(o+m)},     thickness:lw, color:blk });
   }
-});
+  // Center ticks
+  const t = (ax,ay,hd2,vd2) => {
+    if (hd2 !== 0) pg.drawLine({ start:{x:ax+hd2*o,y:ay}, end:{x:ax+hd2*(o+m),y:ay}, thickness:lw, color:blk });
+    else           pg.drawLine({ start:{x:ax,y:ay+vd2*o}, end:{x:ax,y:ay+vd2*(o+m)}, thickness:lw, color:blk });
+  };
+  t(w/2, y+h, 0, -1);  // top center
+  t(w/2, y,   0, +1);  // bottom center
+  t(x,   h/2, +1, 0);  // left center
+  t(x+w, h/2, -1, 0);  // right center
+}
 
-// ─────────────────────────────────────────────────────────────────────────────
+// Per-page marks in PDF (Y-up: py is bottom of placed rect)
+function drawPdfPageMarks(pg, px, py, pw, ph, rgb) {
+  const gray = rgb(0.3, 0.3, 0.3);
+  const m = 6, lw = 0.4;
+  const corners = [
+    [px,    py+ph, +1, -1],  // top-left
+    [px+pw, py+ph, -1, -1],  // top-right
+    [px,    py,    +1, +1],  // bottom-left
+    [px+pw, py,    -1, +1],  // bottom-right
+  ];
+  for (const [cx, cy, hd, vd] of corners) {
+    pg.drawLine({ start:{x:cx,y:cy}, end:{x:cx+hd*m,y:cy},    thickness:lw, color:gray });
+    pg.drawLine({ start:{x:cx,y:cy}, end:{x:cx,y:cy+vd*m},    thickness:lw, color:gray });
+  }
+}
+
+// Rasterize all pages at 150 DPI for "outline text" export
+async function rasterizeAll(doc, count) {
+  const SCALE = 150 / 72;
+  const result = [];
+  for (let p = 1; p <= count; p++) {
+    const page  = await doc.getPage(p);
+    const vp    = page.getViewport({ scale: SCALE });
+    const cv    = document.createElement('canvas');
+    cv.width    = vp.width; cv.height = vp.height;
+    await page.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise;
+    const url   = cv.toDataURL('image/png');
+    const b64   = url.split(',')[1];
+    const bin   = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const origVp = page.getViewport({ scale: 1 });
+    result.push({ bytes, origW: origVp.width, origH: origVp.height });
+  }
+  return result;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
 // HELPERS
-// ─────────────────────────────────────────────────────────────────────────────
-function downloadBytes(bytes, filename, mime) {
-  const blob = new Blob([bytes], { type: mime });
-  const url  = URL.createObjectURL(blob);
-  const a    = Object.assign(document.createElement('a'), { href: url, download: filename });
-  a.click();
+// ─────────────────────────────────────────────────────────────────────────
+function dlBytes(bytes, filename, mime) {
+  const url = URL.createObjectURL(new Blob([bytes], { type: mime }));
+  Object.assign(document.createElement('a'), { href: url, download: filename }).click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-function dataURLtoBytes(dataURL) {
-  const b64  = dataURL.split(',')[1];
-  const bin  = atob(b64);
-  const out  = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
-  return out;
-}
-
-function setBusy(btn, state) {
-  btn.classList.toggle('busy', state);
-  btn.disabled = state;
+function setBusy(state) {
+  downloadBtn.classList.toggle('busy', state);
+  downloadBtn.disabled = state;
 }
 
 function setProgress(pct) {
