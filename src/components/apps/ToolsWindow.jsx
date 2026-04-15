@@ -7,7 +7,7 @@ export default function ToolsWindow({ activeTool }) {
 
   return (
     <Window id="tools" title={tool.name}>
-      <div className="w-full h-full relative overflow-hidden rounded-b-[20px]">
+      <div className="w-full h-full relative overflow-hidden ">
         {tool.url ? (
           <iframe
             key={tool.id}

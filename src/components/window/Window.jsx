@@ -73,7 +73,7 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
         x:            win.position.x,
         y:            win.position.y,
         pointerEvents:'auto',
-        borderRadius: win.isMaximized ? 0 : undefined,
+        borderRadius: win.isMaximized ? 0 : 14,
       }}
       initial={{ opacity: 0, scale: 0.92, y: win.position.y + 20 }}
       animate={{
@@ -83,7 +83,7 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
         y:       win.position.y,
         width:   win.size.width,
         height:  win.size.height,
-        borderRadius: win.isMaximized ? 0 : 20,
+        borderRadius: win.isMaximized ? 0 : 14,
       }}
       exit={{    opacity: 0, scale: 0.88, transition: { duration: 0.15 } }}
       drag={!win.isMaximized}
@@ -132,8 +132,8 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
       {/* Content */}
       <div className={
         hideTitleBar
-          ? 'h-full overflow-hidden rounded-[20px]'
-          : 'h-[calc(100%-40px)] overflow-hidden rounded-b-[20px]'
+          ? 'h-full overflow-hidden'
+          : 'h-[calc(100%-40px)] overflow-hidden'
       }>
         {children}
       </div>

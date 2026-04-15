@@ -174,12 +174,12 @@ export default function WorkWindow() {
   return (
     <>
     <Window id="portfolio" title="Portfolio" toolbar={toolbar}>
-      <div className="flex h-full overflow-hidden rounded-b-[20px]">
+      <div className="flex h-full overflow-hidden">
 
         {/* ── Sidebar ─────────────────────────────────────────────────────── */}
         <div
           className="flex-shrink-0 flex flex-col overflow-y-auto window-scroll py-3 gap-0.5"
-          style={{ width: 180, borderRight: '1px solid var(--border)' }}
+          style={{ width: 180, background: 'var(--sidebar-bg)', borderRight: '1px solid var(--border)' }}
         >
           {/* All */}
           <button

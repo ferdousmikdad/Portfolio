@@ -274,7 +274,7 @@ export default function NotesWindow() {
         {/* ── Sidebar ── */}
         <div
           className="flex flex-col flex-shrink-0 overflow-y-auto window-scroll"
-          style={{ width: 160, borderRight: '1px solid var(--border)' }}
+          style={{ width: 160, background: 'var(--sidebar-bg)', borderRight: '1px solid var(--border)' }}
         >
           <div className="px-4 pt-4 pb-2">
             <p className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--dot)', letterSpacing: '0.1em' }}>
@@ -301,7 +301,7 @@ export default function NotesWindow() {
         {/* ── List / Drawing ── */}
         <div
           className="flex flex-col flex-shrink-0 overflow-y-auto window-scroll"
-          style={{ width: 220, borderRight: '1px solid var(--border)' }}
+          style={{ width: 220, background: 'var(--sidebar-bg)', borderRight: '1px solid var(--border)' }}
         >
           {activeCategory === 'drawing' ? (
             <div className="flex items-center justify-center h-full text-body text-xs">

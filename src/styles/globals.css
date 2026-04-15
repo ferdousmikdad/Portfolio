@@ -63,11 +63,13 @@
   --mk-plus-hover-text: #1c1c1e;
   --mk-input-color:     #1c1c1e;
   --mk-input-ph:        #9a9690;
-  --window-bg:      rgba(255, 255, 255, 0.55);
-  --titlebar-bg:    rgba(0, 0, 0, 0.01);
-  --dock-bg:        rgba(255, 255, 255, 0.45);
-  --border:         rgba(0, 0, 0, 0.08);
+  --window-bg:      #F7F5F0;
+  --sidebar-bg:     #EFECE5;
+  --titlebar-bg:    #EFECE5;
+  --dock-bg:        rgba(255, 255, 255, 0.55);
+  --border:         rgba(0, 0, 0, 0.07);
   --border-dock:    rgba(0, 0, 0, 0.10);
+  --window-shadow:  none;
   --headline:       #1c1c1e;
   --body:           #6b6861;
   --dot:            #b8b4a8;
@@ -119,11 +121,13 @@
   --mk-plus-hover-text: #d0cdc4;
   --mk-input-color:     #d0cdc4;
   --mk-input-ph:        #4a4845;
-  --window-bg:      rgba(255, 255, 255, 0.01);
-  --titlebar-bg:    rgba(255, 255, 255, 0.01);
-  --dock-bg:        rgba(255, 255, 255, 0.03);
-  --border:         rgba(255, 255, 255, 0.08);
-  --border-dock:    rgba(255, 255, 255, 0.10);
+  --window-bg:      #1E1F20;
+  --sidebar-bg:     #1C1D1E;
+  --titlebar-bg:    #1C1D1E;
+  --dock-bg:        rgba(30, 31, 32, 0.85);
+  --border:         rgba(255, 255, 255, 0.07);
+  --border-dock:    rgba(255, 255, 255, 0.09);
+  --window-shadow:  none;
   --headline:       #f3f0e5;
   --body:           #aba795;
   --dot:            #4b4941;
@@ -200,12 +204,11 @@
   .window-shell {
     position: relative;
     background: var(--window-bg);
-    backdrop-filter: blur(8px) saturate(1.1);
-    -webkit-backdrop-filter: blur(8px) saturate(1.1);
-    border-radius: 20px;
+    border-radius: 14px;
     border: 1px solid var(--border);
-    box-shadow: none;
-    transition: background 0.3s ease, border-color 0.3s ease;
+    box-shadow: var(--window-shadow);
+    overflow: hidden;
+    transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
   }
 
   .window-titlebar {
@@ -214,8 +217,9 @@
     align-items: center;
     padding: 0 12px;
     background: var(--titlebar-bg);
-    border-bottom: none;
+    border-bottom: 1px solid var(--border);
     cursor: grab;
+    flex-shrink: 0;
   }
   .window-titlebar:active { cursor: grabbing; }
 
