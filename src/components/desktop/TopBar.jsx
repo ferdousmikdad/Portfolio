@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, Settings, X, Moon, Sun, Volume2, VolumeX, Check } from 'lucide-react'
+import { Search, X, Moon, Sun, Volume2, VolumeX, Check, Wifi } from 'lucide-react'
 import useWindowStore from '@/store/windowStore'
 import useThemeStore from '@/store/themeStore'
 import useSoundStore from '@/store/soundStore'
 import mikdadHeadUrl from '@/assets/icons/mikdad-head.svg?url'
+import macSettingUrl from '@/assets/icons/macsetting.svg?url'
 import projects from '@/data/projects'
 
 // ── Nav items (left side) ─────────────────────────────────────────────────────
@@ -15,19 +16,25 @@ const NAV_ITEMS = [
 ]
 
 // ── Live clock ────────────────────────────────────────────────────────────────
+const DAYS   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+
 function Clock() {
   const [time, setTime] = useState(() => new Date())
   useEffect(() => {
     const t = setInterval(() => setTime(new Date()), 1000)
     return () => clearInterval(t)
   }, [])
-  const h = time.getHours()
-  const m = String(time.getMinutes()).padStart(2, '0')
-  const ampm = h >= 12 ? 'PM' : 'AM'
-  const h12  = h % 12 || 12
+  const day   = DAYS[time.getDay()]
+  const month = MONTHS[time.getMonth()]
+  const date  = time.getDate()
+  const h     = time.getHours()
+  const m     = String(time.getMinutes()).padStart(2, '0')
+  const ampm  = h >= 12 ? 'PM' : 'AM'
+  const h12   = h % 12 || 12
   return (
-    <span className="topbar-label select-none tabular-nums">
-      {h12}:{m} {ampm}
+    <span className="topbar-label select-none tabular-nums" style={{ whiteSpace: 'nowrap' }}>
+      {day} {month} {date} {h12}:{m}{ampm}
     </span>
   )
 }
@@ -175,33 +182,13 @@ function SettingsPanel({ onClose }) {
   )
 }
 
-// ── Language panel ────────────────────────────────────────────────────────────
-function LangPanel({ lang, onChange, onClose }) {
-  return (
-    <Panel align="right" style={{ minWidth: 160 }}>
-      <p className="topbar-section-label">Language</p>
-      {[{ id: 'en', label: 'English', native: 'English' },
-        { id: 'ar', label: 'Arabic',  native: 'العربية' }].map((l) => (
-        <button
-          key={l.id}
-          className="topbar-panel-item"
-          onClick={() => { onChange(l.id); onClose() }}
-        >
-          <span className="flex-1 text-[12px]" style={{ color: 'var(--headline)' }}>{l.native}</span>
-          {lang === l.id && <Check size={11} style={{ color: '#cf0506', flexShrink: 0 }} />}
-        </button>
-      ))}
-    </Panel>
-  )
-}
 
 // ── Main TopBar ───────────────────────────────────────────────────────────────
 export default function TopBar() {
   const { navigate, activePage } = useWindowStore()
 
-  const [openPanel, setOpenPanel] = useState(null) // 'search' | 'status' | 'settings' | 'lang'
+  const [openPanel, setOpenPanel] = useState(null) // 'search' | 'status' | 'settings'
   const [status,    setStatus]    = useState('available')
-  const [lang,      setLang]      = useState('en')
 
   const barRef = useRef(null)
 
@@ -262,6 +249,11 @@ export default function TopBar() {
       {/* ── Right: utilities ───────────────────────────────────────────────── */}
       <div className="flex items-center gap-0.5">
 
+        {/* WiFi */}
+        <button className="topbar-icon-btn" title="WiFi">
+          <Wifi size={12} />
+        </button>
+
         {/* Search */}
         <div className="relative">
           <button
@@ -281,7 +273,23 @@ export default function TopBar() {
           </AnimatePresence>
         </div>
 
-        {/* Status */}
+        {/* Settings — macOS style */}
+        <div className="relative">
+          <button
+            className={`topbar-icon-btn ${openPanel === 'settings' ? 'active' : ''}`}
+            onClick={() => toggle('settings')}
+            title="Control Center"
+          >
+            <img src={macSettingUrl} alt="settings" width={13} height={13} style={{ opacity: 0.85 }} />
+          </button>
+          <AnimatePresence>
+            {openPanel === 'settings' && (
+              <SettingsPanel onClose={() => setOpenPanel(null)} />
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Status dot */}
         <div className="relative">
           <button
             className={`topbar-status-btn ${openPanel === 'status' ? 'active' : ''}`}
@@ -306,48 +314,8 @@ export default function TopBar() {
 
         <div className="topbar-sep" />
 
-        {/* Language toggle */}
-        <div className="relative">
-          <button
-            className={`topbar-lang-btn ${openPanel === 'lang' ? 'active' : ''}`}
-            onClick={() => toggle('lang')}
-            title="Language"
-          >
-            {lang === 'en' ? 'EN' : 'AR'}
-          </button>
-          <AnimatePresence>
-            {openPanel === 'lang' && (
-              <LangPanel
-                lang={lang}
-                onChange={setLang}
-                onClose={() => setOpenPanel(null)}
-              />
-            )}
-          </AnimatePresence>
-        </div>
-
-        <div className="topbar-sep" />
-
         {/* Clock */}
         <Clock />
-
-        <div className="topbar-sep" />
-
-        {/* Settings */}
-        <div className="relative">
-          <button
-            className={`topbar-icon-btn ${openPanel === 'settings' ? 'active' : ''}`}
-            onClick={() => toggle('settings')}
-            title="Settings"
-          >
-            <Settings size={12} />
-          </button>
-          <AnimatePresence>
-            {openPanel === 'settings' && (
-              <SettingsPanel onClose={() => setOpenPanel(null)} />
-            )}
-          </AnimatePresence>
-        </div>
 
       </div>
     </div>

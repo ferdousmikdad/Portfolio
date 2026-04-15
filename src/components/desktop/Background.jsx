@@ -1,5 +1,29 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import useThemeStore from '@/store/themeStore'
+
+// ── Parse bg-config.md ────────────────────────────────────────────────────────
+function parseBgConfig(text) {
+  const get = (key) => {
+    const match = text.match(new RegExp(`^${key}:\\s*(\\S+)`, 'm'))
+    return match ? match[1].trim() : null
+  }
+  return {
+    animatedbg: get('animatedbg') === 'true',
+    wallpaper:  get('wallpaper')  === 'true',
+    image:      get('image') ?? 'wallpaper.jpg',
+  }
+}
+
+function useBackgroundConfig() {
+  const [config, setConfig] = useState({ animatedbg: true, wallpaper: false, image: 'wallpaper.jpg' })
+  useEffect(() => {
+    fetch('/bg-config.md')
+      .then((r) => r.text())
+      .then((text) => setConfig(parseBgConfig(text)))
+      .catch(() => {}) // keep default if file missing
+  }, [])
+  return config
+}
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
@@ -26,9 +50,8 @@ const ORBS_LIGHT = [
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function Background() {
+function AnimatedBackground({ isDark }) {
   const canvasRef = useRef(null)
-  const isDark    = useThemeStore((s) => s.isDark)
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -176,4 +199,29 @@ export default function Background() {
       />
     </>
   )
+}
+
+function WallpaperBackground({ image }) {
+  return (
+    <div
+      className="absolute inset-0 w-full h-full"
+      style={{
+        backgroundImage: `url('/${image}')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        zIndex: 0,
+      }}
+    />
+  )
+}
+
+export default function Background() {
+  const isDark  = useThemeStore((s) => s.isDark)
+  const config  = useBackgroundConfig()
+
+  // animatedbg takes priority if both are true
+  if (config.animatedbg) return <AnimatedBackground isDark={isDark} />
+  if (config.wallpaper)  return <WallpaperBackground image={config.image} />
+  return <AnimatedBackground isDark={isDark} />
 }
