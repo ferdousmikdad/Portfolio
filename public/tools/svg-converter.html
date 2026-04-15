@@ -3,163 +3,316 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Image to SVG — Tools</title>
-  <script>if (window.self !== window.top) document.documentElement.dataset.embed = '1';</script>
-  <style>[data-embed='1'] header { display: none !important; }</style>
+  <title>Image Trace</title>
+  <script>
+    (function () {
+      if (window.self !== window.top) document.documentElement.dataset.embed = '1';
+      try {
+        if (window.parent.document.documentElement.classList.contains('dark'))
+          document.documentElement.classList.add('dark');
+      } catch (e) {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/imagetracerjs"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
-    @font-face {
-      font-family: 'BoldPixels';
-      src: url('../assets/BoldPixels.otf') format('opentype');
-    }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    * { font-family: 'Fira Code', monospace; }
-    .title-font { font-family: 'BoldPixels', 'Courier New', monospace; letter-spacing: 2px; }
+    @font-face { font-family:'SF Pro Display'; src:url('../fonts/SF-Pro-Display-Regular.otf') format('opentype'); font-weight:400; }
+    @font-face { font-family:'SF Pro Display'; src:url('../fonts/SF-Pro-Display-Medium.otf')  format('opentype'); font-weight:500; }
+    @font-face { font-family:'SF Pro Display'; src:url('../fonts/SF-Pro-Display-Semibold.otf') format('opentype'); font-weight:600; }
+    @font-face { font-family:'SF Pro Display'; src:url('../fonts/SF-Pro-Display-Bold.otf')    format('opentype'); font-weight:700; }
 
+    :root {
+      --bg:           #F2EDD9;
+      --border:       rgba(0,0,0,0.08);
+      --headline:     #1c1c1e;
+      --body:         #6b6861;
+      --social-bg:    rgba(0,0,0,0.05);
+      --social-hover: rgba(0,0,0,0.10);
+      --input-bg:     rgba(0,0,0,0.04);
+      --input-border: rgba(0,0,0,0.08);
+      --canvas-bg:    rgba(0,0,0,0.04);
+      --accent:       #cf0506;
+      --scrollbar:    rgba(0,0,0,0.10);
+      --slider-track: rgba(0,0,0,0.12);
+    }
+    .dark {
+      --bg:           #080808;
+      --border:       rgba(255,255,255,0.08);
+      --headline:     #f3f0e5;
+      --body:         #aba795;
+      --social-bg:    rgba(255,255,255,0.05);
+      --social-hover: rgba(255,255,255,0.10);
+      --input-bg:     rgba(255,255,255,0.04);
+      --input-border: rgba(255,255,255,0.08);
+      --canvas-bg:    rgba(255,255,255,0.03);
+      --accent:       #cf0506;
+      --scrollbar:    rgba(255,255,255,0.10);
+      --slider-track: rgba(255,255,255,0.10);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; }
+
     body {
-      background-color: #09090b;
-      color: #e4e4e7;
-      min-height: 100vh;
+      font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--headline);
+      height: 100%;
       display: flex;
       flex-direction: column;
-      overflow-y: auto;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* ── Header ── */
-    .hdr-btn {
-      display: flex; align-items: center; gap: 6px;
-      padding: 5px 14px;
-      font-family: 'BoldPixels', monospace;
-      font-size: 10px; letter-spacing: 1px;
-      border: 1.5px solid #3f3f46; border-radius: 6px;
-      background: transparent; color: #71717a;
-      cursor: pointer;
-      transition: border-color 0.15s, color 0.15s;
-    }
-    .hdr-btn:hover { border-color: #ef4444; color: #ef4444; }
+    [data-embed='1'] .page-header { display: none !important; }
 
-    /* ── Main layout ── */
-    .main-content {
+    /* ── Standalone header ── */
+    .page-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .back-link { font-size:12px; font-weight:500; color:var(--body); text-decoration:none; transition:color .15s; }
+    .back-link:hover { color:var(--accent); }
+    .hdr-sep { width:1px; height:14px; background:var(--border); }
+    .hdr-title { font-size:13px; font-weight:500; color:var(--headline); }
+
+    /* ── Main area ── */
+    .main {
       flex: 1;
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 32px 24px 60px;
-      gap: 20px;
+      overflow: hidden;
+      min-height: 0;
     }
 
-    /* ── Drop state ── */
-    #dropState { width: 100%; max-width: 680px; }
-
-    .drop-card {
-      background: #111113;
-      border: 1px solid #1c1c1e;
-      border-radius: 14px;
-      padding: 48px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 28px;
+    /* ══════════════════════════════════════
+       DROP STATE
+    ══════════════════════════════════════ */
+    #dropState {
+      width: 100%; flex: 1;
+      display: flex; align-items: stretch;
+      padding: 120px;
+      min-height: 0;
     }
-
+    :root .drop-zone {
+      background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='14' ry='14' stroke='rgba(0,0,0,0.18)' stroke-width='1.5' stroke-dasharray='6 6' stroke-linecap='square'/%3e%3c/svg%3e");
+    }
+    .dark .drop-zone {
+      background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='14' ry='14' stroke='rgba(255,255,255,0.12)' stroke-width='1.5' stroke-dasharray='6 6' stroke-linecap='square'/%3e%3c/svg%3e");
+    }
     .drop-zone {
-      width: 100%;
-      border: 2px dashed #27272a; border-radius: 12px;
-      padding: 64px 40px;
+      width: 100%; height: 100%;
+      border: none; border-radius: 14px; position: relative;
       display: flex; flex-direction: column;
-      align-items: center; gap: 16px;
-      cursor: pointer;
-      transition: border-color 0.2s, background 0.2s;
+      align-items: center; justify-content: center;
+      gap: 12px; cursor: pointer;
+      transition: background-color 0.2s;
     }
     .drop-zone:hover, .drop-zone.drag-over {
-      border-color: #ef4444;
-      background: rgba(239, 68, 68, 0.04);
+      background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='14' ry='14' stroke='rgba(207,5,6,0.5)' stroke-width='1.5' stroke-dasharray='6 6' stroke-linecap='square'/%3e%3c/svg%3e");
+      background-color: rgba(207,5,6,0.03);
     }
-    .drop-label {
-      font-size: 10px; letter-spacing: 3px;
-      text-transform: uppercase; color: #52525b;
-      font-family: 'BoldPixels', monospace;
-    }
-    .drop-sub { font-size: 11px; color: #3f3f46; }
-    .choose-btn {
-      margin-top: 4px;
-      padding: 7px 22px;
-      border: 1.5px solid #3f3f46; border-radius: 8px;
-      font-size: 11px; font-family: 'BoldPixels', monospace;
-      letter-spacing: 1px; color: #71717a; background: transparent;
-      cursor: pointer; transition: border-color 0.15s, color 0.15s;
-    }
-    .choose-btn:hover { border-color: #ef4444; color: #ef4444; }
+    .drop-icon { opacity: 0.35; }
+    .drop-zone-label { font-size:12px; font-weight:500; color:var(--body); opacity:.55; }
+    .drop-zone input { display:none; }
 
-    /* ── Image state ── */
+    /* ══════════════════════════════════════
+       IMAGE STATE — two-column layout
+    ══════════════════════════════════════ */
     #imageState {
       display: none;
-      width: 100%; max-width: 860px;
-      flex-direction: column; gap: 20px;
+      width: 100%; height: 100%;
+      overflow: hidden;
     }
     #imageState.show { display: flex; }
 
-    /* ── Tool card ── */
-    .tool-card {
-      width: 100%;
-      background: #111113;
-      border: 1px solid #1c1c1e;
-      border-radius: 14px;
+    /* ── Left controls column ── */
+    .ctrl-col {
+      width: 270px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 12px;
+      gap: 0;
+    }
+
+    .ctrl-panel {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
       overflow: hidden;
     }
-    .card-header {
-      padding: 12px 20px;
-      border-bottom: 1px solid #1c1c1e;
+
+    .ctrl-panel-header {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
       display: flex; align-items: center; justify-content: space-between;
+    }
+    .ctrl-panel-title {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.14em;
+      color: var(--body); opacity: 0.5;
+    }
+
+    .ctrl-panel-body {
+      padding: 16px 14px;
+      display: flex; flex-direction: column;
+      gap: 20px;
+    }
+
+    .ctrl-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 2px 0;
+    }
+
+    .ctrl-group { display: flex; flex-direction: column; gap: 7px; }
+
+    .ctrl-label-row {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .ctrl-label {
+      font-size: 10px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--body); opacity: 0.6;
+    }
+    .ctrl-value {
+      font-family: 'SF Mono','Fira Code',ui-monospace,monospace;
+      font-size: 10px; font-weight: 600;
+      color: var(--accent);
+    }
+
+    /* ── Sliders ── */
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%; height: 3px;
+      border-radius: 2px;
+      background: var(--slider-track);
+      outline: none; cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      box-shadow: 0 0 0 2px var(--bg);
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer; border: none;
+    }
+
+    /* ── Reset button ── */
+    .reset-btn {
+      width: 100%; height: 34px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--body);
+      font-family: inherit;
+      font-size: 11px; font-weight: 500;
+      cursor: pointer;
+      transition: background .15s, color .15s, border-color .15s;
+    }
+    .reset-btn:hover { background: var(--social-hover); color: var(--headline); }
+
+    /* ── Right preview column ── */
+    .preview-col {
+      flex: 1;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      padding: 12px 12px 12px 0;
+      gap: 20px;
+      min-width: 0;
+    }
+
+    /* presets row */
+    .presets-row {
+      display: flex; align-items: center; gap: 6px;
       flex-shrink: 0;
     }
-    .card-label {
-      font-size: 10px; text-transform: uppercase;
-      letter-spacing: 0.14em; color: #52525b; font-weight: 600;
+    .presets-label {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.14em;
+      color: var(--body); opacity: 0.5;
+      margin-right: 2px;
+    }
+    .preset-btn {
+      height: 32px; padding: 0 14px;
+      border-radius: 8px;
+      font-size: 12px; font-weight: 500;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--social-bg);
+      color: var(--body);
+      font-family: inherit;
+      transition: background .15s, color .15s, border-color .15s;
+      white-space: nowrap;
+    }
+    .preset-btn:hover { background: var(--social-hover); color: var(--headline); }
+    .preset-btn.active {
+      background: rgba(207,5,6,0.09);
+      border-color: rgba(207,5,6,0.3);
+      color: var(--accent);
     }
 
-    /* ── Panels ── */
-    .panels-row {
+    /* images row */
+    .images-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
-    }
-    .img-panel { display: flex; flex-direction: column; }
-    .img-panel:first-child { border-right: 1px solid #1c1c1e; }
-
-    .panel-header {
-      padding: 8px 16px;
-      border-bottom: 1px solid #1c1c1e;
-      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px;
+      flex: 1;
+      min-height: 0;
     }
 
-    .img-panel-body {
-      height: 360px;
+    .img-pane {
+      display: flex; flex-direction: column; gap: 8px;
+      min-height: 0;
+    }
+    .img-pane-label {
+      font-size: 10px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.12em;
+      color: var(--body); opacity: 0.5;
+      flex-shrink: 0;
+    }
+    .img-pane-body {
+      aspect-ratio: 1 / 1;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--canvas-bg);
       display: flex; align-items: center; justify-content: center;
-      background: #0c0c0e;
-      overflow: hidden;
-      position: relative;
+      overflow: hidden; position: relative;
+      padding: 10px;
+      width: 100%;
+    }
+    .img-pane-body canvas {
+      max-width: 100%; max-height: 100%;
+      width: auto; height: auto;
+      display: block;
     }
 
-    /* Checkerboard for SVG panel */
+    /* checker bg for SVG pane */
     .checker {
       background-image:
-        linear-gradient(45deg, #161618 25%, transparent 25%),
-        linear-gradient(-45deg, #161618 25%, transparent 25%),
-        linear-gradient(45deg, transparent 75%, #161618 75%),
-        linear-gradient(-45deg, transparent 75%, #161618 75%);
-      background-size: 16px 16px;
-      background-position: 0 0, 0 8px, 8px -8px, -8px 0;
-      background-color: #0c0c0e;
+        linear-gradient(45deg, var(--input-bg) 25%, transparent 25%),
+        linear-gradient(-45deg, var(--input-bg) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, var(--input-bg) 75%),
+        linear-gradient(-45deg, transparent 75%, var(--input-bg) 75%);
+      background-size: 14px 14px;
+      background-position: 0 0, 0 7px, 7px -7px, -7px 0;
     }
 
-    canvas#originalCanvas { max-width: 90%; max-height: 90%; display: block; }
-
+    /* SVG result container */
     #svgResult {
-      width: 90%; height: 90%;
+      width: 100%; height: 100%;
       display: flex; align-items: center; justify-content: center;
     }
     #svgResult svg {
@@ -167,316 +320,258 @@
       width: auto; height: auto; display: block;
     }
 
-    /* Processing overlay */
-    .processing-overlay {
-      display: none;
-      position: absolute; inset: 0;
-      background: rgba(9, 9, 11, 0.85);
-      align-items: center; justify-content: center;
-      flex-direction: column; gap: 12px;
-      z-index: 10;
+    /* processing overlay */
+    #processingOverlay {
+      display: none; position: absolute; inset: 0;
+      background: rgba(0,0,0,0.45);
+      backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+      align-items: center; justify-content: center; z-index: 10;
+      border-radius: 10px;
     }
-    .processing-overlay.show { display: flex; }
-    .processing-text {
-      font-size: 10px; color: #ef4444;
-      letter-spacing: 2px; text-transform: uppercase;
-    }
-
-    /* Spinner */
-    .spinner {
-      width: 24px; height: 24px;
-      border: 2px solid #27272a;
-      border-top-color: #ef4444;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ── Controls ── */
-    .controls-body {
-      padding: 20px 24px;
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 20px 28px;
-      align-items: start;
-    }
-    .ctrl-group { display: flex; flex-direction: column; gap: 8px; }
-    .ctrl-label-row { display: flex; align-items: center; justify-content: space-between; }
-    .ctrl-label {
-      font-size: 10px; color: #52525b;
-      text-transform: uppercase; letter-spacing: 0.1em;
-    }
-    .ctrl-value { font-size: 10px; color: #ef4444; font-variant-numeric: tabular-nums; }
-
-    /* Range sliders */
-    input[type="range"] {
-      -webkit-appearance: none; width: 100%; height: 3px;
-      border-radius: 2px; background: #27272a; outline: none; cursor: pointer;
-    }
-    input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none; width: 13px; height: 13px;
-      border-radius: 50%; background: #ef4444; cursor: pointer;
-    }
-    input[type="range"]::-moz-range-thumb {
-      width: 13px; height: 13px;
-      border-radius: 50%; background: #ef4444; border: none; cursor: pointer;
+    #processingOverlay.show { display: flex; }
+    .processing-label {
+      font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.12em;
+      color: var(--accent);
     }
 
-    /* Preset buttons */
-    .preset-row { display: flex; gap: 5px; flex-wrap: wrap; }
-    .preset-btn {
-      padding: 4px 12px; font-size: 10px;
-      font-family: 'BoldPixels', monospace; letter-spacing: 1px;
-      border: 1.5px solid #3f3f46; border-radius: 6px;
-      background: transparent; color: #71717a;
-      cursor: pointer; transition: border-color 0.15s, color 0.15s;
+    /* action buttons row */
+    .actions-row {
+      display: flex; align-items: center; gap: 8px;
+      flex-shrink: 0;
     }
-    .preset-btn:hover, .preset-btn.active { border-color: #ef4444; color: #ef4444; }
-
-    /* Download buttons */
-    .dl-btn {
-      padding: 5px 14px; font-size: 10px;
-      font-family: 'BoldPixels', monospace; letter-spacing: 1px;
-      border-radius: 6px; cursor: pointer;
-      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    .action-btn {
+      height: 32px; padding: 0 16px;
+      border-radius: 8px;
+      font-size: 12px; font-weight: 600;
+      cursor: pointer; font-family: inherit;
+      transition: background .15s, opacity .15s, color .15s;
+      white-space: nowrap;
     }
-    .dl-outline { border: 1.5px solid #3f3f46; background: transparent; color: #71717a; }
-    .dl-outline:hover { border-color: #ef4444; color: #ef4444; }
-    .dl-solid { border: 1.5px solid #ef4444; background: #ef4444; color: #fff; }
-    .dl-solid:hover { background: #dc2626; border-color: #dc2626; }
-
-    /* Reset */
-    .reset-btn {
-      width: 100%; padding: 8px;
-      border: 1.5px solid #27272a; border-radius: 8px;
-      background: transparent; color: #52525b;
-      font-size: 10px; font-family: 'BoldPixels', monospace;
-      letter-spacing: 1px; text-transform: uppercase;
-      cursor: pointer; transition: border-color 0.15s, color 0.15s;
-      margin-top: 4px;
+    .action-btn-ghost {
+      border: 1px solid var(--border);
+      background: var(--social-bg);
+      color: var(--body);
     }
-    .reset-btn:hover { border-color: #52525b; color: #a1a1aa; }
+    .action-btn-ghost:hover { background: var(--social-hover); color: var(--headline); }
+    .action-btn-solid {
+      border: none;
+      background: var(--accent);
+      color: #fff;
+    }
+    .action-btn-solid:hover { opacity: 0.88; }
 
     /* Scrollbar */
-    ::-webkit-scrollbar { width: 5px; height: 5px; }
-    ::-webkit-scrollbar-track { background: #18181b; }
-    ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 3px; }
-
-    @media (max-width: 600px) {
-      .panels-row { grid-template-columns: 1fr; }
-      .img-panel:first-child { border-right: none; border-bottom: 1px solid #1c1c1e; }
-      .controls-body { grid-template-columns: 1fr 1fr; }
-      .main-content { padding: 20px 16px 40px; }
-    }
+    ::-webkit-scrollbar { width:4px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:var(--scrollbar); border-radius:4px; }
   </style>
 </head>
 <body>
 
-<!-- ════ HEADER ════ -->
-<header style="background:#09090b; border-bottom:1px solid #1c1c1e; display:flex; align-items:center; gap:16px; padding:12px 20px; flex-shrink:0;">
-  <a href="../index.html" class="title-font" style="font-size:10px; color:#52525b; text-decoration:none;"
-     onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#52525b'">← Back</a>
-  <div style="width:1px;height:16px;background:#27272a;"></div>
-  <h1 class="title-font" style="font-size:10px; color:#e4e4e7;">Image to SVG</h1>
+<!-- Theme sync -->
+<script>
+(function () {
+  try {
+    const ph = window.parent.document.documentElement;
+    const sync = () => document.documentElement.classList.toggle('dark', ph.classList.contains('dark'));
+    sync();
+    new MutationObserver(sync).observe(ph, { attributes: true, attributeFilter: ['class'] });
+  } catch (e) {}
+})();
+</script>
 
-  <div id="headerActions" style="display:none; margin-left:auto; align-items:center; gap:8px;">
-    <button id="copySvgBtn" class="hdr-btn">⎘ Copy SVG</button>
-    <button id="downloadSvgBtn" class="dl-btn dl-solid" style="font-family:'BoldPixels',monospace; font-size:10px;">↓ Download SVG</button>
-    <button id="changeImgBtn" class="hdr-btn">⤴ Change Image</button>
-  </div>
-</header>
+<!-- Standalone header -->
+<div class="page-header">
+  <a href="../index.html" class="back-link">← Back</a>
+  <div class="hdr-sep"></div>
+  <span class="hdr-title">Image Trace</span>
+</div>
 
+<!-- Main -->
+<div class="main">
 
-<!-- ════ MAIN ════ -->
-<div class="main-content">
-
-  <!-- ── DROP STATE ── -->
+  <!-- ── Drop state ── -->
   <div id="dropState">
-    <div>
-      <p class="title-font" style="font-size:11px; color:#e4e4e7; text-align:center; margin-bottom:4px;">Image to SVG</p>
-      <p style="font-size:11px; color:#52525b; text-align:center; margin-bottom:20px;">Trace raster images into vector SVG — like Illustrator's Image Trace</p>
-    </div>
-    <div class="drop-card">
-      <div id="dropZone" class="drop-zone">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3f3f46" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-          <polyline points="17 8 12 3 7 8"/>
-          <line x1="12" y1="3" x2="12" y2="15"/>
-        </svg>
-        <p class="drop-label">Drop image here</p>
-        <p class="drop-sub">JPG · PNG · WebP</p>
-        <label class="choose-btn">
-          Choose File
-          <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" style="display:none;" />
-        </label>
-      </div>
-    </div>
+    <label id="dropZone" class="drop-zone">
+      <svg class="drop-icon" width="36" height="36" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg" color="var(--body)">
+        <path d="M25.1363 14.3633C24.8188 14.3633 24.5144 14.4895 24.2899 14.7139C24.0654 14.9384 23.9393 15.2429 23.9393 15.5603V20.6031C23.9384 21.4876 23.5866 22.3355 22.9612 22.9609C22.3358 23.5863 21.4878 23.9381 20.6034 23.9391H5.72988C4.84542 23.9381 3.99746 23.5863 3.37206 22.9609C2.74665 22.3355 2.39488 21.4876 2.39393 20.6031V15.5603C2.39393 15.2429 2.26782 14.9384 2.04335 14.7139C1.81887 14.4895 1.51442 14.3633 1.19697 14.3633C0.879511 14.3633 0.575058 14.4895 0.350583 14.7139C0.126109 14.9384 0 15.2429 0 15.5603V20.6031C0.00158429 22.1223 0.605775 23.5788 1.67999 24.653C2.75421 25.7272 4.21071 26.3314 5.72988 26.333H20.6034C22.1225 26.3314 23.579 25.7272 24.6533 24.653C25.7275 23.5788 26.3317 22.1223 26.3333 20.6031V15.5603C26.3333 15.2429 26.2071 14.9384 25.9827 14.7139C25.7582 14.4895 25.4537 14.3633 25.1363 14.3633Z" fill="currentColor"/>
+        <path d="M6.83125 9.22476L11.9698 4.08619V19.1512C11.9698 19.4687 12.0959 19.7731 12.3204 19.9976C12.5449 20.2221 12.8493 20.3482 13.1668 20.3482C13.4842 20.3482 13.7887 20.2221 14.0132 19.9976C14.2376 19.7731 14.3638 19.4687 14.3638 19.1512V4.08619L19.5023 9.22476C19.7281 9.4428 20.0304 9.56344 20.3443 9.56072C20.6581 9.55799 20.9583 9.43211 21.1803 9.21018C21.4022 8.98825 21.5281 8.68804 21.5308 8.3742C21.5335 8.06036 21.4129 7.758 21.1948 7.53225L14.013 0.350455C13.7886 0.126059 13.4842 0 13.1668 0C12.8494 0 12.545 0.126059 12.3205 0.350455L5.13874 7.53225C4.9207 7.758 4.80005 8.06036 4.80278 8.3742C4.80551 8.68804 4.93139 8.98825 5.15332 9.21018C5.37525 9.43211 5.67546 9.55799 5.9893 9.56072C6.30314 9.56344 6.6055 9.4428 6.83125 9.22476Z" fill="currentColor"/>
+      </svg>
+      <p class="drop-zone-label">Click to select or drop an image</p>
+      <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" />
+    </label>
   </div>
 
-
-  <!-- ── IMAGE STATE ── -->
+  <!-- ── Image state ── -->
   <div id="imageState">
 
-    <!-- Panels card -->
-    <div class="tool-card">
-      <div class="panels-row">
+    <!-- Left: Controls -->
+    <div class="ctrl-col">
+      <div class="ctrl-panel">
 
-        <!-- Original -->
-        <div class="img-panel">
-          <div class="panel-header">
-            <span class="card-label">Original</span>
+        <div class="ctrl-panel-header">
+          <span class="ctrl-panel-title">Controls</span>
+          <button id="changeImgBtn" style="background:none;border:none;cursor:pointer;font-size:10px;font-weight:600;color:var(--body);font-family:inherit;letter-spacing:0.04em;opacity:0.6;transition:opacity .15s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.6">⤴ Change</button>
+        </div>
+
+        <div class="ctrl-panel-body">
+
+          <!-- Colors -->
+          <div class="ctrl-group">
+            <div class="ctrl-label-row">
+              <span class="ctrl-label">Colors</span>
+              <span class="ctrl-value" id="colorsVal">16</span>
+            </div>
+            <input type="range" id="colorsSlider" min="2" max="32" value="16" />
           </div>
-          <div class="img-panel-body">
+
+          <div class="ctrl-divider"></div>
+
+          <!-- Paths -->
+          <div class="ctrl-group">
+            <div class="ctrl-label-row">
+              <span class="ctrl-label">Paths</span>
+              <span class="ctrl-value" id="pathsVal">70%</span>
+            </div>
+            <input type="range" id="pathsSlider" min="0" max="100" value="70" />
+          </div>
+
+          <!-- Corners -->
+          <div class="ctrl-group">
+            <div class="ctrl-label-row">
+              <span class="ctrl-label">Corners</span>
+              <span class="ctrl-value" id="cornersVal">25%</span>
+            </div>
+            <input type="range" id="cornersSlider" min="0" max="100" value="25" />
+          </div>
+
+          <div class="ctrl-divider"></div>
+
+          <!-- Noise -->
+          <div class="ctrl-group">
+            <div class="ctrl-label-row">
+              <span class="ctrl-label">Noise</span>
+              <span class="ctrl-value" id="noiseVal">0</span>
+            </div>
+            <input type="range" id="noiseSlider" min="0" max="5" value="0" />
+          </div>
+
+          <!-- Stroke Width -->
+          <div class="ctrl-group">
+            <div class="ctrl-label-row">
+              <span class="ctrl-label">Stroke Width</span>
+              <span class="ctrl-value" id="strokeVal">0</span>
+            </div>
+            <input type="range" id="strokeSlider" min="0" max="5" value="0" />
+          </div>
+
+          <div class="ctrl-divider"></div>
+
+          <!-- Reset -->
+          <button class="reset-btn" id="resetBtn">Reset Controls</button>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Preview -->
+    <div class="preview-col">
+
+      <!-- Presets -->
+      <div class="presets-row">
+        <span class="presets-label">Presets</span>
+        <button class="preset-btn active" data-preset="balanced">Balanced</button>
+        <button class="preset-btn" data-preset="photo">Photo</button>
+        <button class="preset-btn" data-preset="flat">Flat</button>
+        <button class="preset-btn" data-preset="bw">B&amp;W</button>
+        <button class="preset-btn" data-preset="sketch">Sketch</button>
+      </div>
+
+      <!-- Images -->
+      <div class="images-row">
+        <div class="img-pane">
+          <span class="img-pane-label">Original</span>
+          <div class="img-pane-body">
             <canvas id="originalCanvas"></canvas>
           </div>
         </div>
-
-        <!-- SVG Result -->
-        <div class="img-panel">
-          <div class="panel-header">
-            <span class="card-label">SVG Result</span>
-            <div style="display:flex; gap:6px;">
-              <button id="copySvgBtnPanel" class="dl-btn dl-outline">⎘ Copy</button>
-              <button id="downloadSvgBtnPanel" class="dl-btn dl-solid">↓ SVG</button>
-            </div>
-          </div>
-          <div class="img-panel-body checker">
+        <div class="img-pane">
+          <span class="img-pane-label">SVG Output</span>
+          <div class="img-pane-body checker">
             <div id="svgResult"></div>
-            <div class="processing-overlay" id="processingOverlay">
-              <div class="spinner"></div>
-              <span class="processing-text">Tracing…</span>
+            <div id="processingOverlay">
+              <span class="processing-label">Tracing…</span>
             </div>
           </div>
         </div>
-
       </div>
+
+      <!-- Actions -->
+      <div class="actions-row">
+        <button id="copySvgBtn" class="action-btn action-btn-ghost">Copy SVG</button>
+        <button id="downloadSvgBtn" class="action-btn action-btn-solid">↓ Download</button>
+      </div>
+
     </div>
-
-    <!-- Controls card -->
-    <div class="tool-card">
-      <div class="card-header">
-        <span class="card-label">Trace Settings</span>
-        <div class="preset-row">
-          <span style="font-size:10px; color:#3f3f46; letter-spacing:.08em; margin-right:4px;">Presets:</span>
-          <button class="preset-btn active" data-preset="balanced">Balanced</button>
-          <button class="preset-btn" data-preset="detailed">Detailed</button>
-          <button class="preset-btn" data-preset="flat">Flat</button>
-          <button class="preset-btn" data-preset="bw">B&W</button>
-        </div>
-      </div>
-      <div class="controls-body">
-
-        <!-- Colors -->
-        <div class="ctrl-group">
-          <div class="ctrl-label-row">
-            <span class="ctrl-label">Colors</span>
-            <span class="ctrl-value" id="colorsVal">16</span>
-          </div>
-          <input type="range" id="colorsSlider" min="2" max="32" value="16" />
-        </div>
-
-        <!-- Detail -->
-        <div class="ctrl-group">
-          <div class="ctrl-label-row">
-            <span class="ctrl-label">Detail</span>
-            <span class="ctrl-value" id="detailVal">5</span>
-          </div>
-          <input type="range" id="detailSlider" min="1" max="10" value="5" />
-        </div>
-
-        <!-- Blur -->
-        <div class="ctrl-group">
-          <div class="ctrl-label-row">
-            <span class="ctrl-label">Blur (Denoise)</span>
-            <span class="ctrl-value" id="blurVal">0</span>
-          </div>
-          <input type="range" id="blurSlider" min="0" max="5" value="0" />
-        </div>
-
-        <!-- Stroke Width -->
-        <div class="ctrl-group">
-          <div class="ctrl-label-row">
-            <span class="ctrl-label">Stroke Width</span>
-            <span class="ctrl-value" id="strokeVal">0</span>
-          </div>
-          <input type="range" id="strokeSlider" min="0" max="5" value="0" />
-        </div>
-
-        <!-- Reset -->
-        <div class="ctrl-group" style="justify-content:flex-end;">
-          <button class="reset-btn" id="resetBtn">Reset Settings</button>
-        </div>
-
-      </div>
-    </div>
-
   </div><!-- /imageState -->
 
-</div><!-- /main-content -->
+</div><!-- /main -->
 
 
-<!-- ════ SCRIPT ════ -->
 <script>
 'use strict';
 
-// ── Presets ────────────────────────────────────────────────────
+// colors, paths (0-100%), corners (0-100%), noise (0-5), stroke (0-5)
 const PRESETS = {
-  balanced: { colors: 16, detail: 5,  blur: 0, stroke: 0 },
-  detailed: { colors: 24, detail: 9,  blur: 0, stroke: 0 },
-  flat:     { colors: 8,  detail: 3,  blur: 2, stroke: 1 },
-  bw:       { colors: 2,  detail: 6,  blur: 1, stroke: 0 },
+  balanced: { colors: 16, paths: 70, corners: 25, noise: 0, stroke: 0 },
+  photo:    { colors: 32, paths: 88, corners: 15, noise: 0, stroke: 0 },
+  flat:     { colors: 8,  paths: 55, corners: 80, noise: 1, stroke: 0 },
+  bw:       { colors: 2,  paths: 75, corners: 65, noise: 1, stroke: 0 },
+  sketch:   { colors: 2,  paths: 85, corners: 20, noise: 0, stroke: 1 },
 };
-const DEFAULTS = PRESETS.balanced;
 
-// ── State ──────────────────────────────────────────────────────
-let sourceImg   = null;
-let svgString   = '';
-let tracePending = false;
-let traceTimer   = null;
+let sourceImg  = null;
+let svgString  = '';
+let traceTimer = null;
 
-// ── DOM refs ───────────────────────────────────────────────────
-const dropState        = document.getElementById('dropState');
-const imageState       = document.getElementById('imageState');
-const dropZone         = document.getElementById('dropZone');
-const fileInput        = document.getElementById('fileInput');
-const originalCanvas   = document.getElementById('originalCanvas');
-const svgResult        = document.getElementById('svgResult');
+const dropState         = document.getElementById('dropState');
+const imageState        = document.getElementById('imageState');
+const dropZone          = document.getElementById('dropZone');
+const fileInput         = document.getElementById('fileInput');
+const originalCanvas    = document.getElementById('originalCanvas');
+const svgResult         = document.getElementById('svgResult');
 const processingOverlay = document.getElementById('processingOverlay');
-const headerActions    = document.getElementById('headerActions');
 
 const sliders = {
-  colors: document.getElementById('colorsSlider'),
-  detail: document.getElementById('detailSlider'),
-  blur:   document.getElementById('blurSlider'),
-  stroke: document.getElementById('strokeSlider'),
+  colors:  document.getElementById('colorsSlider'),
+  paths:   document.getElementById('pathsSlider'),
+  corners: document.getElementById('cornersSlider'),
+  noise:   document.getElementById('noiseSlider'),
+  stroke:  document.getElementById('strokeSlider'),
 };
 const labels = {
-  colors: document.getElementById('colorsVal'),
-  detail: document.getElementById('detailVal'),
-  blur:   document.getElementById('blurVal'),
-  stroke: document.getElementById('strokeVal'),
+  colors:  document.getElementById('colorsVal'),
+  paths:   document.getElementById('pathsVal'),
+  corners: document.getElementById('cornersVal'),
+  noise:   document.getElementById('noiseVal'),
+  stroke:  document.getElementById('strokeVal'),
 };
 
 const MAX_PX = 800;
 
-
-// ── State transitions ──────────────────────────────────────────
 function showImageState() {
   dropState.style.display = 'none';
   imageState.classList.add('show');
-  headerActions.style.display = 'flex';
 }
 function showDropState() {
   imageState.classList.remove('show');
   dropState.style.display = '';
-  headerActions.style.display = 'none';
-  sourceImg  = null;
-  svgString  = '';
+  sourceImg = null;
+  svgString = '';
   svgResult.innerHTML = '';
 }
 
-
-// ── File loading ───────────────────────────────────────────────
 function loadFile(file) {
   if (!file || !file.type.startsWith('image/')) return;
   const reader = new FileReader();
@@ -486,11 +581,9 @@ function loadFile(file) {
       const scale = Math.min(1, MAX_PX / Math.max(img.naturalWidth, img.naturalHeight));
       const w = Math.round(img.naturalWidth  * scale);
       const h = Math.round(img.naturalHeight * scale);
-
       originalCanvas.width  = w;
       originalCanvas.height = h;
       originalCanvas.getContext('2d').drawImage(img, 0, 0, w, h);
-
       sourceImg = img;
       showImageState();
       scheduleTrace();
@@ -500,24 +593,36 @@ function loadFile(file) {
   reader.readAsDataURL(file);
 }
 
-
-// ── Tracing ────────────────────────────────────────────────────
 function getOptions() {
-  const detail = +sliders.detail.value;
-  const ltres  = Math.max(0.1, 11 - detail); // higher detail → lower threshold
-  const qtres  = Math.max(0.1, 11 - detail);
+  const paths   = +sliders.paths.value;   // 0–100
+  const corners = +sliders.corners.value; // 0–100
+  const noise   = +sliders.noise.value;
+
+  // Paths → base error threshold (100% paths = very accurate = low threshold)
+  const baseErr = Math.max(0.1, (100 - paths) * 0.1); // 10→0.1 as paths 0→100
+
+  // Corners → balance between straight lines (ltres) and curves (qtres)
+  // High corners: stricter straight lines (lower ltres), lenient curves (higher qtres) → angular
+  // Low corners: lenient straight lines (higher ltres), accurate curves (lower qtres) → smooth
+  const cRatio = corners / 100;
+  const ltres  = Math.max(0.1, baseErr * (1 - cRatio * 0.7));
+  const qtres  = Math.max(0.1, baseErr * (1 + cRatio * 2.5));
+
+  // Noise slider → pathomit (remove tiny paths) + blur
+  const pathomit = Math.max(1, Math.round(1 + noise * 3));
+
   return {
-    numberofcolors: +sliders.colors.value,
-    colorsampling:  1,
-    colorquantcycles: 3,
-    ltres,
-    qtres,
-    pathomit:    4,
-    blurradius:  +sliders.blur.value,
-    blurdelta:   20,
-    strokewidth: +sliders.stroke.value,
-    scale:       1,
-    roundcoords: 1,
+    numberofcolors:      +sliders.colors.value,
+    colorsampling:       1,
+    colorquantcycles:    3,
+    ltres, qtres,
+    pathomit,
+    blurradius:          noise,
+    blurdelta:           20,
+    strokewidth:         +sliders.stroke.value,
+    rightangleenhance:   corners > 55,
+    scale:               1,
+    roundcoords:         1,
   };
 }
 
@@ -529,42 +634,30 @@ function scheduleTrace(delay = 800) {
 function runTrace() {
   if (!sourceImg) return;
   processingOverlay.classList.add('show');
-
   setTimeout(() => {
-    // Draw source image at trace resolution
-    const offscreen = document.createElement('canvas');
-    offscreen.width  = originalCanvas.width;
-    offscreen.height = originalCanvas.height;
-    offscreen.getContext('2d').drawImage(sourceImg, 0, 0, offscreen.width, offscreen.height);
-
-    const imgData = offscreen.getContext('2d').getImageData(0, 0, offscreen.width, offscreen.height);
-    const opts    = getOptions();
-
+    const off = document.createElement('canvas');
+    off.width  = originalCanvas.width;
+    off.height = originalCanvas.height;
+    off.getContext('2d').drawImage(sourceImg, 0, 0, off.width, off.height);
+    const imgData = off.getContext('2d').getImageData(0, 0, off.width, off.height);
     try {
-      svgString = ImageTracer.imagedataToSVG(imgData, opts);
+      svgString = ImageTracer.imagedataToSVG(imgData, getOptions());
       svgResult.innerHTML = svgString;
-
-      // Remove hardcoded dimensions so CSS controls sizing
       const svg = svgResult.querySelector('svg');
       if (svg) {
-        const w = svg.getAttribute('width');
-        const h = svg.getAttribute('height');
-        if (w && h && !svg.getAttribute('viewBox')) {
-          svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
-        }
+        const w = svg.getAttribute('width'), h = svg.getAttribute('height');
+        if (w && h && !svg.getAttribute('viewBox')) svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
         svg.removeAttribute('width');
         svg.removeAttribute('height');
       }
     } catch (err) {
-      svgResult.innerHTML = `<span style="font-size:10px;color:#ef4444;">Trace failed: ${err.message}</span>`;
+      svgResult.innerHTML = `<span style="font-size:10px;color:var(--accent);">Trace failed: ${err.message}</span>`;
     }
-
     processingOverlay.classList.remove('show');
   }, 30);
 }
 
-
-// ── Drag & drop ────────────────────────────────────────────────
+// Drag & drop
 dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
 dropZone.addEventListener('dragleave', ()  => dropZone.classList.remove('drag-over'));
 dropZone.addEventListener('drop', e => {
@@ -572,24 +665,19 @@ dropZone.addEventListener('drop', e => {
   dropZone.classList.remove('drag-over');
   loadFile(e.dataTransfer.files[0]);
 });
-dropZone.addEventListener('click', e => {
-  if (e.target.closest('label')) return;
-  fileInput.click();
-});
 fileInput.addEventListener('change', e => loadFile(e.target.files[0]));
 
-
-// ── Sliders ────────────────────────────────────────────────────
+// Sliders
 Object.entries(sliders).forEach(([key, el]) => {
   el.addEventListener('input', () => {
-    labels[key].textContent = el.value;
+    const isPct = key === 'paths' || key === 'corners';
+    labels[key].textContent = isPct ? el.value + '%' : el.value;
     document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
     scheduleTrace();
   });
 });
 
-
-// ── Presets ────────────────────────────────────────────────────
+// Presets
 document.querySelectorAll('.preset-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
@@ -601,15 +689,15 @@ document.querySelectorAll('.preset-btn').forEach(btn => {
 function applyPreset(name) {
   const p = PRESETS[name];
   if (!p) return;
-  sliders.colors.value = p.colors; labels.colors.textContent = p.colors;
-  sliders.detail.value = p.detail; labels.detail.textContent = p.detail;
-  sliders.blur.value   = p.blur;   labels.blur.textContent   = p.blur;
-  sliders.stroke.value = p.stroke; labels.stroke.textContent = p.stroke;
+  sliders.colors.value  = p.colors;  labels.colors.textContent  = p.colors;
+  sliders.paths.value   = p.paths;   labels.paths.textContent   = p.paths + '%';
+  sliders.corners.value = p.corners; labels.corners.textContent = p.corners + '%';
+  sliders.noise.value   = p.noise;   labels.noise.textContent   = p.noise;
+  sliders.stroke.value  = p.stroke;  labels.stroke.textContent  = p.stroke;
   scheduleTrace(400);
 }
 
-
-// ── Reset ──────────────────────────────────────────────────────
+// Reset
 document.getElementById('resetBtn').addEventListener('click', () => {
   applyPreset('balanced');
   document.querySelectorAll('.preset-btn').forEach(b =>
@@ -617,9 +705,21 @@ document.getElementById('resetBtn').addEventListener('click', () => {
   );
 });
 
+// Change image
+document.getElementById('changeImgBtn').addEventListener('click', showDropState);
 
-// ── Download / Copy helpers ────────────────────────────────────
-function downloadSvg() {
+// Copy SVG
+document.getElementById('copySvgBtn').addEventListener('click', function () {
+  if (!svgString) return;
+  navigator.clipboard.writeText(svgString).catch(() => {});
+  const orig = this.textContent;
+  this.textContent = 'Copied!';
+  this.style.color = '#22c55e'; this.style.borderColor = 'rgba(34,197,94,0.35)';
+  setTimeout(() => { this.textContent = orig; this.style.color = ''; this.style.borderColor = ''; }, 1800);
+});
+
+// Download SVG
+document.getElementById('downloadSvgBtn').addEventListener('click', () => {
   if (!svgString) return;
   const blob = new Blob([svgString], { type: 'image/svg+xml' });
   const a = Object.assign(document.createElement('a'), {
@@ -627,21 +727,7 @@ function downloadSvg() {
   });
   a.click();
   URL.revokeObjectURL(a.href);
-}
-
-function copySvg(btn) {
-  if (!svgString) return;
-  navigator.clipboard.writeText(svgString).catch(() => {});
-  const o = btn.textContent;
-  btn.textContent = 'Copied!';
-  setTimeout(() => btn.textContent = o, 1400);
-}
-
-document.getElementById('downloadSvgBtn').addEventListener('click', downloadSvg);
-document.getElementById('downloadSvgBtnPanel').addEventListener('click', downloadSvg);
-document.getElementById('copySvgBtn').addEventListener('click', function () { copySvg(this); });
-document.getElementById('copySvgBtnPanel').addEventListener('click', function () { copySvg(this); });
-document.getElementById('changeImgBtn').addEventListener('click', showDropState);
+});
 </script>
 </body>
 </html>
