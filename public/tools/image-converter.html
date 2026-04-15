@@ -3,263 +3,363 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Image Converter — Tools</title>
-  <script>if (window.self !== window.top) document.documentElement.dataset.embed = '1';</script>
-  <style>[data-embed='1'] header { display: none !important; }</style>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <title>Image Converter</title>
+  <script>
+    (function () {
+      if (window.self !== window.top) document.documentElement.dataset.embed = '1';
+      try {
+        if (window.parent.document.documentElement.classList.contains('dark'))
+          document.documentElement.classList.add('dark');
+      } catch (e) {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
   <style>
-    @font-face {
-      font-family: 'BoldPixels';
-      src: url('../assets/BoldPixels.otf') format('opentype');
-    }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    * { font-family: 'Fira Code', monospace; }
-    .title-font { font-family: 'BoldPixels', 'Courier New', monospace; letter-spacing: 2px; }
+    @font-face { font-family:'SF Pro Display'; src:url('../fonts/SF-Pro-Display-Regular.otf') format('opentype'); font-weight:400; }
+    @font-face { font-family:'SF Pro Display'; src:url('../fonts/SF-Pro-Display-Medium.otf')  format('opentype'); font-weight:500; }
+    @font-face { font-family:'SF Pro Display'; src:url('../fonts/SF-Pro-Display-Semibold.otf') format('opentype'); font-weight:600; }
+    @font-face { font-family:'SF Pro Display'; src:url('../fonts/SF-Pro-Display-Bold.otf')    format('opentype'); font-weight:700; }
 
+    :root {
+      --bg:           #F2EDD9;
+      --border:       rgba(0,0,0,0.08);
+      --headline:     #1c1c1e;
+      --body:         #6b6861;
+      --social-bg:    rgba(0,0,0,0.05);
+      --social-hover: rgba(0,0,0,0.10);
+      --input-bg:     rgba(0,0,0,0.04);
+      --input-border: rgba(0,0,0,0.08);
+      --accent:       #cf0506;
+      --scrollbar:    rgba(0,0,0,0.10);
+      --slider-track: rgba(0,0,0,0.12);
+    }
+    .dark {
+      --bg:           #080808;
+      --border:       rgba(255,255,255,0.08);
+      --headline:     #f3f0e5;
+      --body:         #aba795;
+      --social-bg:    rgba(255,255,255,0.05);
+      --social-hover: rgba(255,255,255,0.10);
+      --input-bg:     rgba(255,255,255,0.04);
+      --input-border: rgba(255,255,255,0.08);
+      --accent:       #cf0506;
+      --scrollbar:    rgba(255,255,255,0.10);
+      --slider-track: rgba(255,255,255,0.10);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; }
+
     body {
-      background-color: #09090b;
-      color: #e4e4e7;
-      min-height: 100vh;
+      font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--headline);
+      height: 100%;
       display: flex;
       flex-direction: column;
-      overflow-y: auto;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
     }
+
+    [data-embed='1'] .page-header { display: none !important; }
 
     /* ── Header ── */
-    header {
-      background: #09090b;
-      border-bottom: 1px solid #1c1c1e;
-      display: flex; align-items: center; gap: 16px;
-      padding: 12px 20px; flex-shrink: 0;
+    .page-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
     }
+    .back-link { font-size:12px; font-weight:500; color:var(--body); text-decoration:none; transition:color .15s; }
+    .back-link:hover { color:var(--accent); }
+    .hdr-sep { width:1px; height:14px; background:var(--border); }
+    .hdr-title { font-size:13px; font-weight:500; color:var(--headline); }
 
     /* ── Main ── */
-    .main-content {
+    .main {
       flex: 1;
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 32px 24px 60px;
+      overflow: hidden;
+      min-height: 0;
     }
 
-    /* ── Card ── */
-    .card {
+    /* ══════════════════════════════════════
+       DROP STATE
+    ══════════════════════════════════════ */
+    #dropState {
+      width: 100%; flex: 1;
+      display: flex; align-items: stretch;
+      padding: 120px;
+      min-height: 0;
+    }
+
+    :root .drop-zone {
+      background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='14' ry='14' stroke='rgba(0,0,0,0.18)' stroke-width='1.5' stroke-dasharray='6 6' stroke-linecap='square'/%3e%3c/svg%3e");
+    }
+    .dark .drop-zone {
+      background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='14' ry='14' stroke='rgba(255,255,255,0.12)' stroke-width='1.5' stroke-dasharray='6 6' stroke-linecap='square'/%3e%3c/svg%3e");
+    }
+    .drop-zone {
+      width: 100%; height: 100%;
+      border: none; border-radius: 14px; position: relative;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 12px; cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .drop-zone:hover, .drop-zone.drag-over {
+      background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='14' ry='14' stroke='rgba(207,5,6,0.5)' stroke-width='1.5' stroke-dasharray='6 6' stroke-linecap='square'/%3e%3c/svg%3e");
+      background-color: rgba(207,5,6,0.03);
+    }
+    .drop-icon { opacity: 0.35; color: var(--headline); }
+    .drop-zone-label { font-size:12px; font-weight:500; color:var(--body); opacity:.55; }
+    .drop-zone input { display:none; }
+
+    /* ══════════════════════════════════════
+       CONVERT STATE
+    ══════════════════════════════════════ */
+    #convertState {
+      display: none;
+      width: 100%; flex: 1;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+      overflow-y: auto;
+      min-height: 0;
+    }
+    #convertState.show { display: flex; }
+
+    .convert-card {
       width: 100%;
-      max-width: 520px;
-      background: #111113;
-      border: 1px solid #1c1c1e;
-      border-radius: 16px;
+      max-width: 480px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
       overflow: hidden;
     }
 
-    /* ── Drop zone ── */
-    .drop-zone {
-      padding: 56px 40px;
-      display: flex; flex-direction: column;
-      align-items: center; gap: 16px;
-      cursor: pointer;
-      border-bottom: 1px solid #1c1c1e;
-      transition: background .2s;
-    }
-    .drop-zone:hover, .drop-zone.drag-over {
-      background: rgba(239,68,68,.04);
-    }
-    .drop-label { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: #52525b; font-family: 'BoldPixels', monospace; }
-    .drop-sub   { font-size: 11px; color: #3f3f46; }
-    .choose-btn {
-      margin-top: 4px; padding: 7px 22px;
-      border: 1.5px solid #3f3f46; border-radius: 8px;
-      font-size: 11px; font-family: 'BoldPixels', monospace;
-      letter-spacing: 1px; color: #71717a; background: transparent;
-      cursor: pointer; transition: border-color .15s, color .15s;
-    }
-    .choose-btn:hover { border-color: #ef4444; color: #ef4444; }
-
-    /* ── File info bar ── */
+    /* File info bar */
     .file-bar {
-      display: none;
-      padding: 12px 20px;
-      border-bottom: 1px solid #1c1c1e;
-      align-items: center; justify-content: space-between; gap: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
     }
-    .file-bar.show { display: flex; }
-    .file-name { font-size: 11px; color: #a1a1aa; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 260px; }
-    .file-meta { font-size: 10px; color: #3f3f46; white-space: nowrap; flex-shrink: 0; }
+    .file-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+    .file-name {
+      font-size: 12px; font-weight: 500;
+      color: var(--headline);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .file-meta { font-size: 10px; color: var(--body); opacity: 0.7; }
+
     .change-btn {
-      padding: 4px 10px; font-size: 9px;
-      font-family: 'BoldPixels', monospace; letter-spacing: 1px;
-      border: 1.5px solid #27272a; border-radius: 5px;
-      background: transparent; color: #52525b;
-      cursor: pointer; transition: border-color .15s, color .15s; flex-shrink: 0;
+      height: 28px; padding: 0 12px;
+      font-family: inherit; font-size: 11px; font-weight: 500;
+      color: var(--body);
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      cursor: pointer;
+      white-space: nowrap; flex-shrink: 0;
+      transition: color .15s, border-color .15s;
     }
-    .change-btn:hover { border-color: #52525b; color: #a1a1aa; }
+    .change-btn:hover { color: var(--headline); border-color: var(--body); }
 
-    /* ── Settings ── */
-    .settings {
-      display: none;
-      flex-direction: column;
-      gap: 0;
-    }
-    .settings.show { display: flex; }
-
+    /* Settings rows */
     .setting-row {
-      padding: 16px 20px;
-      border-bottom: 1px solid #1c1c1e;
-      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      display: flex; align-items: center;
+      justify-content: space-between; gap: 16px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
     }
-    .setting-label { font-size: 10px; color: #52525b; text-transform: uppercase; letter-spacing: .12em; flex-shrink: 0; }
+    .setting-label {
+      font-size: 10px; font-weight: 600;
+      color: var(--body); opacity: 0.7;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      flex-shrink: 0;
+    }
 
     /* Format toggle */
-    .fmt-toggle { display: flex; border: 1px solid #27272a; border-radius: 8px; overflow: hidden; }
-    .fmt-btn {
-      padding: 6px 16px; font-size: 11px;
-      background: transparent; color: #52525b;
-      border: none; cursor: pointer; transition: background .15s, color .15s;
+    .fmt-toggle {
+      display: flex;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
     }
-    .fmt-btn + .fmt-btn { border-left: 1px solid #27272a; }
-    .fmt-btn.active { background: rgba(239,68,68,.1); color: #ef4444; }
+    .fmt-btn {
+      height: 30px; padding: 0 14px;
+      font-family: inherit; font-size: 11px; font-weight: 500;
+      background: transparent; color: var(--body);
+      border: none; cursor: pointer;
+      transition: background .15s, color .15s;
+    }
+    .fmt-btn + .fmt-btn { border-left: 1px solid var(--border); }
+    .fmt-btn.active { background: rgba(207,5,6,0.09); color: var(--accent); }
 
-    /* Quality */
-    .quality-right { display: flex; align-items: center; gap: 10px; flex: 1; justify-content: flex-end; }
-    .quality-val { font-size: 11px; color: #ef4444; width: 36px; text-align: right; flex-shrink: 0; }
+    /* Quality slider */
+    .quality-right { display: flex; align-items: center; gap: 10px; }
+    .quality-val { font-size: 11px; font-weight: 600; color: var(--accent); width: 34px; text-align: right; flex-shrink: 0; }
     input[type="range"] {
-      -webkit-appearance: none; width: 140px; height: 3px;
-      border-radius: 2px; background: #27272a; outline: none; cursor: pointer;
+      -webkit-appearance: none;
+      width: 130px; height: 3px;
+      border-radius: 2px;
+      background: var(--slider-track);
+      outline: none; cursor: pointer;
     }
     input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none; width: 13px; height: 13px;
-      border-radius: 50%; background: #ef4444; cursor: pointer;
+      -webkit-appearance: none;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      box-shadow: 0 0 0 2px var(--bg);
     }
     input[type="range"]::-moz-range-thumb {
-      width: 13px; height: 13px; border-radius: 50%;
-      background: #ef4444; border: none; cursor: pointer;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer; border: none;
     }
 
     /* Resize */
     .resize-right { display: flex; align-items: center; gap: 6px; }
     .dim-input {
-      width: 68px; background: #18181b;
-      border: 1.5px solid #27272a; border-radius: 6px;
-      color: #d4d4d8; font-size: 11px; padding: 5px 8px;
-      outline: none; transition: border-color .15s;
-      text-align: center;
+      width: 64px; height: 30px;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      color: var(--headline);
+      font-family: inherit; font-size: 11px; font-weight: 500;
+      padding: 0 8px; outline: none; text-align: center;
+      transition: border-color .15s;
     }
-    .dim-input:focus { border-color: #52525b; }
-    .dim-sep { font-size: 10px; color: #3f3f46; }
+    .dim-input:focus { border-color: rgba(207,5,6,0.35); }
+    .dim-sep { font-size: 11px; color: var(--body); opacity: 0.5; }
     .lock-btn {
-      padding: 5px 8px; font-size: 11px;
-      border: 1.5px solid #27272a; border-radius: 6px;
-      background: transparent; color: #52525b; cursor: pointer;
+      height: 30px; width: 30px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: transparent; color: var(--body);
+      cursor: pointer;
       transition: border-color .15s, color .15s;
     }
-    .lock-btn.locked { border-color: #ef4444; color: #ef4444; }
+    .lock-btn.locked { border-color: rgba(207,5,6,0.4); color: var(--accent); }
 
-    /* ── Download button ── */
+    /* Download button */
     .download-wrap {
-      display: none;
-      padding: 20px;
+      padding: 14px 16px;
     }
-    .download-wrap.show { display: block; }
     .download-btn {
-      width: 100%;
-      padding: 14px;
-      background: #ef4444;
-      border: none; border-radius: 10px;
+      width: 100%; height: 38px;
+      background: var(--accent);
+      border: none; border-radius: 9px;
       color: #fff;
-      font-size: 13px;
-      font-family: 'BoldPixels', monospace;
-      letter-spacing: 2px;
+      font-family: inherit; font-size: 13px; font-weight: 600;
       cursor: pointer;
-      transition: background .15s, transform .1s;
+      transition: opacity .15s;
     }
-    .download-btn:hover  { background: #dc2626; }
-    .download-btn:active { transform: scale(.98); }
+    .download-btn:hover { opacity: 0.88; }
 
-    /* Scrollbar */
     ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 2px; }
+    ::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 2px; }
   </style>
 </head>
 <body>
 
+<!-- Theme sync -->
+<script>
+(function () {
+  try {
+    const ph = window.parent.document.documentElement;
+    const sync = () => document.documentElement.classList.toggle('dark', ph.classList.contains('dark'));
+    sync();
+    new MutationObserver(sync).observe(ph, { attributes: true, attributeFilter: ['class'] });
+  } catch (e) {}
+})();
+</script>
+
 <!-- ════ HEADER ════ -->
-<header>
-  <a href="../index.html" class="title-font" style="font-size:10px;color:#52525b;text-decoration:none;"
-     onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#52525b'">← Back</a>
-  <div style="width:1px;height:16px;background:#27272a;"></div>
-  <h1 class="title-font" style="font-size:10px;color:#e4e4e7;">Image Converter</h1>
+<header class="page-header">
+  <a href="../index.html" class="back-link">← Back</a>
+  <div class="hdr-sep"></div>
+  <span class="hdr-title">Image Converter</span>
 </header>
 
-
 <!-- ════ MAIN ════ -->
-<div class="main-content">
-<div class="card">
+<div class="main">
 
-  <!-- Drop zone -->
-  <div id="dropZone" class="drop-zone">
-    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3f3f46" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-      <polyline points="17 8 12 3 7 8"/>
-      <line x1="12" y1="3" x2="12" y2="15"/>
-    </svg>
-    <p class="drop-label">Drop image here</p>
-    <p class="drop-sub">JPG · PNG · WebP · GIF</p>
-    <label class="choose-btn">
-      Choose File
-      <input type="file" id="fileInput" accept="image/*" style="display:none;" />
+  <!-- ── Drop state ── -->
+  <div id="dropState">
+    <label id="dropZone" class="drop-zone">
+      <svg class="drop-icon" width="36" height="36" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M25.1363 14.3633C24.8188 14.3633 24.5144 14.4895 24.2899 14.7139C24.0654 14.9384 23.9393 15.2429 23.9393 15.5603V20.6031C23.9384 21.4876 23.5866 22.3355 22.9612 22.9609C22.3358 23.5863 21.4878 23.9381 20.6034 23.9391H5.72988C4.84542 23.9381 3.99746 23.5863 3.37206 22.9609C2.74665 22.3355 2.39488 21.4876 2.39393 20.6031V15.5603C2.39393 15.2429 2.26782 14.9384 2.04335 14.7139C1.81887 14.4895 1.51442 14.3633 1.19697 14.3633C0.879511 14.3633 0.575058 14.4895 0.350583 14.7139C0.126109 14.9384 0 15.2429 0 15.5603V20.6031C0.00158429 22.1223 0.605775 23.5788 1.67999 24.653C2.75421 25.7272 4.21071 26.3314 5.72988 26.333H20.6034C22.1225 26.3314 23.579 25.7272 24.6533 24.653C25.7275 23.5788 26.3317 22.1223 26.3333 20.6031V15.5603C26.3333 15.2429 26.2071 14.9384 25.9827 14.7139C25.7582 14.4895 25.4537 14.3633 25.1363 14.3633Z" fill="currentColor"/>
+        <path d="M6.83125 9.22476L11.9698 4.08619V19.1512C11.9698 19.4687 12.0959 19.7731 12.3204 19.9976C12.5449 20.2221 12.8493 20.3482 13.1668 20.3482C13.4842 20.3482 13.7887 20.2221 14.0132 19.9976C14.2376 19.7731 14.3638 19.4687 14.3638 19.1512V4.08619L19.5023 9.22476C19.7281 9.4428 20.0304 9.56344 20.3443 9.56072C20.6581 9.55799 20.9583 9.43211 21.1803 9.21018C21.4022 8.98825 21.5281 8.68804 21.5308 8.3742C21.5335 8.06036 21.4129 7.758 21.1948 7.53225L14.013 0.350455C13.7886 0.126059 13.4842 0 13.1668 0C12.8494 0 12.545 0.126059 12.3205 0.350455L5.13874 7.53225C4.9207 7.758 4.80005 8.06036 4.80278 8.3742C4.80551 8.68804 4.93139 8.98825 5.15332 9.21018C5.37525 9.43211 5.67546 9.55799 5.9893 9.56072C6.30314 9.56344 6.6055 9.4428 6.83125 9.22476Z" fill="currentColor"/>
+      </svg>
+      <p class="drop-zone-label">Click to select or drop an image</p>
+      <input type="file" id="fileInput" accept="image/*" />
     </label>
   </div>
 
-  <!-- File info -->
-  <div class="file-bar" id="fileBar">
-    <span class="file-name" id="fileName">—</span>
-    <span class="file-meta" id="fileMeta">—</span>
-    <button class="change-btn" id="changeBtn">⤴ Change</button>
+  <!-- ── Convert state ── -->
+  <div id="convertState">
+    <div class="convert-card">
+
+      <!-- File info -->
+      <div class="file-bar">
+        <div class="file-info">
+          <span class="file-name" id="fileName">image.png</span>
+          <span class="file-meta" id="fileMeta">—</span>
+        </div>
+        <button class="change-btn" id="changeBtn">⤴ Change</button>
+      </div>
+
+      <!-- Format -->
+      <div class="setting-row">
+        <span class="setting-label">Format</span>
+        <div class="fmt-toggle">
+          <button class="fmt-btn active" data-fmt="image/png"  data-ext="png">PNG</button>
+          <button class="fmt-btn"        data-fmt="image/jpeg" data-ext="jpg">JPG</button>
+          <button class="fmt-btn"        data-fmt="image/webp" data-ext="webp">WebP</button>
+        </div>
+      </div>
+
+      <!-- Quality -->
+      <div class="setting-row" id="qualityRow">
+        <span class="setting-label">Quality</span>
+        <div class="quality-right">
+          <input type="range" id="qualitySlider" min="10" max="100" value="90" />
+          <span class="quality-val" id="qualityVal">90%</span>
+        </div>
+      </div>
+
+      <!-- Resize -->
+      <div class="setting-row">
+        <span class="setting-label">Resize</span>
+        <div class="resize-right">
+          <input class="dim-input" id="outWidth"  type="number" min="1" max="8000" placeholder="W" />
+          <span class="dim-sep">×</span>
+          <input class="dim-input" id="outHeight" type="number" min="1" max="8000" placeholder="H" />
+          <button class="lock-btn locked" id="lockBtn">⛓</button>
+        </div>
+      </div>
+
+      <!-- Download -->
+      <div class="download-wrap">
+        <button class="download-btn" id="downloadBtn">↓ Download</button>
+      </div>
+
+    </div>
   </div>
 
-  <!-- Settings -->
-  <div class="settings" id="settings">
-
-    <div class="setting-row">
-      <span class="setting-label">Format</span>
-      <div class="fmt-toggle">
-        <button class="fmt-btn active" data-fmt="image/png"  data-ext="png">PNG</button>
-        <button class="fmt-btn"        data-fmt="image/jpeg" data-ext="jpg">JPG</button>
-        <button class="fmt-btn"        data-fmt="image/webp" data-ext="webp">WebP</button>
-      </div>
-    </div>
-
-    <div class="setting-row" id="qualityRow">
-      <span class="setting-label">Quality</span>
-      <div class="quality-right">
-        <input type="range" id="qualitySlider" min="10" max="100" value="90" />
-        <span class="quality-val" id="qualityVal">90%</span>
-      </div>
-    </div>
-
-    <div class="setting-row">
-      <span class="setting-label">Resize</span>
-      <div class="resize-right">
-        <input class="dim-input" id="outWidth"  type="number" min="1" max="8000" placeholder="W" />
-        <span class="dim-sep">×</span>
-        <input class="dim-input" id="outHeight" type="number" min="1" max="8000" placeholder="H" />
-        <button class="lock-btn locked" id="lockBtn">⛓</button>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- Download -->
-  <div class="download-wrap" id="downloadWrap">
-    <button class="download-btn" id="downloadBtn">↓ Download</button>
-  </div>
-
-</div>
-</div>
+</div><!-- /main -->
 
 <canvas id="offscreen" style="display:none;"></canvas>
 
@@ -270,27 +370,24 @@
 
 let sourceImg    = null;
 let origW = 0, origH = 0;
-let origFile     = null;
 let outputFmt    = 'image/png';
 let outputExt    = 'png';
 let quality      = 0.90;
 let aspectLocked = true;
-let fileName     = 'image';
+let baseName     = 'image';
 
 const dropZone    = document.getElementById('dropZone');
 const fileInput   = document.getElementById('fileInput');
-const fileBar     = document.getElementById('fileBar');
-const settings    = document.getElementById('settings');
-const downloadWrap = document.getElementById('downloadWrap');
-const offscreen   = document.getElementById('offscreen');
+const dropState   = document.getElementById('dropState');
+const convertState = document.getElementById('convertState');
 const qualityRow  = document.getElementById('qualityRow');
+const offscreen   = document.getElementById('offscreen');
 
 
 // ── Load file ──────────────────────────────────────────────────
 function loadFile(file) {
   if (!file || !file.type.startsWith('image/')) return;
-  origFile = file;
-  fileName = file.name.replace(/\.[^.]+$/, '');
+  baseName = file.name.replace(/\.[^.]+$/, '');
 
   const url = URL.createObjectURL(file);
   const img = new Image();
@@ -303,22 +400,19 @@ function loadFile(file) {
     document.getElementById('outWidth').value  = origW;
     document.getElementById('outHeight').value = origH;
     document.getElementById('fileName').textContent = file.name;
-    document.getElementById('fileMeta').textContent = `${origW}×${origH} · ${formatBytes(file.size)}`;
+    document.getElementById('fileMeta').textContent =
+      origW + ' × ' + origH + ' px · ' + formatBytes(file.size);
 
-    dropZone.style.display = 'none';
-    fileBar.classList.add('show');
-    settings.classList.add('show');
-    downloadWrap.classList.add('show');
+    dropState.style.display = 'none';
+    convertState.classList.add('show');
   };
   img.src = url;
 }
 
 function reset() {
-  sourceImg = null; origFile = null;
-  dropZone.style.display = '';
-  fileBar.classList.remove('show');
-  settings.classList.remove('show');
-  downloadWrap.classList.remove('show');
+  sourceImg = null;
+  dropState.style.display = '';
+  convertState.classList.remove('show');
   fileInput.value = '';
 }
 
@@ -331,10 +425,6 @@ dropZone.addEventListener('drop', e => {
   dropZone.classList.remove('drag-over');
   loadFile(e.dataTransfer.files[0]);
 });
-dropZone.addEventListener('click', e => {
-  if (e.target.closest('label')) return;
-  fileInput.click();
-});
 fileInput.addEventListener('change', e => loadFile(e.target.files[0]));
 document.getElementById('changeBtn').addEventListener('click', reset);
 
@@ -346,8 +436,9 @@ document.querySelectorAll('.fmt-btn').forEach(btn => {
     btn.classList.add('active');
     outputFmt = btn.dataset.fmt;
     outputExt = btn.dataset.ext;
-    qualityRow.style.opacity       = outputFmt === 'image/png' ? '0.35' : '1';
-    qualityRow.style.pointerEvents = outputFmt === 'image/png' ? 'none'  : 'auto';
+    const isPng = outputFmt === 'image/png';
+    qualityRow.style.opacity       = isPng ? '0.35' : '1';
+    qualityRow.style.pointerEvents = isPng ? 'none'  : 'auto';
   });
 });
 
@@ -359,7 +450,7 @@ document.getElementById('qualitySlider').addEventListener('input', function () {
 });
 
 
-// ── Resize ─────────────────────────────────────────────────────
+// ── Resize / aspect lock ────────────────────────────────────────
 document.getElementById('lockBtn').addEventListener('click', function () {
   aspectLocked = !aspectLocked;
   this.classList.toggle('locked', aspectLocked);
@@ -398,7 +489,7 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
   const q = outputFmt === 'image/png' ? undefined : quality;
   const a = Object.assign(document.createElement('a'), {
     href: offscreen.toDataURL(outputFmt, q),
-    download: `${fileName}-converted.${outputExt}`,
+    download: baseName + '-converted.' + outputExt,
   });
   a.click();
 });
