@@ -12,6 +12,7 @@ import projects from '@/data/projects'
 // ── Nav items (left side) ─────────────────────────────────────────────────────
 const NAV_ITEMS = [
   { id: 'portfolio', label: 'Portfolio' },
+  { id: 'about',     label: 'About Me'  },
   { id: 'notes',     label: 'Notes'     },
   { id: 'tools',     label: 'Tools'     },
 ]
@@ -267,15 +268,6 @@ export default function TopBar() {
       {/* ── Right: utilities ───────────────────────────────────────────────── */}
       <div className="flex items-center gap-0.5">
 
-        {/* Fit / Fullscreen */}
-        <button
-          className={`topbar-icon-btn ${isFullscreen ? 'active' : ''}`}
-          onClick={toggleFullscreen}
-          title={isFullscreen ? 'Exit fullscreen (Esc)' : 'Fit to screen'}
-        >
-          <img src={macFitUrl} alt="fit" width={13} height={13} style={{ opacity: isFullscreen ? 1 : 0.85 }} />
-        </button>
-
         {/* WiFi */}
         <button className="topbar-icon-btn" title="WiFi">
           <Wifi size={12} />
@@ -338,6 +330,15 @@ export default function TopBar() {
             )}
           </AnimatePresence>
         </div>
+
+        {/* Fit / Fullscreen */}
+        <button
+          className={`topbar-icon-btn ${isFullscreen ? 'active' : ''}`}
+          onClick={toggleFullscreen}
+          title={isFullscreen ? 'Exit fullscreen (Esc)' : 'Fit to screen'}
+        >
+          <img src={macFitUrl} alt="fit" width={13} height={13} style={{ opacity: isFullscreen ? 1 : 0.85 }} />
+        </button>
 
         <div className="topbar-sep" />
 
