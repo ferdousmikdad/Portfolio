@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react'
 import useWindowStore from '@/store/windowStore'
-import { Search, Grid2X2, List, Columns3, LayoutGrid } from 'lucide-react'
 import Window from '@/components/window/Window'
 import WindowControls from '@/components/window/WindowControls'
 import projects, { CATEGORIES, TAGS } from '@/data/projects'
@@ -12,6 +11,9 @@ import BrandIcon         from '@/assets/icons/work-brand-identity.svg?react'
 import LandingIcon       from '@/assets/icons/work-landing-pages.svg?react'
 import DashboardsIcon    from '@/assets/icons/work-dashboards.svg?react'
 import MobileIcon        from '@/assets/icons/work-mobile-ui.svg?react'
+import MacGridIcon       from '@/assets/icons/macgrid.svg?react'
+import MacSearchIcon     from '@/assets/icons/macsearch.svg?react'
+import macListPng        from '@/assets/icons/maclist.png'
 
 // Icon map per category id
 const ICON_MAP = {
@@ -128,44 +130,63 @@ export default function WorkWindow() {
 
   // ── Toolbar ───────────────────────────────────────────────────────────────
 
-  const viewButtons = [
-    { mode: 'grid',   Icon: Grid2X2     },
-    { mode: 'list',   Icon: List        },
-    { mode: 'cols',   Icon: Columns3    },
-    { mode: 'large',  Icon: LayoutGrid  },
-  ]
+  const glassPill = {
+    backgroundColor:      'rgba(40, 40, 40, 0.20)',
+    // Refraction 65 → stronger highlight band; Dispersion 50 → wide fade to transparent
+    backgroundImage:      'linear-gradient(-45deg, rgba(255,255,255,0.165) 0%, rgba(255,255,255,0.04) 50%, rgba(255,255,255,0.00) 100%)',
+    // Depth 10 → blur(10px); Frost 2.5 → slight saturation + brightness lift
+    backdropFilter:       'blur(10px) saturate(1.4) brightness(1.025)',
+    WebkitBackdropFilter: 'blur(10px) saturate(1.4) brightness(1.025)',
+    borderRadius:         9999,
+    border:               '1px solid rgba(255,255,255,0.07)',
+    // Shadow blur 8px
+    boxShadow:            '0 2px 8px rgba(0,0,0,0.10)',
+  }
 
   const toolbar = (
     <div className="flex items-center gap-2" style={{ pointerEvents: 'auto' }}>
-      {/* View toggles */}
-      <div className="flex items-center rounded-md overflow-hidden" style={{ border: '1px solid var(--border)' }}>
-        {viewButtons.map(({ mode, Icon }) => (
-          <button
-            key={mode}
-            onClick={() => setViewMode(mode)}
-            className="flex items-center justify-center w-7 h-6 transition-colors"
-            style={{
-              background: viewMode === mode ? 'var(--wall-bg)' : 'transparent',
-              color:      viewMode === mode ? 'var(--headline)' : 'var(--body)',
-            }}
-          >
-            <Icon size={12} />
-          </button>
-        ))}
+      {/* View toggle pill */}
+      <div className="flex items-center gap-0.5 p-[3px]" style={glassPill}>
+        <button
+          onClick={() => setViewMode('grid')}
+          className="flex items-center justify-center w-[26px] h-[22px] rounded-full transition-all duration-150"
+          style={{ background: viewMode === 'grid' ? 'rgba(255,255,255,0.12)' : 'transparent' }}
+          title="Grid view"
+        >
+          <MacGridIcon width={12} height={12} style={{ color: viewMode === 'grid' ? '#fff' : 'rgba(255,255,255,0.45)' }} />
+        </button>
+        <button
+          onClick={() => setViewMode('list')}
+          className="flex items-center justify-center w-[26px] h-[22px] rounded-full transition-all duration-150"
+          style={{ background: viewMode === 'list' ? 'rgba(255,255,255,0.12)' : 'transparent' }}
+          title="List view"
+        >
+          <img
+            src={macListPng}
+            alt="list"
+            width={12}
+            height={12}
+            style={{ opacity: viewMode === 'list' ? 1 : 0.45, transition: 'opacity 0.15s' }}
+          />
+        </button>
       </div>
 
-      {/* Search */}
+      {/* Search pill */}
       <div
-        className="flex items-center gap-1.5 px-2 h-6 rounded-md"
-        style={{ background: 'var(--wall-bg)', border: '1px solid var(--border)', minWidth: 160 }}
+        className="flex items-center gap-2 px-3"
+        style={{ ...glassPill, height: 28, minWidth: 190 }}
       >
-        <Search size={11} style={{ color: 'var(--body)', flexShrink: 0 }} />
+        <MacSearchIcon
+          width={11}
+          height={11}
+          style={{ color: 'rgba(255,255,255,0.45)', flexShrink: 0 }}
+        />
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search"
-          className="bg-transparent text-[11px] outline-none w-full"
-          style={{ color: 'var(--headline)' }}
+          className="bg-transparent text-[11px] outline-none w-full placeholder:text-white/35"
+          style={{ color: '#fff' }}
           onMouseDown={(e) => e.stopPropagation()}
         />
       </div>
@@ -282,7 +303,7 @@ export default function WorkWindow() {
         <div className={isMaximized ? 'w-full max-w-[1140px] mx-auto p-4' : 'p-4'}>
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full gap-2" style={{ color: 'var(--body)' }}>
-              <Search size={28} style={{ opacity: 0.3 }} />
+              <MacSearchIcon width={28} height={28} style={{ opacity: 0.3 }} />
               <p className="text-[12px]">No results</p>
             </div>
           ) : viewMode === 'list' ? (
@@ -317,11 +338,7 @@ export default function WorkWindow() {
           ) : (
             <div
               className="grid gap-3"
-              style={{
-                gridTemplateColumns: viewMode === 'cols'  ? 'repeat(2, 1fr)'
-                                   : viewMode === 'large' ? 'repeat(4, 1fr)'
-                                   : 'repeat(3, 1fr)',
-              }}
+              style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}
             >
               {filtered.map((project) => (
                 <ProjectCard key={project.id} project={project} onClick={() => openProjectPreview(project)} />
