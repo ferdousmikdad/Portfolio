@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, Download, Trash2, Minus } from 'lucide-react'
 import Window from '@/components/window/Window'
+import WindowControls from '@/components/window/WindowControls'
 import { CATEGORIES, NOTES } from '@/data/notes.js'
 import useWindowStore from '@/store/windowStore'
 
@@ -266,37 +267,49 @@ export default function NotesWindow() {
     setReading(false)
   }
 
-  return (
-    <Window id="notes" title="Notes">
-      <div className="flex h-full overflow-hidden">
-      <div className={`flex h-full w-full ${isMaximized ? 'max-w-[1140px] mx-auto' : ''}`}>
+  const sidebarContent = ({ onClose, onMinimize, onMaximize }) => (
+    <div style={{ width: 210, padding: '6px 4px 6px 6px', height: '100%', boxSizing: 'border-box' }}>
+      <div
+        style={{
+          background: '#1B1B1B',
+          border: '1px solid #404040',
+          borderRadius: 18,
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Traffic lights row */}
+        <div style={{ height: 40, display: 'flex', alignItems: 'center', padding: '0 12px', flexShrink: 0 }}>
+          <WindowControls onClose={onClose} onMinimize={onMinimize} onMaximize={onMaximize} />
+        </div>
 
-        {/* ── Sidebar ── */}
-        <div
-          className="flex flex-col flex-shrink-0 overflow-y-auto window-scroll"
-          style={{ width: 160, background: 'var(--sidebar-bg)', borderRight: '1px solid var(--border)' }}
-        >
-          <div className="px-4 pt-4 pb-2">
-            <p className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--dot)', letterSpacing: '0.1em' }}>
-              Categories
-            </p>
-          </div>
+        {/* Navigation list */}
+        <div className="flex flex-col overflow-y-auto window-scroll px-2 py-3 gap-0.5" style={{ flex: 1 }}>
+          <p className="px-3 pb-1 text-[10px] font-semibold tracking-wide" style={{ color: '#5E5C53' }}>
+            Categories
+          </p>
           {CATEGORIES.map((cat) => (
             <button
               key={cat.id}
               onClick={() => handleCategoryChange(cat.id)}
-              className="w-full text-left px-4 py-2 text-[12.5px] transition-colors rounded-none"
-              style={{
-                color: activeCategory === cat.id ? 'var(--headline)' : 'var(--body)',
-                background: activeCategory === cat.id ? 'var(--social-hover)' : 'transparent',
-                fontWeight: activeCategory === cat.id ? 500 : 400,
-                fontFamily: "'SF Pro Text'",
-              }}
+              className={`w-full flex items-center px-3 py-[5px] rounded-md text-left text-[12px] font-medium transition-colors
+                ${activeCategory === cat.id ? 'bg-white/5 text-[#D0CDC4]' : 'text-[#5E5C53] hover:bg-white/5'}`}
+              style={{ fontFamily: "'SF Pro Text'" }}
             >
               {cat.label}
             </button>
           ))}
         </div>
+      </div>
+    </div>
+  )
+
+  return (
+    <Window id="notes" title="Notes" sidebarContent={sidebarContent}>
+      <div className="flex h-full overflow-hidden">
+      <div className={`flex h-full w-full ${isMaximized ? 'max-w-[1140px] mx-auto' : ''}`}>
 
         {/* ── List / Drawing ── */}
         <div
@@ -378,3 +391,4 @@ export default function NotesWindow() {
     </Window>
   )
 }
+
