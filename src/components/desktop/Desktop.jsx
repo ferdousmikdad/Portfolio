@@ -9,20 +9,61 @@ import MenuWindow from '@/components/dock/MenuWindow'
 import ProfileCard from '@/components/apps/ProfileCard'
 import AboutMeWindow from '@/components/apps/AboutMeWindow'
 import PacmanWindow from '@/components/apps/PacmanWindow'
+import DocWindow from '@/components/apps/BioWindow'
 import WorkWindow from '@/components/apps/WorkWindow'
 import ComingSoonWindow from '@/components/apps/ComingSoonWindow'
 import NotesWindow from '@/components/apps/NotesWindow'
 import ToolWindow from '@/components/apps/ToolWindow'
 import ToolsDock from '@/components/dock/ToolsDock'
 import useWindowStore, { TOOL_IDS } from '@/store/windowStore'
+import macDocumentUrl from '@/assets/icons/macDocument.png'
 import useSound from '@/hooks/useSound'
 import MikudaChat from '@/components/apps/MikudaChat'
 import ProjectPreviewWindow from '@/components/apps/ProjectPreviewWindow'
 import allProjects from '@/data/projects'
 
+function DesktopIcon({ src, label, initialX, initialY, onOpen, selected, onSelect }) {
+  const pos     = useRef({ x: initialX, y: initialY })
+  const [, rerender] = useState(0)
+  const didDrag = useRef(false)
+
+  return (
+    <motion.div
+      className={`desktop-icon${selected ? ' selected' : ''}`}
+      style={{ position: 'absolute', x: pos.current.x, y: pos.current.y, zIndex: 15 }}
+      drag
+      dragMomentum={false}
+      dragElastic={0}
+      onDragStart={() => { didDrag.current = false }}
+      onDrag={(_, info) => {
+        if (Math.abs(info.offset.x) > 3 || Math.abs(info.offset.y) > 3) didDrag.current = true
+      }}
+      onDragEnd={(_, info) => {
+        pos.current = { x: pos.current.x + info.offset.x, y: pos.current.y + info.offset.y }
+        rerender((n) => n + 1)
+      }}
+      onClick={(e) => {
+        if (didDrag.current) return
+        e.stopPropagation()
+        onSelect()
+      }}
+      onDoubleClick={(e) => {
+        if (didDrag.current) return
+        e.stopPropagation()
+        onOpen()
+      }}
+      title={label}
+    >
+      <img src={src} alt={label} draggable={false} />
+      <span className="desktop-icon-label">{label}</span>
+    </motion.div>
+  )
+}
+
 export default function Desktop() {
-  const [menuOpen,   setMenuOpen]   = useState(false)
-  const [mikudaOpen, setMikudaOpen] = useState(false)
+  const [menuOpen,      setMenuOpen]      = useState(false)
+  const [mikudaOpen,    setMikudaOpen]    = useState(false)
+  const [selectedIcon,  setSelectedIcon]  = useState(null)
   const menuRef  = useRef(null)
   const chatRef  = useRef(null)
   const fabRef   = useRef(null)
@@ -94,7 +135,7 @@ export default function Desktop() {
   }, [])
 
   return (
-    <div className="relative w-full h-full overflow-hidden" style={{ background: 'var(--bg)' }}>
+    <div className="relative w-full h-full overflow-hidden" style={{ background: 'var(--bg)' }} onClick={() => setSelectedIcon(null)}>
 
       {/* Top menu bar */}
       <TopBar />
@@ -111,11 +152,19 @@ export default function Desktop() {
         )}
       </AnimatePresence>
 
+      {/* Desktop icons — draggable column, top-right below topbar */}
+      <DesktopIcon src={macDocumentUrl} label="about_me.txt"  initialX={window.innerWidth - 96} initialY={80}  onOpen={() => openWindow('bio')}     selected={selectedIcon === 'bio'}     onSelect={() => setSelectedIcon('bio')}     />
+      <DesktopIcon src={macDocumentUrl} label="skills.txt"    initialX={window.innerWidth - 96} initialY={180} onOpen={() => openWindow('skills')}  selected={selectedIcon === 'skills'}  onSelect={() => setSelectedIcon('skills')}  />
+      <DesktopIcon src={macDocumentUrl} label="contact.txt"   initialX={window.innerWidth - 96} initialY={280} onOpen={() => openWindow('contact')} selected={selectedIcon === 'contact'} onSelect={() => setSelectedIcon('contact')} />
+
       {/* Windows layer */}
       <div className="absolute inset-0" style={{ zIndex: 20, pointerEvents: 'none' }}>
         <AnimatePresence>
           <ProfileCard />
           <PacmanWindow />
+          <DocWindow id="bio" />
+          <DocWindow id="skills" />
+          <DocWindow id="contact" />
           <WorkWindow />
           <ComingSoonWindow id="shop" />
           <NotesWindow />

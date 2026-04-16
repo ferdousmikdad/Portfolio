@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-const gap      = 20
+const gap      = 8
 const profileW = 308, pacmanW = 620, winH = 482
 const totalW   = profileW + gap + pacmanW
 const vw       = window.innerWidth
@@ -38,7 +38,36 @@ const toolWindows = TOOL_IDS.map((id, i) => ({
   zIndex: 3,
 }))
 
+const docW = 340, docH = 380
+
 const defaultWindows = [
+  {
+    id: 'bio',
+    title: 'about_me.txt',
+    isOpen: false,
+    isMinimized: false,
+    position: { x: Math.max(20, vw - docW - 24), y: 80 },
+    size: { width: docW, height: docH },
+    zIndex: 3,
+  },
+  {
+    id: 'skills',
+    title: 'skills.txt',
+    isOpen: false,
+    isMinimized: false,
+    position: { x: Math.max(20, vw - docW - 60), y: 100 },
+    size: { width: docW, height: docH },
+    zIndex: 3,
+  },
+  {
+    id: 'contact',
+    title: 'contact.txt',
+    isOpen: false,
+    isMinimized: false,
+    position: { x: Math.max(20, vw - docW - 96), y: 120 },
+    size: { width: docW, height: docH },
+    zIndex: 3,
+  },
   {
     id: 'profile',
     title: 'About Me',

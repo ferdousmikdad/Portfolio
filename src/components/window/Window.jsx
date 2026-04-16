@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { motion } from 'framer-motion'
+import { motion, useDragControls } from 'framer-motion'
 import WindowControls from './WindowControls'
 import useWindowStore from '@/store/windowStore'
 import useSoundStore from '@/store/soundStore'
@@ -7,9 +7,10 @@ import { genieOut } from '@/utils/genie'
 
 export default function Window({ id, title, children, actionLabel, onAction, hideControls, hideTitleBar, toolbar }) {
   const { closeWindow, minimizeWindow, focusWindow, updatePosition, getWindow, toggleMaximize } = useWindowStore()
-  const play   = useSoundStore((s) => s.play)
-  const win    = getWindow(id)
-  const winRef = useRef(null)
+  const play        = useSoundStore((s) => s.play)
+  const win         = getWindow(id)
+  const winRef      = useRef(null)
+  const dragControls = useDragControls()
 
   const handleMaximize = () => {
     play('open')
@@ -25,7 +26,6 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
     const el = winRef.current
     if (!el) { minimizeWindow(id); return }
 
-    // Measure the window and the trash button
     const rect  = el.getBoundingClientRect()
     const trash = document.querySelector('[data-trash]')
     let tx = 0, ty = 400
@@ -35,8 +35,6 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
       ty = (tr.top  + tr.height / 2) - (rect.top  + rect.height / 2)
     }
 
-    // Create a fixed-position snapshot clone so we can hide the real window
-    // immediately while the animation plays on the disposable clone.
     const clone = el.cloneNode(true)
     clone.style.cssText = [
       'position:fixed',
@@ -52,13 +50,10 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
       'opacity:1',
       'animation:none',
     ].join(';')
-    clone.classList.add('genie-freeze')   // freezes all child animations via CSS
+    clone.classList.add('genie-freeze')
     document.body.appendChild(clone)
 
-    // Hide the real window in the store right away — zero visible gap
     minimizeWindow(id)
-
-    // Animate the clone toward the trash, then remove it
     genieOut(clone, tx, ty, 520).then(() => clone.remove())
   }
 
@@ -67,13 +62,13 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
       ref={winRef}
       className="window-shell absolute"
       style={{
-        width:        win.size.width,
-        height:       win.size.height,
-        zIndex:       win.zIndex,
-        x:            win.position.x,
-        y:            win.position.y,
-        pointerEvents:'auto',
-        borderRadius: win.isMaximized ? 0 : 14,
+        width:         win.size.width,
+        height:        win.size.height,
+        zIndex:        win.zIndex,
+        x:             win.position.x,
+        y:             win.position.y,
+        pointerEvents: 'auto',
+        borderRadius:  win.isMaximized ? 0 : 14,
       }}
       initial={{ opacity: 0, scale: 0.92, y: win.position.y + 20 }}
       animate={{
@@ -85,8 +80,10 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
         height:  win.size.height,
         borderRadius: win.isMaximized ? 0 : 14,
       }}
-      exit={{    opacity: 0, scale: 0.88, transition: { duration: 0.15 } }}
+      exit={{ opacity: 0, scale: 0.88, transition: { duration: 0.15 } }}
       drag={!win.isMaximized}
+      dragControls={dragControls}
+      dragListener={false}
       dragMomentum={false}
       dragElastic={0}
       onDragEnd={(_, info) => {
@@ -99,11 +96,17 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
       onMouseDown={() => focusWindow(id)}
       transition={{ type: 'spring', stiffness: 300, damping: 28 }}
     >
-      {/* Title bar */}
+      {/* Title bar — drag handle only */}
       {!hideTitleBar && (
         <div
           className="window-titlebar relative"
-          style={{ borderBottom: toolbar ? '1px solid var(--border)' : 'none' }}
+          style={{
+            borderBottom: toolbar ? '1px solid var(--border)' : 'none',
+            cursor: win.isMaximized ? 'default' : 'grab',
+          }}
+          onPointerDown={(e) => {
+            if (!win.isMaximized) dragControls.start(e)
+          }}
         >
           {!hideControls && (
             <WindowControls

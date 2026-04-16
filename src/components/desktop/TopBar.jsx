@@ -154,7 +154,7 @@ function SettingsPanel({ onClose }) {
   return (
     <Panel align="right" style={{ minWidth: 220 }}>
       <p className="topbar-section-label">Appearance</p>
-      <button className="topbar-panel-item" onClick={toggleTheme}>
+      <button className="topbar-panel-item liquid-glass-btn" onClick={toggleTheme}>
         {isDark
           ? <Sun  size={13} style={{ color: 'var(--body)', flexShrink: 0 }} />
           : <Moon size={13} style={{ color: 'var(--body)', flexShrink: 0 }} />
@@ -168,7 +168,7 @@ function SettingsPanel({ onClose }) {
       <div style={{ height: 1, background: 'var(--border)', margin: '4px 0' }} />
 
       <p className="topbar-section-label" style={{ marginTop: 4 }}>Sound</p>
-      <button className="topbar-panel-item" onClick={toggleSound}>
+      <button className="topbar-panel-item liquid-glass-btn" onClick={toggleSound}>
         {isEnabled
           ? <Volume2  size={13} style={{ color: 'var(--body)', flexShrink: 0 }} />
           : <VolumeX  size={13} style={{ color: 'var(--body)', flexShrink: 0 }} />
