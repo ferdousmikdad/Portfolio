@@ -6,7 +6,7 @@ import useSoundStore from '@/store/soundStore'
 import { genieOut } from '@/utils/genie'
 import { useResize, RESIZE_CURSORS } from '@/hooks/useResize'
 
-export default function Window({ id, title, children, actionLabel, onAction, hideControls, hideTitleBar, toolbar, sidebarContent }) {
+export default function Window({ id, title, children, actionLabel, onAction, hideControls, hideTitleBar, toolbar, sidebarContent, shellStyle }) {
   const { closeWindow, minimizeWindow, focusWindow, updatePosition, getWindow, toggleMaximize } = useWindowStore()
   const play        = useSoundStore((s) => s.play)
   const win         = getWindow(id)
@@ -87,6 +87,7 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
         height: mh,
         zIndex:        win.zIndex,
         pointerEvents: 'auto',
+        ...shellStyle,
       }}
       // animate only controls entrance/exit appearance — NOT geometry
       initial={{ opacity: 0, scale: 0.92 }}

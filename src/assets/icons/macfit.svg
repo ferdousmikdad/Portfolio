@@ -1,0 +1,10 @@
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Top-left corner bracket -->
+  <path d="M1 1H6V2.5H2.5V6H1V1Z" fill="#F4F4F4"/>
+  <!-- Top-right corner bracket -->
+  <path d="M15 1H10V2.5H13.5V6H15V1Z" fill="#F4F4F4"/>
+  <!-- Bottom-left corner bracket -->
+  <path d="M1 15H6V13.5H2.5V10H1V15Z" fill="#F4F4F4"/>
+  <!-- Bottom-right corner bracket -->
+  <path d="M15 15H10V13.5H13.5V10H15V15Z" fill="#F4F4F4"/>
+</svg>

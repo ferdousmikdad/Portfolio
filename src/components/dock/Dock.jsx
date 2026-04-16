@@ -24,8 +24,8 @@ export default function Dock({ activeId = null, onNavigate, menuOpen = false, on
         transition={spring}
         className="dock-bar flex items-center gap-3 px-4 h-[52px] overflow-hidden"
       >
-        {/* Avatar */}
-        <motion.div layout="position" className="flex-shrink-0 cursor-pointer hover:scale-110 transition-transform">
+        {/* Avatar — navigate home */}
+        <motion.div layout="position" className="flex-shrink-0 cursor-pointer hover:scale-110 transition-transform" onClick={() => { play('open'); onNavigate('home') }}>
           <img src={mikdadHeadUrl} alt="Mikdad" className="w-8 h-8 object-contain" />
         </motion.div>
 

@@ -67,7 +67,7 @@ export default function Desktop() {
   const menuRef  = useRef(null)
   const chatRef  = useRef(null)
   const fabRef   = useRef(null)
-  const { openWindow, closeAllExcept, switchTool, activePage, navigate, previewProject, closeProjectPreview, openProjectPreview } = useWindowStore()
+  const { openWindow, closeAllExcept, switchTool, activePage, navKey, navigate, previewProject, closeProjectPreview, openProjectPreview } = useWindowStore()
   const isAnyMaximized = useWindowStore((s) => s.windows.some((w) => w.isMaximized))
   const setActivePage = navigate
   const play = useSound()
@@ -123,7 +123,7 @@ export default function Desktop() {
       closeAllExcept([activePage])
       openWindow(activePage)
     }
-  }, [activePage, openWindow, closeAllExcept, switchTool, play])
+  }, [activePage, navKey, openWindow, closeAllExcept, switchTool, play])
 
   // Keyboard shortcuts: Shift + H / A / P / S / N / T
   useEffect(() => {

@@ -5,7 +5,8 @@ import useWindowStore from '@/store/windowStore'
 import useThemeStore from '@/store/themeStore'
 import useSoundStore from '@/store/soundStore'
 import mikdadHeadUrl from '@/assets/icons/mikdad-head.svg?url'
-import macSettingUrl from '@/assets/icons/macsetting.svg?url'
+import macSettingUrl  from '@/assets/icons/macsetting.svg?url'
+import macFitUrl      from '@/assets/icons/macfit.svg?url'
 import projects from '@/data/projects'
 
 // ── Nav items (left side) ─────────────────────────────────────────────────────
@@ -187,12 +188,29 @@ function SettingsPanel({ onClose }) {
 export default function TopBar() {
   const { navigate, activePage } = useWindowStore()
 
-  const [openPanel, setOpenPanel] = useState(null) // 'search' | 'status' | 'settings'
-  const [status,    setStatus]    = useState('available')
+  const [openPanel,    setOpenPanel]    = useState(null) // 'search' | 'status' | 'settings'
+  const [status,       setStatus]       = useState('available')
+  const [isFullscreen, setIsFullscreen] = useState(false)
 
   const barRef = useRef(null)
 
   const currentStatus = STATUS_OPTIONS.find((s) => s.id === status) ?? STATUS_OPTIONS[0]
+
+  // ── Fullscreen toggle ─────────────────────────────────────────────────────
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen?.()
+    } else {
+      document.exitFullscreen?.()
+    }
+  }
+
+  // Track actual fullscreen state (Esc key is handled natively by the browser)
+  useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement)
+    document.addEventListener('fullscreenchange', handler)
+    return () => document.removeEventListener('fullscreenchange', handler)
+  }, [])
 
   // Close panels on outside click
   useEffect(() => {
@@ -248,6 +266,15 @@ export default function TopBar() {
 
       {/* ── Right: utilities ───────────────────────────────────────────────── */}
       <div className="flex items-center gap-0.5">
+
+        {/* Fit / Fullscreen */}
+        <button
+          className={`topbar-icon-btn ${isFullscreen ? 'active' : ''}`}
+          onClick={toggleFullscreen}
+          title={isFullscreen ? 'Exit fullscreen (Esc)' : 'Fit to screen'}
+        >
+          <img src={macFitUrl} alt="fit" width={13} height={13} style={{ opacity: isFullscreen ? 1 : 0.85 }} />
+        </button>
 
         {/* WiFi */}
         <button className="topbar-icon-btn" title="WiFi">

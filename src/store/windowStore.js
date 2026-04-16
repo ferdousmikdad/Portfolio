@@ -122,9 +122,10 @@ const useWindowStore = create((set, get) => ({
   windows: defaultWindows,
   activeWindowId: 'pacman',
   activePage: null,
+  navKey: 0,
   previewProject: null,
 
-  navigate: (page) => set({ activePage: page }),
+  navigate: (page) => set((state) => ({ activePage: page, navKey: state.navKey + 1 })),
 
   openProjectPreview: (project) => {
     if (project?.slug) {
