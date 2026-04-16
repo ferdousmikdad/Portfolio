@@ -1,23 +1,27 @@
 import { useCallback, useRef } from 'react'
 import useWindowStore from '@/store/windowStore'
 
-import hResizeUrl  from '@/assets/icons/macHorizontalresize.svg?url'
-import vResizeUrl  from '@/assets/icons/macVerticalresize.svg?url'
-import corner1Url  from '@/assets/icons/macCorner-1.svg?url'
-import corner2Url  from '@/assets/icons/macCorner-2.svg?url'
+// ?raw gives the SVG source string — inlined as a data URI so the cursor
+// never depends on an external HTTP fetch (works on Cloudflare, Vercel, etc.)
+import hResizeRaw  from '@/assets/icons/macHorizontalresize.svg?raw'
+import vResizeRaw  from '@/assets/icons/macVerticalresize.svg?raw'
+import corner1Raw  from '@/assets/icons/macCorner-1.svg?raw'
+import corner2Raw  from '@/assets/icons/macCorner-2.svg?raw'
+
+const svgUri = (raw) => `data:image/svg+xml,${encodeURIComponent(raw)}`
 
 const MIN_W = 320
 const MIN_H = 220
 
 export const RESIZE_CURSORS = {
-  right:          `url(${hResizeUrl}) 16 16, ew-resize`,
-  left:           `url(${hResizeUrl}) 16 16, ew-resize`,
-  bottom:         `url(${vResizeUrl}) 16 16, ns-resize`,
-  top:            `url(${vResizeUrl}) 16 16, ns-resize`,
-  'top-left':     `url(${corner1Url}) 16 16, nwse-resize`,
-  'bottom-right': `url(${corner1Url}) 16 16, nwse-resize`,
-  'top-right':    `url(${corner2Url}) 16 16, nesw-resize`,
-  'bottom-left':  `url(${corner2Url}) 16 16, nesw-resize`,
+  right:          `url("${svgUri(hResizeRaw)}") 16 16, ew-resize`,
+  left:           `url("${svgUri(hResizeRaw)}") 16 16, ew-resize`,
+  bottom:         `url("${svgUri(vResizeRaw)}") 16 16, ns-resize`,
+  top:            `url("${svgUri(vResizeRaw)}") 16 16, ns-resize`,
+  'top-left':     `url("${svgUri(corner1Raw)}") 16 16, nwse-resize`,
+  'bottom-right': `url("${svgUri(corner1Raw)}") 16 16, nwse-resize`,
+  'top-right':    `url("${svgUri(corner2Raw)}") 16 16, nesw-resize`,
+  'bottom-left':  `url("${svgUri(corner2Raw)}") 16 16, nesw-resize`,
 }
 
 // mx, my, mw, mh are framer-motion MotionValues — .set() updates the DOM
