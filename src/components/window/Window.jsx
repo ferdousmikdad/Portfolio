@@ -5,7 +5,7 @@ import useWindowStore from '@/store/windowStore'
 import useSoundStore from '@/store/soundStore'
 import { genieOut } from '@/utils/genie'
 
-export default function Window({ id, title, children, actionLabel, onAction, hideControls, hideTitleBar, toolbar }) {
+export default function Window({ id, title, children, actionLabel, onAction, hideControls, hideTitleBar, toolbar, sidebarContent }) {
   const { closeWindow, minimizeWindow, focusWindow, updatePosition, getWindow, toggleMaximize } = useWindowStore()
   const play        = useSoundStore((s) => s.play)
   const win         = getWindow(id)
@@ -68,7 +68,7 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
         x:             win.position.x,
         y:             win.position.y,
         pointerEvents: 'auto',
-        borderRadius:  win.isMaximized ? 0 : 14,
+        borderRadius:  win.isMaximized ? 0 : 22,
       }}
       initial={{ opacity: 0, scale: 0.92, y: win.position.y + 20 }}
       animate={{
@@ -78,7 +78,7 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
         y:       win.position.y,
         width:   win.size.width,
         height:  win.size.height,
-        borderRadius: win.isMaximized ? 0 : 14,
+        borderRadius: win.isMaximized ? 0 : 22,
       }}
       exit={{ opacity: 0, scale: 0.88, transition: { duration: 0.15 } }}
       drag={!win.isMaximized}
@@ -96,50 +96,99 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
       onMouseDown={() => focusWindow(id)}
       transition={{ type: 'spring', stiffness: 300, damping: 28 }}
     >
-      {/* Title bar — drag handle only */}
-      {!hideTitleBar && (
-        <div
-          className="window-titlebar relative"
-          style={{
-            borderBottom: toolbar ? '1px solid var(--border)' : 'none',
-            cursor: win.isMaximized ? 'default' : 'grab',
-          }}
-          onPointerDown={(e) => {
-            if (!win.isMaximized) dragControls.start(e)
-          }}
-        >
-          {!hideControls && (
-            <WindowControls
-              onClose={() => { play('close'); closeWindow(id) }}
-              onMinimize={handleMinimize}
-              onMaximize={handleMaximize}
-            />
-          )}
-          {title && (
-            <span
-              className="absolute left-1/2 -translate-x-1/2 text-xs font-medium"
-              style={{ color: 'var(--body)', fontFamily: "'SF Pro Display'" }}
-            >
-              {title}
-            </span>
-          )}
-          {toolbar && <div className="ml-auto flex items-center gap-2">{toolbar}</div>}
-          {actionLabel && !toolbar && (
-            <span className="ml-auto text-xs text-brand font-medium cursor-pointer hover:opacity-80 transition-opacity" onClick={onAction}>
-              {actionLabel}
-            </span>
-          )}
-        </div>
-      )}
+      {sidebarContent ? (
+        /* ── Sidebar-panel layout ─────────────────────────────────────────── */
+        <div style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
+          {/* Left: sidebar panel (full height) */}
+          <div style={{ flexShrink: 0, height: '100%' }}>
+            {sidebarContent({
+              onClose:    () => { play('close'); closeWindow(id) },
+              onMinimize: handleMinimize,
+              onMaximize: handleMaximize,
+            })}
+          </div>
 
-      {/* Content */}
-      <div className={
-        hideTitleBar
-          ? 'h-full overflow-hidden'
-          : 'h-[calc(100%-40px)] overflow-hidden'
-      }>
-        {children}
-      </div>
+          {/* Right: titlebar (drag handle, no traffic lights) + content */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            {!hideTitleBar && (
+              <div
+                className="window-titlebar relative"
+                style={{
+                  borderBottom: '1px solid var(--border)',
+                  cursor: win.isMaximized ? 'default' : 'grab',
+                }}
+                onPointerDown={(e) => { if (!win.isMaximized) dragControls.start(e) }}
+              >
+                {title && (
+                  <span
+                    className="absolute left-1/2 -translate-x-1/2 text-xs font-medium"
+                    style={{ color: 'var(--body)', fontFamily: "'SF Pro Display'" }}
+                  >
+                    {title}
+                  </span>
+                )}
+                {toolbar && <div className="ml-auto flex items-center gap-2">{toolbar}</div>}
+                {actionLabel && !toolbar && (
+                  <span className="ml-auto text-xs text-brand font-medium cursor-pointer hover:opacity-80 transition-opacity" onClick={onAction}>
+                    {actionLabel}
+                  </span>
+                )}
+              </div>
+            )}
+            <div style={{ flex: 1, overflow: 'hidden' }}>
+              {children}
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* ── Default layout ───────────────────────────────────────────────── */
+        <>
+          {/* Title bar — drag handle only */}
+          {!hideTitleBar && (
+            <div
+              className="window-titlebar relative"
+              style={{
+                borderBottom: toolbar ? '1px solid var(--border)' : 'none',
+                cursor: win.isMaximized ? 'default' : 'grab',
+              }}
+              onPointerDown={(e) => {
+                if (!win.isMaximized) dragControls.start(e)
+              }}
+            >
+              {!hideControls && (
+                <WindowControls
+                  onClose={() => { play('close'); closeWindow(id) }}
+                  onMinimize={handleMinimize}
+                  onMaximize={handleMaximize}
+                />
+              )}
+              {title && (
+                <span
+                  className="absolute left-1/2 -translate-x-1/2 text-xs font-medium"
+                  style={{ color: 'var(--body)', fontFamily: "'SF Pro Display'" }}
+                >
+                  {title}
+                </span>
+              )}
+              {toolbar && <div className="ml-auto flex items-center gap-2">{toolbar}</div>}
+              {actionLabel && !toolbar && (
+                <span className="ml-auto text-xs text-brand font-medium cursor-pointer hover:opacity-80 transition-opacity" onClick={onAction}>
+                  {actionLabel}
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Content */}
+          <div className={
+            hideTitleBar
+              ? 'h-full overflow-hidden'
+              : 'h-[calc(100%-40px)] overflow-hidden'
+          }>
+            {children}
+          </div>
+        </>
+      )}
     </motion.div>
   )
 }

@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import useWindowStore from '@/store/windowStore'
 import { Search, Grid2X2, List, Columns3, LayoutGrid } from 'lucide-react'
 import Window from '@/components/window/Window'
+import WindowControls from '@/components/window/WindowControls'
 import projects, { CATEGORIES, TAGS } from '@/data/projects'
 import AllIcon           from '@/assets/icons/work-all.svg?react'
 import RecentsIcon       from '@/assets/icons/work-recents.svg?react'
@@ -171,16 +172,36 @@ export default function WorkWindow() {
     </div>
   )
 
-  return (
-    <>
-    <Window id="portfolio" title="Portfolio" toolbar={toolbar}>
-      <div className="flex h-full overflow-hidden">
-
-        {/* ── Sidebar ─────────────────────────────────────────────────────── */}
+  // ── Sidebar panel (passed as render prop to Window) ──────────────────────
+  const sidebarContent = ({ onClose, onMinimize, onMaximize }) => (
+    <div style={{ width: 210, padding: '6px 4px 6px 6px', height: '100%', boxSizing: 'border-box' }}>
+      <div
+        style={{
+          background: '#1B1B1B',
+          border: '1px solid #404040',
+          borderRadius: 18,
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Traffic lights row */}
         <div
-          className="flex-shrink-0 flex flex-col overflow-y-auto window-scroll py-3 gap-0.5"
-          style={{ width: 180, background: 'var(--sidebar-bg)', borderRight: '1px solid var(--border)' }}
+          style={{
+            height: 40,
+            display: 'flex',
+            alignItems: 'center',
+            padding: '0 12px',
+            flexShrink: 0,
+          }}
         >
+          <WindowControls onClose={onClose} onMinimize={onMinimize} onMaximize={onMaximize} />
+        </div>
+
+
+        {/* Navigation list */}
+        <div className="flex flex-col overflow-y-auto window-scroll px-2 py-3 gap-0.5" style={{ flex: 1 }}>
           {/* All */}
           <button
             onClick={() => { setSelectedItem(null); setSelectedType(null) }}
@@ -214,10 +235,7 @@ export default function WorkWindow() {
           {/* Categories */}
           {CATEGORIES.map((cat) => (
             <div key={cat.section} className="mb-2">
-              <p
-                className="px-3 pb-1 text-[10px] font-semibold tracking-wide"
-                style={{ color: 'var(--body)', opacity: 0.5 }}
-              >
+              <p className="px-3 pb-1 text-[10px] font-semibold tracking-wide" style={{ color: '#5E5C53' }}>
                 {cat.section}
               </p>
               {cat.items.map((item) => {
@@ -238,10 +256,7 @@ export default function WorkWindow() {
 
           {/* Tags */}
           <div>
-            <p
-              className="px-3 pb-1 text-[10px] font-semibold tracking-wide"
-              style={{ color: 'var(--body)', opacity: 0.5 }}
-            >
+            <p className="px-3 pb-1 text-[10px] font-semibold tracking-wide" style={{ color: '#5E5C53' }}>
               Tags
             </p>
             {TAGS.map((tag) => (
@@ -254,9 +269,16 @@ export default function WorkWindow() {
             ))}
           </div>
         </div>
+      </div>
+    </div>
+  )
 
-        {/* ── Content ─────────────────────────────────────────────────────── */}
-        <div className="flex-1 overflow-y-auto window-scroll">
+  return (
+    <>
+    <Window id="portfolio" title="Portfolio" toolbar={toolbar} sidebarContent={sidebarContent}>
+
+      {/* ── Content ─────────────────────────────────────────────────────── */}
+      <div className="flex-1 h-full overflow-y-auto window-scroll">
         <div className={isMaximized ? 'w-full max-w-[1140px] mx-auto p-4' : 'p-4'}>
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full gap-2" style={{ color: 'var(--body)' }}>
@@ -307,9 +329,8 @@ export default function WorkWindow() {
             </div>
           )}
         </div>
-        </div>
-
       </div>
+
     </Window>
     </>
   )
