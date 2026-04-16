@@ -204,8 +204,10 @@ const useWindowStore = create((set, get) => ({
               isMaximized: false,
               position: w._savedPosition,
               size:     w._savedSize,
+              zIndex:   w._savedZIndex ?? ++topZ,
               _savedPosition: null,
               _savedSize:     null,
+              _savedZIndex:   null,
             }
           }
           return {
@@ -213,8 +215,10 @@ const useWindowStore = create((set, get) => ({
             isMaximized:    true,
             _savedPosition: w.position,
             _savedSize:     w.size,
+            _savedZIndex:   w.zIndex,
             position: { x: 0, y: 0 },
             size:     { width: vw, height: vh },
+            zIndex:   9999,
           }
         }),
       }
@@ -224,6 +228,13 @@ const useWindowStore = create((set, get) => ({
     set((state) => ({
       windows: state.windows.map((w) =>
         w.id === id ? { ...w, position } : w
+      ),
+    })),
+
+  updateSizePosition: (id, size, position) =>
+    set((state) => ({
+      windows: state.windows.map((w) =>
+        w.id === id ? { ...w, size, position } : w
       ),
     })),
 

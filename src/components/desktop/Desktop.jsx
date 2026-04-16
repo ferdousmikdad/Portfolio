@@ -68,6 +68,7 @@ export default function Desktop() {
   const chatRef  = useRef(null)
   const fabRef   = useRef(null)
   const { openWindow, closeAllExcept, switchTool, activePage, navigate, previewProject, closeProjectPreview, openProjectPreview } = useWindowStore()
+  const isAnyMaximized = useWindowStore((s) => s.windows.some((w) => w.isMaximized))
   const setActivePage = navigate
   const play = useSound()
 
@@ -157,8 +158,8 @@ export default function Desktop() {
       <DesktopIcon src={macDocumentUrl} label="skills.txt"    initialX={window.innerWidth - 96} initialY={180} onOpen={() => openWindow('skills')}  selected={selectedIcon === 'skills'}  onSelect={() => setSelectedIcon('skills')}  />
       <DesktopIcon src={macDocumentUrl} label="contact.txt"   initialX={window.innerWidth - 96} initialY={280} onOpen={() => openWindow('contact')} selected={selectedIcon === 'contact'} onSelect={() => setSelectedIcon('contact')} />
 
-      {/* Windows layer */}
-      <div className="absolute inset-0" style={{ zIndex: 20, pointerEvents: 'none' }}>
+      {/* Windows layer — z-index lifts to 9999 when any window is maximized */}
+      <div className="absolute inset-0" style={{ zIndex: isAnyMaximized ? 9999 : 20, pointerEvents: 'none' }}>
         <AnimatePresence>
           <ProfileCard />
           <PacmanWindow />

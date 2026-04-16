@@ -71,9 +71,9 @@ function ProjectCard({ project, onClick }) {
   return (
     <div
       className="group rounded-xl overflow-hidden cursor-pointer transition-all duration-200"
-      style={{ border: '1px solid var(--border)', background: 'var(--wall-bg)' }}
+      style={{ border: '1px solid transparent', background: 'var(--wall-bg)' }}
       onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(207,5,6,0.25)' }}
-      onMouseLeave={(e) => { e.currentTarget.style.borderColor = '' }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent' }}
       onClick={onClick}
     >
       <div style={{ aspectRatio: '4/3', background: 'var(--wall-bg)', overflow: 'hidden' }}>
@@ -299,7 +299,7 @@ export default function WorkWindow() {
     <Window id="portfolio" title="Portfolio" toolbar={toolbar} sidebarContent={sidebarContent}>
 
       {/* ── Content ─────────────────────────────────────────────────────── */}
-      <div className="flex-1 h-full overflow-y-auto window-scroll">
+      <div className="flex-1 h-full overflow-y-scroll window-scroll">
         <div className={isMaximized ? 'w-full max-w-[1140px] mx-auto p-4' : 'p-4'}>
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full gap-2" style={{ color: 'var(--body)' }}>

@@ -1,9 +1,10 @@
-import { useRef } from 'react'
-import { motion, useDragControls } from 'framer-motion'
+import { useRef, useEffect } from 'react'
+import { motion, useDragControls, useMotionValue } from 'framer-motion'
 import WindowControls from './WindowControls'
 import useWindowStore from '@/store/windowStore'
 import useSoundStore from '@/store/soundStore'
 import { genieOut } from '@/utils/genie'
+import { useResize, RESIZE_CURSORS } from '@/hooks/useResize'
 
 export default function Window({ id, title, children, actionLabel, onAction, hideControls, hideTitleBar, toolbar, sidebarContent }) {
   const { closeWindow, minimizeWindow, focusWindow, updatePosition, getWindow, toggleMaximize } = useWindowStore()
@@ -11,6 +12,23 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
   const win         = getWindow(id)
   const winRef      = useRef(null)
   const dragControls = useDragControls()
+
+  // ── Motion values for geometry ─────────────────────────────────────────────
+  // Using motion values instead of `animate` for x/y/width/height means that
+  // .set() calls bypass React entirely — instant DOM updates, no spring lag.
+  const mx = useMotionValue(win?.position.x ?? 0)
+  const my = useMotionValue(win?.position.y ?? 0)
+  const mw = useMotionValue(win?.size.width  ?? 0)
+  const mh = useMotionValue(win?.size.height ?? 0)
+
+  // Keep in sync with the store for all external changes
+  // (drag commit, maximize/restore, openWindow position reset, etc.)
+  useEffect(() => { win && mx.set(win.position.x) }, [win?.position.x])
+  useEffect(() => { win && my.set(win.position.y) }, [win?.position.y])
+  useEffect(() => { win && mw.set(win.size.width)  }, [win?.size.width])
+  useEffect(() => { win && mh.set(win.size.height) }, [win?.size.height])
+
+  const { startResize } = useResize(id, mx, my, mw, mh)
 
   const handleMaximize = () => {
     play('open')
@@ -62,39 +80,30 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
       ref={winRef}
       className="window-shell absolute"
       style={{
-        width:         win.size.width,
-        height:        win.size.height,
+        // Geometry via motion values — updated directly, never spring-animated
+        x:      mx,
+        y:      my,
+        width:  mw,
+        height: mh,
         zIndex:        win.zIndex,
-        x:             win.position.x,
-        y:             win.position.y,
         pointerEvents: 'auto',
-        borderRadius:  win.isMaximized ? 0 : 22,
       }}
-      initial={{ opacity: 0, scale: 0.92, y: win.position.y + 20 }}
-      animate={{
-        opacity: 1,
-        scale:   1,
-        x:       win.position.x,
-        y:       win.position.y,
-        width:   win.size.width,
-        height:  win.size.height,
-        borderRadius: win.isMaximized ? 0 : 22,
-      }}
+      // animate only controls entrance/exit appearance — NOT geometry
+      initial={{ opacity: 0, scale: 0.92 }}
+      animate={{ opacity: 1, scale: 1, borderRadius: win.isMaximized ? 0 : 22 }}
       exit={{ opacity: 0, scale: 0.88, transition: { duration: 0.15 } }}
+      transition={{ type: 'spring', stiffness: 300, damping: 28 }}
       drag={!win.isMaximized}
       dragControls={dragControls}
       dragListener={false}
       dragMomentum={false}
       dragElastic={0}
-      onDragEnd={(_, info) => {
+      onDragEnd={() => {
         if (win.isMaximized) return
-        updatePosition(id, {
-          x: win.position.x + info.offset.x,
-          y: win.position.y + info.offset.y,
-        })
+        // Read final position directly from motion values after drag
+        updatePosition(id, { x: mx.get(), y: my.get() })
       }}
       onMouseDown={() => focusWindow(id)}
-      transition={{ type: 'spring', stiffness: 300, damping: 28 }}
     >
       {sidebarContent ? (
         /* ── Sidebar-panel layout ─────────────────────────────────────────── */
@@ -187,6 +196,31 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
           }>
             {children}
           </div>
+        </>
+      )}
+
+      {/* ── Resize handles (hidden when maximized) ──────────────────────────── */}
+      {!win.isMaximized && (
+        <>
+          {/* Edges */}
+          <div onMouseDown={(e) => startResize(e, 'top')}
+            style={{ position:'absolute', top:0, left:10, right:10, height:6, cursor: RESIZE_CURSORS.top, zIndex:100 }} />
+          <div onMouseDown={(e) => startResize(e, 'bottom')}
+            style={{ position:'absolute', bottom:0, left:10, right:10, height:6, cursor: RESIZE_CURSORS.bottom, zIndex:100 }} />
+          <div onMouseDown={(e) => startResize(e, 'left')}
+            style={{ position:'absolute', left:0, top:10, bottom:10, width:6, cursor: RESIZE_CURSORS.left, zIndex:100 }} />
+          <div onMouseDown={(e) => startResize(e, 'right')}
+            style={{ position:'absolute', right:0, top:10, bottom:10, width:6, cursor: RESIZE_CURSORS.right, zIndex:100 }} />
+
+          {/* Corners */}
+          <div onMouseDown={(e) => startResize(e, 'top-left')}
+            style={{ position:'absolute', top:0, left:0, width:14, height:14, cursor: RESIZE_CURSORS['top-left'], zIndex:101 }} />
+          <div onMouseDown={(e) => startResize(e, 'top-right')}
+            style={{ position:'absolute', top:0, right:0, width:14, height:14, cursor: RESIZE_CURSORS['top-right'], zIndex:101 }} />
+          <div onMouseDown={(e) => startResize(e, 'bottom-left')}
+            style={{ position:'absolute', bottom:0, left:0, width:14, height:14, cursor: RESIZE_CURSORS['bottom-left'], zIndex:101 }} />
+          <div onMouseDown={(e) => startResize(e, 'bottom-right')}
+            style={{ position:'absolute', bottom:0, right:0, width:14, height:14, cursor: RESIZE_CURSORS['bottom-right'], zIndex:101 }} />
         </>
       )}
     </motion.div>
