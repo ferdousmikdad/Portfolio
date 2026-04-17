@@ -99,8 +99,18 @@ export default function Desktop() {
   // Re-center after fullscreen toggle (viewport dimensions change)
   useEffect(() => {
     const handler = () => {
-      // Wait a tick for the browser to update innerWidth/innerHeight
-      setTimeout(centerInitialWindows, 50)
+      setTimeout(() => {
+        // Temporarily add a smooth CSS transition to window elements
+        const shells = document.querySelectorAll('.window-shell')
+        shells.forEach(el => { el.style.transition = 'transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)' })
+
+        centerInitialWindows()
+
+        // Remove the transition once the move completes
+        setTimeout(() => {
+          shells.forEach(el => { el.style.transition = '' })
+        }, 400)
+      }, 300)
     }
     document.addEventListener('fullscreenchange', handler)
     return () => document.removeEventListener('fullscreenchange', handler)
