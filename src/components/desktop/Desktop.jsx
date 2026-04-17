@@ -89,6 +89,14 @@ export default function Desktop() {
       const y = Math.max(0, Math.round((liveVH - tool.size.height) / 2) - 110)
       updateSizePosition('color-contrast', tool.size, { x, y })
     }
+    for (const id of ['notes', 'shop']) {
+      const win = windows.find((w) => w.id === id)
+      if (win) {
+        const x = Math.max(0, Math.round((liveVW - win.size.width) / 2))
+        const y = Math.max(0, Math.round((liveVH - win.size.height) / 2))
+        updateSizePosition(id, win.size, { x, y })
+      }
+    }
   }
 
   // On mount: center initial windows
