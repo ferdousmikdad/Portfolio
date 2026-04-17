@@ -1,3 +1,3 @@
-animatedbg: true
-wallpaper: false
+animatedbg: false
+wallpaper: true
 image: wallpaper.jpg

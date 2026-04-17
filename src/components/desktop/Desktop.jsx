@@ -62,7 +62,7 @@ function DesktopIcon({ src, label, initialX, initialY, onOpen, selected, onSelec
 
 export default function Desktop() {
   const [menuOpen,      setMenuOpen]      = useState(false)
-  const [mikudaOpen,    setMikudaOpen]    = useState(false)
+  const [mikudaOpen,    setMikudaOpen]    = useState(true)   // open on first load
   const [selectedIcon,  setSelectedIcon]  = useState(null)
   const menuRef  = useRef(null)
   const chatRef  = useRef(null)
@@ -71,6 +71,40 @@ export default function Desktop() {
   const isAnyMaximized = useWindowStore((s) => s.windows.some((w) => w.isMaximized))
   const setActivePage = navigate
   const play = useSound()
+
+  // Center the initial windows — called on mount and after fullscreen changes
+  const centerInitialWindows = () => {
+    const { windows, updateSizePosition } = useWindowStore.getState()
+    const liveVW = window.innerWidth
+    const liveVH = window.innerHeight
+    const portfolio = windows.find((w) => w.id === 'portfolio')
+    if (portfolio) {
+      const x = Math.max(0, Math.round((liveVW - portfolio.size.width) / 2))
+      const y = Math.max(0, Math.round((liveVH - portfolio.size.height) / 2))
+      updateSizePosition('portfolio', portfolio.size, { x, y })
+    }
+    const tool = windows.find((w) => w.id === 'color-contrast')
+    if (tool) {
+      const x = Math.max(0, Math.round((liveVW - tool.size.width) / 2) - 110)
+      const y = Math.max(0, Math.round((liveVH - tool.size.height) / 2) - 110)
+      updateSizePosition('color-contrast', tool.size, { x, y })
+    }
+  }
+
+  // On mount: center initial windows
+  useEffect(() => {
+    centerInitialWindows()
+  }, [])
+
+  // Re-center after fullscreen toggle (viewport dimensions change)
+  useEffect(() => {
+    const handler = () => {
+      // Wait a tick for the browser to update innerWidth/innerHeight
+      setTimeout(centerInitialWindows, 50)
+    }
+    document.addEventListener('fullscreenchange', handler)
+    return () => document.removeEventListener('fullscreenchange', handler)
+  }, [])
 
   // On mount: open a project directly if the URL hash is #project/<slug>
   useEffect(() => {
@@ -234,9 +268,9 @@ export default function Desktop() {
 
       </div>
 
-      {/* Dock — unified tools dock on tools page, regular dock everywhere else */}
+      {/* Dock — tools dock on first load (null) and tools page, regular dock everywhere else */}
       <AnimatePresence mode="wait">
-        {activePage === 'tools' ? (
+        {(activePage === null || activePage === 'tools') ? (
           <ToolsPageDock
             key="tools-dock"
             menuOpen={menuOpen}

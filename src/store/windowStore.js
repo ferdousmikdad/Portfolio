@@ -31,9 +31,12 @@ export const TOOL_IDS = [
 const toolWindows = TOOL_IDS.map((id, i) => ({
   id,
   title: id,           // overridden at render time by ToolWindow
-  isOpen: false,
+  isOpen: id === 'color-contrast',   // open color-contrast on first load
   isMinimized: false,
-  position: { x: toolX + i * 6, y: toolY + i * 4 },   // slight cascade offset
+  // color-contrast gets a left-aligned position for the initial landing layout
+  position: id === 'color-contrast'
+    ? { x: Math.max(20, (vw - portfolioW) / 2), y: Math.max(20, (vh - portfolioH) / 2) }
+    : { x: toolX + i * 6, y: toolY + i * 4 },
   size: { width: portfolioW, height: portfolioH },
   zIndex: 3,
 }))
@@ -71,7 +74,7 @@ const defaultWindows = [
   {
     id: 'profile',
     title: 'About Me',
-    isOpen: true,
+    isOpen: false,   // not shown on initial tools page
     isMinimized: false,
     position: { x: startX, y: startY },
     size: { width: profileW, height: winH },
@@ -80,7 +83,7 @@ const defaultWindows = [
   {
     id: 'pacman',
     title: 'Play',
-    isOpen: true,
+    isOpen: false,   // not shown on initial tools page
     isMinimized: false,
     position: { x: startX + profileW + gap, y: startY },
     size: { width: pacmanW, height: winH },
@@ -89,11 +92,11 @@ const defaultWindows = [
   {
     id: 'portfolio',
     title: 'Portfolio',
-    isOpen: false,
+    isOpen: true,    // open by default for the initial landing layout
     isMinimized: false,
-    position: { x: Math.max(20, (vw - portfolioW) / 2), y: Math.max(20, (vh - portfolioH) / 2 - 30) },
+    position: { x: Math.max(20, (vw - portfolioW) / 2), y: Math.max(20, (vh - portfolioH) / 2) },
     size: { width: portfolioW, height: portfolioH },
-    zIndex: 3,
+    zIndex: 4,  // above the tool window
   },
   {
     id: 'shop',
@@ -120,7 +123,7 @@ let topZ = 10
 
 const useWindowStore = create((set, get) => ({
   windows: defaultWindows,
-  activeWindowId: 'pacman',
+  activeWindowId: 'color-contrast',
   activePage: null,
   navKey: 0,
   previewProject: null,
