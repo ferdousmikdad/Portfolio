@@ -118,7 +118,7 @@ export default function Desktop() {
         setTimeout(() => {
           shells.forEach(el => { el.style.transition = '' })
         }, 400)
-      }, 300)
+      }, 150)
     }
     document.addEventListener('fullscreenchange', handler)
     return () => document.removeEventListener('fullscreenchange', handler)
@@ -171,6 +171,13 @@ export default function Desktop() {
     } else if (activePage === 'tools') {
       closeAllExcept(TOOL_IDS)
       switchTool('color-contrast')
+      const { windows, updateSizePosition } = useWindowStore.getState()
+      const tool = windows.find((w) => w.id === 'color-contrast')
+      if (tool) {
+        const x = Math.max(0, Math.round((window.innerWidth  - tool.size.width)  / 2))
+        const y = Math.max(0, Math.round((window.innerHeight - tool.size.height) / 2))
+        updateSizePosition('color-contrast', tool.size, { x, y })
+      }
     } else {
       closeAllExcept([activePage])
       openWindow(activePage)
