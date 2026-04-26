@@ -31,7 +31,7 @@ function FloatingHead() {
         <img
           src={mikdadHeadUrl}
           alt="Mikdad"
-          style={{ width: 'clamp(100px, 28vw, 150px)', height: 'clamp(100px, 28vw, 150px)', objectFit: 'contain', display: 'block' }}
+          style={{ width: 'clamp(120px, 34vw, 150px)', height: 'clamp(120px, 34vw, 150px)', objectFit: 'contain', display: 'block' }}
         />
 
         {/* "Hey!" speech bubble — attached to head, rotated 15deg */}
@@ -71,9 +71,9 @@ export default function MobileHome({ onNav }) {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'flex-end',
         textAlign: 'center',
-        padding: '0 32px',
+        padding: '0 32px 100px',
         boxSizing: 'border-box',
         overflow: 'hidden',
       }}
@@ -84,7 +84,7 @@ export default function MobileHome({ onNav }) {
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
-        style={{ marginBottom: 'clamp(16px, 4svh, 32px)' }}
+        style={{ marginBottom: 0 }}
       >
         <FloatingHead />
       </motion.div>
