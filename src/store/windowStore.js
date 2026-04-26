@@ -13,6 +13,19 @@ const notesW     = 900, notesH     = 580
 const smallW     = 420, smallH     = 360
 const initW      = vw <= 1440 ? Math.round(portfolioW * 0.9) : portfolioW
 const initH      = vw <= 1440 ? Math.round(portfolioH * 0.9) : portfolioH
+
+const TOPBAR_H  = 28
+const DOCK_SAFE = 88
+
+const centeredInUsableArea = (w, h) => {
+  const liveVW  = window.innerWidth
+  const liveVH  = window.innerHeight
+  const usableH = liveVH - TOPBAR_H - DOCK_SAFE
+  return {
+    x: Math.max(0, Math.round((liveVW - w) / 2)),
+    y: Math.max(TOPBAR_H, Math.round(TOPBAR_H + (usableH - h) / 2)),
+  }
+}
 const toolX      = Math.max(20, (vw - initW) / 2)
 const toolY      = Math.max(20, (vh - initH) / 2 - 30)
 
@@ -151,18 +164,22 @@ const useWindowStore = create((set, get) => ({
       windows: state.windows.map((w) => {
         if (w.id !== id) return w
         if (id === 'portfolio') {
-          const liveVW = window.innerWidth
-          const liveVH = window.innerHeight
           return {
             ...w,
             isOpen: true,
             isMinimized: false,
             zIndex: ++topZ,
-            size: { width: portfolioW, height: portfolioH },
-            position: {
-              x: Math.max(0, Math.round((liveVW - portfolioW) / 2)),
-              y: Math.max(0, Math.round((liveVH - portfolioH) / 2)),
-            },
+            size:     { width: portfolioW, height: portfolioH },
+            position: centeredInUsableArea(portfolioW, portfolioH),
+          }
+        }
+        if (id === 'notes') {
+          return {
+            ...w,
+            isOpen: true,
+            isMinimized: false,
+            zIndex: ++topZ,
+            position: centeredInUsableArea(notesW, notesH),
           }
         }
         return { ...w, isOpen: true, isMinimized: false, zIndex: ++topZ }
@@ -198,18 +215,13 @@ const useWindowStore = create((set, get) => ({
       windows: state.windows.map((w) => {
         if (!TOOL_IDS.includes(w.id)) return w
         if (w.id === toolId) {
-          const liveVW = window.innerWidth
-          const liveVH = window.innerHeight
           return {
             ...w,
             isOpen: true,
             isMinimized: false,
             zIndex: ++topZ,
-            size: { width: portfolioW, height: portfolioH },
-            position: {
-              x: Math.max(0, Math.round((liveVW - portfolioW) / 2)),
-              y: Math.max(0, Math.round((liveVH - portfolioH) / 2)),
-            },
+            size:     { width: portfolioW, height: portfolioH },
+            position: centeredInUsableArea(portfolioW, portfolioH),
           }
         }
         if (w.isMinimized) return w
