@@ -83,11 +83,12 @@ export default function Desktop() {
       const y = Math.max(0, Math.round((liveVH - portfolio.size.height) / 2))
       updateSizePosition('portfolio', portfolio.size, { x, y })
     }
-    const tool = windows.find((w) => w.id === 'color-contrast')
-    if (tool) {
-      const x = Math.max(0, Math.round((liveVW - tool.size.width) / 2) - 110)
-      const y = Math.max(0, Math.round((liveVH - tool.size.height) / 2) - 110)
-      updateSizePosition('color-contrast', tool.size, { x, y })
+    const activeTool = windows.find((w) => TOOL_IDS.includes(w.id) && w.isOpen && !w.isMinimized)
+    if (activeTool) {
+      const offset = activeTool.id === 'color-contrast' ? 110 : 0
+      const x = Math.max(0, Math.round((liveVW - activeTool.size.width) / 2) - offset)
+      const y = Math.max(0, Math.round((liveVH - activeTool.size.height) / 2) - offset)
+      updateSizePosition(activeTool.id, activeTool.size, { x, y })
     }
     for (const id of ['notes', 'shop']) {
       const win = windows.find((w) => w.id === id)
