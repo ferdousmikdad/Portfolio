@@ -11,8 +11,10 @@ const startY   = Math.max(20, (vh - winH) / 2 - 40)
 const portfolioW = 946, portfolioH = 582
 const notesW     = 900, notesH     = 580
 const smallW     = 420, smallH     = 360
-const toolX      = Math.max(20, (vw - portfolioW) / 2)
-const toolY      = Math.max(20, (vh - portfolioH) / 2 - 30)
+const initW      = vw <= 1440 ? Math.round(portfolioW * 0.9) : portfolioW
+const initH      = vw <= 1440 ? Math.round(portfolioH * 0.9) : portfolioH
+const toolX      = Math.max(20, (vw - initW) / 2)
+const toolY      = Math.max(20, (vh - initH) / 2 - 30)
 
 // All tool window IDs — must match ids in data/tools.js
 export const TOOL_IDS = [
@@ -35,9 +37,9 @@ const toolWindows = TOOL_IDS.map((id, i) => ({
   isMinimized: false,
   // color-contrast gets a left-aligned position for the initial landing layout
   position: id === 'color-contrast'
-    ? { x: Math.max(20, (vw - portfolioW) / 2), y: Math.max(20, (vh - portfolioH) / 2) }
+    ? { x: Math.max(20, (vw - initW) / 2), y: Math.max(20, (vh - initH) / 2) }
     : { x: toolX + i * 6, y: toolY + i * 4 },
-  size: { width: portfolioW, height: portfolioH },
+  size: { width: initW, height: initH },
   zIndex: 3,
 }))
 
@@ -94,8 +96,8 @@ const defaultWindows = [
     title: 'Portfolio',
     isOpen: true,    // open by default for the initial landing layout
     isMinimized: false,
-    position: { x: Math.max(20, (vw - portfolioW) / 2), y: Math.max(20, (vh - portfolioH) / 2) },
-    size: { width: portfolioW, height: portfolioH },
+    position: { x: Math.max(20, (vw - initW) / 2), y: Math.max(20, (vh - initH) / 2) },
+    size: { width: initW, height: initH },
     zIndex: 4,  // above the tool window
   },
   {
@@ -146,9 +148,25 @@ const useWindowStore = create((set, get) => ({
 
   openWindow: (id) =>
     set((state) => ({
-      windows: state.windows.map((w) =>
-        w.id === id ? { ...w, isOpen: true, isMinimized: false, zIndex: ++topZ } : w
-      ),
+      windows: state.windows.map((w) => {
+        if (w.id !== id) return w
+        if (id === 'portfolio') {
+          const liveVW = window.innerWidth
+          const liveVH = window.innerHeight
+          return {
+            ...w,
+            isOpen: true,
+            isMinimized: false,
+            zIndex: ++topZ,
+            size: { width: portfolioW, height: portfolioH },
+            position: {
+              x: Math.max(0, Math.round((liveVW - portfolioW) / 2)),
+              y: Math.max(0, Math.round((liveVH - portfolioH) / 2)),
+            },
+          }
+        }
+        return { ...w, isOpen: true, isMinimized: false, zIndex: ++topZ }
+      }),
       activeWindowId: id,
     })),
 
@@ -179,9 +197,23 @@ const useWindowStore = create((set, get) => ({
     set((state) => ({
       windows: state.windows.map((w) => {
         if (!TOOL_IDS.includes(w.id)) return w
-        if (w.id === toolId) return { ...w, isOpen: true, isMinimized: false, zIndex: ++topZ }
-        if (w.isMinimized)   return w          // keep minimized tools in trash
-        return { ...w, isOpen: false }         // hide other open tools
+        if (w.id === toolId) {
+          const liveVW = window.innerWidth
+          const liveVH = window.innerHeight
+          return {
+            ...w,
+            isOpen: true,
+            isMinimized: false,
+            zIndex: ++topZ,
+            size: { width: portfolioW, height: portfolioH },
+            position: {
+              x: Math.max(0, Math.round((liveVW - portfolioW) / 2)),
+              y: Math.max(0, Math.round((liveVH - portfolioH) / 2)),
+            },
+          }
+        }
+        if (w.isMinimized) return w
+        return { ...w, isOpen: false }
       }),
       activeWindowId: toolId,
     })),
