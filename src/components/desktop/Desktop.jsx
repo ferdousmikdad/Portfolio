@@ -72,7 +72,15 @@ export default function Desktop() {
   const setActivePage = navigate
   const play = useSound()
 
-  // Center the initial windows — called on mount and after fullscreen changes
+  const TOPBAR_H  = 28
+  const DOCK_SAFE = 88
+
+  const usableCenter = (w, h, liveVW, liveVH) => ({
+    x: Math.max(0, Math.round((liveVW - w) / 2)),
+    y: Math.max(TOPBAR_H, Math.round(TOPBAR_H + (liveVH - TOPBAR_H - DOCK_SAFE - h) / 2)),
+  })
+
+  // Center the initial windows on first mount (full viewport, no usable-area offset)
   const centerInitialWindows = () => {
     const { windows, updateSizePosition } = useWindowStore.getState()
     const liveVW = window.innerWidth
@@ -83,11 +91,12 @@ export default function Desktop() {
       const y = Math.max(0, Math.round((liveVH - portfolio.size.height) / 2))
       updateSizePosition('portfolio', portfolio.size, { x, y })
     }
-    const tool = windows.find((w) => w.id === 'color-contrast')
-    if (tool) {
-      const x = Math.max(0, Math.round((liveVW - tool.size.width) / 2) - 110)
-      const y = Math.max(0, Math.round((liveVH - tool.size.height) / 2) - 110)
-      updateSizePosition('color-contrast', tool.size, { x, y })
+    const activeTool = windows.find((w) => TOOL_IDS.includes(w.id) && w.isOpen && !w.isMinimized)
+    if (activeTool) {
+      const offset = activeTool.id === 'color-contrast' ? 110 : 0
+      const x = Math.max(0, Math.round((liveVW - activeTool.size.width) / 2) - offset)
+      const y = Math.max(0, Math.round((liveVH - activeTool.size.height) / 2) - offset)
+      updateSizePosition(activeTool.id, activeTool.size, { x, y })
     }
     for (const id of ['notes', 'shop']) {
       const win = windows.find((w) => w.id === id)
@@ -95,6 +104,27 @@ export default function Desktop() {
         const x = Math.max(0, Math.round((liveVW - win.size.width) / 2))
         const y = Math.max(0, Math.round((liveVH - win.size.height) / 2))
         updateSizePosition(id, win.size, { x, y })
+      }
+    }
+  }
+
+  // Re-center after fit/restore — uses usable area between topbar and dock
+  const recenterAfterFullscreen = () => {
+    const { windows, updateSizePosition } = useWindowStore.getState()
+    const liveVW = window.innerWidth
+    const liveVH = window.innerHeight
+    const portfolio = windows.find((w) => w.id === 'portfolio')
+    if (portfolio && portfolio.isOpen) {
+      updateSizePosition('portfolio', portfolio.size, usableCenter(portfolio.size.width, portfolio.size.height, liveVW, liveVH))
+    }
+    const activeTool = windows.find((w) => TOOL_IDS.includes(w.id) && w.isOpen && !w.isMinimized)
+    if (activeTool) {
+      updateSizePosition(activeTool.id, activeTool.size, usableCenter(activeTool.size.width, activeTool.size.height, liveVW, liveVH))
+    }
+    for (const id of ['notes', 'shop']) {
+      const win = windows.find((w) => w.id === id && w.isOpen)
+      if (win) {
+        updateSizePosition(id, win.size, usableCenter(win.size.width, win.size.height, liveVW, liveVH))
       }
     }
   }
@@ -108,13 +138,16 @@ export default function Desktop() {
   useEffect(() => {
     const handler = () => {
       setTimeout(() => {
-        // Temporarily add a smooth CSS transition to window elements
         const shells = document.querySelectorAll('.window-shell')
         shells.forEach(el => { el.style.transition = 'transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)' })
 
-        centerInitialWindows()
+        const { activePage } = useWindowStore.getState()
+        if (activePage === null) {
+          centerInitialWindows()
+        } else {
+          recenterAfterFullscreen()
+        }
 
-        // Remove the transition once the move completes
         setTimeout(() => {
           shells.forEach(el => { el.style.transition = '' })
         }, 400)

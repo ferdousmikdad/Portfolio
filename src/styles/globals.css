@@ -1388,6 +1388,14 @@
 .m-ctrl-pill:hover  { opacity: 0.8; }
 .m-ctrl-pill.active { opacity: 0.8; }
 
+/* ── 1280px breakpoint — shrink default windows to 80% on first load ──────── */
+@media (max-width: 1440px) {
+  .mk-window {
+    width: 252px;
+    height: 342px;
+  }
+}
+
 /* ── Mobile responsive ───────────────────────────────────────────────────── */
 @media (max-width: 767px) {
   /* Chat window: don't overflow screen edges */

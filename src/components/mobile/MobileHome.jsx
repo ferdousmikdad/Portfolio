@@ -31,7 +31,7 @@ function FloatingHead() {
         <img
           src={mikdadHeadUrl}
           alt="Mikdad"
-          style={{ width: 150, height: 150, objectFit: 'contain', display: 'block' }}
+          style={{ width: 'clamp(120px, 34vw, 150px)', height: 'clamp(120px, 34vw, 150px)', objectFit: 'contain', display: 'block' }}
         />
 
         {/* "Hey!" speech bubble — attached to head, rotated 15deg */}
@@ -67,13 +67,15 @@ export default function MobileHome({ onNav }) {
   return (
     <div
       style={{
-        minHeight: '100svh',
+        height: '100svh',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'flex-end',
         textAlign: 'center',
-        padding: '300px 32px 100px',
+        padding: '0 32px 100px',
+        boxSizing: 'border-box',
+        overflow: 'hidden',
       }}
     >
 
@@ -82,6 +84,7 @@ export default function MobileHome({ onNav }) {
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
+        style={{ marginBottom: 0 }}
       >
         <FloatingHead />
       </motion.div>
@@ -92,8 +95,8 @@ export default function MobileHome({ onNav }) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.12, duration: 0.5 }}
         style={{
-          margin: '0 0 10px',
-          fontSize: 'clamp(32px, 9.5vw, 46px)',
+          margin: '0 0 clamp(6px, 1.5svh, 10px)',
+          fontSize: 'clamp(26px, 8vw, 46px)',
           fontWeight: 500,
           letterSpacing: '-0.03em',
           lineHeight: 1.1,
@@ -109,8 +112,8 @@ export default function MobileHome({ onNav }) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.4 }}
         style={{
-          margin: '0 0 20px',
-          fontSize: 21,
+          margin: '0 0 clamp(12px, 2.5svh, 20px)',
+          fontSize: 'clamp(16px, 4.5vw, 21px)',
           fontWeight: 500,
           color: 'var(--body)',
           letterSpacing: '-0.01em',
@@ -125,8 +128,8 @@ export default function MobileHome({ onNav }) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.28, duration: 0.45 }}
         style={{
-          margin: '0 0 36px',
-          fontSize: 14,
+          margin: '0 0 clamp(20px, 4svh, 36px)',
+          fontSize: 'clamp(12px, 3.5vw, 14px)',
           lineHeight: 1.7,
           color: 'var(--body)',
           opacity: 0.6,

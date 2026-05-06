@@ -44,6 +44,91 @@ function SparkleIcon() {
   )
 }
 
+const PC_MODAL_TEXT = 'For the full desktop experience with interactive windows, open this site on a PC or Mac.'
+
+function PcModal({ onClose }) {
+  const [displayed, setDisplayed] = useState('')
+
+  useEffect(() => {
+    let i = 0
+    const id = setInterval(() => {
+      i++
+      setDisplayed(PC_MODAL_TEXT.slice(0, i))
+      if (i >= PC_MODAL_TEXT.length) clearInterval(id)
+    }, 38)
+    return () => clearInterval(id)
+  }, [])
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.25 }}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 9999,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'rgba(0,0,0,0.45)',
+        backdropFilter: 'blur(6px)',
+        WebkitBackdropFilter: 'blur(6px)',
+        padding: '0 24px',
+      }}
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.92, y: 16 }}
+        animate={{ opacity: 1, scale: 1,    y: 0  }}
+        exit={{    opacity: 0, scale: 0.94,  y: 8  }}
+        transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: 'var(--dock-bg)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          border: '1px solid var(--border-dock)',
+          borderRadius: 20,
+          padding: '28px 24px 28px',
+          width: '100%',
+          maxWidth: 320,
+          position: 'relative',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+        }}
+      >
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute', top: 14, right: 14,
+            width: 28, height: 28, borderRadius: '50%',
+            background: 'var(--social-bg)',
+            border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: 'var(--headline)',
+          }}
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <line x1="1" y1="1" x2="11" y2="11" /><line x1="11" y1="1" x2="1" y2="11" />
+          </svg>
+        </button>
+
+        {/* Typewriter text */}
+        <p style={{
+          margin: 0,
+          fontSize: 16,
+          fontWeight: 500,
+          lineHeight: 1.6,
+          color: 'var(--headline)',
+          fontFamily: "'SF Pro Display', sans-serif",
+          minHeight: 52,
+        }}>
+          {displayed}
+          <span style={{ opacity: displayed.length < PC_MODAL_TEXT.length ? 1 : 0, transition: 'opacity 0.2s' }}>▎</span>
+        </p>
+      </motion.div>
+    </motion.div>
+  )
+}
+
 export default function MobileApp() {
   const { previewProject, closeProjectPreview, openProjectPreview } = useWindowStore()
   const { isDark, toggleTheme } = useThemeStore()
@@ -53,6 +138,7 @@ export default function MobileApp() {
   const [menuOpen,   setMenuOpen]   = useState(false)
   const [activeTool, setActiveTool] = useState(null)
   const [mikudaOpen, setMikudaOpen] = useState(false)
+  const [showPcModal, setShowPcModal] = useState(() => !sessionStorage.getItem('pc-modal-seen'))
   const chatRef = useRef(null)
   const fabRef  = useRef(null)
 
@@ -96,8 +182,18 @@ export default function MobileApp() {
 
   const direction = prevPage && PAGES.indexOf(activePage) > PAGES.indexOf(prevPage) ? 1 : -1
 
+  const closePcModal = () => {
+    sessionStorage.setItem('pc-modal-seen', '1')
+    setShowPcModal(false)
+  }
+
   return (
     <div style={{ width: '100%', height: '100svh', overflow: 'hidden', background: 'var(--bg)', color: 'var(--headline)', position: 'relative' }}>
+
+      {/* ── PC recommendation modal ───────────────────────────────────── */}
+      <AnimatePresence>
+        {showPcModal && <PcModal onClose={closePcModal} />}
+      </AnimatePresence>
 
       {/* ── Page content ─────────────────────────────────────────────── */}
       <AnimatePresence mode="wait" initial={false}>
