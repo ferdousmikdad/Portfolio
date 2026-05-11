@@ -162,8 +162,10 @@ const KB = [
   {
     id: 'about',
     test: (t) =>
-      (/\b(who is|about|mikdad|yourself|background|tell me|introduce)\b/.test(t) ||
-       fuzzy(t, ['mikdad', 'about', 'background'])) &&
+      (/\b(about mikdad|about ferdous|mikdad|yourself|background|introduce)\b/.test(t) ||
+       /who is (mikdad|ferdous|he)/.test(t) ||
+       /tell me (about|more) (him|mikdad|ferdous|yourself)/.test(t) ||
+       fuzzy(t, ['mikdad'])) &&
       !isPlatformQ(t) && !isEmailQ(t) && !isPhoneQ(t),
     answer: "Mikdad is a UI/UX designer and web developer who specialises in interactive websites, modern UI design, branding, and Arabic logo design. He loves building creative experiences.",
   },
@@ -357,12 +359,15 @@ const KB = [
   {
     id: 'ux',
     test: (t) =>
-      /\b(ux|ui|design|interface|figma|prototype|wireframe|user experience)\b/.test(t) ||
-      fuzzy(t, ['design', 'figma', 'prototype', 'wireframe', 'interface']),
+      /\b(ux|ui design|ui\/ux|interface design|figma|prototype|wireframe|user experience)\b/.test(t) ||
+      /mikdad.*(design|ux|ui)/.test(t) ||
+      /(design|ux|ui).*(mikdad|ferdous|his|your|portfolio)/.test(t) ||
+      fuzzy(t, ['figma', 'prototype', 'wireframe']),
     answer: "UI/UX design is central to Mikdad's work. He creates intuitive interfaces, prototypes, and complete design systems.",
   },
 ]
 
+const WORKER_URL = 'https://delicate-lab-1163.mikdadtaqi2024.workers.dev'
 const FALLBACK = "I'm here to help! Ask about Mikdad's skills, projects, or say something like \"show me an arabic logo\" or \"show me a landing page\"."
 
 function getResponse(input) {
@@ -375,7 +380,7 @@ function getResponse(input) {
       }
     }
   }
-  return { answer: FALLBACK }
+  return { answer: FALLBACK, isAiFallback: true }
 }
 
 // ── Suggestions ───────────────────────────────────────────────────────────────
@@ -671,7 +676,7 @@ export default function MikudaChat({ isOpen, onClose, chatRef }) {
     if (el) el.scrollTop = el.scrollHeight
   }, [messages, thinking])
 
-  const sendMessage = useCallback((text) => {
+  const sendMessage = useCallback(async (text) => {
     const trimmed = typeof text === 'string' ? text.trim() : input.trim()
     if (!trimmed || thinking) return
 
@@ -680,8 +685,32 @@ export default function MikudaChat({ isOpen, onClose, chatRef }) {
     setInput('')
     setThinking(true)
 
+    const entry = getResponse(trimmed)
+
+    // ── AI fallback — no KB match ──────────────────────────────────────────
+    if (entry.isAiFallback) {
+      try {
+        const res  = await fetch(`${WORKER_URL}/mikuda`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: trimmed }),
+        })
+        const data = await res.json()
+        const aiId = nextId.current++
+        setThinking(false)
+        setMessages((prev) => [...prev, { id: aiId, role: 'ai', type: 'text', text: data.reply || FALLBACK }])
+        setLatestId(aiId)
+      } catch {
+        const aiId = nextId.current++
+        setThinking(false)
+        setMessages((prev) => [...prev, { id: aiId, role: 'ai', type: 'text', text: FALLBACK }])
+        setLatestId(aiId)
+      }
+      return
+    }
+
+    // ── KB match — existing simulated delay ───────────────────────────────
     setTimeout(() => {
-      const entry = getResponse(trimmed)
       const aiId  = nextId.current++
 
       // Resolve which category to show

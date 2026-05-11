@@ -13,7 +13,10 @@ const W  = '#e2e2e2'
 const D  = '#666'
 const BG = 'var(--bg)'
 
-const PROMPT = 'ferdous@portfolio:~$'
+const PROMPT = 'ferdous@portfolio:~$ '
+
+const URL_RE = /^https?:\/\/|^www\.|^[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?\.(?:com|net|org|io|dev|co|me|app|ai|tv|gg|info|edu|gov|design|studio|agency|media|digital|creative|shop|store|online|site|web|tech|photography|art|gallery|blog|news|press|space|cloud|link|page|run|works|fund|world|global|systems|solutions|services|consulting|ventures|partners|group|team|tools|lab|labs|codes|build|built|made|land|zone|plus|pro|expert|guru|ninja|rocks|club|community|network|social|live|stream|show|play|game|games|music|video|films|photos|events|travel|tours|hotel|cafe|bar|shop|market|store|sale|deals|trade|exchange|finance|capital|fund|invest|bank|pay|money|cash|coin|gold|diamond|luxury|fashion|style|wear|clothing|shoes|bags|beauty|health|fit|care|life|living|home|house|estate|realty|build|construction|repair|clean|green|eco|solar|energy|farm|food|eat|kitchen|chef|pizza|coffee|tea|beer|wine|spirits|spa|yoga|gym|sport|run|bike|surf|ski|golf|tennis|football|soccer|basketball|cricket|games|casino|poker|bet|win|play|fun|kids|baby|family|wedding|party|gift|love|flowers|art|music|band|dj|dance|theatre|cinema|film|tv|radio|podcast|news|media|press|blog|magazine|journal|book|books|story|stories|write|read|learn|teach|school|college|university|academy|institute|center|centre|foundation|charity|ngo|org|church|temple|mosque|gov|mil|edu|int)\b/i
+const toUrl  = (s) => /^https?:\/\//i.test(s) ? s : `https://${s}`
 const MATRIX = 'アイウエオカキクケコサシスセソタチツテトナニヌネノ01101001001010'
 
 /* ── Line factory ─────────────────────────────────────────────────── */
@@ -78,7 +81,7 @@ function Line({ line }) {
   const base = { fontFamily: FONT, fontSize: 12.5, lineHeight: '1.6', whiteSpace: 'pre-wrap', padding: '0 16px', minHeight: 20 }
   if (line.type === 'input') return (
     <div style={base}>
-      <span style={{ color: G, userSelect: 'none' }}>{PROMPT} </span>
+      <span style={{ color: G, userSelect: 'none', whiteSpace: 'pre' }}>{PROMPT}</span>
       <span style={{ color: W }}>{line.content}</span>
     </div>
   )
@@ -98,26 +101,34 @@ export default function TerminalWindow() {
   const [history,     setHistory]     = useState([])
   const [histIdx,     setHistIdx]     = useState(-1)
   const [booted,      setBooted]      = useState(false)
-  const [hackRows,    setHackRows]    = useState(null)
-  const [urlLoading,  setUrlLoading]  = useState(false)
-  const [dots,        setDots]        = useState(1)
+  const [hackRows,      setHackRows]      = useState(null)
+  const [urlLoading,    setUrlLoading]    = useState(false)
+  const [aiThinking,    setAiThinking]    = useState(false)
+  const [dots,          setDots]          = useState(1)
+  const [aiActive,      setAiActive]      = useState(false)
+  const [installProgress, setInstallProgress] = useState(null)
 
-  const inputRef  = useRef(null)
-  const scrollRef = useRef(null)
-  const hackTimer = useRef(null)
+  const inputRef     = useRef(null)
+  const scrollRef    = useRef(null)
+  const hackTimer    = useRef(null)
+  const installTimer = useRef(null)
+  const aiActiveRef  = useRef(false)   // ref so execute closure always reads latest value
+
+  const activateAi   = () => { aiActiveRef.current = true;  setAiActive(true)  }
+  const deactivateAi = () => { aiActiveRef.current = false; setAiActive(false) }
 
   /* auto-scroll */
   useEffect(() => {
     const el = scrollRef.current
     if (el) el.scrollTop = el.scrollHeight
-  }, [lines, hackRows, urlLoading, input])
+  }, [lines, hackRows, urlLoading, input, installProgress])
 
-  /* blinking dots while URL is loading */
+  /* blinking dots while URL loading or AI thinking */
   useEffect(() => {
-    if (!urlLoading) { setDots(1); return }
+    if (!urlLoading && !aiThinking) { setDots(1); return }
     const t = setInterval(() => setDots(d => d >= 3 ? 1 : d + 1), 450)
     return () => clearInterval(t)
-  }, [urlLoading])
+  }, [urlLoading, aiThinking])
 
   /* focus input when booted */
   useEffect(() => { if (booted) inputRef.current?.focus() }, [booted])
@@ -127,7 +138,9 @@ export default function TerminalWindow() {
     if (!win?.isOpen) return
     setLines([]); setBooted(false); setInput('')
     setHistory([]); setHistIdx(-1); setHackRows(null)
-    if (hackTimer.current) clearInterval(hackTimer.current)
+    setAiActive(false); aiActiveRef.current = false; setInstallProgress(null)
+    if (hackTimer.current)    clearInterval(hackTimer.current)
+    if (installTimer.current) clearInterval(installTimer.current)
 
     const timers = BOOT.map(({ text, delay }) =>
       setTimeout(() => setLines(p => [...p, ln('system', text)]), delay)
@@ -152,15 +165,68 @@ export default function TerminalWindow() {
 
     const lo = cmd.toLowerCase()
 
-    /* raw URL — anything starting with http:// or https:// */
-    if (/^https?:\/\//i.test(cmd)) {
-      addLines([ln('output', ''), ln('info', ` Launching ${cmd}...`)])
+    /* raw URL — http/https/www/bare domain */
+    if (URL_RE.test(cmd)) {
+      const url = toUrl(cmd)
+      addLines([ln('output', ''), ln('info', ` Launching ${url}...`)])
       setUrlLoading(true)
       setTimeout(() => {
         setUrlLoading(false)
-        window.open(cmd, '_blank', 'noopener,noreferrer')
-        addLines([ln('success', ' ✓ Opened successfully 🚀'), ln('output', '')])
+        window.open(url, '_blank', 'noopener,noreferrer')
+        addLines([ln('success', ' ✓ Opened successfully'), ln('output', '')])
       }, 2000)
+      return
+    }
+
+    /* mikuda start */
+    if (lo === 'mikuda start') {
+      if (aiActiveRef.current) {
+        addLines([ln('output', ''), ln('info', ' Mikuda AI is already running. Say anything!'), ln('output', '')])
+        return
+      }
+      addLines([ln('output', ''), ln('info', ' Installing mikuda...')])
+      let progress = 0
+      setInstallProgress(0)
+      installTimer.current = setInterval(() => {
+        progress += 20
+        setInstallProgress(progress)
+        if (progress >= 100) {
+          clearInterval(installTimer.current)
+          setTimeout(() => {
+            setInstallProgress(null)
+            activateAi()
+            addLines([
+              ln('success', ' ✓ Mikuda AI is now active.'),
+              ln('info',    " Say anything — I'm listening."),
+              ln('output',  ''),
+            ])
+          }, 400)
+        }
+      }, 320)
+      return
+    }
+
+    /* mikuda stop */
+    if (lo === 'mikuda stop') {
+      if (!aiActiveRef.current) {
+        addLines([ln('output', ''), ln('error', ' Mikuda AI is not running. Type mikuda start to activate.'), ln('output', '')])
+        return
+      }
+      deactivateAi()
+      addLines([ln('output', ''), ln('info', ' Mikuda AI deactivated.'), ln('output', '')])
+      return
+    }
+
+    /* mikuda (no subcommand) */
+    if (lo === 'mikuda') {
+      addLines([
+        ln('output', ''),
+        ln('info',    ' mikuda — AI assistant CLI'),
+        ln('output',  ''),
+        ln('jsx', <HelpRow cmd="mikuda start" desc="Activate AI mode" />),
+        ln('jsx', <HelpRow cmd="mikuda stop"  desc="Deactivate AI mode" />),
+        ln('output',  ''),
+      ])
       return
     }
 
@@ -225,6 +291,10 @@ export default function TerminalWindow() {
         ln('jsx', <HelpRow cmd="neofetch"      desc="System info" />),
         ln('jsx', <HelpRow cmd="coffee"        desc="☕" />),
         ln('jsx', <HelpRow cmd="exit"          desc="Close terminal" />),
+        ln('output', ''),
+        ln('info',   '  AI Mode ─────────────────────────────────────────'),
+        ln('jsx', <HelpRow cmd="mikuda start" desc="Activate Mikuda AI (unknown cmds → AI)" />),
+        ln('jsx', <HelpRow cmd="mikuda stop"  desc="Deactivate AI mode" />),
         ln('output', ''),
       ], 12)
       return
@@ -419,13 +489,14 @@ export default function TerminalWindow() {
     if (lo.startsWith('open ')) {
       const target = cmd.slice(5).trim()
 
-      /* open https://... */
-      if (/^https?:\/\//i.test(target)) {
-        addLines([ln('output', ''), ln('info', ` Launching ${target}...`)])
+      /* open <url> — http/https/www/bare domain */
+      if (URL_RE.test(target)) {
+        const url = toUrl(target)
+        addLines([ln('output', ''), ln('info', ` Launching ${url}...`)])
         setUrlLoading(true)
         setTimeout(() => {
           setUrlLoading(false)
-          window.open(target, '_blank', 'noopener,noreferrer')
+          window.open(url, '_blank', 'noopener,noreferrer')
           addLines([ln('success', ' ✓ Opened successfully'), ln('output', '')])
         }, 2000)
         return
@@ -453,13 +524,43 @@ export default function TerminalWindow() {
       return
     }
 
-    /* unknown */
-    addLines([
-      ln('output', ''),
-      ln('error',  ` command not found: ${cmd}`),
-      ln('info',   " Type 'help' for available commands."),
-      ln('output', ''),
-    ], 18)
+    /* unknown — ask AI only if active, else command not found */
+    if (!aiActiveRef.current) {
+      addLines([
+        ln('output', ''),
+        ln('error',  ` command not found: ${cmd}`),
+        ln('info',   " Type 'mikuda start' to enable AI, or 'help' for commands."),
+        ln('output', ''),
+      ])
+      return
+    }
+
+    setAiThinking(true)
+    fetch('https://delicate-lab-1163.mikdadtaqi2024.workers.dev/terminal', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: cmd }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        setAiThinking(false)
+        const reply = (data.reply || '').trim()
+        if (!reply) {
+          addLines([ln('output', ''), ln('error', ` command not found: ${cmd}`), ln('info', " Type 'help' for available commands."), ln('output', '')])
+          return
+        }
+        const replyLines = reply.split('\n').filter(Boolean)
+        addLines([ln('output', ''), ...replyLines.map(l => ln('output', ' ' + l)), ln('output', '')])
+      })
+      .catch(() => {
+        setAiThinking(false)
+        addLines([
+          ln('output', ''),
+          ln('error', ` command not found: ${cmd}`),
+          ln('info',  " Type 'help' for available commands."),
+          ln('output', ''),
+        ])
+      })
   }, [addLines, closeWindow, openWindow, openTool, play])
 
   /* keyboard */
@@ -487,10 +588,24 @@ export default function TerminalWindow() {
         <div ref={scrollRef} className="window-scroll" style={{ flex: 1, overflowY: 'auto', paddingTop: 10, paddingBottom: 12 }}>
           {lines.map(line => <Line key={line.id} line={line} />)}
 
-          {/* animated URL loading */}
+          {/* mikuda install progress bar */}
+          {installProgress !== null && (
+            <div style={{ fontFamily: FONT, fontSize: 12.5, lineHeight: '1.6', padding: '0 16px' }}>
+              <span style={{ color: G }}>{'▓'.repeat(Math.floor(installProgress / 5))}</span>
+              <span style={{ color: D }}>{'░'.repeat(20 - Math.floor(installProgress / 5))}</span>
+              <span style={{ color: W }}> {installProgress}%</span>
+            </div>
+          )}
+
+          {/* animated loading indicators */}
           {urlLoading && (
             <div style={{ fontFamily: FONT, fontSize: 12.5, lineHeight: '1.6', padding: '0 16px', color: G }}>
               {' Opening in new tab '}{'.'.repeat(dots)}
+            </div>
+          )}
+          {aiThinking && (
+            <div style={{ fontFamily: FONT, fontSize: 12.5, lineHeight: '1.6', padding: '0 16px', color: D }}>
+              {' thinking'}{'.'.repeat(dots)}
             </div>
           )}
 
@@ -504,8 +619,9 @@ export default function TerminalWindow() {
           {/* inline prompt — flows after output */}
           {booted && (
             <div style={{ display: 'flex', alignItems: 'center', padding: '0 16px', marginTop: 2 }}>
-              <span style={{ color: G, fontFamily: FONT, fontSize: 12.5, whiteSpace: 'nowrap', userSelect: 'none' }}>
-                {PROMPT}&nbsp;
+              <span style={{ fontFamily: FONT, fontSize: 12.5, whiteSpace: 'pre', userSelect: 'none' }}>
+                <span style={{ color: G }}>{PROMPT}</span>
+                {aiActive && <span style={{ color: C }}>/mikuda </span>}
               </span>
               <input
                 ref={inputRef}
