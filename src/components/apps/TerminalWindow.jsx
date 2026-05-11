@@ -11,7 +11,7 @@ const C  = '#56b6c2'
 const R  = '#ff6b6b'
 const W  = '#e2e2e2'
 const D  = '#666'
-const BG = '#0d1117'
+const BG = 'var(--bg)'
 
 const PROMPT = 'ferdous@portfolio:~$'
 const MATRIX = 'アイウエオカキクケコサシスセソタチツテトナニヌネノ01101001001010'
@@ -99,6 +99,8 @@ export default function TerminalWindow() {
   const [histIdx,     setHistIdx]     = useState(-1)
   const [booted,      setBooted]      = useState(false)
   const [hackRows,    setHackRows]    = useState(null)
+  const [urlLoading,  setUrlLoading]  = useState(false)
+  const [dots,        setDots]        = useState(1)
 
   const inputRef  = useRef(null)
   const scrollRef = useRef(null)
@@ -108,7 +110,14 @@ export default function TerminalWindow() {
   useEffect(() => {
     const el = scrollRef.current
     if (el) el.scrollTop = el.scrollHeight
-  }, [lines, hackRows])
+  }, [lines, hackRows, urlLoading, input])
+
+  /* blinking dots while URL is loading */
+  useEffect(() => {
+    if (!urlLoading) { setDots(1); return }
+    const t = setInterval(() => setDots(d => d >= 3 ? 1 : d + 1), 450)
+    return () => clearInterval(t)
+  }, [urlLoading])
 
   /* focus input when booted */
   useEffect(() => { if (booted) inputRef.current?.focus() }, [booted])
@@ -142,6 +151,18 @@ export default function TerminalWindow() {
     setInput('')
 
     const lo = cmd.toLowerCase()
+
+    /* raw URL — anything starting with http:// or https:// */
+    if (/^https?:\/\//i.test(cmd)) {
+      addLines([ln('output', ''), ln('info', ` Launching ${cmd}...`)])
+      setUrlLoading(true)
+      setTimeout(() => {
+        setUrlLoading(false)
+        window.open(cmd, '_blank', 'noopener,noreferrer')
+        addLines([ln('success', ' ✓ Opened successfully 🚀'), ln('output', '')])
+      }, 2000)
+      return
+    }
 
     /* clear */
     if (lo === 'clear') { setTimeout(() => setLines([]), 10); return }
@@ -396,17 +417,31 @@ export default function TerminalWindow() {
 
     /* open <target> */
     if (lo.startsWith('open ')) {
-      const target = lo.slice(5).trim()
-      const tool   = TOOLS.find(t => t.id === target || t.name.toLowerCase() === target)
+      const target = cmd.slice(5).trim()
+
+      /* open https://... */
+      if (/^https?:\/\//i.test(target)) {
+        addLines([ln('output', ''), ln('info', ` Launching ${target}...`)])
+        setUrlLoading(true)
+        setTimeout(() => {
+          setUrlLoading(false)
+          window.open(target, '_blank', 'noopener,noreferrer')
+          addLines([ln('success', ' ✓ Opened successfully'), ln('output', '')])
+        }, 2000)
+        return
+      }
+
+      const targetLo = target.toLowerCase()
+      const tool = TOOLS.find(t => t.id === targetLo || t.name.toLowerCase() === targetLo)
       if (tool) {
         addLines([ln('output', ''), ln('success', ` Opening ${tool.name}...`), ln('output', '')])
         setTimeout(() => { play('open'); openTool(tool.id) }, 400)
         return
       }
       const native = { finder: 'finder', notes: 'notes', portfolio: 'portfolio', shop: 'shop', terminal: 'terminal' }
-      if (native[target]) {
-        addLines([ln('output', ''), ln('success', ` Opening ${target}...`), ln('output', '')])
-        setTimeout(() => { play('open'); openWindow(native[target]) }, 400)
+      if (native[targetLo]) {
+        addLines([ln('output', ''), ln('success', ` Opening ${targetLo}...`), ln('output', '')])
+        setTimeout(() => { play('open'); openWindow(native[targetLo]) }, 400)
         return
       }
       addLines([
@@ -448,9 +483,16 @@ export default function TerminalWindow() {
         onClick={() => inputRef.current?.focus()}
         style={{ height: '100%', display: 'flex', flexDirection: 'column', background: BG, cursor: 'text' }}
       >
-        {/* ── Output ── */}
-        <div ref={scrollRef} className="window-scroll" style={{ flex: 1, overflowY: 'auto', paddingTop: 10, paddingBottom: 4 }}>
+        {/* ── Scrollable output + inline input ── */}
+        <div ref={scrollRef} className="window-scroll" style={{ flex: 1, overflowY: 'auto', paddingTop: 10, paddingBottom: 12 }}>
           {lines.map(line => <Line key={line.id} line={line} />)}
+
+          {/* animated URL loading */}
+          {urlLoading && (
+            <div style={{ fontFamily: FONT, fontSize: 12.5, lineHeight: '1.6', padding: '0 16px', color: G }}>
+              {' Opening in new tab '}{'.'.repeat(dots)}
+            </div>
+          )}
 
           {/* matrix hack rows */}
           {hackRows && hackRows.map((row, i) => (
@@ -458,36 +500,29 @@ export default function TerminalWindow() {
               {row}
             </div>
           ))}
-        </div>
 
-        {/* ── Input row ── */}
-        {booted && (
-          <div
-            style={{
-              display: 'flex', alignItems: 'center',
-              padding: '6px 16px 10px',
-              borderTop: '1px solid rgba(255,255,255,0.06)',
-              flexShrink: 0,
-            }}
-          >
-            <span style={{ color: G, fontFamily: FONT, fontSize: 12.5, whiteSpace: 'nowrap', userSelect: 'none' }}>
-              {PROMPT}&nbsp;
-            </span>
-            <input
-              ref={inputRef}
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={onKeyDown}
-              autoFocus
-              spellCheck={false}
-              autoComplete="off"
-              style={{
-                flex: 1, background: 'transparent', border: 'none', outline: 'none',
-                color: W, fontFamily: FONT, fontSize: 12.5, caretColor: G,
-              }}
-            />
-          </div>
-        )}
+          {/* inline prompt — flows after output */}
+          {booted && (
+            <div style={{ display: 'flex', alignItems: 'center', padding: '0 16px', marginTop: 2 }}>
+              <span style={{ color: G, fontFamily: FONT, fontSize: 12.5, whiteSpace: 'nowrap', userSelect: 'none' }}>
+                {PROMPT}&nbsp;
+              </span>
+              <input
+                ref={inputRef}
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={onKeyDown}
+                autoFocus
+                spellCheck={false}
+                autoComplete="off"
+                style={{
+                  flex: 1, background: 'transparent', border: 'none', outline: 'none',
+                  color: W, fontFamily: FONT, fontSize: 12.5, caretColor: G,
+                }}
+              />
+            </div>
+          )}
+        </div>
       </div>
     </Window>
   )
