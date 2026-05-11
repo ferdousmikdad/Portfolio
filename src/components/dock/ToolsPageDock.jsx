@@ -3,18 +3,22 @@ import { motion, AnimatePresence } from 'framer-motion'
 import cmdfUrl       from '@/assets/icons/cmdf.svg?url'
 import trashUrl      from '@/assets/icons/trash.svg?url'
 import mikdadHeadUrl from '@/assets/icons/mikdad-head.svg?url'
+import finderIconUrl from '@/assets/icons/finder.svg?url'
 import useWindowStore, { TOOL_IDS } from '@/store/windowStore'
 import useSound from '@/hooks/useSound'
 import TOOLS from '@/data/tools'
 import MinimizedTray from './MinimizedTray'
 
 const ICON_BASE  = 44
-const PILL_H     = ICON_BASE + 20   // fixed pill height — icons overflow above, nothing shifts vertically
+const PILL_H     = ICON_BASE + 20
 const GAP        = 8
 const MAG_RANGE  = 115
 const MAX_SCALE  = 1.80
-const SPRING     = { type: 'spring', stiffness: 460, damping: 26, mass: 0.5 }
+const SPRING      = { type: 'spring', stiffness: 460, damping: 26, mass: 0.5 }
 const DOCK_SPRING = { type: 'spring', stiffness: 420, damping: 30 }
+
+// Tools always visible in the dock
+const PINNED_TOOL_IDS = ['color-contrast', 'color-palette', 'retro-dot', 'print-setup']
 
 function smoothstep(t) { return t * t * (3 - 2 * t) }
 
@@ -33,11 +37,19 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
   const [trayOpen,  setTrayOpen]  = useState(false)
   const iconsRef = useRef(null)
 
-  const { windows, switchTool } = useWindowStore()
-  const minimized  = windows.filter((w) => w.isMinimized)
-  const activeTool = windows.find(
+  const { windows, switchTool, openTool, openWindow, closeWindow } = useWindowStore()
+  const minimized   = windows.filter((w) => w.isMinimized)
+  const activeTool  = windows.find(
     (w) => TOOL_IDS.includes(w.id) && w.isOpen && !w.isMinimized
   )?.id ?? null
+  const finderWin   = windows.find((w) => w.id === 'finder')
+  const finderOpen  = finderWin?.isOpen && !finderWin?.isMinimized
+
+  // Pinned tools always shown; any other open tool appears dynamically
+  const dockTools = [
+    ...TOOLS.filter((t) => PINNED_TOOL_IDS.includes(t.id)),
+    ...TOOLS.filter((t) => !PINNED_TOOL_IDS.includes(t.id) && windows.some((w) => w.id === t.id && (w.isOpen || w.isMinimized))),
+  ]
 
   // Track mouse relative to the icons section only so magnification
   // centres are correct regardless of what's to the left/right
@@ -72,7 +84,9 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
       }}
     >
       {/* ── Unified pill ──────────────────────────────────────────────────── */}
-      <div
+      <motion.div
+        layout
+        transition={DOCK_SPRING}
         onMouseMove={onMouseMove}
         onMouseLeave={onMouseLeave}
         style={{
@@ -128,19 +142,90 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
 
         {SEP}
 
-        {/* ── Centre: tool icons with magnification ─────────────────────── */}
-        <div
+        {/* ── Centre: finder + tool icons with magnification ────────────── */}
+        <motion.div
           ref={iconsRef}
+          layout
+          transition={DOCK_SPRING}
           style={{ display: 'flex', alignItems: 'flex-end', gap: GAP, paddingBottom: 10, alignSelf: 'flex-end' }}
         >
-          {TOOLS.map((tool, i) => {
-            const scale    = getScale(i, mouseX)
+          {/* Finder — index 0 */}
+          {(() => {
+            const scale    = getScale(0, mouseX)
+            const iconSize = ICON_BASE * scale
+            return (
+              <div
+                style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 1 }}
+              >
+                <AnimatePresence>
+                  {hoveredId === '__finder__' && (
+                    <motion.span
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{    opacity: 0, y: 4 }}
+                      transition={{ duration: 0.12 }}
+                      style={{
+                        position:             'absolute',
+                        bottom:               iconSize + 10,
+                        left:                 '50%',
+                        transform:            'translateX(-50%)',
+                        whiteSpace:           'nowrap',
+                        padding:             '3px 10px',
+                        borderRadius:          8,
+                        background:           'rgba(20,20,20,0.80)',
+                        border:               '1px solid rgba(255,255,255,0.10)',
+                        backdropFilter:       'blur(12px)',
+                        WebkitBackdropFilter: 'blur(12px)',
+                        color:               'var(--headline)',
+                        fontSize:             11,
+                        fontFamily:          "'SF Pro Display'",
+                        fontWeight:           500,
+                        pointerEvents:       'none',
+                        zIndex:               10,
+                      }}
+                    >
+                      Finder
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+                <motion.button
+                  animate={{ width: iconSize, height: iconSize }}
+                  transition={SPRING}
+                  onClick={() => { play('open'); openWindow('finder') }}
+                  onMouseEnter={() => setHoveredId('__finder__')}
+                  onMouseLeave={() => setHoveredId(null)}
+                  style={{ flexShrink: 0, display: 'flex', borderRadius: Math.round(12 * scale), overflow: 'hidden' }}
+                >
+                  <img src={finderIconUrl} alt="Finder" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                </motion.button>
+                <motion.span
+                  animate={{ opacity: finderOpen ? 1 : 0, scale: finderOpen ? 1 : 0 }}
+                  transition={SPRING}
+                  style={{
+                    position: 'absolute', bottom: -8, left: '50%', transform: 'translateX(-50%)',
+                    width: 4, height: 4, borderRadius: '50%', background: '#cf0506', pointerEvents: 'none',
+                  }}
+                />
+              </div>
+            )
+          })()}
+
+          {/* Tool icons — index 1+ (pinned always, extras when open) */}
+          <AnimatePresence mode="popLayout">
+          {dockTools.map((tool, i) => {
+            const isPinned = PINNED_TOOL_IDS.includes(tool.id)
+            const scale    = getScale(i + 1, mouseX)
             const iconSize = ICON_BASE * scale
             const isActive = activeTool === tool.id
 
             return (
-              <div
+              <motion.div
                 key={tool.id}
+                layout
+                initial={isPinned ? false : { opacity: 0, scale: 0 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0 }}
+                transition={SPRING}
                 style={{
                   position:       'relative',
                   display:        'flex',
@@ -186,7 +271,7 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
                 <motion.button
                   animate={{ width: iconSize, height: iconSize }}
                   transition={SPRING}
-                  onClick={() => switchTool(tool.id)}
+                  onClick={() => openTool(tool.id)}
                   onMouseEnter={() => setHoveredId(tool.id)}
                   onMouseLeave={() => setHoveredId(null)}
                   style={{
@@ -226,10 +311,11 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
                     pointerEvents:'none',
                   }}
                 />
-              </div>
+              </motion.div>
             )
           })}
-        </div>
+          </AnimatePresence>
+        </motion.div>
 
         {SEP}
 
@@ -290,7 +376,7 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
             </AnimatePresence>
           </button>
         </div>
-      </div>
+      </motion.div>
     </motion.div>
   )
 }

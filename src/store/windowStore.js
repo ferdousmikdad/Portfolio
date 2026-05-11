@@ -10,6 +10,7 @@ const startY   = Math.max(20, (vh - winH) / 2 - 40)
 
 const portfolioW = 946, portfolioH = 582
 const notesW     = 900, notesH     = 580
+const finderW    = 900, finderH    = 560
 const smallW     = 420, smallH     = 360
 const initW      = vw <= 1440 ? Math.round(portfolioW * 0.9) : portfolioW
 const initH      = vw <= 1440 ? Math.round(portfolioH * 0.9) : portfolioH
@@ -131,6 +132,15 @@ const defaultWindows = [
     size: { width: notesW, height: notesH },
     zIndex: 3,
   },
+  {
+    id: 'finder',
+    title: 'Finder',
+    isOpen: false,
+    isMinimized: false,
+    position: centeredInUsableArea(finderW, finderH),
+    size: { width: finderW, height: finderH },
+    zIndex: 3,
+  },
   ...toolWindows,
 ]
 
@@ -182,6 +192,15 @@ const useWindowStore = create((set, get) => ({
             position: centeredInUsableArea(notesW, notesH),
           }
         }
+        if (id === 'finder') {
+          return {
+            ...w,
+            isOpen: true,
+            isMinimized: false,
+            zIndex: ++topZ,
+            position: centeredInUsableArea(finderW, finderH),
+          }
+        }
         return { ...w, isOpen: true, isMinimized: false, zIndex: ++topZ }
       }),
       activeWindowId: id,
@@ -207,6 +226,24 @@ const useWindowStore = create((set, get) => ({
         w.id === id ? { ...w, zIndex: ++topZ } : w
       ),
       activeWindowId: id,
+    })),
+
+  // Open a tool without closing others — focus if already open, restore if minimized
+  openTool: (toolId) =>
+    set((state) => ({
+      windows: state.windows.map((w) => {
+        if (w.id !== toolId) return w
+        if (w.isOpen && !w.isMinimized) return { ...w, zIndex: ++topZ }
+        return {
+          ...w,
+          isOpen: true,
+          isMinimized: false,
+          zIndex: ++topZ,
+          size:     { width: portfolioW, height: portfolioH },
+          position: centeredInUsableArea(portfolioW, portfolioH),
+        }
+      }),
+      activeWindowId: toolId,
     })),
 
   // Open one tool, close all other non-minimized tool windows

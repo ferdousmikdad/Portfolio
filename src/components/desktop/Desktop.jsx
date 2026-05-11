@@ -4,7 +4,6 @@ import { Sparkles } from 'lucide-react'
 import TopBar from './TopBar'
 import RightControls from './RightControls'
 import Background from './Background'
-import Dock from '@/components/dock/Dock'
 import ToolsPageDock from '@/components/dock/ToolsPageDock'
 import MenuWindow from '@/components/dock/MenuWindow'
 import ProfileCard from '@/components/apps/ProfileCard'
@@ -15,6 +14,7 @@ import WorkWindow from '@/components/apps/WorkWindow'
 import ComingSoonWindow from '@/components/apps/ComingSoonWindow'
 import NotesWindow from '@/components/apps/NotesWindow'
 import ToolWindow from '@/components/apps/ToolWindow'
+import FinderWindow from '@/components/apps/FinderWindow'
 import useWindowStore, { TOOL_IDS } from '@/store/windowStore'
 import macDocumentUrl from '@/assets/icons/macDocument.png'
 import useSound from '@/hooks/useSound'
@@ -196,13 +196,13 @@ export default function Desktop() {
     if (!activePage) return
     play('open')
     if (activePage === 'home') {
-      closeAllExcept(['profile', 'pacman'])
+      closeAllExcept(['profile', 'pacman', 'finder'])
       openWindow('profile')
       openWindow('pacman')
     } else if (activePage === 'about') {
-      closeAllExcept([])
+      closeAllExcept(['finder'])
     } else if (activePage === 'tools') {
-      closeAllExcept(TOOL_IDS)
+      closeAllExcept([...TOOL_IDS, 'finder'])
       switchTool('color-contrast')
       const { windows, updateSizePosition } = useWindowStore.getState()
       const tool = windows.find((w) => w.id === 'color-contrast')
@@ -212,7 +212,7 @@ export default function Desktop() {
         updateSizePosition('color-contrast', tool.size, { x, y })
       }
     } else {
-      closeAllExcept([activePage])
+      closeAllExcept([activePage, 'finder'])
       openWindow(activePage)
     }
   }, [activePage, navKey, openWindow, closeAllExcept, switchTool, play])
@@ -264,6 +264,7 @@ export default function Desktop() {
           {TOOL_IDS.map((toolId) => (
             <ToolWindow key={toolId} toolId={toolId} />
           ))}
+          <FinderWindow />
         </AnimatePresence>
       </div>
 
@@ -326,25 +327,12 @@ export default function Desktop() {
 
       </div>
 
-      {/* Dock — tools dock on first load (null) and tools page, regular dock everywhere else */}
-      <AnimatePresence mode="wait">
-        {(activePage === null || activePage === 'tools') ? (
-          <ToolsPageDock
-            key="tools-dock"
-            menuOpen={menuOpen}
-            onMenuToggle={() => setMenuOpen((v) => !v)}
-            onNavigate={setActivePage}
-          />
-        ) : (
-          <Dock
-            key="main-dock"
-            activeId={activePage}
-            onNavigate={setActivePage}
-            menuOpen={menuOpen}
-            onMenuToggle={() => setMenuOpen((v) => !v)}
-          />
-        )}
-      </AnimatePresence>
+      {/* Dock — tools dock on all pages */}
+      <ToolsPageDock
+        menuOpen={menuOpen}
+        onMenuToggle={() => setMenuOpen((v) => !v)}
+        onNavigate={setActivePage}
+      />
 
     </div>
   )
