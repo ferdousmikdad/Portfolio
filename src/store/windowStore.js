@@ -11,6 +11,7 @@ const startY   = Math.max(20, (vh - winH) / 2 - 40)
 const portfolioW = 946, portfolioH = 582
 const notesW     = 900, notesH     = 580
 const finderW    = 900, finderH    = 560
+const terminalW  = 700, terminalH  = 460
 const smallW     = 420, smallH     = 360
 const initW      = vw <= 1440 ? Math.round(portfolioW * 0.9) : portfolioW
 const initH      = vw <= 1440 ? Math.round(portfolioH * 0.9) : portfolioH
@@ -133,6 +134,15 @@ const defaultWindows = [
     zIndex: 3,
   },
   {
+    id: 'terminal',
+    title: 'Terminal',
+    isOpen: false,
+    isMinimized: false,
+    position: centeredInUsableArea(terminalW, terminalH),
+    size: { width: terminalW, height: terminalH },
+    zIndex: 3,
+  },
+  {
     id: 'finder',
     title: 'Finder',
     isOpen: false,
@@ -190,6 +200,15 @@ const useWindowStore = create((set, get) => ({
             isMinimized: false,
             zIndex: ++topZ,
             position: centeredInUsableArea(notesW, notesH),
+          }
+        }
+        if (id === 'terminal') {
+          return {
+            ...w,
+            isOpen: true,
+            isMinimized: false,
+            zIndex: ++topZ,
+            position: centeredInUsableArea(terminalW, terminalH),
           }
         }
         if (id === 'finder') {

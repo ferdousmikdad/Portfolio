@@ -15,6 +15,7 @@ import ComingSoonWindow from '@/components/apps/ComingSoonWindow'
 import NotesWindow from '@/components/apps/NotesWindow'
 import ToolWindow from '@/components/apps/ToolWindow'
 import FinderWindow from '@/components/apps/FinderWindow'
+import TerminalWindow from '@/components/apps/TerminalWindow'
 import useWindowStore, { TOOL_IDS } from '@/store/windowStore'
 import macDocumentUrl from '@/assets/icons/macDocument.png'
 import useSound from '@/hooks/useSound'
@@ -196,13 +197,13 @@ export default function Desktop() {
     if (!activePage) return
     play('open')
     if (activePage === 'home') {
-      closeAllExcept(['profile', 'pacman', 'finder'])
+      closeAllExcept(['profile', 'pacman', 'finder', 'terminal'])
       openWindow('profile')
       openWindow('pacman')
     } else if (activePage === 'about') {
-      closeAllExcept(['finder'])
+      closeAllExcept(['finder', 'terminal'])
     } else if (activePage === 'tools') {
-      closeAllExcept([...TOOL_IDS, 'finder'])
+      closeAllExcept([...TOOL_IDS, 'finder', 'terminal'])
       switchTool('color-contrast')
       const { windows, updateSizePosition } = useWindowStore.getState()
       const tool = windows.find((w) => w.id === 'color-contrast')
@@ -212,7 +213,7 @@ export default function Desktop() {
         updateSizePosition('color-contrast', tool.size, { x, y })
       }
     } else {
-      closeAllExcept([activePage, 'finder'])
+      closeAllExcept([activePage, 'finder', 'terminal'])
       openWindow(activePage)
     }
   }, [activePage, navKey, openWindow, closeAllExcept, switchTool, play])
@@ -265,6 +266,7 @@ export default function Desktop() {
             <ToolWindow key={toolId} toolId={toolId} />
           ))}
           <FinderWindow />
+          <TerminalWindow />
         </AnimatePresence>
       </div>
 

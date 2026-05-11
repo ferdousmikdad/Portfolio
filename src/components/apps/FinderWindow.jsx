@@ -12,7 +12,12 @@ import portfolioIconUrl from '@/assets/icons/nav-portfolio.svg?url'
 import notesIconUrl     from '@/assets/icons/nav-notes.svg?url'
 import shopIconUrl      from '@/assets/icons/nav-shop.svg?url'
 import toolsIconUrl     from '@/assets/icons/nav-tools.svg?url'
+import terminalAppIconUrl from '@/assets/icons/terminal.svg?url'
 import MacSearchIcon    from '@/assets/icons/macsearch.svg?react'
+
+const NATIVE_APPS = [
+  { id: 'terminal', label: 'Terminal', icon: terminalAppIconUrl },
+]
 
 const FAVORITES = [
   { id: 'home',      label: 'Home',      icon: homeIconUrl },
@@ -94,7 +99,7 @@ function GridItem({ icon, label, disabled, selected, onSingleClick, onDoubleClic
 }
 
 export default function FinderWindow() {
-  const { navigate, openTool } = useWindowStore()
+  const { navigate, openTool, openWindow } = useWindowStore()
   const play = useSound()
   // contentView: 'applications' | page id from FAVORITES
   const [contentView,   setContentView]   = useState('applications')
@@ -204,6 +209,26 @@ export default function FinderWindow() {
               exit={{    opacity: 0 }}
               transition={{ duration: 0.15 }}
             >
+              {/* Native apps (Terminal etc.) — always shown, not affected by search */}
+              {!search.trim() && (
+                <section className="mb-4">
+                  <p className="text-[10px] font-semibold tracking-widest mb-3 px-1" style={{ color: '#5E5C53' }}>SYSTEM</p>
+                  <div className="grid gap-1" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(88px, 1fr))' }}>
+                    {NATIVE_APPS.map((app) => (
+                      <GridItem
+                        key={app.id}
+                        icon={app.icon}
+                        label={app.label}
+                        disabled={false}
+                        selected={selectedTool === app.id}
+                        onSingleClick={() => setSelectedTool(app.id)}
+                        onDoubleClick={() => { play('open'); openWindow(app.id) }}
+                      />
+                    ))}
+                  </div>
+                </section>
+              )}
+
               {visibleTools.length > 0 ? (
                 <section>
                   <p className="text-[10px] font-semibold tracking-widest mb-3 px-1" style={{ color: '#5E5C53' }}>
