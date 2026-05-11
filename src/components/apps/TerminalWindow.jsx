@@ -5,7 +5,7 @@ import useSound from '@/hooks/useSound'
 import TOOLS from '@/data/tools'
 
 /* ── Palette ──────────────────────────────────────────────────────── */
-const FONT = "'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace"
+const FONT = "'SF Pro Text'"
 const G  = '#4af08e'
 const C  = '#56b6c2'
 const R  = '#ff6b6b'
