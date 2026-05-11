@@ -263,8 +263,9 @@ export default function TerminalWindow() {
       return
     }
 
-    /* help */
+    /* help — also opens Terminal Help note on the right */
     if (lo === 'help') {
+      useWindowStore.getState().openNoteRequest('help', 7)
       addLines([
         ln('output', ''),
         ln('info',   ' Available commands:'),

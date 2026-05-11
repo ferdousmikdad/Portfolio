@@ -179,40 +179,86 @@ function DrawingCanvas() {
 }
 
 // ── Article Reader ────────────────────────────────────────────────────────────
+function renderInline(text) {
+  return text.split(/(\*\*[^*]+\*\*)/).map((part, j) =>
+    part.startsWith('**') && part.endsWith('**')
+      ? <strong key={j} style={{ color: 'var(--headline)', fontWeight: 600 }}>{part.slice(2, -2)}</strong>
+      : part
+  )
+}
+
 function ArticleView({ note, onBack }) {
   const lines = note.content.split('\n')
+
+  // Group lines into blocks: table | divider | text
+  const blocks = []
+  let i = 0
+  while (i < lines.length) {
+    const line = lines[i]
+    if (line.trim().startsWith('|')) {
+      const tableRows = []
+      while (i < lines.length && lines[i].trim().startsWith('|')) {
+        const isSep = !lines[i].replace(/[|\-\s]/g, '').trim()
+        if (!isSep) {
+          const cells = lines[i].trim().split('|').slice(1, -1).map(c => c.trim())
+          tableRows.push(cells)
+        }
+        i++
+      }
+      if (tableRows.length) blocks.push({ type: 'table', rows: tableRows })
+    } else if (line.trim() === '---') {
+      blocks.push({ type: 'divider' })
+      i++
+    } else {
+      blocks.push({ type: 'line', content: line })
+      i++
+    }
+  }
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-2 px-4 py-3 flex-shrink-0" style={{ borderBottom: '1px solid var(--border)' }}>
-        <button
-          onClick={onBack}
-          className="flex items-center gap-1 text-body hover:text-headline transition-colors text-xs"
-        >
+        <button onClick={onBack} className="flex items-center gap-1 text-body hover:text-headline transition-colors text-xs">
           <ChevronLeft size={14} /> Back
         </button>
         <span className="text-body text-xs" style={{ marginLeft: 'auto' }}>{note.date}</span>
       </div>
       <div className="flex-1 overflow-y-auto window-scroll px-6 py-5">
-        <h1
-          className="text-headline font-medium text-lg leading-tight mb-4"
-          style={{ fontFamily: "'SF Pro Display'" }}
-        >
+        <h1 className="text-headline font-medium text-lg leading-tight mb-4" style={{ fontFamily: "'SF Pro Display'" }}>
           {note.title}
         </h1>
         <div className="text-body text-[13px] leading-relaxed" style={{ fontFamily: "'SF Pro Text'" }}>
-          {lines.map((line, i) => {
-            if (!line.trim()) return <div key={i} className="h-3" />
-            // Bold markdown **text**
-            const parts = line.split(/(\*\*[^*]+\*\*)/)
-            return (
-              <p key={i} className="mb-0">
-                {parts.map((part, j) =>
-                  part.startsWith('**') && part.endsWith('**')
-                    ? <strong key={j} style={{ color: 'var(--headline)', fontWeight: 600 }}>{part.slice(2, -2)}</strong>
-                    : part
-                )}
-              </p>
+          {blocks.map((block, bi) => {
+            if (block.type === 'divider') return (
+              <hr key={bi} style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '14px 0' }} />
             )
+            if (block.type === 'table') return (
+              <div key={bi} style={{ overflowX: 'auto', marginBottom: 14 }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  {block.rows.map((row, ri) => (
+                    <tr key={ri} style={{ borderBottom: '1px solid var(--border)', background: ri === 0 ? 'rgba(255,255,255,0.03)' : 'transparent' }}>
+                      {row.map((cell, ci) => {
+                        const Tag = ri === 0 ? 'th' : 'td'
+                        return (
+                          <Tag key={ci} style={{
+                            padding: '7px 12px', textAlign: 'left',
+                            color: ri === 0 ? 'var(--headline)' : 'var(--body)',
+                            fontWeight: ri === 0 ? 600 : 400,
+                            fontSize: ri === 0 ? 10.5 : 12,
+                            fontFamily: "'SF Pro Text'",
+                            whiteSpace: 'nowrap',
+                          }}>
+                            {renderInline(cell)}
+                          </Tag>
+                        )
+                      })}
+                    </tr>
+                  ))}
+                </table>
+              </div>
+            )
+            if (!block.content.trim()) return <div key={bi} className="h-3" />
+            return <p key={bi} className="mb-0">{renderInline(block.content)}</p>
           })}
         </div>
       </div>
@@ -246,11 +292,25 @@ function NoteRow({ note, active, onClick }) {
 
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function NotesWindow() {
-  const isMaximized = useWindowStore((s) => s.windows.find((w) => w.id === 'notes')?.isMaximized ?? false)
+  const isMaximized     = useWindowStore((s) => s.windows.find((w) => w.id === 'notes')?.isMaximized ?? false)
+  const noteRequest     = useWindowStore((s) => s.noteRequest)
+  const clearNoteRequest = useWindowStore((s) => s.clearNoteRequest)
 
   const [activeCategory, setActiveCategory] = useState('all')
   const [activeNote,     setActiveNote]     = useState(null)
   const [reading,        setReading]        = useState(false)
+
+  // Auto-navigate when terminal (or anything) requests a specific note
+  useEffect(() => {
+    if (!noteRequest) return
+    const note = NOTES.find((n) => n.id === noteRequest.noteId)
+    if (note) {
+      setActiveCategory(noteRequest.category)
+      setActiveNote(note)
+      setReading(true)
+    }
+    clearNoteRequest()
+  }, [noteRequest])
 
   const filtered = activeCategory === 'all' || activeCategory === 'drawing'
     ? NOTES

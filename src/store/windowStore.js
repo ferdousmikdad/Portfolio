@@ -162,8 +162,28 @@ const useWindowStore = create((set, get) => ({
   activePage: null,
   navKey: 0,
   previewProject: null,
+  noteRequest: null,
 
   navigate: (page) => set((state) => ({ activePage: page, navKey: state.navKey + 1 })),
+
+  openNoteRequest: (category, noteId) => {
+    const liveVW = window.innerWidth
+    set((state) => ({
+      noteRequest: { category, noteId },
+      windows: state.windows.map((w) => {
+        if (w.id !== 'notes') return w
+        return {
+          ...w,
+          isOpen: true,
+          isMinimized: false,
+          zIndex: ++topZ,
+          position: { x: Math.max(0, liveVW - notesW - 20), y: TOPBAR_H + 20 },
+          size: { width: notesW, height: notesH },
+        }
+      }),
+    }))
+  },
+  clearNoteRequest: () => set({ noteRequest: null }),
 
   openProjectPreview: (project) => {
     if (project?.slug) {

@@ -4,6 +4,7 @@ export const CATEGORIES = [
   { id: 'case-study',  label: 'Case Studies' },
   { id: 'notes',       label: 'Notes' },
   { id: 'drawing',     label: 'Drawing' },
+  { id: 'help',        label: 'Help' },
 ]
 
 export const NOTES = [
@@ -54,5 +55,112 @@ export const NOTES = [
     date: 'Jan 12, 2026',
     preview: 'The non-negotiable type rules that make everything look more professional.',
     content: "**Scale**\nUse a type scale. I like: 11 / 12 / 13 / 15 / 17 / 20 / 24 / 32 / 40 / 52px. Consistent steps, never arbitrary.\n\n**Line height**\nBody text: 1.5–1.65. Headings: 1.1–1.2. Tighter for display, looser for reading.\n\n**Max line length**\n60–75 characters per line for body text. Beyond 80 and the eye struggles to track back to the start of the next line.\n\n**Letter spacing**\nSlightly negative for large headings (−0.02em). Slightly positive for small caps and labels (+0.04em). Never adjust body text tracking.\n\n**Font pairing**\nOne display font + one text font is usually enough. High contrast pairings (serif + sans, or geometric + humanist) work best. Avoid two similar fonts — it reads as a mistake, not a choice.\n\n**Weight**\nUse weight intentionally. Regular + Medium + Semibold covers most hierarchies. Bold should be used sparingly — save it for moments that need real emphasis.\n\n**Colour**\nPrimary text: near-black (not pure black — try #1c1c1e). Secondary text: muted (~60% opacity). Avoid pure grey on coloured backgrounds — it can look washed out.",
+  },
+  {
+    id: 7,
+    category: 'help',
+    title: 'Terminal Help',
+    date: 'May 2026',
+    preview: 'All terminal commands, outputs, and AI mode explained.',
+    content: `**Terminal Commands Reference**
+
+A full list of commands available in the Portfolio Terminal.
+
+| Command | Output | Description |
+|---|---|---|
+| help | Opens this guide | Shows Terminal Help in Notes |
+| about | Bio text | Short intro about Ferdous |
+| skills | Skills list | Design and development stack |
+| projects | Projects list | Portfolio overview |
+| open <name> | Opens app | Opens a tool or page by name |
+| contact | Contact info | Email and social links |
+| resume | Resume info | View resume details |
+| clear | — | Clears all terminal output |
+| whoami | Visitor message | Returns a fun visitor message |
+| date | Current date/time | Shows real date and time |
+| neofetch | System info | ASCII art + OS info card |
+| coffee | ☕ message | Brewing animation |
+| exit | Closes window | Goodbye message then close |
+
+---
+
+**Easter Eggs**
+
+| Command | What Happens |
+|---|---|
+| sudo hire me | Permission granted animation |
+| rm -rf life | Life restored from backup |
+| ls feelings | Lists your feelings |
+| ping happiness | Pings the happiness server |
+| git status | Shows life's git status |
+| hack | Matrix rain animation for 3s |
+
+---
+
+**AI Mode**
+
+| Command | Description |
+|---|---|
+| mikuda start | Activates Mikuda AI mode |
+| mikuda stop | Deactivates AI mode |
+
+After running **mikuda start**, any unknown command is sent to the AI.
+Type any URL (e.g. github.com) to open it in a new tab.`,
+  },
+  {
+    id: 8,
+    category: 'help',
+    title: 'Website User Guide',
+    date: 'May 2026',
+    preview: 'How to navigate and use every feature of this portfolio.',
+    content: `**Welcome to Portfolio OS**
+
+This site is designed like a macOS desktop. Everything is interactive.
+
+---
+
+**The Dock**
+
+The dock at the bottom is your main navigation hub.
+Click the **avatar icon** to return to the home screen.
+Click the **⌘ button** to open the full navigation menu.
+Click the **Finder icon** to browse all tools and pages.
+Click the **Terminal icon** to open the terminal.
+Tool icons are always visible in the dock — click to open.
+
+---
+
+**Windows**
+
+All windows are **draggable** — click and hold the title bar.
+**Resize** any window by dragging its edges or corners.
+Use the **traffic lights** to close, minimize, or fullscreen.
+Minimized windows go to the tray (trash icon in the dock).
+
+---
+
+**Finder**
+
+Open Finder from the dock to access all apps and pages.
+**Single-click** to select — **double-click** to open.
+Use the **search bar** to find tools instantly.
+The sidebar shows Favorites (pages) and Applications (tools).
+
+---
+
+**Terminal**
+
+Open from the dock or Finder → Applications.
+Type **help** to see all commands and open this guide.
+Type **mikuda start** to enable AI mode.
+Type any URL directly to open it — no https:// needed.
+
+---
+
+**AI Assistant — Mikuda**
+
+Click the **sparkle ✦ button** (bottom right) to open Mikuda.
+Ask about Ferdous's work, skills, projects, or anything creative.
+Mikuda knows everything about this portfolio.`,
   },
 ]

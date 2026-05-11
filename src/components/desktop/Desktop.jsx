@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Sparkles } from 'lucide-react'
 import TopBar from './TopBar'
+import WelcomeModal from './WelcomeModal'
 import RightControls from './RightControls'
 import Background from './Background'
 import ToolsPageDock from '@/components/dock/ToolsPageDock'
@@ -230,6 +231,9 @@ export default function Desktop() {
 
   return (
     <div className="relative w-full h-full overflow-hidden" style={{ background: 'var(--bg)' }} onClick={() => setSelectedIcon(null)}>
+
+      {/* First-time visitor welcome */}
+      <WelcomeModal />
 
       {/* Top menu bar */}
       <TopBar />

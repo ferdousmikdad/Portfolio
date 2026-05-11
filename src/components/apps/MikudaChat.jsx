@@ -673,8 +673,11 @@ export default function MikudaChat({ isOpen, onClose, chatRef }) {
 
   useEffect(() => {
     const el = scrollRef.current
-    if (el) el.scrollTop = el.scrollHeight
-  }, [messages, thinking])
+    if (!el) return
+    const mo = new MutationObserver(() => { el.scrollTop = el.scrollHeight })
+    mo.observe(el, { childList: true, subtree: true, characterData: true })
+    return () => mo.disconnect()
+  }, [])
 
   const sendMessage = useCallback(async (text) => {
     const trimmed = typeof text === 'string' ? text.trim() : input.trim()
