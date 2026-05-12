@@ -86,7 +86,7 @@ function Line({ line }) {
     </div>
   )
   if (line.type === 'jsx') return <div style={{ ...base, color: W }}>{line.content}</div>
-  const colorMap = { system: D, output: W, error: R, success: G, info: C }
+  const colorMap = { system: D, output: W, error: R, success: G, info: C, dim: D }
   return <div style={{ ...base, color: colorMap[line.type] ?? W }}>{line.content}</div>
 }
 
@@ -141,6 +141,7 @@ export default function TerminalWindow() {
     setAiActive(false); aiActiveRef.current = false; setInstallProgress(null)
     if (hackTimer.current)    clearInterval(hackTimer.current)
     if (installTimer.current) clearInterval(installTimer.current)
+    document.body.style.cursor = ''
 
     const timers = BOOT.map(({ text, delay }) =>
       setTimeout(() => setLines(p => [...p, ln('system', text)]), delay)
@@ -237,6 +238,44 @@ export default function TerminalWindow() {
     if (lo === 'exit') {
       addLines([ln('output', ''), ln('info', "Goodbye. Don't forget to hire Ferdous. 👋"), ln('output', '')])
       setTimeout(() => { play('close'); closeWindow('terminal') }, 1300)
+      return
+    }
+
+    /* :q! — vim escape */
+    if (lo === ':q!' || lo === ':q' || lo === ':wq') {
+      addLines([ln('output', ''), ln('success', '  Escaped Vim. You are one of the chosen ones. 🏆'), ln('output', '')])
+      return
+    }
+
+    /* vim */
+    if (lo === 'vim') {
+      addLines([
+        ln('output', ''),
+        ln('info',   '  VIM - Vi IMproved'),
+        ln('output', ''),
+        ln('output', ''),
+        ln('output', ''),
+        ln('output', ''),
+        ln('dim' ,   '  ~'),
+        ln('dim' ,   '  ~'),
+        ln('dim' ,   '  ~'),
+        ln('output', ''),
+        ln('output', '  Welcome to Vim.'),
+        ln('output', ''),
+        ln('output', '  (You are now trapped. There is no escape.)'),
+        ln('output', '  Hint: nobody knows how to quit. You live here now.'),
+        ln('output', ''),
+      ], 30)
+      document.body.style.cursor = 'none'
+      setTimeout(() => {
+        addLines([
+          ln('info', '  > Just kidding. Type :q! to escape... or close the window.'),
+          ln('output', ''),
+        ])
+      }, 2000)
+      setTimeout(() => {
+        document.body.style.cursor = ''
+      }, 5000)
       return
     }
 

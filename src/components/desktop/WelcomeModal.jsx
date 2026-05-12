@@ -11,7 +11,7 @@ export default function WelcomeModal() {
   const [typeDone, setTypeDone] = useState(false)
 
   useEffect(() => {
-    if (!localStorage.getItem(STORAGE_KEY)) setShow(true)
+    if (!sessionStorage.getItem(STORAGE_KEY)) setShow(true)
   }, [])
 
   useEffect(() => {
@@ -30,7 +30,7 @@ export default function WelcomeModal() {
   }, [show])
 
   const dismiss = () => {
-    localStorage.setItem(STORAGE_KEY, '1')
+    sessionStorage.setItem(STORAGE_KEY, '1')
     setShow(false)
   }
 

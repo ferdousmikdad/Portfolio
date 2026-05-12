@@ -94,6 +94,8 @@ A full list of commands available in the Portfolio Terminal.
 | ping happiness | Pings the happiness server |
 | git status | Shows life's git status |
 | hack | Matrix rain animation for 3s |
+| vim | You are now trapped. Cursor disappears for 5s |
+| :q! | Escaped Vim. You are one of the chosen ones 🏆 |
 
 ---
 
