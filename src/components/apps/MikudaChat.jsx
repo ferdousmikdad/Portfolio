@@ -651,10 +651,11 @@ export default function MikudaChat({ isOpen, onClose, chatRef }) {
   const openProjectPreview = useWindowStore((s) => s.openProjectPreview)
   const isMobile           = useIsMobile()
 
-  const [messages,  setMessages]  = useState([])
-  const [input,     setInput]     = useState('')
-  const [thinking,  setThinking]  = useState(false)
-  const [latestId,  setLatestId]  = useState(null)
+  const [messages,     setMessages]     = useState([])
+  const [input,        setInput]        = useState('')
+  const [thinking,     setThinking]     = useState(false)
+  const [latestId,     setLatestId]     = useState(null)
+  const [keyboardBase, setKeyboardBase] = useState(0)
 
   const dragControls    = useDragControls()
   const scrollRef       = useRef(null)
@@ -668,8 +669,27 @@ export default function MikudaChat({ isOpen, onClose, chatRef }) {
   const inChat = messages.length > 0
 
   useEffect(() => {
-    if (isOpen) setTimeout(() => inputRef.current?.focus(), 150)
-  }, [isOpen])
+    if (isOpen && !isMobile) setTimeout(() => inputRef.current?.focus(), 150)
+  }, [isOpen, isMobile])
+
+  // On mobile, keep the chat window above the virtual keyboard
+  useEffect(() => {
+    if (!isMobile || !isOpen) { setKeyboardBase(0); return }
+    const vv = window.visualViewport
+    if (!vv) return
+    const update = () => {
+      const kh = Math.max(0, window.innerHeight - vv.height - vv.offsetTop)
+      setKeyboardBase(kh)
+    }
+    vv.addEventListener('resize', update)
+    vv.addEventListener('scroll', update)
+    update()
+    return () => {
+      vv.removeEventListener('resize', update)
+      vv.removeEventListener('scroll', update)
+      setKeyboardBase(0)
+    }
+  }, [isMobile, isOpen])
 
   useEffect(() => {
     const el = scrollRef.current
@@ -796,7 +816,7 @@ export default function MikudaChat({ isOpen, onClose, chatRef }) {
         <motion.div
           ref={chatRef}
           className="mk-window"
-          drag
+          drag={!isMobile}
           dragControls={dragControls}
           dragListener={false}
           dragMomentum={false}
@@ -806,6 +826,7 @@ export default function MikudaChat({ isOpen, onClose, chatRef }) {
           exit={{    opacity: 0, y: 16, scale: 0.95 }}
           transition={{ type: 'spring', stiffness: 380, damping: 30 }}
           onMouseDown={(e) => e.stopPropagation()}
+          style={isMobile && keyboardBase > 0 ? { bottom: keyboardBase + 8 } : undefined}
         >
           {/* Titlebar — drag handle on desktop, close icon on mobile */}
           <div
