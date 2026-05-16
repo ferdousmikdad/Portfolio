@@ -11,7 +11,8 @@
       "Bash(rm -rf new/)",
       "Bash(rm -rf assets/)",
       "Bash(rm -rf dist/)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "WebFetch(domain:codepen.io)"
     ]
   }
 }

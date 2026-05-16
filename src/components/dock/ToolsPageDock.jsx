@@ -39,6 +39,7 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
   const iconsRef = useRef(null)
 
   const { windows, switchTool, openTool, openWindow, closeWindow, closeAllExcept, activePage } = useWindowStore()
+
   const minimized   = windows.filter((w) => w.isMinimized)
   const activeTool  = windows.find(
     (w) => TOOL_IDS.includes(w.id) && w.isOpen && !w.isMinimized
