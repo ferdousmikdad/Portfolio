@@ -14,7 +14,6 @@ const NAV_ITEMS = [
   { id: 'portfolio', label: 'Portfolio' },
   { id: 'about',     label: 'About Me'  },
   { id: 'notes',     label: 'Notes'     },
-  { id: 'tools',     label: 'Tools'     },
 ]
 
 // ── Live clock ────────────────────────────────────────────────────────────────

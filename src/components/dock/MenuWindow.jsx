@@ -5,15 +5,12 @@ import AboutIcon     from '@/assets/icons/nav-about.svg?react'
 import PortfolioIcon from '@/assets/icons/nav-portfolio.svg?react'
 import ShopIcon      from '@/assets/icons/nav-shop.svg?react'
 import NotesIcon     from '@/assets/icons/nav-notes.svg?react'
-import ToolsIcon     from '@/assets/icons/nav-tools.svg?react'
-
 const menuItems = [
   { id: 'home',      label: 'Home',      icon: HomeIcon,      shortcut: 'Shift + H' },
   { id: 'about',     label: 'About me',  icon: AboutIcon,     shortcut: 'Shift + A' },
   { id: 'portfolio', label: 'Portfolio', icon: PortfolioIcon, shortcut: 'Shift + P' },
   { id: 'shop',      label: 'Shop',      icon: ShopIcon,      shortcut: 'Shift + S' },
   { id: 'notes',     label: 'Notes',     icon: NotesIcon,     shortcut: 'Shift + N' },
-  { id: 'tools',     label: 'Tools',     icon: ToolsIcon,     shortcut: 'Shift + T' },
 ]
 
 export default function MenuWindow({ isOpen, onClose, activeId, onNavigate, menuRef }) {

@@ -219,9 +219,9 @@ export default function Desktop() {
     }
   }, [activePage, navKey, openWindow, closeAllExcept, switchTool, play])
 
-  // Keyboard shortcuts: Shift + H / A / P / S / N / T
+  // Keyboard shortcuts: Shift + H / A / P / S / N
   useEffect(() => {
-    const map = { H: 'home', A: 'about', P: 'portfolio', S: 'shop', N: 'notes', T: 'tools' }
+    const map = { H: 'home', A: 'about', P: 'portfolio', S: 'shop', N: 'notes' }
     const handler = (e) => {
       if (e.shiftKey && map[e.key]) { e.preventDefault(); navigate(map[e.key]) }
     }
