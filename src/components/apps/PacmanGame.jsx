@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import figmaIcon from '@/assets/icons/figma-icon.svg'
 import magicIcon from '@/assets/icons/magic-icon.svg'
 import afterEffect from '@/assets/icons/after-effect.svg'
@@ -114,6 +115,16 @@ function initState() {
   }
 }
 
+// ── Pick a project for the popup ─────────────────────────────────────────────
+function pickProject(type) {
+  const ui     = projects.filter(p => ['Landing pages','Dashboards','Mobile UI'].includes(p.category))
+  const design = projects.filter(p => ['Brand identity','Logo','Arabic Logo'].includes(p.category))
+  const pool   = type === 'figma' && ui.length     ? ui
+               : type === 'aftereffects' && design.length ? design
+               : projects
+  return pool[Math.floor(Math.random() * pool.length)] ?? projects[0]
+}
+
 // ── Animated Pacman SVG ─────────────────────��──────────────────────────���──────
 function PacmanIcon({ direction, animated = true, style = {} }) {
   const jawClass = animated ? '' : 'jaw-paused'
@@ -134,9 +145,12 @@ export default function PacmanGame() {
   const [currentProject, setCurrentProject] = useState(0)
   const [state, setState] = useState(initState())
 
+  const [popup, setPopup] = useState(null)   // { project, type }
+
   const stateRef     = useRef(state)
   const nextDirRef   = useRef('right')
   const isMovingRef  = useRef(false)
+  const pausedRef    = useRef(false)
   const [isMoving, setIsMoving] = useState(false)
   const tickTimer    = useRef(null)
   const effectTimers = useRef([])
@@ -169,7 +183,9 @@ export default function PacmanGame() {
     if (tickTimer.current) clearTimeout(tickTimer.current)
     nextDirRef.current = 'right'
     isMovingRef.current = false
+    pausedRef.current = false
     setIsMoving(false)
+    setPopup(null)
     setState(initState())
     setGameComplete(false)
     setGameStarted(false)
@@ -185,12 +201,20 @@ export default function PacmanGame() {
     setTimeout(() => setState(s => ({ ...s, floatingMsgs: s.floatingMsgs.filter(m => m.id !== id) })), 1600)
   }, [])
 
-  // ── Skill effect ──────────────────────────────────���─────────────────────────
+  const closePopup = useCallback(() => {
+    pausedRef.current = false
+    setPopup(null)
+  }, [])
+
+  // ── Skill effect ──────────────────────────────────────────────────────────
   const applyEffect = useCallback((type) => {
-    if (type === 'figma') {
-      setState(s => ({ ...s, figmaOverlay: true }))
-      effectTimers.current.push(setTimeout(() => setState(s => ({ ...s, figmaOverlay: false })), 2000))
-    } else if (type === 'ai') {
+    // show portfolio popup and pause the game
+    const project = pickProject(type)
+    pausedRef.current = true
+    setPopup({ project, type })
+
+    // keep gameplay effects running for when popup is closed
+    if (type === 'ai') {
       setState(s => ({ ...s, aiPowerMode: true, magnetMode: true, currentSpeed: 80, aiGlow: true }))
       effectTimers.current.push(setTimeout(() => setState(s => ({
         ...s, aiPowerMode: false, magnetMode: false, currentSpeed: GAME_SPEED, aiGlow: false
@@ -244,7 +268,7 @@ export default function PacmanGame() {
     if (!gameStarted || gameComplete) return
 
     const tick = () => {
-      if (!isMovingRef.current) {
+      if (!isMovingRef.current || pausedRef.current) {
         tickTimer.current = setTimeout(tick, stateRef.current.currentSpeed)
         return
       }
@@ -364,9 +388,6 @@ export default function PacmanGame() {
           <PacmanIcon direction={direction} animated={isMoving} />
         </div>
 
-        {/* Figma overlay */}
-        {figmaOverlay && <div className="figma-overlay" />}
-
         {/* Floating messages */}
         {floatingMsgs.map(msg => (
           <div
@@ -381,6 +402,65 @@ export default function PacmanGame() {
             {msg.label}
           </div>
         ))}
+
+        {/* Portfolio popup — shown when a skill icon is eaten */}
+        <AnimatePresence>
+          {popup && (
+            <motion.div
+              key="popup-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18 }}
+              className="absolute inset-0 flex items-center justify-center z-40"
+              style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
+              onClick={closePopup}
+            >
+              <motion.div
+                key="popup-card"
+                initial={{ scale: 0.82, opacity: 0, y: 14 }}
+                animate={{ scale: 1,    opacity: 1, y: 0  }}
+                exit={{    scale: 0.88, opacity: 0, y: 8  }}
+                transition={{ type: 'spring', stiffness: 420, damping: 28 }}
+                style={{
+                  position:     'relative',
+                  borderRadius:  14,
+                  overflow:     'hidden',
+                  maxWidth:     '74%',
+                  boxShadow:    '0 24px 64px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.07)',
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <img
+                  src={popup.project.thumbnail}
+                  alt={popup.project.title}
+                  style={{ width: '100%', display: 'block', maxHeight: '50vh', objectFit: 'cover' }}
+                />
+                <div style={{ padding: '10px 14px', background: 'rgba(18,18,18,0.97)' }}>
+                  <p style={{ color: '#fff', fontSize: 13, fontWeight: 600, fontFamily: "'SF Pro Display'", margin: 0 }}>
+                    {popup.project.title}
+                  </p>
+                  <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 11, marginTop: 3, fontFamily: "'SF Pro Text'" }}>
+                    {popup.project.category}
+                  </p>
+                </div>
+                {/* close button */}
+                <button
+                  onClick={closePopup}
+                  style={{
+                    position: 'absolute', top: 8, right: 8,
+                    width: 22, height: 22, borderRadius: '50%',
+                    background: 'rgba(0,0,0,0.55)',
+                    border: '1px solid rgba(255,255,255,0.18)',
+                    color: '#fff', fontSize: 13, lineHeight: 1,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer',
+                  }}
+                >×</button>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Game complete */}
         {gameComplete && (
