@@ -1,10 +1,13 @@
 import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import cmdfUrl        from '@/assets/icons/cmdf.svg?url'
-import trashUrl       from '@/assets/icons/trash.svg?url'
-import mikdadHeadUrl  from '@/assets/icons/mikdad-head.svg?url'
-import finderIconUrl  from '@/assets/icons/finder.svg?url'
+import trashUrl        from '@/assets/icons/trash.svg?url'
+import mikdadHeadUrl   from '@/assets/icons/mikdad-head.svg?url'
+import finderIconUrl   from '@/assets/icons/finder.svg?url'
 import terminalIconUrl from '@/assets/icons/terminal.svg?url'
+import homeIconUrl      from '@/assets/icons/nav-home.svg?url'
+import portfolioIconUrl from '@/assets/icons/nav-portfolio.svg?url'
+import notesIconUrl     from '@/assets/icons/nav-notes.svg?url'
+import shopIconUrl      from '@/assets/icons/nav-shop.svg?url'
 import useWindowStore, { TOOL_IDS } from '@/store/windowStore'
 import useSound from '@/hooks/useSound'
 import TOOLS from '@/data/tools'
@@ -17,6 +20,13 @@ const MAG_RANGE  = 115
 const MAX_SCALE  = 1.80
 const SPRING      = { type: 'spring', stiffness: 460, damping: 26, mass: 0.5 }
 const DOCK_SPRING = { type: 'spring', stiffness: 420, damping: 30 }
+
+const PAGE_NAV = [
+  { id: 'home',      label: 'Home',      icon: homeIconUrl },
+  { id: 'portfolio', label: 'Portfolio', icon: portfolioIconUrl },
+  { id: 'notes',     label: 'Notes',     icon: notesIconUrl },
+  { id: 'shop',      label: 'Shop',      icon: shopIconUrl },
+]
 
 // Tools always visible in the dock
 const PINNED_TOOL_IDS = ['color-contrast', 'color-palette', 'retro-dot', 'print-setup']
@@ -125,37 +135,60 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
 
         {SEP}
 
-        {/* ── Left: menu button ─────────────────────────────────────────── */}
-        <button
-          onClick={() => { play(menuOpen ? 'close' : 'open'); onMenuToggle() }}
-          style={{
-            alignSelf:      'center',
-            display:        'flex',
-            alignItems:     'center',
-            justifyContent: 'center',
-            padding:        '8px 12px',
-            background:     'rgba(255,255,255,0.03)',
-            borderRadius:    12,
-            flexShrink:      0,
-            opacity:         menuOpen ? 1 : 0.85,
-            transition:     'opacity 0.15s',
-          }}
-        >
-          <img src={cmdfUrl} alt="Menu" style={{ height: 16, objectFit: 'contain' }} />
-        </button>
-
-        {SEP}
-
-        {/* ── Centre: finder + tool icons with magnification ────────────── */}
+        {/* ── All icons with magnification ──────────────────────────────── */}
         <motion.div
           ref={iconsRef}
           layout
           transition={DOCK_SPRING}
           style={{ display: 'flex', alignItems: 'flex-end', gap: GAP, paddingBottom: 10, alignSelf: 'flex-end' }}
         >
-          {/* Finder — index 0 */}
+          {/* ── Page nav icons — indices 0‥PAGE_NAV.length-1 ── */}
+          {PAGE_NAV.map((page, i) => {
+            const scale    = getScale(i, mouseX)
+            const iconSize = ICON_BASE * scale
+            const isActive = activePage === page.id
+            return (
+              <div key={page.id} style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 1 }}>
+                <AnimatePresence>
+                  {hoveredId === page.id && (
+                    <motion.span
+                      initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 4 }}
+                      transition={{ duration: 0.12 }}
+                      style={{ position: 'absolute', bottom: iconSize + 10, left: '50%', transform: 'translateX(-50%)', whiteSpace: 'nowrap', padding: '3px 10px', borderRadius: 8, background: 'rgba(20,20,20,0.80)', border: '1px solid rgba(255,255,255,0.10)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', color: 'var(--headline)', fontSize: 11, fontFamily: "'SF Pro Display'", fontWeight: 500, pointerEvents: 'none', zIndex: 10 }}
+                    >
+                      {page.label}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+                <motion.button
+                  animate={{ width: iconSize, height: iconSize }}
+                  transition={SPRING}
+                  onClick={() => { play('open'); onNavigate?.(page.id) }}
+                  onMouseEnter={() => setHoveredId(page.id)}
+                  onMouseLeave={() => setHoveredId(null)}
+                  style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: Math.round(12 * scale), overflow: 'hidden', background: isActive ? 'rgba(255,255,255,0.10)' : 'transparent' }}
+                >
+                  <img
+                    src={page.icon}
+                    alt={page.label}
+                    style={{ width: '58%', height: '58%', objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: isActive ? 1 : 0.65 }}
+                  />
+                </motion.button>
+                <motion.span
+                  animate={{ opacity: isActive ? 1 : 0, scale: isActive ? 1 : 0 }}
+                  transition={SPRING}
+                  style={{ position: 'absolute', bottom: -8, left: '50%', transform: 'translateX(-50%)', width: 4, height: 4, borderRadius: '50%', background: '#cf0506', pointerEvents: 'none' }}
+                />
+              </div>
+            )
+          })}
+
+          {/* thin divider between pages and apps */}
+          <div style={{ width: 1, height: 28, background: 'rgba(255,255,255,0.10)', alignSelf: 'center', flexShrink: 0 }} />
+
+          {/* Finder — index PAGE_NAV.length + 1 */}
           {(() => {
-            const scale    = getScale(0, mouseX)
+            const scale    = getScale(PAGE_NAV.length + 1, mouseX)
             const iconSize = ICON_BASE * scale
             return (
               <div
@@ -218,9 +251,9 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
             )
           })()}
 
-          {/* Terminal — index 1 */}
+          {/* Terminal — index PAGE_NAV.length + 2 */}
           {(() => {
-            const scale    = getScale(1, mouseX)
+            const scale    = getScale(PAGE_NAV.length + 2, mouseX)
             const iconSize = ICON_BASE * scale
             return (
               <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 1 }}>
@@ -262,7 +295,7 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
           <AnimatePresence mode="popLayout">
           {dockTools.map((tool, i) => {
             const isPinned = PINNED_TOOL_IDS.includes(tool.id)
-            const scale    = getScale(i + 2, mouseX)
+            const scale    = getScale(i + PAGE_NAV.length + 3, mouseX)
             const iconSize = ICON_BASE * scale
             const isActive = activeTool === tool.id
 

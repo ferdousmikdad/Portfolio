@@ -3,7 +3,7 @@ import PacmanGame from './PacmanGame'
 
 export default function PacmanWindow() {
   return (
-    <Window id="pacman" title="Play" hideTitleBar>
+    <Window id="pacman" title="Pac-Man">
       <PacmanGame />
     </Window>
   )

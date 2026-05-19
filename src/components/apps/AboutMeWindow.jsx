@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import Window from '@/components/window/Window'
 import mikdadPhoto from '@/assets/images/mikdad.jpg'
 import mikdadHeadUrl from '@/assets/icons/mikdad-head.svg?url'
 
@@ -81,12 +82,9 @@ export default function AboutMeWindow() {
     })
 
   return (
-    <motion.div
-      className="absolute inset-0 overflow-y-auto window-scroll"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.2 }}
+    <Window id="about" title="About Me">
+    <div
+      className="h-full overflow-y-auto window-scroll"
       onMouseMove={(e) => setYouPos({ x: e.clientX, y: e.clientY, on: true })}
       onMouseLeave={() => setYouPos((p) => ({ ...p, on: false }))}
     >
@@ -185,6 +183,7 @@ export default function AboutMeWindow() {
           You
         </div>
       )}
-    </motion.div>
+    </div>
+    </Window>
   )
 }

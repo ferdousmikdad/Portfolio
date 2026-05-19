@@ -198,11 +198,9 @@ export default function Desktop() {
     if (!activePage) return
     play('open')
     if (activePage === 'home') {
-      closeAllExcept(['profile', 'pacman', 'finder', 'terminal'])
+      closeAllExcept(['profile', 'about', 'finder', 'terminal'])
       openWindow('profile')
-      openWindow('pacman')
-    } else if (activePage === 'about') {
-      closeAllExcept(['finder', 'terminal'])
+      openWindow('about')
     } else if (activePage === 'tools') {
       closeAllExcept([...TOOL_IDS, 'finder', 'terminal'])
       switchTool('color-contrast')
@@ -221,7 +219,7 @@ export default function Desktop() {
 
   // Keyboard shortcuts: Shift + H / A / P / S / N
   useEffect(() => {
-    const map = { H: 'home', A: 'about', P: 'portfolio', S: 'shop', N: 'notes' }
+    const map = { H: 'home', P: 'portfolio', S: 'shop', N: 'notes' }
     const handler = (e) => {
       if (e.shiftKey && map[e.key]) { e.preventDefault(); navigate(map[e.key]) }
     }
@@ -241,15 +239,6 @@ export default function Desktop() {
       {/* Animated background */}
       <Background />
 
-      {/* About Me — full-desktop view */}
-      <AnimatePresence>
-        {activePage === 'about' && (
-          <div className="absolute inset-0" style={{ zIndex: 10, paddingTop: 28 }}>
-            <AboutMeWindow key="about" />
-          </div>
-        )}
-      </AnimatePresence>
-
       {/* Desktop icons — draggable column, top-right below topbar */}
       <DesktopIcon src={macDocumentUrl} label="about_me.txt"  initialX={window.innerWidth - 96} initialY={80}  onOpen={() => openWindow('bio')}     selected={selectedIcon === 'bio'}     onSelect={() => setSelectedIcon('bio')}     />
       <DesktopIcon src={macDocumentUrl} label="skills.txt"    initialX={window.innerWidth - 96} initialY={180} onOpen={() => openWindow('skills')}  selected={selectedIcon === 'skills'}  onSelect={() => setSelectedIcon('skills')}  />
@@ -259,6 +248,7 @@ export default function Desktop() {
       <div className="absolute inset-0" style={{ zIndex: isAnyMaximized ? 9999 : 20, pointerEvents: 'none' }}>
         <AnimatePresence>
           <ProfileCard />
+          <AboutMeWindow />
           <PacmanWindow />
           <DocWindow id="bio" />
           <DocWindow id="skills" />

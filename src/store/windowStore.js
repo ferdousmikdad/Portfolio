@@ -1,8 +1,8 @@
 import { create } from 'zustand'
 
 const gap      = 8
-const profileW = 308, pacmanW = 620, winH = 482
-const totalW   = profileW + gap + pacmanW
+const profileW = 308, aboutW = 480, winH = 482
+const totalW   = profileW + gap + aboutW
 const vw       = window.innerWidth
 const vh       = window.innerHeight
 const startX   = Math.max(20, (vw - totalW) / 2)
@@ -90,20 +90,29 @@ const defaultWindows = [
   },
   {
     id: 'profile',
-    title: 'About Me',
-    isOpen: false,   // not shown on initial tools page
+    title: 'Profile',
+    isOpen: false,
     isMinimized: false,
     position: { x: startX, y: startY },
     size: { width: profileW, height: winH },
     zIndex: 1,
   },
   {
-    id: 'pacman',
-    title: 'Play',
-    isOpen: false,   // not shown on initial tools page
+    id: 'about',
+    title: 'About Me',
+    isOpen: false,
     isMinimized: false,
     position: { x: startX + profileW + gap, y: startY },
-    size: { width: pacmanW, height: winH },
+    size: { width: aboutW, height: winH },
+    zIndex: 2,
+  },
+  {
+    id: 'pacman',
+    title: 'Play',
+    isOpen: false,
+    isMinimized: false,
+    position: { x: startX + profileW + gap, y: startY },
+    size: { width: 620, height: winH },
     zIndex: 2,
   },
   {

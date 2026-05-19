@@ -7,21 +7,21 @@ import useSound from '@/hooks/useSound'
 import TOOLS from '@/data/tools'
 
 import homeIconUrl      from '@/assets/icons/nav-home.svg?url'
-import aboutIconUrl     from '@/assets/icons/nav-about.svg?url'
 import portfolioIconUrl from '@/assets/icons/nav-portfolio.svg?url'
 import notesIconUrl     from '@/assets/icons/nav-notes.svg?url'
 import shopIconUrl      from '@/assets/icons/nav-shop.svg?url'
 import toolsIconUrl     from '@/assets/icons/nav-tools.svg?url'
 import terminalAppIconUrl from '@/assets/icons/terminal.svg?url'
+import pacmanIconUrl    from '@/assets/icons/magic-icon.svg?url'
 import MacSearchIcon    from '@/assets/icons/macsearch.svg?react'
 
 const NATIVE_APPS = [
-  { id: 'terminal', label: 'Terminal', icon: terminalAppIconUrl },
+  { id: 'terminal', label: 'Terminal',  icon: terminalAppIconUrl },
+  { id: 'pacman',   label: 'Pac-Man',   icon: pacmanIconUrl },
 ]
 
 const FAVORITES = [
   { id: 'home',      label: 'Home',      icon: homeIconUrl },
-  { id: 'about',     label: 'About',     icon: aboutIconUrl },
   { id: 'portfolio', label: 'Portfolio', icon: portfolioIconUrl },
   { id: 'notes',     label: 'Notes',     icon: notesIconUrl },
   { id: 'shop',      label: 'Shop',      icon: shopIconUrl },

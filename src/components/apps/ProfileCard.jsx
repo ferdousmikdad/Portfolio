@@ -12,7 +12,7 @@ export default function ProfileCard() {
   const navigate = useWindowStore((s) => s.navigate)
 
   return (
-    <Window id="profile" actionLabel="Read more →" onAction={() => navigate('about')} shellStyle={{ background: '#1B1B1B' }}>
+    <Window id="profile" shellStyle={{ background: '#1B1B1B' }}>
       <div className="flex flex-col h-full">
         {/* Photo area */}
         <div className="relative flex-shrink-0 p-3">
