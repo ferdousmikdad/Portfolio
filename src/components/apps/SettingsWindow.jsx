@@ -6,6 +6,7 @@ import useThemeStore from '@/store/themeStore'
 import useSoundStore from '@/store/soundStore'
 import useSettingsStore, { ACCENT_PRESETS } from '@/store/settingsStore'
 import useCursorStore, { CURSOR_PACKS } from '@/store/cursorStore'
+import useWindowStore from '@/store/windowStore'
 import mikdadHeadUrl from '@/assets/icons/mikdad-head.svg?url'
 
 // ── Primitives ────────────────────────────────────────────────────────────────
@@ -236,10 +237,12 @@ function CursorSection() {
 }
 
 function AboutSection() {
+  const openMailWindow = useWindowStore(s => s.openMailWindow)
+
   const socials = [
-    { label: 'LinkedIn',  href: 'https://www.linkedin.com/in/ferdousmikdad/' },
-    { label: 'Instagram', href: 'https://www.instagram.com/ferdousmikdad/' },
-    { label: 'Email',     href: 'mailto:mikdadtaqi2024@gmail.com' },
+    { label: 'LinkedIn',  onClick: () => window.open('https://www.linkedin.com/in/ferdousmikdad/', '_blank') },
+    { label: 'Instagram', onClick: () => window.open('https://www.instagram.com/ferdousmikdad/', '_blank') },
+    { label: 'Email',     onClick: () => openMailWindow() },
   ]
 
   return (
@@ -265,7 +268,7 @@ function AboutSection() {
           <CardRow
             key={s.label}
             label={s.label}
-            onClick={() => window.open(s.href, s.href.startsWith('mailto') ? '_self' : '_blank')}
+            onClick={s.onClick}
             isLast={i === socials.length - 1}
           />
         ))}

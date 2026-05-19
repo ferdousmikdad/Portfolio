@@ -22,8 +22,10 @@ import useSettingsStore from '@/store/settingsStore'
 import macDocumentUrl from '@/assets/icons/macDocument.png'
 import useSound from '@/hooks/useSound'
 import MikudaChat from '@/components/apps/MikudaChat'
+import HomeWindow from '@/components/apps/HomeWindow'
 import ProjectPreviewWindow from '@/components/apps/ProjectPreviewWindow'
 import SettingsWindow from '@/components/apps/SettingsWindow'
+import MailWindow from '@/components/apps/MailWindow'
 import allProjects from '@/data/projects'
 
 function DesktopIcon({ src, label, initialX, initialY, onOpen, selected, onSelect }) {
@@ -66,12 +68,12 @@ function DesktopIcon({ src, label, initialX, initialY, onOpen, selected, onSelec
 
 export default function Desktop() {
   const [menuOpen,      setMenuOpen]      = useState(false)
-  const [mikudaOpen,    setMikudaOpen]    = useState(true)   // open on first load
+  const [mikudaOpen,    setMikudaOpen]    = useState(false)
   const [selectedIcon,  setSelectedIcon]  = useState(null)
   const menuRef  = useRef(null)
   const chatRef  = useRef(null)
   const fabRef   = useRef(null)
-  const { openWindow, closeAllExcept, switchTool, activePage, navKey, navigate, previewProject, closeProjectPreview, openProjectPreview } = useWindowStore()
+  const { openWindow, closeAllExcept, switchTool, activePage, navKey, navigate, previewProject, closeProjectPreview, openProjectPreview, openMailWindow } = useWindowStore()
   const isAnyMaximized    = useWindowStore((s) => s.windows.some((w) => w.isMaximized))
   const showDesktopIcons  = useSettingsStore((s) => s.showDesktopIcons)
   const setActivePage = navigate
@@ -201,9 +203,8 @@ export default function Desktop() {
     if (!activePage) return
     play('open')
     if (activePage === 'home') {
-      closeAllExcept(['profile', 'about', 'finder', 'terminal'])
-      openWindow('profile')
-      openWindow('about')
+      closeAllExcept(['home', 'finder', 'terminal'])
+      openWindow('home')
     } else if (activePage === 'tools') {
       closeAllExcept([...TOOL_IDS, 'finder', 'terminal'])
       switchTool('color-contrast')
@@ -229,6 +230,19 @@ export default function Desktop() {
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [])
+
+  // Intercept all mailto: link clicks — open the in-app mail window instead
+  useEffect(() => {
+    const handler = (e) => {
+      const link = e.target.closest('a[href^="mailto:"]')
+      if (!link) return
+      e.preventDefault()
+      const to = link.href.replace('mailto:', '')
+      openMailWindow(to)
+    }
+    document.addEventListener('click', handler)
+    return () => document.removeEventListener('click', handler)
+  }, [openMailWindow])
 
   return (
     <div className="relative w-full h-full overflow-hidden" style={{ background: 'var(--bg)' }} onClick={() => setSelectedIcon(null)}>
@@ -266,9 +280,11 @@ export default function Desktop() {
           {TOOL_IDS.map((toolId) => (
             <ToolWindow key={toolId} toolId={toolId} />
           ))}
+          <HomeWindow />
           <FinderWindow />
           <TerminalWindow />
           <SettingsWindow />
+          <MailWindow />
         </AnimatePresence>
       </div>
 
@@ -290,44 +306,48 @@ export default function Desktop() {
       {/* Mikuda AI — own layer so pointer events aren't blocked */}
       <div style={{ position: 'absolute', inset: 0, zIndex: 60, pointerEvents: 'none' }}>
 
-        {/* Chat window — absolute inside the full-screen layer */}
-        <MikudaChat isOpen={mikudaOpen} onClose={() => setMikudaOpen(false)} chatRef={chatRef} />
+        {/* Floating chat popup — hidden on home page (full chat is shown there) */}
+        {activePage !== 'home' && (
+          <MikudaChat isOpen={mikudaOpen} onClose={() => setMikudaOpen(false)} chatRef={chatRef} />
+        )}
 
-        {/* FAB button */}
-        <div ref={fabRef} style={{ position: 'absolute', bottom: 32, right: 20, pointerEvents: 'auto' }}>
-          <motion.button
-            className={`mikuda-fab ${mikudaOpen ? 'active' : ''}`}
-            onClick={() => setMikudaOpen((v) => !v)}
-            whileTap={{ scale: 0.92 }}
-            title="Ask Mikuda"
-          >
-            <AnimatePresence mode="wait">
-              {mikudaOpen ? (
-                <motion.span
-                  key="close"
-                  initial={{ rotate: -45, opacity: 0 }}
-                  animate={{ rotate: 0,   opacity: 1 }}
-                  exit={{    rotate: 45,  opacity: 0 }}
-                  transition={{ duration: 0.15 }}
-                  style={{ display: 'flex' }}
-                >
-                  <Sparkles size={18} style={{ color: '#cf0506' }} />
-                </motion.span>
-              ) : (
-                <motion.span
-                  key="open"
-                  initial={{ rotate: 45,  opacity: 0 }}
-                  animate={{ rotate: 0,   opacity: 1 }}
-                  exit={{    rotate: -45, opacity: 0 }}
-                  transition={{ duration: 0.15 }}
-                  style={{ display: 'flex' }}
-                >
-                  <Sparkles size={18} />
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </motion.button>
-        </div>
+        {/* FAB button — hidden on home page */}
+        {activePage !== 'home' && (
+          <div ref={fabRef} style={{ position: 'absolute', bottom: 32, right: 20, pointerEvents: 'auto' }}>
+            <motion.button
+              className={`mikuda-fab ${mikudaOpen ? 'active' : ''}`}
+              onClick={() => setMikudaOpen((v) => !v)}
+              whileTap={{ scale: 0.92 }}
+              title="Ask Mikuda"
+            >
+              <AnimatePresence mode="wait">
+                {mikudaOpen ? (
+                  <motion.span
+                    key="close"
+                    initial={{ rotate: -45, opacity: 0 }}
+                    animate={{ rotate: 0,   opacity: 1 }}
+                    exit={{    rotate: 45,  opacity: 0 }}
+                    transition={{ duration: 0.15 }}
+                    style={{ display: 'flex' }}
+                  >
+                    <Sparkles size={18} style={{ color: '#cf0506' }} />
+                  </motion.span>
+                ) : (
+                  <motion.span
+                    key="open"
+                    initial={{ rotate: 45,  opacity: 0 }}
+                    animate={{ rotate: 0,   opacity: 1 }}
+                    exit={{    rotate: -45, opacity: 0 }}
+                    transition={{ duration: 0.15 }}
+                    style={{ display: 'flex' }}
+                  >
+                    <Sparkles size={18} />
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </motion.button>
+          </div>
+        )}
 
       </div>
 

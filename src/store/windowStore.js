@@ -13,6 +13,7 @@ const notesW     = 900, notesH     = 580
 const finderW    = 900, finderH    = 560
 const terminalW  = 700, terminalH  = 460
 const smallW     = 420, smallH     = 360
+const mailW      = 560, mailH      = 430
 const initW      = vw <= 1440 ? Math.round(portfolioW * 0.9) : portfolioW
 const initH      = vw <= 1440 ? Math.round(portfolioH * 0.9) : portfolioH
 
@@ -169,6 +170,24 @@ const defaultWindows = [
     size: { width: finderW, height: finderH },
     zIndex: 3,
   },
+  {
+    id: 'mail',
+    title: 'New Message',
+    isOpen: false,
+    isMinimized: false,
+    position: centeredInUsableArea(mailW, mailH),
+    size: { width: mailW, height: mailH },
+    zIndex: 3,
+  },
+  {
+    id: 'home',
+    title: 'Mikuda',
+    isOpen: false,
+    isMinimized: false,
+    position: centeredInUsableArea(portfolioW, portfolioH),
+    size: { width: portfolioW, height: portfolioH },
+    zIndex: 3,
+  },
   ...toolWindows,
 ]
 
@@ -181,6 +200,7 @@ const useWindowStore = create((set, get) => ({
   navKey: 0,
   previewProject: null,
   noteRequest: null,
+  mailTo: null,
 
   navigate: (page) => set((state) => ({ activePage: page, navKey: state.navKey + 1 })),
 
@@ -203,6 +223,24 @@ const useWindowStore = create((set, get) => ({
   },
   clearNoteRequest: () => set({ noteRequest: null }),
 
+  openMailWindow: (to = '') =>
+    set((state) => ({
+      mailTo: to,
+      windows: state.windows.map((w) => {
+        if (w.id !== 'mail') return w
+        return {
+          ...w,
+          isOpen: true,
+          isMinimized: false,
+          zIndex: ++topZ,
+          position: centeredInUsableArea(mailW, mailH),
+          size: { width: mailW, height: mailH },
+        }
+      }),
+      activeWindowId: 'mail',
+    })),
+  clearMailTo: () => set({ mailTo: null }),
+
   openProjectPreview: (project) => {
     if (project?.slug) {
       window.history.replaceState(null, '', `#project/${project.slug}`)
@@ -221,7 +259,7 @@ const useWindowStore = create((set, get) => ({
     set((state) => ({
       windows: state.windows.map((w) => {
         if (w.id !== id) return w
-        if (id === 'portfolio') {
+        if (id === 'portfolio' || id === 'home') {
           return {
             ...w,
             isOpen: true,

@@ -1091,6 +1091,287 @@ html.reduce-motion *::after {
 .mikuda-fab:hover { color: var(--headline); transform: scale(1.06); }
 .mikuda-fab.active { color: #cf0506; }
 
+/* ── Home Chat Window ────────────────────────────────────────────────────────── */
+
+/* Sidebar scroll container (inside the dark rounded panel) */
+.hw-sidebar-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 12px 20px;
+  scrollbar-width: none;
+}
+.hw-sidebar-scroll::-webkit-scrollbar { display: none; }
+
+.hw-profile-photo {
+  width: 100%;
+  border-radius: 10px;
+  object-fit: cover;
+  aspect-ratio: 1 / 1;
+  margin-bottom: 12px;
+  user-select: none;
+  display: block;
+}
+
+.hw-profile-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #D0CDC4;
+  font-family: 'SF Pro Display', sans-serif;
+  margin-bottom: 2px;
+}
+
+.hw-profile-role {
+  font-size: 11px;
+  color: #5E5C53;
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+
+.hw-available-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 100px;
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  font-size: 10px;
+  font-weight: 500;
+  color: #22c55e;
+  margin-bottom: 0;
+  width: fit-content;
+}
+
+.hw-available-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #22c55e;
+  flex-shrink: 0;
+}
+
+.hw-sidebar-divider {
+  width: 100%;
+  height: 1px;
+  background: #2a2a2a;
+  margin: 12px 0;
+}
+
+.hw-sidebar-bio {
+  font-size: 11px;
+  line-height: 1.65;
+  color: #5E5C53;
+  margin-bottom: 14px;
+}
+
+.hw-social-links {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.hw-social-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px;
+  border-radius: 7px;
+  text-decoration: none;
+  color: #5E5C53;
+  font-size: 11.5px;
+  font-weight: 500;
+  transition: background 0.12s ease, color 0.12s ease;
+  font-family: 'SF Pro Text', sans-serif;
+}
+.hw-social-link:hover {
+  background: rgba(255,255,255,0.05);
+  color: #D0CDC4;
+}
+
+.hw-social-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+  letter-spacing: -0.3px;
+}
+
+/* Right chat panel — relative container for absolute children */
+.hw-chat-panel {
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Welcome layout — fills panel, centres content + input */
+.hw-welcome-layout {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 0 32px 0;
+  gap: 28px;
+}
+
+.hw-welcome-text {
+  text-align: center;
+}
+
+.hw-welcome-heading {
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--headline);
+  font-family: 'SF Pro Display', sans-serif;
+  line-height: 1.12;
+  margin-bottom: 10px;
+}
+
+.hw-welcome-sub {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--body);
+}
+
+/* Chat layout — fills panel, messages scroll above fixed input */
+.hw-chat-layout {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0 32px 16px;
+  overflow: hidden;
+}
+
+/* Add bottom padding to input row only when inside chat layout */
+.hw-chat-layout .hw-input-row {
+  padding-top: 10px;
+}
+
+.hw-messages {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px 0 10px;
+}
+
+/* Wider AI bubble — no background */
+.hw-bubble-ai {
+  background: transparent;
+  border-radius: 4px 12px 12px 12px;
+  padding: 11px 0;
+  max-width: 480px;
+  align-self: flex-start;
+}
+
+.hw-bubble-text {
+  color: var(--mk-bubble-ai-text);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+/* User bubble — ChatGPT style: gray bg, theme-aware text */
+.hw-bubble-user {
+  background: var(--social-hover);
+  border-radius: 12px 12px 4px 12px;
+  padding: 11px 14px;
+  max-width: 440px;
+  color: var(--headline);
+  align-self: flex-end;
+}
+
+/* Wider image card */
+.hw-image-card {
+  width: 260px;
+  border-radius: 11px;
+  overflow: hidden;
+  background: var(--mk-card-bg);
+  border: 1px solid var(--mk-card-border);
+  cursor: pointer;
+  text-align: left;
+  transition: transform 0.2s ease;
+}
+.hw-image-card:hover { transform: translateY(-2px); }
+.hw-image-card:hover .mk-image { transform: scale(1.04); }
+
+/* Input area */
+.hw-input-row {
+  width: 100%;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+/* Suggestion dropdown */
+.hw-suggest-dropdown {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: var(--window-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  z-index: 10;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.hw-suggest-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  font-size: 13px;
+  font-family: 'SF Pro Text', sans-serif;
+  color: var(--headline);
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.hw-suggest-item:hover { background: var(--social-hover); }
+
+.hw-suggest-icon {
+  color: var(--body);
+  flex-shrink: 0;
+}
+
+.hw-input-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  background: var(--mk-bubble-ai-bg);
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  transition: border-color 0.2s ease;
+}
+.hw-input-bar:focus-within {
+  border-color: rgba(150, 150, 150, 0.4);
+}
+
+.hw-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 13px;
+  color: var(--mk-input-color);
+  font-family: 'SF Pro Text', sans-serif;
+  caret-color: #cf0506;
+}
+.hw-input::placeholder { color: var(--mk-input-ph); }
+
 /* ── Genie Minimize Clone ─────────────────────────────────────────────────── */
 /* Freeze all child animations on the fixed-position snapshot */
 .genie-freeze * {
@@ -1462,6 +1743,12 @@ html.reduce-motion *::after {
     width: 252px;
     height: 342px;
   }
+}
+
+/* ── Mail window ─────────────────────────────────────────────────────────── */
+.mail-body::placeholder {
+  color: var(--body);
+  opacity: 0.2;
 }
 
 /* ── Mobile responsive ───────────────────────────────────────────────────── */
