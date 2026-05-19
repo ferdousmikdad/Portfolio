@@ -8,8 +8,10 @@ import { useResize, RESIZE_CURSORS } from '@/hooks/useResize'
 
 export default function Window({ id, title, children, actionLabel, onAction, hideControls, hideTitleBar, toolbar, sidebarContent, shellStyle }) {
   const { closeWindow, minimizeWindow, focusWindow, updatePosition, getWindow, toggleMaximize } = useWindowStore()
+  const activeWindowId = useWindowStore((s) => s.activeWindowId)
   const play        = useSoundStore((s) => s.play)
   const win         = getWindow(id)
+  const isActive    = activeWindowId === id
   const winRef      = useRef(null)
   const dragControls = useDragControls()
 
@@ -78,7 +80,7 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
   return (
     <motion.div
       ref={winRef}
-      className="window-shell absolute"
+      className={`window-shell absolute${isActive ? ' focused' : ''}`}
       style={{
         // Geometry via motion values — updated directly, never spring-animated
         x:      mx,
@@ -87,6 +89,7 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
         height: mh,
         zIndex:        win.zIndex,
         pointerEvents: 'auto',
+        boxShadow:     win.isMaximized ? 'none' : undefined,
         ...shellStyle,
       }}
       // animate only controls entrance/exit appearance — NOT geometry
