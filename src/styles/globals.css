@@ -1166,40 +1166,26 @@ html.reduce-motion *::after {
 
 .hw-social-links {
   display: flex;
-  flex-direction: column;
-  gap: 1px;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
-.hw-social-link {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 6px;
-  border-radius: 7px;
-  text-decoration: none;
-  color: #5E5C53;
-  font-size: 11.5px;
-  font-weight: 500;
-  transition: background 0.12s ease, color 0.12s ease;
-  font-family: 'SF Pro Text', sans-serif;
-}
-.hw-social-link:hover {
-  background: rgba(255,255,255,0.05);
-  color: #D0CDC4;
-}
-
-.hw-social-icon {
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
+.hw-social-icon-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
-  flex-shrink: 0;
   letter-spacing: -0.3px;
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: opacity 0.14s ease, transform 0.14s ease;
 }
+.hw-social-icon-btn:hover { opacity: 0.75; transform: scale(1.08); }
 
 /* Right chat panel — relative container for absolute children */
 .hw-chat-panel {

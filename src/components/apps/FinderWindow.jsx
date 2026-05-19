@@ -6,6 +6,7 @@ import useWindowStore from '@/store/windowStore'
 import useSound from '@/hooks/useSound'
 import TOOLS from '@/data/tools'
 
+import spotifyIconUrl   from '@/assets/icons/spotify.svg?url'
 import homeIconUrl      from '@/assets/icons/nav-home.svg?url'
 import portfolioIconUrl from '@/assets/icons/nav-portfolio.svg?url'
 import notesIconUrl     from '@/assets/icons/nav-notes.svg?url'
@@ -18,6 +19,7 @@ import MacSearchIcon    from '@/assets/icons/macsearch.svg?react'
 const NATIVE_APPS = [
   { id: 'terminal', label: 'Terminal',  icon: terminalAppIconUrl },
   { id: 'pacman',   label: 'Pac-Man',   icon: pacmanIconUrl },
+  { id: 'spotify',  label: 'Spotify',   icon: spotifyIconUrl },
 ]
 
 const FAVORITES = [

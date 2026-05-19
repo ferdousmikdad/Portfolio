@@ -339,7 +339,7 @@ function ChatPanel() {
     return () => clearTimeout(t)
   }, [inChat])
 
-  const showSuggestions = focused && !input.trim()
+  const showSuggestions = focused && !input.trim() && !inChat
 
   const inputBar = (
     <div className="hw-input-row" style={{ position: 'relative' }}>
@@ -504,16 +504,14 @@ export default function HomeWindow() {
 
           <div className="hw-social-links">
             {SIDEBAR_SOCIALS.map((s) => (
-              <a key={s.label} href={s.href} target="_blank" rel="noreferrer" className="hw-social-link">
-                <span className="hw-social-icon" style={{ background: `${s.color}18`, color: s.color }}>
-                  {s.icon}
-                </span>
-                {s.label}
+              <a key={s.label} href={s.href} target="_blank" rel="noreferrer" className="hw-social-icon-btn" title={s.label}
+                style={{ background: `${s.color}18`, color: s.color }}>
+                {s.icon}
               </a>
             ))}
-            <a href={`mailto:${CONTACT.email}`} className="hw-social-link">
-              <span className="hw-social-icon" style={{ background: 'rgba(207,5,6,0.12)', color: '#cf0506' }}>✉</span>
-              Email me
+            <a href={`mailto:${CONTACT.email}`} className="hw-social-icon-btn" title="Email me"
+              style={{ background: 'rgba(207,5,6,0.12)', color: '#cf0506' }}>
+              ✉
             </a>
           </div>
         </div>

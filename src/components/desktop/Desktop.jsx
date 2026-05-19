@@ -23,6 +23,7 @@ import macDocumentUrl from '@/assets/icons/macDocument.png'
 import useSound from '@/hooks/useSound'
 import MikudaChat from '@/components/apps/MikudaChat'
 import HomeWindow from '@/components/apps/HomeWindow'
+import SpotifyWindow from '@/components/apps/SpotifyWindow'
 import ProjectPreviewWindow from '@/components/apps/ProjectPreviewWindow'
 import SettingsWindow from '@/components/apps/SettingsWindow'
 import MailWindow from '@/components/apps/MailWindow'
@@ -281,6 +282,7 @@ export default function Desktop() {
             <ToolWindow key={toolId} toolId={toolId} />
           ))}
           <HomeWindow />
+          <SpotifyWindow />
           <FinderWindow />
           <TerminalWindow />
           <SettingsWindow />

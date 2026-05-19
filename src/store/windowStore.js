@@ -188,6 +188,15 @@ const defaultWindows = [
     size: { width: portfolioW, height: portfolioH },
     zIndex: 3,
   },
+  {
+    id: 'spotify',
+    title: 'Spotify',
+    isOpen: false,
+    isMinimized: false,
+    position: centeredInUsableArea(880, 560),
+    size: { width: 880, height: 560 },
+    zIndex: 3,
+  },
   ...toolWindows,
 ]
 
@@ -267,6 +276,16 @@ const useWindowStore = create((set, get) => ({
             zIndex: ++topZ,
             size:     { width: portfolioW, height: portfolioH },
             position: centeredInUsableArea(portfolioW, portfolioH),
+          }
+        }
+        if (id === 'spotify') {
+          return {
+            ...w,
+            isOpen: true,
+            isMinimized: false,
+            zIndex: ++topZ,
+            size:     { width: 880, height: 560 },
+            position: centeredInUsableArea(880, 560),
           }
         }
         if (id === 'notes') {
