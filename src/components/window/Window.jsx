@@ -6,7 +6,7 @@ import useSoundStore from '@/store/soundStore'
 import { genieOut } from '@/utils/genie'
 import { useResize, RESIZE_CURSORS } from '@/hooks/useResize'
 
-export default function Window({ id, title, children, actionLabel, onAction, hideControls, hideTitleBar, toolbar, sidebarContent, shellStyle }) {
+export default function Window({ id, title, children, actionLabel, onAction, hideControls, hideTitleBar, toolbar, sidebarContent, shellStyle, navSlot }) {
   const { closeWindow, minimizeWindow, focusWindow, updatePosition, getWindow, toggleMaximize } = useWindowStore()
   const activeWindowId = useWindowStore((s) => s.activeWindowId)
   const play        = useSoundStore((s) => s.play)
@@ -132,6 +132,7 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
                 }}
                 onPointerDown={(e) => { if (!win.isMaximized) dragControls.start(e) }}
               >
+                {navSlot}
                 {title && (
                   <span
                     className="absolute left-1/2 -translate-x-1/2 text-xs font-medium"
@@ -175,6 +176,7 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
                   onMaximize={handleMaximize}
                 />
               )}
+              {navSlot}
               {title && (
                 <span
                   className="absolute left-1/2 -translate-x-1/2 text-xs font-medium"

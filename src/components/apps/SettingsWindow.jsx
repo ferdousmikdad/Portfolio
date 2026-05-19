@@ -1,13 +1,14 @@
-import { useState } from 'react'
-import { Palette, Monitor, Volume2, MousePointer2, Info } from 'lucide-react'
+import { useState, useCallback } from 'react'
+import { Palette, Monitor, Volume2, MousePointer2, ChevronRight, ChevronLeft } from 'lucide-react'
 import Window from '@/components/window/Window'
+import WindowControls from '@/components/window/WindowControls'
 import useThemeStore from '@/store/themeStore'
 import useSoundStore from '@/store/soundStore'
 import useSettingsStore, { ACCENT_PRESETS } from '@/store/settingsStore'
 import useCursorStore, { CURSOR_PACKS } from '@/store/cursorStore'
 import mikdadHeadUrl from '@/assets/icons/mikdad-head.svg?url'
 
-// ── Shared primitives ──────────────────────────────────────────────────────────
+// ── Primitives ────────────────────────────────────────────────────────────────
 
 function Toggle({ value, onChange }) {
   return (
@@ -48,34 +49,58 @@ function Segment({ options, value, onChange }) {
   )
 }
 
-function Row({ label, description, children }) {
+// ── macOS-style card group + row ──────────────────────────────────────────────
+
+function CardGroup({ label, children }) {
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '11px 0', borderBottom: '1px solid var(--border)',
-    }}>
-      <div style={{ flex: 1, paddingRight: 16 }}>
-        <p style={{ color: 'var(--headline)', fontSize: 13, fontWeight: 500, fontFamily: "'SF Pro Text'" }}>{label}</p>
-        {description && <p style={{ color: 'var(--body)', fontSize: 11, marginTop: 2, opacity: 0.55, fontFamily: "'SF Pro Text'" }}>{description}</p>}
+    <div style={{ marginBottom: 18 }}>
+      {label && (
+        <p style={{
+          fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em',
+          color: 'var(--body)', opacity: 0.45, fontFamily: "'SF Pro Text'",
+          marginBottom: 6, paddingLeft: 2,
+        }}>{label}</p>
+      )}
+      <div style={{
+        borderRadius: 12, overflow: 'hidden',
+        border: '1px solid var(--border)',
+        background: 'rgba(128,128,128,0.06)',
+      }}>
+        {children}
       </div>
-      {children}
     </div>
   )
 }
 
-function GroupLabel({ children }) {
+function CardRow({ label, description, value, children, onClick, isLast }) {
   return (
-    <p style={{
-      fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em',
-      color: 'var(--body)', opacity: 0.45, fontFamily: "'SF Pro Text'",
-      marginTop: 20, marginBottom: 2, paddingBottom: 4,
-    }}>
-      {children}
-    </p>
+    <div
+      onClick={onClick}
+      style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '10px 16px', minHeight: 44,
+        borderBottom: isLast ? 'none' : '1px solid rgba(128,128,128,0.1)',
+        cursor: onClick ? 'pointer' : 'default',
+      }}
+      onMouseEnter={onClick ? e => (e.currentTarget.style.background = 'rgba(128,128,128,0.06)') : undefined}
+      onMouseLeave={onClick ? e => (e.currentTarget.style.background = 'transparent') : undefined}
+    >
+      <div style={{ flex: 1, paddingRight: 12 }}>
+        <p style={{ color: 'var(--headline)', fontSize: 13, fontWeight: 500, fontFamily: "'SF Pro Text'" }}>{label}</p>
+        {description && (
+          <p style={{ color: 'var(--body)', fontSize: 11, marginTop: 2, opacity: 0.5, fontFamily: "'SF Pro Text'" }}>{description}</p>
+        )}
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+        {value && <span style={{ fontSize: 13, color: 'var(--body)', opacity: 0.4, fontFamily: "'SF Pro Text'" }}>{value}</span>}
+        {children}
+        {onClick && <ChevronRight size={14} style={{ color: 'var(--body)', opacity: 0.3 }} />}
+      </div>
+    </div>
   )
 }
 
-// ── Section components ─────────────────────────────────────────────────────────
+// ── Section content ───────────────────────────────────────────────────────────
 
 function AppearanceSection() {
   const { isDark, toggleTheme } = useThemeStore()
@@ -83,40 +108,44 @@ function AppearanceSection() {
 
   return (
     <>
-      <GroupLabel>Display</GroupLabel>
-      <Row label="Theme" description="Dark or light interface">
-        <Segment
-          options={[{ value: true, label: 'Dark' }, { value: false, label: 'Light' }]}
-          value={isDark}
-          onChange={(val) => { if (val !== isDark) toggleTheme() }}
-        />
-      </Row>
-      <Row label="Background" description="Animated canvas or static wallpaper">
-        <Segment
-          options={[{ value: 'animated', label: 'Animated' }, { value: 'static', label: 'Static' }]}
-          value={background}
-          onChange={setBackground}
-        />
-      </Row>
-
-      <GroupLabel>Accent Color</GroupLabel>
-      <div style={{ display: 'flex', gap: 10, paddingTop: 8, paddingBottom: 4 }}>
-        {ACCENT_PRESETS.map(preset => (
-          <button
-            key={preset.id}
-            onClick={() => setAccentColor(preset.color)}
-            title={preset.label}
-            style={{
-              width: 28, height: 28, borderRadius: '50%', cursor: 'pointer',
-              background: preset.color,
-              border: accentColor === preset.color ? '3px solid var(--window-bg)' : '3px solid transparent',
-              outline: accentColor === preset.color ? `2px solid ${preset.color}` : 'none',
-              transform: accentColor === preset.color ? 'scale(1.18)' : 'scale(1)',
-              transition: 'transform 0.15s, outline 0.15s',
-            }}
+      <CardGroup label="Display">
+        <CardRow label="Theme" description="Dark or light interface">
+          <Segment
+            options={[{ value: true, label: 'Dark' }, { value: false, label: 'Light' }]}
+            value={isDark}
+            onChange={(val) => { if (val !== isDark) toggleTheme() }}
           />
-        ))}
-      </div>
+        </CardRow>
+        <CardRow label="Background" description="Animated canvas or static wallpaper" isLast>
+          <Segment
+            options={[{ value: 'animated', label: 'Animated' }, { value: 'static', label: 'Static' }]}
+            value={background}
+            onChange={setBackground}
+          />
+        </CardRow>
+      </CardGroup>
+
+      <CardGroup label="Accent Color">
+        <CardRow label="Choose a color" isLast>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {ACCENT_PRESETS.map(preset => (
+              <button
+                key={preset.id}
+                onClick={() => setAccentColor(preset.color)}
+                title={preset.label}
+                style={{
+                  width: 22, height: 22, borderRadius: '50%', cursor: 'pointer',
+                  background: preset.color, flexShrink: 0,
+                  border: accentColor === preset.color ? '2.5px solid var(--window-bg)' : '2.5px solid transparent',
+                  outline: accentColor === preset.color ? `2px solid ${preset.color}` : 'none',
+                  transform: accentColor === preset.color ? 'scale(1.2)' : 'scale(1)',
+                  transition: 'transform 0.15s, outline 0.15s',
+                }}
+              />
+            ))}
+          </div>
+        </CardRow>
+      </CardGroup>
     </>
   )
 }
@@ -126,15 +155,16 @@ function DesktopSection() {
 
   return (
     <>
-      <GroupLabel>Accessibility</GroupLabel>
-      <Row label="Reduce Motion" description="Minimizes animations and transitions across the UI">
-        <Toggle value={reduceMotion} onChange={setReduceMotion} />
-      </Row>
-
-      <GroupLabel>Desktop</GroupLabel>
-      <Row label="Desktop Icons" description="Show document icons on the desktop surface">
-        <Toggle value={showDesktopIcons} onChange={setShowDesktopIcons} />
-      </Row>
+      <CardGroup label="Accessibility">
+        <CardRow label="Reduce Motion" description="Minimizes animations and transitions across the UI" isLast>
+          <Toggle value={reduceMotion} onChange={setReduceMotion} />
+        </CardRow>
+      </CardGroup>
+      <CardGroup label="Desktop">
+        <CardRow label="Desktop Icons" description="Show document icons on the desktop surface" isLast>
+          <Toggle value={showDesktopIcons} onChange={setShowDesktopIcons} />
+        </CardRow>
+      </CardGroup>
     </>
   )
 }
@@ -143,12 +173,11 @@ function SoundSection() {
   const { isEnabled, toggleSound } = useSoundStore()
 
   return (
-    <>
-      <GroupLabel>Audio</GroupLabel>
-      <Row label="Sound Effects" description="UI interaction sounds throughout the portfolio">
+    <CardGroup label="Audio">
+      <CardRow label="Sound Effects" description="UI interaction sounds throughout the portfolio" isLast>
         <Toggle value={isEnabled} onChange={() => toggleSound()} />
-      </Row>
-    </>
+      </CardRow>
+    </CardGroup>
   )
 }
 
@@ -164,15 +193,14 @@ function CursorSection() {
     dot: <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--brand)' }} />,
     hand: (
       <svg width="16" height="20" viewBox="0 0 18 22" fill="var(--headline)">
-        <path d="M6 0C4.9 0 4 .9 4 2v7.1C3.1 9.4 2.5 10.2 2.5 11v5C2.5 19.6 5.1 22 8.5 22S14.5 19.6 14.5 16v-5c0-.8-.6-1.6-1.5-1.9V5c0-1.1-.9-2-2-2s-2 .9-2 2v-.5C9 3.4 8.1 2.5 7 2.5S5 3.4 5 4.5V2C5 .9 5.5 0 6 0z"/>
+        <path d="M6 0C4.9 0 4 .9 4 2v7.1C3.1 9.4 2.5 10.2 2.5 11v5C2.5 19.6 5.1 22 8.5 22S14.5 19.6 14.5 16v-5c0-.8-.6-1.6-1.5-1.9V5c0-1.1-.9-2-2-2s-2 .9-2 2v-.5C9 3.4 8.1 2.5 7 2.5S5 3.4 5 4.5V2C5 .9 5.5 0 6 0z" />
       </svg>
     ),
   }
 
   return (
     <>
-      <GroupLabel>Cursor Style</GroupLabel>
-      <p style={{ fontSize: 12, color: 'var(--body)', opacity: 0.55, marginBottom: 14, fontFamily: "'SF Pro Text'" }}>
+      <p style={{ fontSize: 12, color: 'var(--body)', opacity: 0.5, marginBottom: 14, fontFamily: "'SF Pro Text'" }}>
         More cursor packs coming soon
       </p>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
@@ -196,7 +224,7 @@ function CursorSection() {
               <span style={{ fontSize: 12, fontWeight: 600, fontFamily: "'SF Pro Text'", color: active ? 'var(--brand)' : 'var(--headline)' }}>
                 {pack.label}
               </span>
-              <span style={{ fontSize: 10, color: 'var(--body)', opacity: 0.55, fontFamily: "'SF Pro Text'", textAlign: 'center', lineHeight: 1.3 }}>
+              <span style={{ fontSize: 10, color: 'var(--body)', opacity: 0.5, fontFamily: "'SF Pro Text'", textAlign: 'center', lineHeight: 1.3 }}>
                 {pack.description}
               </span>
             </button>
@@ -211,83 +239,188 @@ function AboutSection() {
   const socials = [
     { label: 'LinkedIn',  href: 'https://www.linkedin.com/in/ferdousmikdad/' },
     { label: 'Instagram', href: 'https://www.instagram.com/ferdousmikdad/' },
-    { label: 'Email',     href: 'mailto:ferdousmikdad@gmail.com' },
+    { label: 'Email',     href: 'mailto:mikdadtaqi2024@gmail.com' },
   ]
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 14, paddingBottom: 24 }}>
-      <img src={mikdadHeadUrl} alt="Mikdad" style={{ width: 72, height: 72, objectFit: 'contain' }} />
-      <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <p style={{ fontSize: 18, fontWeight: 700, color: 'var(--headline)', fontFamily: "'SF Pro Display'" }}>Ferdous Mikdad</p>
-        <p style={{ fontSize: 12, color: 'var(--body)', opacity: 0.55, fontFamily: "'SF Pro Text'" }}>Designer & Developer · Portfolio v1.0</p>
-        <p style={{ fontSize: 11, color: 'var(--body)', opacity: 0.38, fontFamily: "'SF Pro Text'" }}>Built with React + Vite</p>
+    <>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, paddingBottom: 24, paddingTop: 6 }}>
+        <div style={{
+          width: 80, height: 80, borderRadius: '50%',
+          background: 'rgba(128,128,128,0.1)',
+          border: '2px solid rgba(255,255,255,0.1)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          overflow: 'hidden',
+        }}>
+          <img src={mikdadHeadUrl} alt="Mikdad" style={{ width: '76%', height: '76%', objectFit: 'contain' }} />
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ fontSize: 18, fontWeight: 700, color: 'var(--headline)', fontFamily: "'SF Pro Display'", marginBottom: 3 }}>Ferdous Mikdad</p>
+          <p style={{ fontSize: 12, color: 'var(--body)', opacity: 0.5, fontFamily: "'SF Pro Text'" }}>mikdadtaqi2024@gmail.com</p>
+        </div>
       </div>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
-        {socials.map(s => (
-          <a key={s.label} href={s.href} target="_blank" rel="noreferrer" className="social-badge">{s.label}</a>
+
+      <CardGroup>
+        {socials.map((s, i) => (
+          <CardRow
+            key={s.label}
+            label={s.label}
+            onClick={() => window.open(s.href, s.href.startsWith('mailto') ? '_self' : '_blank')}
+            isLast={i === socials.length - 1}
+          />
         ))}
-      </div>
-    </div>
+      </CardGroup>
+
+      <CardGroup label="About">
+        <CardRow label="Version" value="Portfolio v1.0" isLast={false} />
+        <CardRow label="Built with" value="React + Vite" isLast />
+      </CardGroup>
+    </>
   )
 }
 
-// ── Main window ────────────────────────────────────────────────────────────────
+// ── Sections config ───────────────────────────────────────────────────────────
 
 const SECTIONS = [
-  { id: 'appearance', label: 'Appearance', icon: Palette,       Content: AppearanceSection },
-  { id: 'desktop',    label: 'Desktop',    icon: Monitor,        Content: DesktopSection    },
-  { id: 'sound',      label: 'Sound',      icon: Volume2,        Content: SoundSection      },
-  { id: 'cursor',     label: 'Cursor',     icon: MousePointer2,  Content: CursorSection     },
-  { id: 'about',      label: 'About',      icon: Info,           Content: AboutSection      },
+  { id: 'appearance', label: 'Appearance', icon: Palette,       iconBg: '#7c3aed', iconBgLight: '#9d5cf5', Content: AppearanceSection },
+  { id: 'desktop',    label: 'Desktop',    icon: Monitor,       iconBg: '#0ea5e9', iconBgLight: '#38bdf8', Content: DesktopSection    },
+  { id: 'sound',      label: 'Sound',      icon: Volume2,       iconBg: '#f97316', iconBgLight: '#fb923c', Content: SoundSection      },
+  { id: 'cursor',     label: 'Cursor',     icon: MousePointer2, iconBg: '#0d9488', iconBgLight: '#14b8a6', Content: CursorSection     },
 ]
 
+// ── Main window ───────────────────────────────────────────────────────────────
+
 export default function SettingsWindow() {
-  const [active, setActive] = useState('appearance')
-  const { Content } = SECTIONS.find(s => s.id === active) ?? SECTIONS[0]
+  const [history, setHistory] = useState(['appearance'])
+  const [histIndex, setHistIndex] = useState(0)
 
-  return (
-    <Window id="settings" title="Settings">
-      <div style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
+  const active = history[histIndex]
+  const canGoBack    = histIndex > 0
+  const canGoForward = histIndex < history.length - 1
 
-        {/* ── Left sidebar ── */}
-        <div style={{
-          width: 185, flexShrink: 0,
-          borderRight: '1px solid var(--border)',
-          background: 'var(--titlebar-bg)',
-          padding: '8px 8px',
-          overflowY: 'auto',
-          display: 'flex', flexDirection: 'column', gap: 2,
-        }}>
-          {SECTIONS.map(({ id, label, icon: Icon }) => {
+  const navigate = useCallback((id) => {
+    setHistory(prev => [...prev.slice(0, histIndex + 1), id])
+    setHistIndex(i => i + 1)
+  }, [histIndex])
+
+  const goBack    = () => { if (canGoBack)    setHistIndex(i => i - 1) }
+  const goForward = () => { if (canGoForward) setHistIndex(i => i + 1) }
+
+  const activeSection = SECTIONS.find(s => s.id === active)
+  const Content = activeSection ? activeSection.Content : AboutSection
+  const windowTitle = activeSection ? activeSection.label : 'About'
+
+  // Back / forward nav buttons — rendered in the right-panel titlebar via navSlot
+  const navSlot = (
+    <div style={{ display: 'flex', gap: 3, marginLeft: 8 }}>
+      {[
+        { onClick: goBack,    disabled: !canGoBack,    Icon: ChevronLeft  },
+        { onClick: goForward, disabled: !canGoForward, Icon: ChevronRight },
+      ].map(({ onClick, disabled, Icon }, i) => (
+        <button
+          key={i}
+          onClick={onClick}
+          disabled={disabled}
+          style={{
+            width: 24, height: 20, borderRadius: 5,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'rgba(128,128,128,0.13)',
+            border: '1px solid rgba(128,128,128,0.18)',
+            cursor: disabled ? 'default' : 'pointer',
+            opacity: disabled ? 0.3 : 1,
+            transition: 'opacity 0.15s',
+            color: 'var(--body)',
+          }}
+        >
+          <Icon size={12} />
+        </button>
+      ))}
+    </div>
+  )
+
+  // Left sidebar — exact Notes style: padded outer, inner rounded card
+  const sidebarContent = ({ onClose, onMinimize, onMaximize }) => (
+    <div style={{ width: 210, padding: '6px 4px 6px 6px', height: '100%', boxSizing: 'border-box' }}>
+      <div style={{
+        background: '#1B1B1B',
+        border: '1px solid #404040',
+        borderRadius: 18,
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}>
+        {/* Traffic lights */}
+        <div style={{ height: 40, display: 'flex', alignItems: 'center', padding: '0 12px', flexShrink: 0 }}>
+          <WindowControls onClose={onClose} onMinimize={onMinimize} onMaximize={onMaximize} />
+        </div>
+
+        {/* Profile card */}
+        <button
+          onClick={() => navigate('about')}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 9,
+            margin: '0 8px 6px', padding: '8px 10px', borderRadius: 10,
+            background: active === 'about' ? 'rgba(255,255,255,0.07)' : 'transparent',
+            cursor: 'pointer', textAlign: 'left',
+            transition: 'background 0.12s',
+          }}
+        >
+          <div style={{
+            width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
+            background: 'rgba(255,255,255,0.06)',
+            border: '1.5px solid rgba(255,255,255,0.1)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            overflow: 'hidden',
+          }}>
+            <img src={mikdadHeadUrl} alt="" style={{ width: '80%', height: '80%', objectFit: 'contain' }} />
+          </div>
+          <div>
+            <p style={{ fontSize: 12.5, fontWeight: 600, color: '#D0CDC4', fontFamily: "'SF Pro Text'", lineHeight: 1.3 }}>Ferdous Mikdad</p>
+            <p style={{ fontSize: 10, color: '#5E5C53', fontFamily: "'SF Pro Text'", marginTop: 1 }}>Portfolio Account</p>
+          </div>
+        </button>
+
+        {/* Divider */}
+        <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '0 12px 6px' }} />
+
+        {/* Nav items */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '0 8px 8px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <p style={{ padding: '0 4px 4px 4px', fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', color: '#5E5C53', fontFamily: "'SF Pro Text'" }}>
+            Settings
+          </p>
+          {SECTIONS.map(({ id, label, icon: Icon, iconBg, iconBgLight }) => {
             const isActive = active === id
             return (
               <button
                 key={id}
-                onClick={() => setActive(id)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 9,
-                  width: '100%', padding: '7px 10px', borderRadius: 8,
-                  background: isActive ? 'rgba(128,128,128,0.12)' : 'transparent',
-                  color: isActive ? 'var(--headline)' : '#5E5C53',
-                  fontSize: 13, fontWeight: 500, fontFamily: "'SF Pro Text'",
-                  transition: 'background 0.12s, color 0.12s', cursor: 'pointer',
-                }}
+                onClick={() => navigate(id)}
+                className={`w-full flex items-center px-3 py-[5px] rounded-md text-left text-[12px] font-medium transition-colors
+                  ${isActive ? 'bg-white/5 text-[#D0CDC4]' : 'text-[#5E5C53] hover:bg-white/5'}`}
+                style={{ fontFamily: "'SF Pro Text'", gap: 8 }}
               >
-                <Icon size={15} style={{ flexShrink: 0, color: isActive ? 'var(--brand)' : 'currentColor' }} />
+                {/* Small glass icon square */}
+                <div style={{
+                  width: 20, height: 20, borderRadius: 5, flexShrink: 0,
+                  background: `linear-gradient(145deg, ${iconBgLight} 0%, ${iconBg} 100%)`,
+                  boxShadow: '0 1px 0 rgba(255,255,255,0.2) inset, 0 1px 4px rgba(0,0,0,0.4)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Icon size={12} color="white" />
+                </div>
                 {label}
               </button>
             )
           })}
         </div>
+      </div>
+    </div>
+  )
 
-        {/* ── Right content ── */}
-        <div
-          className="window-scroll"
-          style={{ flex: 1, padding: '4px 24px 24px', overflowY: 'auto', boxSizing: 'border-box' }}
-        >
-          <Content />
-        </div>
-
+  return (
+    <Window id="settings" title={windowTitle} navSlot={navSlot} sidebarContent={sidebarContent}>
+      <div className="window-scroll" style={{ height: '100%', overflowY: 'auto', padding: '16px 24px 24px', boxSizing: 'border-box' }}>
+        <Content />
       </div>
     </Window>
   )
