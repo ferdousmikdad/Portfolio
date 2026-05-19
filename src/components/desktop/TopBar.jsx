@@ -1,9 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, X, Moon, Sun, Volume2, VolumeX, Check, Wifi } from 'lucide-react'
+import { Search, X, Check, Wifi } from 'lucide-react'
 import useWindowStore from '@/store/windowStore'
-import useThemeStore from '@/store/themeStore'
-import useSoundStore from '@/store/soundStore'
 import mikdadHeadUrl from '@/assets/icons/mikdad-head.svg?url'
 import macSettingUrl  from '@/assets/icons/macsetting.svg?url'
 import macFitUrl      from '@/assets/icons/macfit.svg?url'
@@ -147,44 +145,11 @@ function StatusPanel({ status, onChange, onClose }) {
   )
 }
 
-// ── Settings panel ────────────────────────────────────────────────────────────
-function SettingsPanel({ onClose }) {
-  const { isDark, toggleTheme } = useThemeStore()
-  const { isEnabled, toggleSound } = useSoundStore()
-
-  return (
-    <Panel align="right" style={{ minWidth: 220 }} className="settings-liquid-glass">
-      <button className="topbar-panel-item" onClick={toggleTheme}>
-        {isDark
-          ? <Sun  size={13} style={{ color: 'var(--body)', flexShrink: 0 }} />
-          : <Moon size={13} style={{ color: 'var(--body)', flexShrink: 0 }} />
-        }
-        <span className="flex-1 text-[12px]" style={{ color: 'var(--headline)' }}>
-          {isDark ? 'Light Mode' : 'Dark Mode'}
-        </span>
-        <span className="topbar-toggle" data-on={isDark} />
-      </button>
-
-      <button className="topbar-panel-item" onClick={toggleSound}>
-        {isEnabled
-          ? <Volume2  size={13} style={{ color: 'var(--body)', flexShrink: 0 }} />
-          : <VolumeX  size={13} style={{ color: 'var(--body)', flexShrink: 0 }} />
-        }
-        <span className="flex-1 text-[12px]" style={{ color: 'var(--headline)' }}>
-          {isEnabled ? 'Sound on' : 'Sound off'}
-        </span>
-        <span className="topbar-toggle" data-on={isEnabled} />
-      </button>
-    </Panel>
-  )
-}
-
-
 // ── Main TopBar ───────────────────────────────────────────────────────────────
 export default function TopBar() {
-  const { navigate, activePage } = useWindowStore()
+  const { navigate, activePage, openWindow } = useWindowStore()
 
-  const [openPanel,    setOpenPanel]    = useState(null) // 'search' | 'status' | 'settings'
+  const [openPanel,    setOpenPanel]    = useState(null) // 'search' | 'status'
   const [status,       setStatus]       = useState('available')
   const [isFullscreen, setIsFullscreen] = useState(false)
 
@@ -287,21 +252,14 @@ export default function TopBar() {
           </AnimatePresence>
         </div>
 
-        {/* Settings — macOS style */}
-        <div className="relative">
-          <button
-            className={`topbar-icon-btn ${openPanel === 'settings' ? 'active' : ''}`}
-            onClick={() => toggle('settings')}
-            title="Control Center"
-          >
-            <img src={macSettingUrl} alt="settings" width={13} height={13} style={{ opacity: 0.85 }} />
-          </button>
-          <AnimatePresence>
-            {openPanel === 'settings' && (
-              <SettingsPanel onClose={() => setOpenPanel(null)} />
-            )}
-          </AnimatePresence>
-        </div>
+        {/* Settings — opens Settings window */}
+        <button
+          className="topbar-icon-btn"
+          onClick={() => openWindow('settings')}
+          title="Settings"
+        >
+          <img src={macSettingUrl} alt="settings" width={13} height={13} style={{ opacity: 0.85 }} />
+        </button>
 
         {/* Status dot */}
         <div className="relative">

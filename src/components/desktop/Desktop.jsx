@@ -18,10 +18,12 @@ import ToolWindow from '@/components/apps/ToolWindow'
 import FinderWindow from '@/components/apps/FinderWindow'
 import TerminalWindow from '@/components/apps/TerminalWindow'
 import useWindowStore, { TOOL_IDS } from '@/store/windowStore'
+import useSettingsStore from '@/store/settingsStore'
 import macDocumentUrl from '@/assets/icons/macDocument.png'
 import useSound from '@/hooks/useSound'
 import MikudaChat from '@/components/apps/MikudaChat'
 import ProjectPreviewWindow from '@/components/apps/ProjectPreviewWindow'
+import SettingsWindow from '@/components/apps/SettingsWindow'
 import allProjects from '@/data/projects'
 
 function DesktopIcon({ src, label, initialX, initialY, onOpen, selected, onSelect }) {
@@ -70,7 +72,8 @@ export default function Desktop() {
   const chatRef  = useRef(null)
   const fabRef   = useRef(null)
   const { openWindow, closeAllExcept, switchTool, activePage, navKey, navigate, previewProject, closeProjectPreview, openProjectPreview } = useWindowStore()
-  const isAnyMaximized = useWindowStore((s) => s.windows.some((w) => w.isMaximized))
+  const isAnyMaximized    = useWindowStore((s) => s.windows.some((w) => w.isMaximized))
+  const showDesktopIcons  = useSettingsStore((s) => s.showDesktopIcons)
   const setActivePage = navigate
   const play = useSound()
 
@@ -239,10 +242,14 @@ export default function Desktop() {
       {/* Animated background */}
       <Background />
 
-      {/* Desktop icons — draggable column, top-right below topbar */}
-      <DesktopIcon src={macDocumentUrl} label="about_me.txt"  initialX={window.innerWidth - 96} initialY={80}  onOpen={() => openWindow('bio')}     selected={selectedIcon === 'bio'}     onSelect={() => setSelectedIcon('bio')}     />
-      <DesktopIcon src={macDocumentUrl} label="skills.txt"    initialX={window.innerWidth - 96} initialY={180} onOpen={() => openWindow('skills')}  selected={selectedIcon === 'skills'}  onSelect={() => setSelectedIcon('skills')}  />
-      <DesktopIcon src={macDocumentUrl} label="contact.txt"   initialX={window.innerWidth - 96} initialY={280} onOpen={() => openWindow('contact')} selected={selectedIcon === 'contact'} onSelect={() => setSelectedIcon('contact')} />
+      {/* Desktop icons — toggleable via Settings */}
+      {showDesktopIcons && (
+        <>
+          <DesktopIcon src={macDocumentUrl} label="about_me.txt"  initialX={window.innerWidth - 96} initialY={80}  onOpen={() => openWindow('bio')}     selected={selectedIcon === 'bio'}     onSelect={() => setSelectedIcon('bio')}     />
+          <DesktopIcon src={macDocumentUrl} label="skills.txt"    initialX={window.innerWidth - 96} initialY={180} onOpen={() => openWindow('skills')}  selected={selectedIcon === 'skills'}  onSelect={() => setSelectedIcon('skills')}  />
+          <DesktopIcon src={macDocumentUrl} label="contact.txt"   initialX={window.innerWidth - 96} initialY={280} onOpen={() => openWindow('contact')} selected={selectedIcon === 'contact'} onSelect={() => setSelectedIcon('contact')} />
+        </>
+      )}
 
       {/* Windows layer — z-index lifts to 9999 when any window is maximized */}
       <div className="absolute inset-0" style={{ zIndex: isAnyMaximized ? 9999 : 20, pointerEvents: 'none' }}>
@@ -261,6 +268,7 @@ export default function Desktop() {
           ))}
           <FinderWindow />
           <TerminalWindow />
+          <SettingsWindow />
         </AnimatePresence>
       </div>
 

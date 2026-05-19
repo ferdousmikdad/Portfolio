@@ -152,6 +152,15 @@ const defaultWindows = [
     zIndex: 3,
   },
   {
+    id: 'settings',
+    title: 'Settings',
+    isOpen: false,
+    isMinimized: false,
+    position: centeredInUsableArea(700, 480),
+    size: { width: 700, height: 480 },
+    zIndex: 3,
+  },
+  {
     id: 'finder',
     title: 'Finder',
     isOpen: false,

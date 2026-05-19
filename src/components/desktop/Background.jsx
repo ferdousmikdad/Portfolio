@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import useThemeStore from '@/store/themeStore'
+import useSettingsStore from '@/store/settingsStore'
 
 // ── Parse bg-config.md ────────────────────────────────────────────────────────
 function parseBgConfig(text) {
@@ -216,12 +217,27 @@ function WallpaperBackground({ image }) {
   )
 }
 
+function StaticBackground({ isDark }) {
+  return (
+    <div className="absolute inset-0" style={{ background: isDark ? '#080808' : '#F2EDD9', zIndex: 0 }}>
+      <div className="absolute inset-0 pointer-events-none" style={{
+        backgroundImage: "url('/noise.png')", backgroundRepeat: 'repeat',
+        opacity: isDark ? 0.25 : 0.15,
+        mixBlendMode: isDark ? 'overlay' : 'multiply',
+      }} />
+    </div>
+  )
+}
+
 export default function Background() {
   const isDark  = useThemeStore((s) => s.isDark)
+  const storeBg = useSettingsStore((s) => s.background)
   const config  = useBackgroundConfig()
 
-  // animatedbg takes priority if both are true
-  if (config.animatedbg) return <AnimatedBackground isDark={isDark} />
-  if (config.wallpaper)  return <WallpaperBackground image={config.image} />
+  if (storeBg === 'static') {
+    return config.wallpaper
+      ? <WallpaperBackground image={config.image} />
+      : <StaticBackground isDark={isDark} />
+  }
   return <AnimatedBackground isDark={isDark} />
 }
