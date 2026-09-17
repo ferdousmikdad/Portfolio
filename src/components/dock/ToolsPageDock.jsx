@@ -7,13 +7,17 @@ import homeIconUrl       from '@/assets/icons/Home.png?url'
 import portfolioIconUrl  from '@/assets/icons/Folder.png?url'
 import notesIconUrl      from '@/assets/icons/note.png?url'
 import shopIconUrl       from '@/assets/icons/App Store.png?url'
-import trashEmptyUrl     from '@/assets/icons/Trash Empty.png?url'
-import trashFullUrl      from '@/assets/icons/Trash Full.png?url'
+import trashEmptyUrl     from '@/assets/icons/trash-empty.svg?url'
+import trashFullUrl      from '@/assets/icons/trash-full.svg?url'
+import trashEmptyDarkUrl from '@/assets/icons/trash-empty-dark.svg?url'
+import trashFullDarkUrl  from '@/assets/icons/trash-full-dark.svg?url'
 import useWindowStore, { TOOL_IDS } from '@/store/windowStore'
 import useSound from '@/hooks/useSound'
 import TOOLS from '@/data/tools'
 import MinimizedTray from './MinimizedTray'
-import DockTip from './DockTip'
+import Tip from '@/components/ui/Tip'
+import GlassLayers from '@/components/ui/LiquidGlass'
+import useThemeStore from '@/store/themeStore'
 
 
 /* ── Plateless icon art ────────────────────────────────────────────────────
@@ -93,7 +97,6 @@ function magnify(distance) {
 export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
   const play = useSound()
   const [mouseX,    setMouseX]    = useState(null)
-  const [hoveredId, setHoveredId] = useState(null)
   const [trayOpen,  setTrayOpen]  = useState(false)
   const [bouncing,  setBouncing]  = useState(null)
   const rowRef   = useRef(null)
@@ -101,6 +104,7 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
   const slabRef  = useRef(null)
 
   const { windows, openTool, openWindow, closeAllExcept, activePage } = useWindowStore()
+  const isDark = useThemeStore((s) => s.isDark)
 
   const minimized  = windows.filter((w) => w.isMinimized)
   const activeTool = windows.find(
@@ -156,7 +160,9 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
       { id: '__sep__', sep: true },
       {
         id: '__trash__', label: 'Trash',
-        icon: minimized.length > 0 ? trashFullUrl : trashEmptyUrl,
+        icon: minimized.length > 0
+          ? (isDark ? trashFullDarkUrl  : trashFullUrl)
+          : (isDark ? trashEmptyDarkUrl : trashEmptyUrl),
         onClick: () => setTrayOpen((v) => !v),
         badge: minimized.length, tray: true,
       },
@@ -169,7 +175,7 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
       x += w + GAP
       return entry
     })
-  }, [activePage, activeTool, windows, minimized.length, dockTools.map((t) => t.id).join()])
+  }, [activePage, activeTool, windows, minimized.length, isDark, dockTools.map((t) => t.id).join()])
 
   const restWidth = items.reduce((sum, it) => sum + it.w, 0) + GAP * (items.length - 1)
 
@@ -185,7 +191,7 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
       sheenRef.current.style.setProperty('--sheen-x', `${((e.clientX - dock.left) / dock.width) * 100}%`)
     }
   }
-  const onMouseLeave = () => { setMouseX(null); setHoveredId(null) }
+  const onMouseLeave = () => setMouseX(null)
 
   /* Launch bounce — a tile hops once when its window first opens */
   const prevOpen = useRef(null)
@@ -222,46 +228,6 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
         transformOrigin: 'center center',
       }}
     >
-      {/* Displacement source for the glass. feTurbulence gives an organic,
-          uneven distortion — real glass is never optically perfect — and
-          feDisplacementMap bends the captured backdrop through it. */}
-      <svg aria-hidden="true" style={{ display: 'none' }}>
-        <filter id="dock-lg-dist" x="0%" y="0%" width="100%" height="100%">
-          <feTurbulence
-            type="fractalNoise"
-            baseFrequency="0.008 0.008"
-            numOctaves="2"
-            seed="92"
-            result="noise"
-          />
-          <feGaussianBlur in="noise" stdDeviation="2" result="blurred" />
-          <feDisplacementMap
-            in="SourceGraphic"
-            in2="blurred"
-            scale="70"
-            xChannelSelector="R"
-            yChannelSelector="G"
-          />
-        </filter>
-        <filter id="tip-lg-dist" x="0%" y="0%" width="100%" height="100%">
-          <feTurbulence
-            type="fractalNoise"
-            baseFrequency="0.02 0.02"
-            numOctaves="2"
-            seed="41"
-            result="tipNoise"
-          />
-          <feGaussianBlur in="tipNoise" stdDeviation="1.4" result="tipBlurred" />
-          <feDisplacementMap
-            in="SourceGraphic"
-            in2="tipBlurred"
-            scale="10"
-            xChannelSelector="R"
-            yChannelSelector="G"
-          />
-        </filter>
-      </svg>
-
       <div
         ref={slabRef}
         className="dock-tahoe"
@@ -279,12 +245,9 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
       >
         {/* The glass itself is clipped to the capsule, but the icon row is not,
             so magnified tiles can still rise above the bar. */}
-        <div className="dock-glass">
-          <div className="dock-glass__filter" />
-          <div className="dock-glass__overlay" />
-          <div className="dock-glass__specular" />
+        <GlassLayers>
           <div ref={sheenRef} className="dock-tahoe__sheen" data-on={mouseX !== null} />
-        </div>
+        </GlassLayers>
 
         <div
           ref={rowRef}
@@ -314,26 +277,10 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
 
               const tile = (
                 <>
-                  {/* Hover label, riding above the magnified tile */}
-                  <AnimatePresence>
-                    {hoveredId === item.id && (
-                      <motion.span
-                        className="dock-tip"
-                        initial={{ opacity: 0, y: 5, x: '-50%' }}
-                        animate={{ opacity: 1, y: 0, x: '-50%' }}
-                        exit={{    opacity: 0, y: 3, x: '-50%' }}
-                        transition={{ duration: 0.13 }}
-                        style={{ bottom: size + 9 }}
-                      >
-                        <DockTip label={item.label} />
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
 
+                  <Tip label={item.label} placement="top">
                   <motion.button
                     onClick={item.onClick}
-                    onMouseEnter={() => setHoveredId(item.id)}
-                    onMouseLeave={() => setHoveredId(null)}
                     aria-label={item.label}
                     data-trash={item.tray ? true : undefined}
                     whileTap={{ scale: 0.88 }}
@@ -415,6 +362,7 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
                       )}
                     </AnimatePresence>
                   </motion.button>
+                  </Tip>
 
                   {/* Running indicator — sits inside the slab, below the baseline */}
                   {'active' in item && (

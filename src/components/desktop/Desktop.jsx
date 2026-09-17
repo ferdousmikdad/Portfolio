@@ -6,6 +6,7 @@ import WelcomeModal from './WelcomeModal'
 import RightControls from './RightControls'
 import Background from './Background'
 import ToolsPageDock from '@/components/dock/ToolsPageDock'
+import { GlassDefs } from '@/components/ui/LiquidGlass'
 import MenuWindow from '@/components/dock/MenuWindow'
 import ProfileCard from '@/components/apps/ProfileCard'
 import AboutMeWindow from '@/components/apps/AboutMeWindow'
@@ -247,6 +248,9 @@ export default function Desktop() {
 
   return (
     <div className="relative w-full h-full overflow-hidden" style={{ background: 'var(--bg)' }} onClick={() => setSelectedIcon(null)}>
+
+      {/* Filters every Liquid Glass surface references */}
+      <GlassDefs />
 
       {/* First-time visitor welcome */}
       <WelcomeModal />

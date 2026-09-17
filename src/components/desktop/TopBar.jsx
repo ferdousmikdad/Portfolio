@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, X, Check, Wifi } from 'lucide-react'
 import useWindowStore from '@/store/windowStore'
+import GlassLayers from '@/components/ui/LiquidGlass'
+import Tip from '@/components/ui/Tip'
 import mikdadHeadUrl from '@/assets/icons/mikdad-head.svg?url'
 import macSettingUrl  from '@/assets/icons/macsetting.svg?url'
 import macFitUrl      from '@/assets/icons/macfit.svg?url'
@@ -56,6 +58,7 @@ function Panel({ children, align = 'left', style = {}, className = '' }) {
         ...style,
       }}
     >
+      <GlassLayers small />
       {children}
     </motion.div>
   )
@@ -203,13 +206,14 @@ export default function TopBar() {
       {/* ── Left: logo + nav ───────────────────────────────────────────────── */}
       <div className="flex items-center gap-0.5">
         {/* Logo / home */}
-        <button
-          className="topbar-logo"
-          onClick={() => { navigate('home'); setOpenPanel(null) }}
-          title="Home"
-        >
-          <img src={mikdadHeadUrl} alt="Mikdad" width={16} height={16} className="object-contain" />
-        </button>
+        <Tip label="Home">
+          <button
+            className="topbar-logo"
+            onClick={() => { navigate('home'); setOpenPanel(null) }}
+          >
+            <img src={mikdadHeadUrl} alt="Mikdad" width={16} height={16} className="object-contain" />
+          </button>
+        </Tip>
 
         <div className="topbar-sep" />
 
@@ -229,19 +233,22 @@ export default function TopBar() {
       <div className="flex items-center gap-0.5">
 
         {/* WiFi */}
-        <button className="topbar-icon-btn" title="WiFi">
-          <Wifi size={12} />
-        </button>
+        <Tip label="Wi-Fi">
+          <button className="topbar-icon-btn">
+            <Wifi size={12} />
+          </button>
+        </Tip>
 
         {/* Search */}
         <div className="relative">
-          <button
-            className={`topbar-icon-btn ${openPanel === 'search' ? 'active' : ''}`}
-            onClick={() => toggle('search')}
-            title="Search"
-          >
-            <Search size={12} />
-          </button>
+          <Tip label="Search">
+            <button
+              className={`topbar-icon-btn ${openPanel === 'search' ? 'active' : ''}`}
+              onClick={() => toggle('search')}
+            >
+              <Search size={12} />
+            </button>
+          </Tip>
           <AnimatePresence>
             {openPanel === 'search' && (
               <SearchPanel
@@ -253,26 +260,28 @@ export default function TopBar() {
         </div>
 
         {/* Settings — opens Settings window */}
-        <button
-          className="topbar-icon-btn"
-          onClick={() => openWindow('settings')}
-          title="Settings"
-        >
-          <img src={macSettingUrl} alt="settings" width={13} height={13} style={{ opacity: 0.85 }} />
-        </button>
+        <Tip label="Settings">
+          <button
+            className="topbar-icon-btn"
+            onClick={() => openWindow('settings')}
+          >
+            <img src={macSettingUrl} alt="settings" width={13} height={13} style={{ opacity: 0.85 }} />
+          </button>
+        </Tip>
 
         {/* Status dot */}
         <div className="relative">
-          <button
-            className={`topbar-status-btn ${openPanel === 'status' ? 'active' : ''}`}
-            onClick={() => toggle('status')}
-            title="Availability status"
-          >
-            <span
-              className="topbar-status-dot"
-              style={{ background: currentStatus.color }}
-            />
-          </button>
+          <Tip label={currentStatus.label ?? 'Availability'}>
+            <button
+              className={`topbar-status-btn ${openPanel === 'status' ? 'active' : ''}`}
+              onClick={() => toggle('status')}
+            >
+              <span
+                className="topbar-status-dot"
+                style={{ background: currentStatus.color }}
+              />
+            </button>
+          </Tip>
           <AnimatePresence>
             {openPanel === 'status' && (
               <StatusPanel
@@ -285,13 +294,14 @@ export default function TopBar() {
         </div>
 
         {/* Fit / Fullscreen */}
-        <button
-          className={`topbar-icon-btn ${isFullscreen ? 'active' : ''}`}
-          onClick={toggleFullscreen}
-          title={isFullscreen ? 'Exit fullscreen (Esc)' : 'Fit to screen'}
-        >
-          <img src={macFitUrl} alt="fit" width={13} height={13} style={{ opacity: isFullscreen ? 1 : 0.85 }} />
-        </button>
+        <Tip label={isFullscreen ? 'Exit fullscreen (Esc)' : 'Fit to screen'}>
+          <button
+            className={`topbar-icon-btn ${isFullscreen ? 'active' : ''}`}
+            onClick={toggleFullscreen}
+          >
+            <img src={macFitUrl} alt="fit" width={13} height={13} style={{ opacity: isFullscreen ? 1 : 0.85 }} />
+          </button>
+        </Tip>
 
         <div className="topbar-sep" />
 

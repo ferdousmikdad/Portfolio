@@ -448,10 +448,7 @@ html.reduce-motion *::after {
 
 /* Panel (dropdown) */
 .topbar-panel {
-  background: var(--topbar-panel-bg);
-  backdrop-filter: blur(32px) saturate(200%);
-  -webkit-backdrop-filter: blur(32px) saturate(200%);
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: transparent;
   border-radius: 14px;
   position: relative;
   overflow: hidden;
@@ -465,22 +462,7 @@ html.reduce-motion *::after {
 }
 
 /* specular streak on the panel card */
-.topbar-panel::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(
-    150deg,
-    rgba(255, 255, 255, 0.4) 0%,
-    rgba(255, 255, 255, 0.08) 35%,
-    transparent 70%
-  );
-  pointer-events: none;
-  z-index: 0;
-}
-
-.topbar-panel > * { position: relative; z-index: 1; }
+.topbar-panel > *:not(.lg-glass) { position: relative; z-index: 1; }
 
 /* dark mode panel adjustments */
 .dark .topbar-panel {
@@ -492,16 +474,7 @@ html.reduce-motion *::after {
     inset 0 -1px 0 rgba(0, 0, 0, 0.3);
 }
 
-.dark .topbar-panel::before {
-  background: linear-gradient(
-    150deg,
-    rgba(255, 255, 255, 0.08) 0%,
-    rgba(255, 255, 255, 0.02) 35%,
-    transparent 70%
-  );
-}
-
-/* ── Liquid Glass Settings Panel (codepen style) ─────────────── */
+.dark /* ── Liquid Glass Settings Panel (codepen style) ─────────────── */
 .topbar-panel.settings-liquid-glass {
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(4px) saturate(140%);
@@ -1767,22 +1740,20 @@ html.reduce-motion *::after {
   --lg-blur:      2px;
   --lg-rim:       rgba(255, 255, 255, 0.45);
   --lg-glow:      rgba(255, 255, 255, 0.22);
-  --tip-fill:     rgba(217, 217, 217, 0.20);
-  --tip-frost:    4px;
-  --tip-rim-a:    rgba(255, 255, 255, 0.95);
+  --tip-rim-a:    rgba(255, 255, 255, 0.85);
   --tip-rim-b:    rgba(120, 120, 120, 0.22);
   --tip-rim-c:    rgba(255, 255, 255, 0.60);
+  --panel-fill:   rgba(255, 255, 255, 0.55);
 }
 .dark {
   --lg-bg-color:  rgba(255, 255, 255, 0.04);
   --lg-highlight: rgba(255, 255, 255, 0.28);
   --lg-rim:       rgba(255, 255, 255, 0.13);
   --lg-glow:      rgba(255, 255, 255, 0.06);
-  --tip-fill:     rgba(217, 217, 217, 0.20);
-  --tip-frost:    4px;
-  --tip-rim-a:    rgba(255, 255, 255, 0.80);
-  --tip-rim-b:    rgba(255, 255, 255, 0.14);
-  --tip-rim-c:    rgba(255, 255, 255, 0.42);
+  --tip-rim-a:    rgba(255, 255, 255, 0.40);
+  --tip-rim-b:    rgba(255, 255, 255, 0.10);
+  --tip-rim-c:    rgba(255, 255, 255, 0.22);
+  --panel-fill:   rgba(255, 255, 255, 0.10);
 }
 
 .dock-tahoe {
@@ -1796,7 +1767,7 @@ html.reduce-motion *::after {
   transition: box-shadow 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2);
 }
 
-.dock-glass {
+.lg-glass {
   position: absolute;
   inset: 0;
   z-index: 0;
@@ -1808,24 +1779,23 @@ html.reduce-motion *::after {
 /* `backdrop-filter` captures what is behind; `filter` then distorts that
    captured layer. Distorting the backdrop is what reads as glass — a blur
    alone reads as frosted plastic. */
-.dock-glass__filter {
+.lg-glass__filter {
   position: absolute;
   inset: -28px;
   z-index: 0;
   backdrop-filter: blur(var(--lg-blur)) saturate(140%);
   -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(140%);
-  filter: url(#dock-lg-dist);
   isolation: isolate;
 }
 
-.dock-glass__overlay {
+.lg-glass__overlay {
   position: absolute;
   inset: 0;
   z-index: 1;
   background: var(--lg-bg-color);
 }
 
-.dock-glass__specular {
+.lg-glass__specular {
   position: absolute;
   inset: 0;
   z-index: 2;
@@ -1864,7 +1834,7 @@ html.reduce-motion *::after {
 }
 
 /* The icon row rides above every glass layer */
-.dock-tahoe > *:not(.dock-glass) {
+.dock-tahoe > *:not(.lg-glass) {
   position: relative;
   z-index: 4;
 }
@@ -1909,10 +1879,12 @@ html.reduce-motion *::after {
    Values from the Figma glass: fill #D9D9D9 at 20%, frost 4, light at -45
    degrees at 80%. */
 .dock-tip {
-  position: absolute;
-  left: 50%;
-  z-index: 20;
+  position: fixed;
+  z-index: 2147483000;   /* portalled to <body>, above every other layer */
   pointer-events: none;
+  /* Same material as the bar, but frosted harder: the bar is a wide surface
+     read at a glance, while a tooltip carries text over whatever it covers. */
+  --lg-blur: 20px;
 }
 
 .dock-tip__frame {
@@ -1927,26 +1899,17 @@ html.reduce-motion *::after {
    separate shape stuck on the bottom. */
 .dock-tip__glass {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  background: var(--tip-fill);
   pointer-events: none;
-}
-
-.dock-tip__glass-inner {
-  position: absolute;
-  inset: -14px;
-  backdrop-filter: blur(var(--tip-frost)) saturate(170%);
-  -webkit-backdrop-filter: blur(var(--tip-frost)) saturate(170%);
-  filter: url(#tip-lg-dist);
-  pointer-events: none;
+  /* Same tokens as the bar, so the two match; the displacement filter is
+     deliberately left off — on a shape this small it adds nothing visible and
+     frays the clipped silhouette. */
+  background: var(--lg-bg-color);
+  backdrop-filter: blur(var(--lg-blur)) saturate(140%);
+  -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(140%);
 }
 
 .dock-tip__rim {
   position: absolute;
-  top: 0;
-  left: 0;
   overflow: visible;
   pointer-events: none;
 }
@@ -1990,3 +1953,15 @@ html.reduce-motion *::after {
 
 /* Nav glyphs sit on the app-icon squircle, so they stay white in both themes */
 .dock-tahoe__glyph { filter: brightness(0) invert(1); }
+
+/* Panels use the dock's material but with more body — they carry text */
+.topbar-panel .lg-glass__overlay { background: var(--panel-fill); }
+.topbar-panel .lg-glass__filter  { inset: -18px; }
+
+/* Anchor for the glass tooltips on the top bar and the side rail */
+.tip-anchor {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
