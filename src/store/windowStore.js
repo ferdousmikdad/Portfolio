@@ -205,6 +205,9 @@ let topZ = 10
 const useWindowStore = create((set, get) => ({
   windows: defaultWindows,
   activeWindowId: 'color-contrast',
+  // The window a genie restore is currently drawing: it is mounted and
+  // measurable but held invisible, so the warp lands on the real geometry.
+  restoringId: null,
   activePage: null,
   navKey: 0,
   previewProject: null,
@@ -326,6 +329,8 @@ const useWindowStore = create((set, get) => ({
         w.id === id ? { ...w, isOpen: false } : w
       ),
     })),
+
+  setRestoring: (id) => set({ restoringId: id }),
 
   minimizeWindow: (id) =>
     set((state) => ({

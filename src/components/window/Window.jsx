@@ -3,13 +3,14 @@ import { motion, useDragControls, useMotionValue } from 'framer-motion'
 import WindowControls from './WindowControls'
 import useWindowStore from '@/store/windowStore'
 import useSoundStore from '@/store/soundStore'
-import { genieOut } from '@/utils/genie'
+import { genieOut, flatten, afterMount } from '@/utils/genie'
 import { setSnapshot } from '@/utils/windowSnapshots'
 import { useResize, RESIZE_CURSORS } from '@/hooks/useResize'
 
 export default function Window({ id, title, children, actionLabel, onAction, hideControls, hideTitleBar, toolbar, sidebarContent, shellStyle, navSlot }) {
   const { closeWindow, minimizeWindow, focusWindow, updatePosition, getWindow, toggleMaximize } = useWindowStore()
   const activeWindowId = useWindowStore((s) => s.activeWindowId)
+  const restoring   = useWindowStore((s) => s.restoringId) === id
   const play        = useSoundStore((s) => s.play)
   const win         = getWindow(id)
   const isActive    = activeWindowId === id
@@ -43,21 +44,24 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
   // ── Genie minimize ──────────────────────────────────────────────────────────
   // The window shrinks into its own tile in the dock, the way macOS does it.
   // That tile only exists once the store knows the window is minimised, so the
-  // clone is parked first and the target measured on the next frame.
+  // window is stood in for by a flat copy while the target is measured.
   const handleMinimize = () => {
     play('minimize')
 
     const el = winRef.current
     if (!el) { minimizeWindow(id); return }
 
-    const rect  = el.getBoundingClientRect()
+    const rect = el.getBoundingClientRect()
 
-    // Keep a copy of the window as it looks right now — the dock tile renders
-    // it shrunken, the way macOS shows a minimised window.
-    setSnapshot(id, el.cloneNode(true), { width: rect.width, height: rect.height })
+    // One flattened copy serves three purposes: the stand-in below, the dock
+    // tile's picture of the window, and the source the warp is sliced from.
+    // Flattening has to happen while the window is still live — that is the
+    // only moment its canvases still have pixels to read.
+    const flat = flatten(el)
+    setSnapshot(id, flat, { width: rect.width, height: rect.height })
 
-    const clone = el.cloneNode(true)
-    clone.style.cssText = [
+    const stand = flat.cloneNode(true)
+    stand.style.cssText = [
       'position:fixed',
       `top:${rect.top}px`,
       `left:${rect.left}px`,
@@ -65,37 +69,28 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
       `height:${rect.height}px`,
       'margin:0',
       'box-sizing:border-box',
-      'z-index:9999',
+      'z-index:9998',
       'pointer-events:none',
-      'transform-origin:50% 50%',
-      'opacity:1',
-      'animation:none',
     ].join(';')
-    clone.classList.add('genie-freeze')
-    document.body.appendChild(clone)
+    document.body.appendChild(stand)
 
     minimizeWindow(id)
 
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      const slot = document.querySelector(`[data-min-slot="${id}"]`)
-      // Fall back to straight down if the dock has no slot for it
-      let tx = 0, ty = window.innerHeight - rect.top
-      if (slot) {
-        const sr = slot.getBoundingClientRect()
-        tx = (sr.left + sr.width  / 2) - (rect.left + rect.width  / 2)
-        ty = (sr.top  + sr.height / 2) - (rect.top  + rect.height / 2)
-      }
-      const cx = slot
-        ? Math.min(Math.max((slot.getBoundingClientRect().left +
-            slot.getBoundingClientRect().width / 2 - rect.left) / rect.width, 0), 1)
-        : 0.5
-      genieOut(clone, tx, ty, 560, cx).then(() => clone.remove())
-    }))
+    afterMount(`[data-min-slot="${id}"]`).then((slotEl) => {
+      const cx = rect.left + rect.width / 2
+      // Fall back to a point straight below if the dock has no tile for it
+      const slot = slotEl
+        ? slotEl.getBoundingClientRect()
+        : { left: cx - 24, right: cx + 24, width: 48,
+            top: window.innerHeight - 8, bottom: window.innerHeight + 40, height: 48 }
+      genieOut(flat.cloneNode(true), rect, slot, 520, () => stand.remove())
+    })
   }
 
   return (
     <motion.div
       ref={winRef}
+      data-window={id}
       className={`window-shell absolute${isActive ? ' focused' : ''}`}
       style={{
         // Geometry via motion values — updated directly, never spring-animated
@@ -106,10 +101,12 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
         zIndex:        win.zIndex,
         pointerEvents: 'auto',
         boxShadow:     win.isMaximized ? 'none' : undefined,
+        // held invisible while the genie draws it back out of the dock
+        visibility:    restoring ? 'hidden' : undefined,
         ...shellStyle,
       }}
       // animate only controls entrance/exit appearance — NOT geometry
-      initial={{ opacity: 0, scale: 0.92 }}
+      initial={restoring ? false : { opacity: 0, scale: 0.92 }}
       animate={{ opacity: 1, scale: 1, borderRadius: win.isMaximized ? 0 : 22 }}
       exit={{ opacity: 0, scale: 0.88, transition: { duration: 0.15 } }}
       transition={{ type: 'spring', stiffness: 300, damping: 28 }}

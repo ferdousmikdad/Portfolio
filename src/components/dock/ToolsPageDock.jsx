@@ -15,9 +15,9 @@ import useWindowStore, { TOOL_IDS } from '@/store/windowStore'
 import useSound from '@/hooks/useSound'
 import TOOLS from '@/data/tools'
 import Tip from '@/components/ui/Tip'
-import { genieIn } from '@/utils/genie'
+import { genieIn, afterMount } from '@/utils/genie'
 import WindowThumb, { thumbWidth } from './WindowThumb'
-import { clearSnapshot } from '@/utils/windowSnapshots'
+import { clearSnapshot, getSnapshot } from '@/utils/windowSnapshots'
 import GlassLayers from '@/components/ui/LiquidGlass'
 import useThemeStore from '@/store/themeStore'
 
@@ -104,7 +104,7 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
   const sheenRef = useRef(null)
   const slabRef  = useRef(null)
 
-  const { windows, openTool, openWindow, closeAllExcept, activePage } = useWindowStore()
+  const { windows, openTool, openWindow, closeAllExcept, activePage, setRestoring } = useWindowStore()
   const isDark = useThemeStore((s) => s.isDark)
 
   const minimized  = windows.filter((w) => w.isMinimized)
@@ -123,32 +123,29 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
     ...TOOLS.filter((t) => !PINNED_TOOL_IDS.includes(t.id) && windows.some((w) => w.id === t.id && (w.isOpen || w.isMinimized))),
   ]
 
-  /* Grow the window back out of its dock tile, then hand it to the store. */
+  /* Grow the window back out of its dock tile, then hand it to the store.
+
+     The window is opened first and held invisible: only the mounted window
+     knows where it is going to land — the store re-centres some of them — and
+     the warp has to end on that exact rectangle or it lands with a jump. */
   const restoreWindow = (id) => {
     play('open')
-    clearSnapshot(id)
-    const slot = document.querySelector(`[data-min-slot="${id}"]`)
-    const win  = windows.find((w) => w.id === id)
-    if (!slot || !win) { openWindow(id); return }
 
-    const s = slot.getBoundingClientRect()
-    const ghost = document.createElement('div')
-    const { width, height } = win.size
-    const { x, y } = win.position
-    ghost.className = 'window-shell genie-freeze'
-    ghost.style.cssText = [
-      'position:fixed', `top:${y}px`, `left:${x}px`,
-      `width:${width}px`, `height:${height}px`,
-      'margin:0', 'box-sizing:border-box', 'z-index:9998',
-      'pointer-events:none', 'transform-origin:50% 50%',
-    ].join(';')
-    document.body.appendChild(ghost)
+    const slotEl = document.querySelector(`[data-min-slot="${id}"]`)
+    const snap   = getSnapshot(id)
+    const finish = () => { setRestoring(null); clearSnapshot(id) }
 
-    const fx = (s.left + s.width  / 2) - (x + width  / 2)
-    const fy = (s.top  + s.height / 2) - (y + height / 2)
-    genieIn(ghost, fx, fy, 380).then(() => {
-      ghost.remove()
-      openWindow(id)
+    if (!slotEl || !snap) { openWindow(id); clearSnapshot(id); return }
+
+    // Measured now — the tile is gone the moment the window stops being minimised
+    const slot = slotEl.getBoundingClientRect()
+
+    setRestoring(id)
+    openWindow(id)
+
+    afterMount(`[data-window="${id}"]`).then((el) => {
+      if (!el) { finish(); return }
+      genieIn(snap.node.cloneNode(true), el.getBoundingClientRect(), slot, 480).then(finish)
     })
   }
 
