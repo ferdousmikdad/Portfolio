@@ -24,8 +24,31 @@ const FADE  = 0.88   // progress at which the tail starts dissolving
 
 const clamp01  = (v) => (v < 0 ? 0 : v > 1 ? 1 : v)
 const lerp     = (a, b, t) => a + (b - a) * t
-const smooth   = (t) => t * t * (3 - 2 * t)
 const smoother = (t) => t * t * t * (t * (t * 6 - 15) + 10)
+
+/* Timing curve, as a CSS-style cubic bezier through (x1, 0) and (x2, 1).
+   Solved by bisection: it runs once a frame, so a closed form is not worth the
+   arithmetic. At x1 = 1/3, x2 = 2/3 this is exactly smoothstep. */
+function bezier(x1, x2) {
+  const at = (a, b, s) => s * (3 * (1 - s) * (1 - s) * a + 3 * (1 - s) * s * b + s * s)
+  return (t) => {
+    let lo = 0
+    let hi = 1
+    let s = t
+    for (let i = 0; i < 24; i++) {
+      s = (lo + hi) / 2
+      if (at(x1, x2, s) < t) lo = s
+      else hi = s
+    }
+    return at(0, 1, s)
+  }
+}
+
+/* Smoothstep with its toe drawn out a little, so the window is seen to *begin*
+   moving rather than snapping into it. The tail is left where it was; the
+   durations below carry the small amount of extra time the softer start costs,
+   so the middle of the run keeps the pace it had. */
+const ease = bezier(0.42, 0.66)
 
 /* A slice's own progress. Slices near the bottom (v → 1) start first and are
    done by `p = 1 - lag`; the top slice waits until `p = lag`. That stagger is
@@ -139,32 +162,32 @@ export function flatten(source) {
 // ── The warp ─────────────────────────────────────────────────────────────────
 
 /**
- * Build the sliced stage. `rect` is where the window is (or is going), `slot`
- * is the dock tile it converges on; both in viewport coordinates.
+ * Slice `source` into a stage that can be warped.
+ *
+ * Building it is the expensive half — a dozen copies of the window, laid out
+ * and painted — so it is deliberately separated from starting the clock. A
+ * caller pays for it while the window it is standing in for is still on
+ * screen, and only starts the motion once the stage has painted. Doing both in
+ * one frame costs that frame, and a dropped frame at the very start is the one
+ * place it is impossible not to notice.
+ *
+ * The stage is positioned later, by `place`, so none of this depends on
+ * knowing where the window is going yet.
  */
-function buildGenie(source, rect, slot) {
-  const H = rect.height
-  const N = Math.min(18, Math.max(9, Math.round(H / 48)))
-  const band = H / N
+export function genieStage(source, width, height) {
+  const N = Math.min(18, Math.max(9, Math.round(height / 48)))
+  const band = height / N
 
-  const left = Math.min(rect.left, slot.left) - 48
-  const top = Math.min(rect.top, slot.top) - 8
   const stage = document.createElement('div')
   stage.className = 'genie-stage'
-  stage.style.cssText = [
-    `left:${left}px`,
-    `top:${top}px`,
-    `width:${Math.max(rect.right, slot.right) + 48 - left}px`,
-    `height:${Math.max(rect.bottom, slot.bottom) + 8 - top}px`,
-    'z-index:9999',
-  ].join(';')
+  stage.style.cssText = `left:0;top:0;width:${width}px;height:${height}px;z-index:9999`
 
   const flat = flatten(source)
   flat.style.cssText = [
     'position:absolute',
     'left:0',
-    `width:${rect.width}px`,
-    `height:${H}px`,
+    `width:${width}px`,
+    `height:${height}px`,
     'margin:0',
     'transform:none',
     'opacity:1',
@@ -178,9 +201,9 @@ function buildGenie(source, rect, slot) {
     const slice = document.createElement('div')
     slice.className = 'genie-slice'
     slice.style.cssText = [
-      `left:${rect.left - left}px`,
-      `top:${rect.top - top + i * band}px`,
-      `width:${rect.width}px`,
+      'left:0',
+      `top:${i * band}px`,
+      `width:${width}px`,
       // a hair of overlap, so no seam opens up where two bands shear apart
       `height:${band + (i < N - 1 ? 0.75 : 0)}px`,
       'transform-origin:50% 0',
@@ -194,19 +217,27 @@ function buildGenie(source, rect, slot) {
   }
   document.body.appendChild(stage)
 
-  const winCx = rect.left + rect.width / 2
-  const slotCx = slot.left + slot.width / 2
-  const kx = slot.width / rect.width
+  let geo = null
+
+  /** Anchor the stage on the window's rectangle and aim it at a dock tile. */
+  function place(rect, slot) {
+    stage.style.left = `${rect.left}px`
+    stage.style.top = `${rect.top}px`
+    geo = {
+      rect,
+      slot,
+      lean: slot.left + slot.width / 2 - (rect.left + width / 2),
+      kx: slot.width / width,
+    }
+  }
 
   /* Screen y of the point that sits `v` of the way down the window. It travels
      from its place in the window to the matching place in the dock tile; the
      gap between two such points is the band's height, which is how the content
      stretches thin and then packs down as it is drawn through the neck. */
   const yAt = (v, p) =>
-    lerp(rect.top + v * H, slot.top + v * slot.height, front(v, p, LAG_Y))
-
-  // How far that point has been pulled in toward the dock, 0 → untouched.
-  const qAt = (v, p) => front(v, p, LAG_X)
+    lerp(geo.rect.top + v * height, geo.slot.top + v * geo.slot.height,
+         front(v, p, LAG_Y))
 
   /* A band is mapped by a projective transform, written out by hand because
      the shape it needs — top edge one width, bottom edge another, leaning
@@ -229,14 +260,14 @@ function buildGenie(source, rect, slot) {
       const yTop = yAt(v0, p)
       const ht = Math.max(yAt(v1, p) - yTop, 0.01)
 
-      const q0 = qAt(v0, p)
-      const q1 = qAt(v1, p)
-      const kTop = lerp(1, kx, q0)
-      const r = Math.max(lerp(1, kx, q1) / kTop, 0.0005)
-      const off = (slotCx - winCx) * (q1 - q0)
+      const q0 = front(v0, p, LAG_X)
+      const q1 = front(v1, p, LAG_X)
+      const kTop = lerp(1, geo.kx, q0)
+      const r = Math.max(lerp(1, geo.kx, q1) / kTop, 0.0005)
+      const off = geo.lean * (q1 - q0)
 
-      const dx = (slotCx - winCx) * q0
-      const dy = yTop - (rect.top + v0 * H)
+      const dx = geo.lean * q0
+      const dy = yTop - (geo.rect.top + v0 * height)
 
       slices[i].style.transform =
         `translate3d(${dx.toFixed(2)}px, ${dy.toFixed(2)}px, 0) ` +
@@ -248,7 +279,21 @@ function buildGenie(source, rect, slot) {
     stage.style.opacity = (1 - clamp01((p - FADE) / (1 - FADE))).toFixed(3)
   }
 
-  return { draw, destroy: () => stage.remove() }
+  return {
+    width,
+    height,
+    place,
+    draw,
+    /* One frame of grace before the clock, so the stage is certain to have
+       painted. It is drawing the resting pose, which is what was already on
+       screen, so the wait costs nothing visible. */
+    run: (duration, a, b) =>
+      new Promise((resolve) => {
+        draw(a)
+        requestAnimationFrame(() => run(duration, draw, a, b).then(resolve))
+      }),
+    destroy: () => stage.remove(),
+  }
 }
 
 /** Animate `p` from `a` to `b`, easing the clock, not the shape. */
@@ -258,42 +303,12 @@ function run(duration, draw, a, b) {
     const step = (ts) => {
       if (!start) start = ts
       const t = clamp01((ts - start) / duration)
-      draw(lerp(a, b, smooth(t)))
+      draw(lerp(a, b, ease(t)))
       if (t < 1) requestAnimationFrame(step)
       else resolve()
     }
     requestAnimationFrame(step)
   })
-}
-
-/* The stage is built, drawn at its resting pose and given one frame to paint
-   before the clock starts, so the cost of creating it never lands inside the
-   animation — and never more than one frame, because until the first frame
-   lands there is nothing on screen where the window used to be. */
-function play(source, rect, slot, duration, a, b, onReady) {
-  const g = buildGenie(source, rect, slot)
-  g.draw(a)
-  // The stage is a pixel copy of the resting pose, so whatever was standing in
-  // for the window can go now — in this same task, leaving no blank frame.
-  onReady?.()
-  return new Promise((resolve) => {
-    requestAnimationFrame(() =>
-      run(duration, g.draw, a, b).then(() => {
-        g.destroy()
-        resolve()
-      })
-    )
-  })
-}
-
-/** Suck a live window down into its dock tile. */
-export function genieOut(el, rect, slot, duration = 520, onReady) {
-  return play(el, rect, slot, duration, 0, 1, onReady)
-}
-
-/** Grow a window back out of its tile — the same warp, run backwards. */
-export function genieIn(node, rect, slot, duration = 480, onReady) {
-  return play(node, rect, slot, duration, 1, 0, onReady)
 }
 
 /** Resolve with the first element matching `sel`, once React has put it there. */

@@ -3,7 +3,7 @@ import { motion, useDragControls, useMotionValue } from 'framer-motion'
 import WindowControls from './WindowControls'
 import useWindowStore from '@/store/windowStore'
 import useSoundStore from '@/store/soundStore'
-import { genieOut, flatten, afterMount } from '@/utils/genie'
+import { genieStage, flatten, afterMount } from '@/utils/genie'
 import { setSnapshot } from '@/utils/windowSnapshots'
 import { useResize, RESIZE_CURSORS } from '@/hooks/useResize'
 
@@ -44,7 +44,9 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
   // ── Genie minimize ──────────────────────────────────────────────────────────
   // The window shrinks into its own tile in the dock, the way macOS does it.
   // That tile only exists once the store knows the window is minimised, so the
-  // window is stood in for by a flat copy while the target is measured.
+  // dock is measured a frame later — but the stage is cut here, while the
+  // window is still up, because building it is the only costly part and a
+  // frame lost to it at the start is the one thing the eye always catches.
   const handleMinimize = () => {
     play('minimize')
 
@@ -53,37 +55,29 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
 
     const rect = el.getBoundingClientRect()
 
-    // One flattened copy serves three purposes: the stand-in below, the dock
-    // tile's picture of the window, and the source the warp is sliced from.
+    // One flattened copy serves three purposes: the stage below, the dock
+    // tile's picture of the window, and the source its bands are cut from.
     // Flattening has to happen while the window is still live — that is the
     // only moment its canvases still have pixels to read.
     const flat = flatten(el)
     setSnapshot(id, flat, { width: rect.width, height: rect.height })
 
-    const stand = flat.cloneNode(true)
-    stand.style.cssText = [
-      'position:fixed',
-      `top:${rect.top}px`,
-      `left:${rect.left}px`,
-      `width:${rect.width}px`,
-      `height:${rect.height}px`,
-      'margin:0',
-      'box-sizing:border-box',
-      'z-index:9998',
-      'pointer-events:none',
-    ].join(';')
-    document.body.appendChild(stand)
+    // Somewhere below the window, for the frame before the dock tile exists
+    const cx = rect.left + rect.width / 2
+    let slot = { left: cx - 24, right: cx + 24, width: 48,
+                 top: window.innerHeight - 8, bottom: window.innerHeight + 40, height: 48 }
+
+    // Sits exactly on the window at rest, so putting it up changes nothing
+    const stage = genieStage(flat, rect.width, rect.height)
+    stage.place(rect, slot)
+    stage.draw(0)
 
     minimizeWindow(id)
 
     afterMount(`[data-min-slot="${id}"]`).then((slotEl) => {
-      const cx = rect.left + rect.width / 2
-      // Fall back to a point straight below if the dock has no tile for it
-      const slot = slotEl
-        ? slotEl.getBoundingClientRect()
-        : { left: cx - 24, right: cx + 24, width: 48,
-            top: window.innerHeight - 8, bottom: window.innerHeight + 40, height: 48 }
-      genieOut(flat.cloneNode(true), rect, slot, 520, () => stand.remove())
+      if (slotEl) slot = slotEl.getBoundingClientRect()
+      stage.place(rect, slot)
+      stage.run(540, 0, 1).then(stage.destroy)
     })
   }
 

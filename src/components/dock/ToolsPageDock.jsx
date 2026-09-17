@@ -15,7 +15,7 @@ import useWindowStore, { TOOL_IDS } from '@/store/windowStore'
 import useSound from '@/hooks/useSound'
 import TOOLS from '@/data/tools'
 import Tip from '@/components/ui/Tip'
-import { genieIn, afterMount } from '@/utils/genie'
+import { genieStage, afterMount } from '@/utils/genie'
 import WindowThumb, { thumbWidth } from './WindowThumb'
 import { clearSnapshot, getSnapshot } from '@/utils/windowSnapshots'
 import GlassLayers from '@/components/ui/LiquidGlass'
@@ -127,25 +127,40 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
 
      The window is opened first and held invisible: only the mounted window
      knows where it is going to land — the store re-centres some of them — and
-     the warp has to end on that exact rectangle or it lands with a jump. */
+     the warp has to end on that exact rectangle or it lands with a jump. The
+     stage is cut before any of that, while the tile is still standing, so the
+     cost of building it never lands on the animation's first frame. */
   const restoreWindow = (id) => {
     play('open')
 
     const slotEl = document.querySelector(`[data-min-slot="${id}"]`)
     const snap   = getSnapshot(id)
-    const finish = () => { setRestoring(null); clearSnapshot(id) }
-
-    if (!slotEl || !snap) { openWindow(id); clearSnapshot(id); return }
+    const win    = windows.find((w) => w.id === id)
+    if (!slotEl || !snap || !win) { openWindow(id); clearSnapshot(id); return }
 
     // Measured now — the tile is gone the moment the window stops being minimised
     const slot = slotEl.getBoundingClientRect()
+
+    let stage = genieStage(snap.node, snap.size.width, snap.size.height)
+    stage.place({ left: win.position.x, top: win.position.y }, slot)
+    stage.draw(1)
 
     setRestoring(id)
     openWindow(id)
 
     afterMount(`[data-window="${id}"]`).then((el) => {
-      if (!el) { finish(); return }
-      genieIn(snap.node.cloneNode(true), el.getBoundingClientRect(), slot, 480).then(finish)
+      const done = () => { stage.destroy(); setRestoring(null); clearSnapshot(id) }
+      if (!el) { done(); return }
+
+      const r = el.getBoundingClientRect()
+      // A few windows are handed back at a size they were not minimised at,
+      // and the bands are cut for one size, so those start over.
+      if (Math.abs(r.width - stage.width) > 1 || Math.abs(r.height - stage.height) > 1) {
+        stage.destroy()
+        stage = genieStage(snap.node, r.width, r.height)
+      }
+      stage.place(r, slot)
+      stage.run(500, 1, 0).then(done)
     })
   }
 
