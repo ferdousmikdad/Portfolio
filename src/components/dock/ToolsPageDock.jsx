@@ -1,25 +1,76 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import trashUrl        from '@/assets/icons/trash.svg?url'
 import mikdadHeadUrl   from '@/assets/icons/mikdad-head.svg?url'
 import finderIconUrl   from '@/assets/icons/finder.svg?url'
 import terminalIconUrl from '@/assets/icons/terminal.svg?url'
-import homeIconUrl      from '@/assets/icons/nav-home.svg?url'
-import portfolioIconUrl from '@/assets/icons/nav-portfolio.svg?url'
-import notesIconUrl     from '@/assets/icons/nav-notes.svg?url'
-import shopIconUrl      from '@/assets/icons/nav-shop.svg?url'
+import homeIconUrl       from '@/assets/icons/Home.png?url'
+import portfolioIconUrl  from '@/assets/icons/Folder.png?url'
+import notesIconUrl      from '@/assets/icons/note.png?url'
+import shopIconUrl       from '@/assets/icons/App Store.png?url'
+import trashEmptyUrl     from '@/assets/icons/Trash Empty.png?url'
+import trashFullUrl      from '@/assets/icons/Trash Full.png?url'
 import useWindowStore, { TOOL_IDS } from '@/store/windowStore'
 import useSound from '@/hooks/useSound'
 import TOOLS from '@/data/tools'
 import MinimizedTray from './MinimizedTray'
+import DockTip from './DockTip'
 
-const ICON_BASE  = 44
-const PILL_H     = ICON_BASE + 20
-const GAP        = 8
-const MAG_RANGE  = 115
-const MAX_SCALE  = 1.80
-const SPRING      = { type: 'spring', stiffness: 460, damping: 26, mass: 0.5 }
-const DOCK_SPRING = { type: 'spring', stiffness: 420, damping: 30 }
+
+/* ── Plateless icon art ────────────────────────────────────────────────────
+   The icon SVGs ship with a glass tile baked into the artwork (a rounded rect
+   plus a hairline stroke, wrapped in a `data-figma-bg-blur-radius` group).
+   macOS draws no such box — dock icons are full-bleed art — so in the dock
+   the plate is switched off and the viewBox is tightened onto the art, which
+   measures ~22 units centred in a 36 unit canvas across every icon. The asset
+   files are untouched; desktop icons and the tray still render them as-is.  */
+const ICON_SRC = import.meta.glob('/src/assets/icons/*.svg', {
+  query: '?raw', import: 'default', eager: true,
+})
+
+// Tool ids that do not match their icon filename
+const FILE_ALIAS = { 'qr-code': 'qrcode' }
+
+// Art that overflows the 36-unit canvas needs its own framing
+const VIEWBOX = { 'image-converter': '2 5 34 34' }
+const DEFAULT_VIEWBOX = '5 5 26 26'
+
+const HIDE_PLATE = '<style>foreignObject,[data-figma-bg-blur-radius]{display:none}</style>'
+
+function platelessArt(name) {
+  const src = ICON_SRC[`/src/assets/icons/${name}.svg`]
+  if (!src) return null
+  return src.replace(/<svg([^>]*)>/, (_, attrs) => {
+    const tidied = attrs
+      .replace(/\s(?:width|height)="[^"]*"/g, '')
+      .replace(/viewBox="[^"]*"/, `viewBox="${VIEWBOX[name] ?? DEFAULT_VIEWBOX}"`)
+    return `<svg${tidied}>${HIDE_PLATE}`
+  })
+}
+
+/* ── Geometry ──────────────────────────────────────────────────────────────
+   Proportions taken from the macOS Tahoe dock: the slab is ~1.42× the tile,
+   tiles rest on a common baseline with equal air above and below, and the
+   corner radius is ~0.44× the slab height.                                  */
+/* Measured off a real Tahoe dock: the slab is 1.40x the tile, the corner
+   gap between tiles is ~0.10x the tile. The corner is rounder than the 0.20x
+   measured off the reference, by preference — still short of the 0.5x that
+   would make it a capsule.                                                   */
+const TILE      = 40
+const DOCK_H    = 56
+const DOCK_PAD  = (DOCK_H - TILE) / 2    // 8 — air above/below the baseline
+const GAP       = 5
+const PAD_X     = 9
+const SEP_W     = 12
+const RADIUS    = Math.round(DOCK_H * 0.32)
+const DOT       = 4
+
+/* Magnification — matches this Mac's Dock prefs (largesize 60 / tilesize 38) */
+const MAX_SCALE = 1.58
+const MAG_RANGE = TILE * 2.6
+
+const EASE_OUT   = 'cubic-bezier(0.22, 1, 0.36, 1)'
+const POP_SPRING = { type: 'spring', stiffness: 420, damping: 30 }
+const DOT_SPRING = { type: 'spring', stiffness: 520, damping: 30 }
 
 const PAGE_NAV = [
   { id: 'home',      label: 'Home',      icon: homeIconUrl },
@@ -31,14 +82,12 @@ const PAGE_NAV = [
 // Tools always visible in the dock
 const PINNED_TOOL_IDS = ['color-contrast', 'color-palette', 'retro-dot', 'print-setup']
 
-function smoothstep(t) { return t * t * (3 - 2 * t) }
-
-function getScale(index, mouseX) {
-  if (mouseX === null) return 1
-  const center = index * (ICON_BASE + GAP) + ICON_BASE / 2
-  const dist   = Math.abs(mouseX - center)
-  if (dist >= MAG_RANGE) return 1
-  return 1 + smoothstep(1 - dist / MAG_RANGE) * (MAX_SCALE - 1)
+/* Raised-cosine bell: 1 at the cursor, easing to exactly 1 at the edge of the
+   range with zero slope, so neighbouring tiles never kink. */
+function magnify(distance) {
+  if (distance >= MAG_RANGE) return 1
+  const bell = 0.5 * (1 + Math.cos(Math.PI * (distance / MAG_RANGE)))
+  return 1 + bell * (MAX_SCALE - 1)
 }
 
 export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
@@ -46,18 +95,22 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
   const [mouseX,    setMouseX]    = useState(null)
   const [hoveredId, setHoveredId] = useState(null)
   const [trayOpen,  setTrayOpen]  = useState(false)
-  const iconsRef = useRef(null)
+  const [bouncing,  setBouncing]  = useState(null)
+  const rowRef   = useRef(null)
+  const sheenRef = useRef(null)
+  const slabRef  = useRef(null)
 
-  const { windows, switchTool, openTool, openWindow, closeWindow, closeAllExcept, activePage } = useWindowStore()
+  const { windows, openTool, openWindow, closeAllExcept, activePage } = useWindowStore()
 
-  const minimized   = windows.filter((w) => w.isMinimized)
-  const activeTool  = windows.find(
+  const minimized  = windows.filter((w) => w.isMinimized)
+  const activeTool = windows.find(
     (w) => TOOL_IDS.includes(w.id) && w.isOpen && !w.isMinimized
   )?.id ?? null
-  const finderWin    = windows.find((w) => w.id === 'finder')
-  const finderOpen   = finderWin?.isOpen && !finderWin?.isMinimized
-  const terminalWin  = windows.find((w) => w.id === 'terminal')
-  const terminalOpen = terminalWin?.isOpen && !terminalWin?.isMinimized
+
+  const isLive = (id) => {
+    const win = windows.find((w) => w.id === id)
+    return Boolean(win?.isOpen && !win?.isMinimized)
+  }
 
   // Pinned tools always shown; any other open tool appears dynamically
   const dockTools = [
@@ -65,399 +118,359 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
     ...TOOLS.filter((t) => !PINNED_TOOL_IDS.includes(t.id) && windows.some((w) => w.id === t.id && (w.isOpen || w.isMinimized))),
   ]
 
-  // Track mouse relative to the icons section only so magnification
-  // centres are correct regardless of what's to the left/right
-  const onMouseMove  = (e) => {
-    const rect = iconsRef.current?.getBoundingClientRect()
-    if (rect) setMouseX(e.clientX - rect.left)
+  const openApp = (id) => {
+    play('open')
+    if (!activePage) closeAllExcept(['finder', 'terminal'])
+    openWindow(id)
+  }
+
+  /* ── One flat list so magnification, tooltips and dots share a code path ── */
+  const items = useMemo(() => {
+    const list = [
+      {
+        id: '__avatar__', label: 'Mikdad', icon: mikdadHeadUrl,
+        onClick: () => { play('open'); onNavigate?.('home') },
+        inset: 0.10,
+      },
+      ...PAGE_NAV.map((page) => ({
+        id: `__page_${page.id}__`, label: page.label, icon: page.icon,
+        onClick: () => { play('open'); onNavigate?.(page.id) },
+        active: activePage === page.id,
+        glyph: page.glyph,
+      })),
+      {
+        id: 'finder', label: 'Finder', icon: finderIconUrl, file: 'finder',
+        onClick: () => openApp('finder'), active: isLive('finder'),
+      },
+      {
+        id: 'terminal', label: 'Terminal', icon: terminalIconUrl, file: 'terminal',
+        onClick: () => openApp('terminal'), active: isLive('terminal'),
+      },
+      ...dockTools.map((tool) => ({
+        id: tool.id, label: tool.name, icon: tool.icon, file: FILE_ALIAS[tool.id] ?? tool.id,
+        onClick: () => { play('open'); openTool(tool.id) },
+        active: activeTool === tool.id,
+        dim: tool.url === null,
+        dynamic: !PINNED_TOOL_IDS.includes(tool.id),
+      })),
+      { id: '__sep__', sep: true },
+      {
+        id: '__trash__', label: 'Trash',
+        icon: minimized.length > 0 ? trashFullUrl : trashEmptyUrl,
+        onClick: () => setTrayOpen((v) => !v),
+        badge: minimized.length, tray: true,
+      },
+    ]
+    // Rest-space centre of every entry, used for the magnification distance
+    let x = 0
+    return list.map((it) => {
+      const w = it.sep ? SEP_W : TILE
+      const entry = { ...it, w, center: x + w / 2 }
+      x += w + GAP
+      return entry
+    })
+  }, [activePage, activeTool, windows, minimized.length, dockTools.map((t) => t.id).join()])
+
+  const restWidth = items.reduce((sum, it) => sum + it.w, 0) + GAP * (items.length - 1)
+
+  /* Measure against the row's fixed centre, not its left edge: the row grows
+     symmetrically while magnified, so a left-edge origin feeds back on itself. */
+  const onMouseMove = (e) => {
+    const rect = rowRef.current?.getBoundingClientRect()
+    if (!rect) return
+    const centreX = rect.left + rect.width / 2
+    setMouseX(e.clientX - centreX + restWidth / 2)
+    if (sheenRef.current) {
+      const dock = sheenRef.current.parentElement.getBoundingClientRect()
+      sheenRef.current.style.setProperty('--sheen-x', `${((e.clientX - dock.left) / dock.width) * 100}%`)
+    }
   }
   const onMouseLeave = () => { setMouseX(null); setHoveredId(null) }
 
-  const SEP = (
-    <div style={{
-      width: 1, height: 28,
-      background: 'rgba(255,255,255,0.10)',
-      alignSelf: 'center',
-      flexShrink: 0,
-    }} />
-  )
+  /* Launch bounce — a tile hops once when its window first opens */
+  const prevOpen = useRef(null)
+  useEffect(() => {
+    const open = new Set(windows.filter((w) => w.isOpen && !w.isMinimized).map((w) => w.id))
+    if (prevOpen.current) {
+      const launched = [...open].find((id) => !prevOpen.current.has(id))
+      if (launched) {
+        setBouncing(launched)
+        const tid = setTimeout(() => setBouncing(null), 620)
+        prevOpen.current = open
+        return () => clearTimeout(tid)
+      }
+    }
+    prevOpen.current = open
+  }, [windows])
+
+  const sizing = mouseX === null
+    ? `width 260ms ${EASE_OUT}, height 260ms ${EASE_OUT}`
+    : 'none'
 
   return (
     <motion.div
       initial={{ scaleX: 0, opacity: 0 }}
       animate={{ scaleX: 1, opacity: 1 }}
       exit={{    scaleX: 0, opacity: 0 }}
-      transition={DOCK_SPRING}
+      transition={POP_SPRING}
       style={{
         position:        'absolute',
-        bottom:           24,
+        bottom:           20,
         left:            '50%',
         x:               '-50%',
         zIndex:           45,
         transformOrigin: 'center center',
       }}
     >
-      {/* ── Unified pill ──────────────────────────────────────────────────── */}
-      <motion.div
-        layout
-        transition={DOCK_SPRING}
+      {/* Displacement source for the glass. feTurbulence gives an organic,
+          uneven distortion — real glass is never optically perfect — and
+          feDisplacementMap bends the captured backdrop through it. */}
+      <svg aria-hidden="true" style={{ display: 'none' }}>
+        <filter id="dock-lg-dist" x="0%" y="0%" width="100%" height="100%">
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="0.008 0.008"
+            numOctaves="2"
+            seed="92"
+            result="noise"
+          />
+          <feGaussianBlur in="noise" stdDeviation="2" result="blurred" />
+          <feDisplacementMap
+            in="SourceGraphic"
+            in2="blurred"
+            scale="70"
+            xChannelSelector="R"
+            yChannelSelector="G"
+          />
+        </filter>
+        <filter id="tip-lg-dist" x="0%" y="0%" width="100%" height="100%">
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="0.02 0.02"
+            numOctaves="2"
+            seed="41"
+            result="tipNoise"
+          />
+          <feGaussianBlur in="tipNoise" stdDeviation="1.4" result="tipBlurred" />
+          <feDisplacementMap
+            in="SourceGraphic"
+            in2="tipBlurred"
+            scale="10"
+            xChannelSelector="R"
+            yChannelSelector="G"
+          />
+        </filter>
+      </svg>
+
+      <div
+        ref={slabRef}
+        className="dock-tahoe"
+        data-hovered={mouseX !== null}
         onMouseMove={onMouseMove}
         onMouseLeave={onMouseLeave}
         style={{
-          display:              'flex',
-          alignItems:           'flex-end',
-          gap:                   GAP,
-          height:                PILL_H,
-          padding:              '0 14px',
-          background:           'rgba(255,255,255,0.05)',
-          border:               '1px solid rgba(255,255,255,0.10)',
-          backdropFilter:       'blur(40px)',
-          WebkitBackdropFilter: 'blur(40px)',
-          borderRadius:          28,
-          position:             'relative',
-          overflow:             'visible',
-          boxSizing:            'border-box',
+          '--dock-radius': `${RADIUS}px`,
+          display:      'flex',
+          alignItems:   'flex-end',
+          height:        DOCK_H,
+          padding:      `0 ${PAD_X}px`,
+          overflow:     'visible',
         }}
       >
-        {/* ── Avatar — navigate home ─────────────────────────────────────── */}
-        <motion.div
-          onClick={() => { play('open'); onNavigate?.('home') }}
-          whileTap={{ scale: 0.9 }}
+        {/* The glass itself is clipped to the capsule, but the icon row is not,
+            so magnified tiles can still rise above the bar. */}
+        <div className="dock-glass">
+          <div className="dock-glass__filter" />
+          <div className="dock-glass__overlay" />
+          <div className="dock-glass__specular" />
+          <div ref={sheenRef} className="dock-tahoe__sheen" data-on={mouseX !== null} />
+        </div>
+
+        <div
+          ref={rowRef}
           style={{
-            alignSelf:  'center',
-            flexShrink:  0,
-            cursor:     'pointer',
-            display:    'flex',
+            display:       'flex',
+            alignItems:    'flex-end',
+            gap:            GAP,
+            paddingBottom:  DOCK_PAD,
+            position:      'relative',
           }}
         >
-          <img src={mikdadHeadUrl} alt="Mikdad" style={{ width: 32, height: 32, objectFit: 'contain' }} />
-        </motion.div>
+          <AnimatePresence mode="popLayout" initial={false}>
+            {items.map((item) => {
+              if (item.sep) {
+                return (
+                  <div key={item.id} style={{ width: SEP_W, height: TILE, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <div className="dock-tahoe__sep" style={{ height: TILE * 0.62 }} />
+                  </div>
+                )
+              }
 
-        {SEP}
+              const scale = mouseX === null ? 1 : magnify(Math.abs(mouseX - item.center))
+              const size  = TILE * scale
+              const inset = item.inset ?? 0
+              const art   = item.glyph ? 0.44 : 1 - inset * 2
+              const art_html = item.file ? platelessArt(item.file) : null
 
-        {/* ── All icons with magnification ──────────────────────────────── */}
-        <motion.div
-          ref={iconsRef}
-          layout
-          transition={DOCK_SPRING}
-          style={{ display: 'flex', alignItems: 'flex-end', gap: GAP, paddingBottom: 10, alignSelf: 'flex-end' }}
-        >
-          {/* ── Page nav icons — indices 0‥PAGE_NAV.length-1 ── */}
-          {PAGE_NAV.map((page, i) => {
-            const scale    = getScale(i, mouseX)
-            const iconSize = ICON_BASE * scale
-            const isActive = activePage === page.id
-            return (
-              <div key={page.id} style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 1 }}>
-                <AnimatePresence>
-                  {hoveredId === page.id && (
-                    <motion.span
-                      initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 4 }}
-                      transition={{ duration: 0.12 }}
-                      style={{ position: 'absolute', bottom: iconSize + 10, left: '50%', transform: 'translateX(-50%)', whiteSpace: 'nowrap', padding: '3px 10px', borderRadius: 8, background: 'rgba(20,20,20,0.80)', border: '1px solid rgba(255,255,255,0.10)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', color: 'var(--headline)', fontSize: 11, fontFamily: "'SF Pro Display'", fontWeight: 500, pointerEvents: 'none', zIndex: 10 }}
-                    >
-                      {page.label}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-                <motion.button
-                  animate={{ width: iconSize, height: iconSize }}
-                  transition={SPRING}
-                  onClick={() => { play('open'); onNavigate?.(page.id) }}
-                  onMouseEnter={() => setHoveredId(page.id)}
-                  onMouseLeave={() => setHoveredId(null)}
-                  style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: Math.round(12 * scale), overflow: 'hidden', background: isActive ? 'rgba(255,255,255,0.10)' : 'transparent' }}
-                >
-                  <img
-                    src={page.icon}
-                    alt={page.label}
-                    style={{ width: '58%', height: '58%', objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: isActive ? 1 : 0.65 }}
-                  />
-                </motion.button>
-                <motion.span
-                  animate={{ opacity: isActive ? 1 : 0, scale: isActive ? 1 : 0 }}
-                  transition={SPRING}
-                  style={{ position: 'absolute', bottom: -8, left: '50%', transform: 'translateX(-50%)', width: 4, height: 4, borderRadius: '50%', background: '#cf0506', pointerEvents: 'none' }}
-                />
-              </div>
-            )
-          })}
+              const tile = (
+                <>
+                  {/* Hover label, riding above the magnified tile */}
+                  <AnimatePresence>
+                    {hoveredId === item.id && (
+                      <motion.span
+                        className="dock-tip"
+                        initial={{ opacity: 0, y: 5, x: '-50%' }}
+                        animate={{ opacity: 1, y: 0, x: '-50%' }}
+                        exit={{    opacity: 0, y: 3, x: '-50%' }}
+                        transition={{ duration: 0.13 }}
+                        style={{ bottom: size + 9 }}
+                      >
+                        <DockTip label={item.label} />
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
 
-          {/* thin divider between pages and apps */}
-          <div style={{ width: 1, height: 28, background: 'rgba(255,255,255,0.10)', alignSelf: 'center', flexShrink: 0 }} />
-
-          {/* Finder — index PAGE_NAV.length + 1 */}
-          {(() => {
-            const scale    = getScale(PAGE_NAV.length + 1, mouseX)
-            const iconSize = ICON_BASE * scale
-            return (
-              <div
-                style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 1 }}
-              >
-                <AnimatePresence>
-                  {hoveredId === '__finder__' && (
-                    <motion.span
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{    opacity: 0, y: 4 }}
-                      transition={{ duration: 0.12 }}
-                      style={{
-                        position:             'absolute',
-                        bottom:               iconSize + 10,
-                        left:                 '50%',
-                        transform:            'translateX(-50%)',
-                        whiteSpace:           'nowrap',
-                        padding:             '3px 10px',
-                        borderRadius:          8,
-                        background:           'rgba(20,20,20,0.80)',
-                        border:               '1px solid rgba(255,255,255,0.10)',
-                        backdropFilter:       'blur(12px)',
-                        WebkitBackdropFilter: 'blur(12px)',
-                        color:               'var(--headline)',
-                        fontSize:             11,
-                        fontFamily:          "'SF Pro Display'",
-                        fontWeight:           500,
-                        pointerEvents:       'none',
-                        zIndex:               10,
-                      }}
-                    >
-                      Finder
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-                <motion.button
-                  animate={{ width: iconSize, height: iconSize }}
-                  transition={SPRING}
-                  onClick={() => {
-                    play('open')
-                    if (!activePage) closeAllExcept(['finder', 'terminal'])
-                    openWindow('finder')
-                  }}
-                  onMouseEnter={() => setHoveredId('__finder__')}
-                  onMouseLeave={() => setHoveredId(null)}
-                  style={{ flexShrink: 0, display: 'flex', borderRadius: Math.round(12 * scale), overflow: 'hidden' }}
-                >
-                  <img src={finderIconUrl} alt="Finder" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                </motion.button>
-                <motion.span
-                  animate={{ opacity: finderOpen ? 1 : 0, scale: finderOpen ? 1 : 0 }}
-                  transition={SPRING}
-                  style={{
-                    position: 'absolute', bottom: -8, left: '50%', transform: 'translateX(-50%)',
-                    width: 4, height: 4, borderRadius: '50%', background: '#cf0506', pointerEvents: 'none',
-                  }}
-                />
-              </div>
-            )
-          })()}
-
-          {/* Terminal — index PAGE_NAV.length + 2 */}
-          {(() => {
-            const scale    = getScale(PAGE_NAV.length + 2, mouseX)
-            const iconSize = ICON_BASE * scale
-            return (
-              <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 1 }}>
-                <AnimatePresence>
-                  {hoveredId === '__terminal__' && (
-                    <motion.span
-                      initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 4 }}
-                      transition={{ duration: 0.12 }}
-                      style={{ position: 'absolute', bottom: iconSize + 10, left: '50%', transform: 'translateX(-50%)', whiteSpace: 'nowrap', padding: '3px 10px', borderRadius: 8, background: 'rgba(20,20,20,0.80)', border: '1px solid rgba(255,255,255,0.10)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', color: 'var(--headline)', fontSize: 11, fontFamily: "'SF Pro Display'", fontWeight: 500, pointerEvents: 'none', zIndex: 10 }}
-                    >
-                      Terminal
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-                <motion.button
-                  animate={{ width: iconSize, height: iconSize }}
-                  transition={SPRING}
-                  onClick={() => {
-                    play('open')
-                    if (!activePage) closeAllExcept(['finder', 'terminal'])
-                    openWindow('terminal')
-                  }}
-                  onMouseEnter={() => setHoveredId('__terminal__')}
-                  onMouseLeave={() => setHoveredId(null)}
-                  style={{ flexShrink: 0, display: 'flex', borderRadius: Math.round(12 * scale), overflow: 'hidden', background: terminalOpen ? 'rgba(255,255,255,0.06)' : 'transparent' }}
-                >
-                  <img src={terminalIconUrl} alt="Terminal" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                </motion.button>
-                <motion.span
-                  animate={{ opacity: terminalOpen ? 1 : 0, scale: terminalOpen ? 1 : 0 }}
-                  transition={SPRING}
-                  style={{ position: 'absolute', bottom: -8, left: '50%', transform: 'translateX(-50%)', width: 4, height: 4, borderRadius: '50%', background: '#cf0506', pointerEvents: 'none' }}
-                />
-              </div>
-            )
-          })()}
-
-          {/* Tool icons — index 2+ (pinned always, extras when open) */}
-          <AnimatePresence mode="popLayout">
-          {dockTools.map((tool, i) => {
-            const isPinned = PINNED_TOOL_IDS.includes(tool.id)
-            const scale    = getScale(i + PAGE_NAV.length + 3, mouseX)
-            const iconSize = ICON_BASE * scale
-            const isActive = activeTool === tool.id
-
-            return (
-              <motion.div
-                key={tool.id}
-                layout
-                initial={isPinned ? false : { opacity: 0, scale: 0 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0 }}
-                transition={SPRING}
-                style={{
-                  position:       'relative',
-                  display:        'flex',
-                  flexDirection:  'column',
-                  alignItems:     'center',
-                  zIndex:          1,
-                }}
-              >
-                {/* Tooltip */}
-                <AnimatePresence>
-                  {hoveredId === tool.id && (
-                    <motion.span
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{    opacity: 0, y: 4 }}
-                      transition={{ duration: 0.12 }}
-                      style={{
-                        position:             'absolute',
-                        bottom:               iconSize + 10,
-                        left:                 '50%',
-                        transform:            'translateX(-50%)',
-                        whiteSpace:           'nowrap',
-                        padding:             '3px 10px',
-                        borderRadius:          8,
-                        background:           'rgba(20,20,20,0.80)',
-                        border:               '1px solid rgba(255,255,255,0.10)',
-                        backdropFilter:       'blur(12px)',
-                        WebkitBackdropFilter: 'blur(12px)',
-                        color:               'var(--headline)',
-                        fontSize:             11,
-                        fontFamily:          "'SF Pro Display'",
-                        fontWeight:           500,
-                        pointerEvents:       'none',
-                        zIndex:               10,
-                      }}
-                    >
-                      {tool.name}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-
-                {/* Icon button */}
-                <motion.button
-                  animate={{ width: iconSize, height: iconSize }}
-                  transition={SPRING}
-                  onClick={() => openTool(tool.id)}
-                  onMouseEnter={() => setHoveredId(tool.id)}
-                  onMouseLeave={() => setHoveredId(null)}
-                  style={{
-                    flexShrink:   0,
-                    display:      'flex',
-                    borderRadius: Math.round(12 * scale),
-                    overflow:     'hidden',
-                  }}
-                >
-                  <img
-                    src={tool.icon}
-                    alt={tool.name}
+                  <motion.button
+                    onClick={item.onClick}
+                    onMouseEnter={() => setHoveredId(item.id)}
+                    onMouseLeave={() => setHoveredId(null)}
+                    aria-label={item.label}
+                    data-trash={item.tray ? true : undefined}
+                    whileTap={{ scale: 0.88 }}
+                    animate={bouncing === item.id ? { y: [0, -17, 0, -6, 0, -2, 0] } : { y: 0 }}
+                    transition={bouncing === item.id
+                      ? { duration: 0.62, times: [0, 0.22, 0.44, 0.62, 0.8, 0.9, 1], ease: 'easeOut' }
+                      : { duration: 0.2 }}
                     style={{
-                      width:     '100%',
-                      height:    '100%',
-                      objectFit: 'contain',
-                      filter:    tool.url === null
-                        ? 'grayscale(0.6) opacity(0.45)'
-                        : 'none',
+                      width:          size,
+                      height:         size,
+                      flexShrink:     0,
+                      display:       'flex',
+                      alignItems:    'center',
+                      justifyContent:'center',
+                      position:      'relative',
+                      background:    'transparent',
+                      border:        'none',
+                      padding:        0,
+                      transition:     sizing,
+                      willChange:    'width, height',
                     }}
-                  />
-                </motion.button>
+                  >
+                    {item.glyph && <span className="dock-tahoe__plate" />}
 
-                {/* Active dot */}
-                <motion.span
-                  animate={{ opacity: isActive ? 1 : 0, scale: isActive ? 1 : 0 }}
-                  transition={SPRING}
-                  style={{
-                    position:     'absolute',
-                    bottom:       -8,
-                    left:         '50%',
-                    transform:    'translateX(-50%)',
-                    width:         4,
-                    height:        4,
-                    borderRadius: '50%',
-                    background:   '#cf0506',
-                    pointerEvents:'none',
-                  }}
-                />
-              </motion.div>
-            )
-          })}
+                    {art_html ? (
+                      <span
+                        className="dock-tahoe__art"
+                        dangerouslySetInnerHTML={{ __html: art_html }}
+                      />
+                    ) : (
+                    <img
+                      src={item.icon}
+                      alt=""
+                      draggable={false}
+                      className={item.glyph ? 'dock-tahoe__glyph' : undefined}
+                      style={{
+                        width:     `${art * 100}%`,
+                        height:    `${art * 100}%`,
+                        objectFit: 'contain',
+                        filter: item.glyph
+                          ? undefined
+                          : item.dim
+                            ? 'grayscale(0.6) opacity(0.45)'
+                            : 'drop-shadow(0 1px 2px rgba(0,0,0,0.22))',
+                        opacity: item.glyph ? (item.active ? 1 : 0.72) : 1,
+                        transition: 'opacity 0.2s ease',
+                      }}
+                    />
+                    )}
+
+                    {/* Minimized-window count on the trash */}
+                    <AnimatePresence>
+                      {item.badge > 0 && (
+                        <motion.span
+                          key="badge"
+                          initial={{ scale: 0, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          exit={{    scale: 0, opacity: 0 }}
+                          transition={DOT_SPRING}
+                          style={{
+                            position:      'absolute',
+                            top:            0,
+                            right:          0,
+                            width:          16,
+                            height:         16,
+                            borderRadius:  '50%',
+                            background:    '#cf0506',
+                            boxShadow:     '0 0 0 1.5px rgba(0,0,0,0.25)',
+                            display:       'flex',
+                            alignItems:    'center',
+                            justifyContent:'center',
+                            fontSize:       9,
+                            color:         'white',
+                            fontWeight:    'bold',
+                          }}
+                        >
+                          {item.badge}
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
+                  </motion.button>
+
+                  {/* Running indicator — sits inside the slab, below the baseline */}
+                  {'active' in item && (
+                    <motion.span
+                      className="dock-tahoe__dot"
+                      animate={{ opacity: item.active ? 1 : 0, scale: item.active ? 1 : 0.2 }}
+                      transition={DOT_SPRING}
+                      style={{
+                        bottom:     -(DOCK_PAD - DOT) / 2 - DOT + 1,
+                        width:       DOT,
+                        height:      DOT,
+                      }}
+                    />
+                  )}
+                </>
+              )
+
+              const frame = {
+                position:      'relative',
+                display:       'flex',
+                flexDirection: 'column',
+                alignItems:    'center',
+                flexShrink:     0,
+              }
+
+              // The trash anchors the minimized-window tray
+              if (item.tray) {
+                return (
+                  <div key={item.id} style={frame}>
+                    <MinimizedTray isOpen={trayOpen} onClose={() => setTrayOpen(false)} />
+                    {tile}
+                  </div>
+                )
+              }
+
+              if (item.dynamic) {
+                return (
+                  <motion.div
+                    key={item.id}
+                    layout="position"
+                    initial={{ opacity: 0, scale: 0.4 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{    opacity: 0, scale: 0.4 }}
+                    transition={POP_SPRING}
+                    style={frame}
+                  >
+                    {tile}
+                  </motion.div>
+                )
+              }
+
+              return <div key={item.id} style={frame}>{tile}</div>
+            })}
           </AnimatePresence>
-        </motion.div>
-
-        {SEP}
-
-        {/* ── Right: trash + minimized tray ─────────────────────────────── */}
-        <div style={{ position: 'relative', alignSelf: 'center' }}>
-          <MinimizedTray isOpen={trayOpen} onClose={() => setTrayOpen(false)} />
-          <button
-            data-trash
-            onClick={() => setTrayOpen((v) => !v)}
-            style={{
-              display:        'flex',
-              alignItems:     'center',
-              justifyContent: 'center',
-              width:           44,
-              height:          44,
-              position:       'relative',
-            }}
-          >
-            <img
-              src={trashUrl}
-              alt="Trash"
-              style={{
-                width:      24,
-                height:     24,
-                objectFit: 'contain',
-                transform:  trayOpen ? 'scale(1.15)' : 'scale(1)',
-                transition: 'transform 0.2s',
-              }}
-            />
-            <AnimatePresence>
-              {minimized.length > 0 && (
-                <motion.span
-                  key="badge"
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{    scale: 0, opacity: 0 }}
-                  transition={{ type: 'spring', stiffness: 500, damping: 28 }}
-                  style={{
-                    position:   'absolute',
-                    top:        -4,
-                    right:      -4,
-                    width:       16,
-                    height:      16,
-                    borderRadius:'50%',
-                    background: '#cf0506',
-                    boxShadow:  '0 0 0 2px var(--bg)',
-                    display:    'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize:    9,
-                    color:      'white',
-                    fontWeight: 'bold',
-                  }}
-                >
-                  {minimized.length}
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </button>
         </div>
-      </motion.div>
+      </div>
     </motion.div>
   )
 }
