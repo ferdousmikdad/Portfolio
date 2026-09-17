@@ -4,6 +4,7 @@ import WindowControls from './WindowControls'
 import useWindowStore from '@/store/windowStore'
 import useSoundStore from '@/store/soundStore'
 import { genieOut } from '@/utils/genie'
+import { setSnapshot } from '@/utils/windowSnapshots'
 import { useResize, RESIZE_CURSORS } from '@/hooks/useResize'
 
 export default function Window({ id, title, children, actionLabel, onAction, hideControls, hideTitleBar, toolbar, sidebarContent, shellStyle, navSlot }) {
@@ -40,6 +41,9 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
   if (!win || !win.isOpen || win.isMinimized) return null
 
   // ── Genie minimize ──────────────────────────────────────────────────────────
+  // The window shrinks into its own tile in the dock, the way macOS does it.
+  // That tile only exists once the store knows the window is minimised, so the
+  // clone is parked first and the target measured on the next frame.
   const handleMinimize = () => {
     play('minimize')
 
@@ -47,13 +51,10 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
     if (!el) { minimizeWindow(id); return }
 
     const rect  = el.getBoundingClientRect()
-    const trash = document.querySelector('[data-trash]')
-    let tx = 0, ty = 400
-    if (trash) {
-      const tr = trash.getBoundingClientRect()
-      tx = (tr.left + tr.width  / 2) - (rect.left + rect.width  / 2)
-      ty = (tr.top  + tr.height / 2) - (rect.top  + rect.height / 2)
-    }
+
+    // Keep a copy of the window as it looks right now — the dock tile renders
+    // it shrunken, the way macOS shows a minimised window.
+    setSnapshot(id, el.cloneNode(true), { width: rect.width, height: rect.height })
 
     const clone = el.cloneNode(true)
     clone.style.cssText = [
@@ -74,7 +75,22 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
     document.body.appendChild(clone)
 
     minimizeWindow(id)
-    genieOut(clone, tx, ty, 520).then(() => clone.remove())
+
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const slot = document.querySelector(`[data-min-slot="${id}"]`)
+      // Fall back to straight down if the dock has no slot for it
+      let tx = 0, ty = window.innerHeight - rect.top
+      if (slot) {
+        const sr = slot.getBoundingClientRect()
+        tx = (sr.left + sr.width  / 2) - (rect.left + rect.width  / 2)
+        ty = (sr.top  + sr.height / 2) - (rect.top  + rect.height / 2)
+      }
+      const cx = slot
+        ? Math.min(Math.max((slot.getBoundingClientRect().left +
+            slot.getBoundingClientRect().width / 2 - rect.left) / rect.width, 0), 1)
+        : 0.5
+      genieOut(clone, tx, ty, 560, cx).then(() => clone.remove())
+    }))
   }
 
   return (

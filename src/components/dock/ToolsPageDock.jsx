@@ -14,8 +14,10 @@ import trashFullDarkUrl  from '@/assets/icons/trash-full-dark.svg?url'
 import useWindowStore, { TOOL_IDS } from '@/store/windowStore'
 import useSound from '@/hooks/useSound'
 import TOOLS from '@/data/tools'
-import MinimizedTray from './MinimizedTray'
 import Tip from '@/components/ui/Tip'
+import { genieIn } from '@/utils/genie'
+import WindowThumb, { thumbWidth } from './WindowThumb'
+import { clearSnapshot } from '@/utils/windowSnapshots'
 import GlassLayers from '@/components/ui/LiquidGlass'
 import useThemeStore from '@/store/themeStore'
 
@@ -97,7 +99,6 @@ function magnify(distance) {
 export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
   const play = useSound()
   const [mouseX,    setMouseX]    = useState(null)
-  const [trayOpen,  setTrayOpen]  = useState(false)
   const [bouncing,  setBouncing]  = useState(null)
   const rowRef   = useRef(null)
   const sheenRef = useRef(null)
@@ -121,6 +122,35 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
     ...TOOLS.filter((t) => PINNED_TOOL_IDS.includes(t.id)),
     ...TOOLS.filter((t) => !PINNED_TOOL_IDS.includes(t.id) && windows.some((w) => w.id === t.id && (w.isOpen || w.isMinimized))),
   ]
+
+  /* Grow the window back out of its dock tile, then hand it to the store. */
+  const restoreWindow = (id) => {
+    play('open')
+    clearSnapshot(id)
+    const slot = document.querySelector(`[data-min-slot="${id}"]`)
+    const win  = windows.find((w) => w.id === id)
+    if (!slot || !win) { openWindow(id); return }
+
+    const s = slot.getBoundingClientRect()
+    const ghost = document.createElement('div')
+    const { width, height } = win.size
+    const { x, y } = win.position
+    ghost.className = 'window-shell genie-freeze'
+    ghost.style.cssText = [
+      'position:fixed', `top:${y}px`, `left:${x}px`,
+      `width:${width}px`, `height:${height}px`,
+      'margin:0', 'box-sizing:border-box', 'z-index:9998',
+      'pointer-events:none', 'transform-origin:50% 50%',
+    ].join(';')
+    document.body.appendChild(ghost)
+
+    const fx = (s.left + s.width  / 2) - (x + width  / 2)
+    const fy = (s.top  + s.height / 2) - (y + height / 2)
+    genieIn(ghost, fx, fy, 380).then(() => {
+      ghost.remove()
+      openWindow(id)
+    })
+  }
 
   const openApp = (id) => {
     play('open')
@@ -158,19 +188,29 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
         dynamic: !PINNED_TOOL_IDS.includes(tool.id),
       })),
       { id: '__sep__', sep: true },
+      /* Minimised windows sit between the divider and the trash, each on its
+         own tile — the slot the window shrinks into and grows back out of. */
+      ...minimized.map((win) => {
+        const aspect = (win.size?.width ?? TILE) / (win.size?.height ?? TILE)
+        return {
+          id: `__min_${win.id}__`,
+          label: win.title,
+          minOf: win.id,
+          thumb: true,
+          w: thumbWidth(aspect, TILE),
+          onClick: () => restoreWindow(win.id),
+        }
+      }),
       {
         id: '__trash__', label: 'Trash',
-        icon: minimized.length > 0
-          ? (isDark ? trashFullDarkUrl  : trashFullUrl)
-          : (isDark ? trashEmptyDarkUrl : trashEmptyUrl),
-        onClick: () => setTrayOpen((v) => !v),
-        badge: minimized.length, tray: true,
+        icon: isDark ? trashEmptyDarkUrl : trashEmptyUrl,
+        onClick: () => {},
       },
     ]
     // Rest-space centre of every entry, used for the magnification distance
     let x = 0
     return list.map((it) => {
-      const w = it.sep ? SEP_W : TILE
+      const w = it.sep ? SEP_W : (it.w ?? TILE)
       const entry = { ...it, w, center: x + w / 2 }
       x += w + GAP
       return entry
@@ -271,6 +311,7 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
 
               const scale = mouseX === null ? 1 : magnify(Math.abs(mouseX - item.center))
               const size  = TILE * scale
+              const wide  = item.w * scale   // thumbnails are wider than they are tall
               const inset = item.inset ?? 0
               const art   = item.glyph ? 0.44 : 1 - inset * 2
               const art_html = item.file ? platelessArt(item.file) : null
@@ -282,14 +323,14 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
                   <motion.button
                     onClick={item.onClick}
                     aria-label={item.label}
-                    data-trash={item.tray ? true : undefined}
+                    data-min-slot={item.minOf}
                     whileTap={{ scale: 0.88 }}
                     animate={bouncing === item.id ? { y: [0, -17, 0, -6, 0, -2, 0] } : { y: 0 }}
                     transition={bouncing === item.id
                       ? { duration: 0.62, times: [0, 0.22, 0.44, 0.62, 0.8, 0.9, 1], ease: 'easeOut' }
                       : { duration: 0.2 }}
                     style={{
-                      width:          size,
+                      width:          wide,
                       height:         size,
                       flexShrink:     0,
                       display:       'flex',
@@ -303,6 +344,10 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
                       willChange:    'width, height',
                     }}
                   >
+                    {item.thumb ? (
+                      <WindowThumb id={item.minOf} width={wide} height={size} />
+                    ) : (
+                    <>
                     {item.glyph && <span className="dock-tahoe__plate" />}
 
                     {art_html ? (
@@ -330,37 +375,9 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
                       }}
                     />
                     )}
+                    </>
+                    )}
 
-                    {/* Minimized-window count on the trash */}
-                    <AnimatePresence>
-                      {item.badge > 0 && (
-                        <motion.span
-                          key="badge"
-                          initial={{ scale: 0, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          exit={{    scale: 0, opacity: 0 }}
-                          transition={DOT_SPRING}
-                          style={{
-                            position:      'absolute',
-                            top:            0,
-                            right:          0,
-                            width:          16,
-                            height:         16,
-                            borderRadius:  '50%',
-                            background:    '#cf0506',
-                            boxShadow:     '0 0 0 1.5px rgba(0,0,0,0.25)',
-                            display:       'flex',
-                            alignItems:    'center',
-                            justifyContent:'center',
-                            fontSize:       9,
-                            color:         'white',
-                            fontWeight:    'bold',
-                          }}
-                        >
-                          {item.badge}
-                        </motion.span>
-                      )}
-                    </AnimatePresence>
                   </motion.button>
                   </Tip>
 
@@ -388,15 +405,6 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
                 flexShrink:     0,
               }
 
-              // The trash anchors the minimized-window tray
-              if (item.tray) {
-                return (
-                  <div key={item.id} style={frame}>
-                    <MinimizedTray isOpen={trayOpen} onClose={() => setTrayOpen(false)} />
-                    {tile}
-                  </div>
-                )
-              }
 
               if (item.dynamic) {
                 return (

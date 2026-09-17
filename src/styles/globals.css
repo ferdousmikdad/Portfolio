@@ -1965,3 +1965,35 @@ html.reduce-motion *::after {
   align-items: center;
   justify-content: center;
 }
+
+/* ── Minimised window tile ───────────────────────────────────────────────── */
+/* The window itself, scaled into the dock, with the app icon badged on the
+   corner — what macOS shows for a minimised window. */
+.dock-thumb {
+  position: relative;
+  display: block;
+  /* the badge hangs off the corner, so the composite must not clip */
+  overflow: visible;
+}
+
+/* The window snapshot: top-left of the composite, badge overhanging below it */
+.dock-thumb__shot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: rgba(20, 20, 22, 0.92);
+  box-shadow:
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.20),
+    0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+.dock-thumb__badge {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55));
+  pointer-events: none;
+}

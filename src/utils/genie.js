@@ -1,52 +1,86 @@
 // ── macOS Genie Effect ── pure requestAnimationFrame, no dependencies ─────────
-// Ported from the raw JS portfolio's minimize.js
 
-const KF_OUT = [
-  //  t      TL        TR       mid-R      BR        BL       mid-L
-  [0.00,  0, 0,  100, 0,  100,50,  100,100,   0,100,   0, 50],
-  [0.22,  0, 0,  100, 0,   82,50,   60,100,  40,100,  18, 50],
-  [0.45,  2, 0,   98, 0,   68,50,   53,100,  47,100,  32, 50],
-  [0.65, 16, 0,   84, 0,   56,50,   52,100,  48,100,  44, 50],
-  [0.82, 34, 0,   66, 0,   52,50,   51,100,  49,100,  48, 50],
-  [1.00, 50, 0,   50, 0,   50,50,   50,100,  50,100,  50, 50],
-]
+/* The shape is generated per frame rather than interpolated between a handful
+   of hand-written keyframes. A fixed table can only ever describe straight
+   sides; the real genie necks inward along a curve while a "suction front"
+   sweeps up the window from the bottom edge, and that needs a point per slice. */
 
-function clipAtProgress(table, p) {
-  p = Math.max(0, Math.min(1, p))
-  let a = table[0], b = table[table.length - 1]
-  for (let i = 0; i < table.length - 1; i++) {
-    if (p >= table[i][0] && p <= table[i + 1][0]) { a = table[i]; b = table[i + 1]; break }
+const SLICES = 26      // vertices down each side
+const BAND   = 0.55    // how gradual the neck is, in fractions of the height
+
+const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v)
+const smoothstep = (t) => t * t * (3 - 2 * t)
+
+/**
+ * Clip polygon at progress `p`.
+ * `cx`/`half` are where the shape converges, in fractions of the element box.
+ */
+function genieClip(p, cx = 0.5, half = 0.03) {
+  // The front starts below the bottom edge and sweeps past the top, so by the
+  // end every slice — including the top one — has been drawn in.
+  const front = (1 + BAND) * (1 - p) - BAND
+  const left = []
+  const right = []
+
+  for (let i = 0; i <= SLICES; i++) {
+    const y = i / SLICES
+    const t = smoothstep(clamp01((y - front) / BAND))
+    const h = 0.5 + (half - 0.5) * t
+    const c = 0.5 + (cx - 0.5) * t
+    left.push([(c - h) * 100, y * 100])
+    right.push([(c + h) * 100, y * 100])
   }
-  const span = b[0] - a[0]
-  const t    = span === 0 ? 1 : (p - a[0]) / span
-  const vals = []
-  for (let j = 1; j < a.length; j++) vals.push(a[j] + (b[j] - a[j]) * t)
-  const pts = []
-  for (let k = 0; k < vals.length; k += 2)
-    pts.push(vals[k].toFixed(2) + '% ' + vals[k + 1].toFixed(2) + '%')
-  return 'polygon(' + pts.join(', ') + ')'
+
+  const pts = left.concat(right.reverse())
+  return (
+    'polygon(' +
+    pts.map(([x, y]) => `${x.toFixed(2)}% ${y.toFixed(2)}%`).join(', ') +
+    ')'
+  )
 }
 
-function easeGenie(t) {
-  if (t < 0.35) { const n = t / 0.35; return n * n * 0.35 }
-  const n = (t - 0.35) / 0.65
-  return 0.35 + n * n * n * 0.65
-}
+// Slow to form the neck, then accelerating away into the dock
+const easeGenie = (t) =>
+  t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
 
-/** Animate element toward (tx, ty) with genie warp. Returns a Promise. */
-export function genieOut(el, tx, ty, duration = 520) {
-  return new Promise(resolve => {
+function run(el, duration, draw) {
+  return new Promise((resolve) => {
     let start = null
     function frame(ts) {
       if (!start) start = ts
       const raw = Math.min((ts - start) / duration, 1)
-      const t   = easeGenie(raw)
-      el.style.clipPath  = clipAtProgress(KF_OUT, t)
-      el.style.transform = `translate(${(tx * t).toFixed(1)}px, ${(ty * t).toFixed(1)}px)`
-      el.style.opacity   = (1 - t).toFixed(4)
+      draw(easeGenie(raw), raw)
       if (raw < 1) requestAnimationFrame(frame)
       else resolve()
     }
     requestAnimationFrame(frame)
+  })
+}
+
+/**
+ * Draw an element down into a dock slot.
+ * `tx`/`ty` carry its centre to the slot centre; `cx` is where along the
+ * element's own width the neck converges, so the tail leans toward the slot.
+ */
+export function genieOut(el, tx, ty, duration = 560, cx = 0.5) {
+  return run(el, duration, (t) => {
+    el.style.clipPath = genieClip(t, cx)
+    el.style.transform =
+      `translate(${(tx * t).toFixed(1)}px, ${(ty * t).toFixed(1)}px)` +
+      ` scale(${(1 - 0.88 * t).toFixed(3)})`
+    // stays solid until it is nearly home, then goes in the last stretch
+    el.style.opacity = (1 - clamp01((t - 0.72) / 0.28)).toFixed(3)
+  })
+}
+
+/** The same motion run backwards, for a window growing out of its tile. */
+export function genieIn(el, fx, fy, duration = 440, cx = 0.5) {
+  return run(el, duration, (t) => {
+    const r = 1 - t
+    el.style.clipPath = genieClip(r, cx)
+    el.style.transform =
+      `translate(${(fx * r).toFixed(1)}px, ${(fy * r).toFixed(1)}px)` +
+      ` scale(${(1 - 0.88 * r).toFixed(3)})`
+    el.style.opacity = clamp01(t / 0.35).toFixed(3)
   })
 }
