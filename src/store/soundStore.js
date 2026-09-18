@@ -14,6 +14,11 @@ function getHowl(key) {
     close:        ['/sounds/close.wav'],
     minimize:     ['/sounds/minimize.wav'],
     notification: ['/sounds/notification.wav'],
+    // Trash: a file landing in the basket, and the basket being emptied.
+    // Mapped onto the existing clips for now — swap in the real rustle and
+    // crumple here and nothing else has to change.
+    trash:        ['/sounds/minimize.wav'],
+    emptyTrash:   ['/sounds/close.wav'],
   }
 
   if (!sources[key]) return null

@@ -20,6 +20,10 @@ import WindowThumb, { thumbWidth } from './WindowThumb'
 import { clearSnapshot, getSnapshot } from '@/utils/windowSnapshots'
 import GlassLayers from '@/components/ui/LiquidGlass'
 import useThemeStore from '@/store/themeStore'
+import useTrashStore, { trashedFrom } from '@/store/trashStore'
+import useDragStore from '@/store/dragStore'
+import ContextMenu from '@/components/ui/ContextMenu'
+import MacAlert from '@/components/ui/MacAlert'
 
 
 /* ── Plateless icon art ────────────────────────────────────────────────────
@@ -104,8 +108,29 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
   const sheenRef = useRef(null)
   const slabRef  = useRef(null)
 
-  const { windows, openTool, openWindow, closeAllExcept, activePage, setRestoring } = useWindowStore()
+  const { windows, openTool, openWindow, closeAllExcept, activePage, setRestoring, openFinderAt } = useWindowStore()
   const isDark = useThemeStore((s) => s.isDark)
+
+  /* ── Trash ──────────────────────────────────────────────────────────────
+     The basket is a real folder: it has contents, so it has two icons, a
+     context menu and a drop target. */
+  const trashItems  = useTrashStore((s) => s.items)
+  const emptyTrash  = useTrashStore((s) => s.emptyTrash)
+  const trashFull   = trashItems.length > 0
+  const dragging    = useDragStore((s) => s.payload)
+  const overTrash   = useDragStore((s) => s.overTrash)
+  const [trashMenu,  setTrashMenu]  = useState(null)   // { x, y, immediate }
+  const [confirmEmpty, setConfirmEmpty] = useState(false)
+
+  const trashIcon = trashFull
+    ? (isDark ? trashFullDarkUrl  : trashFullUrl)
+    : (isDark ? trashEmptyDarkUrl : trashEmptyUrl)
+
+  const doEmptyTrash = () => { play('emptyTrash'); emptyTrash(); setConfirmEmpty(false) }
+
+  // Apps whose icon is sitting in the Trash are gone from the dock until
+  // someone puts them back.
+  const trashedApps = trashedFrom(trashItems, 'finder')
 
   const minimized  = windows.filter((w) => w.isMinimized)
   const activeTool = windows.find(
@@ -121,7 +146,7 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
   const dockTools = [
     ...TOOLS.filter((t) => PINNED_TOOL_IDS.includes(t.id)),
     ...TOOLS.filter((t) => !PINNED_TOOL_IDS.includes(t.id) && windows.some((w) => w.id === t.id && (w.isOpen || w.isMinimized))),
-  ]
+  ].filter((t) => !trashedApps.has(t.id))
 
   /* Grow the window back out of its dock tile, then hand it to the store.
 
@@ -214,9 +239,10 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
         }
       }),
       {
-        id: '__trash__', label: 'Trash',
-        icon: isDark ? trashEmptyDarkUrl : trashEmptyUrl,
-        onClick: () => {},
+        /* Last in the row, after the divider, and never a running dot: the
+           Trash is a folder, not an app, so it has nothing to indicate. */
+        id: '__trash__', label: 'Trash', icon: trashIcon, trash: true,
+        onClick: () => { play('open'); openFinderAt('trash') },
       },
     ]
     // Rest-space centre of every entry, used for the magnification distance
@@ -227,7 +253,7 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
       x += w + GAP
       return entry
     })
-  }, [activePage, activeTool, windows, minimized.length, isDark, dockTools.map((t) => t.id).join()])
+  }, [activePage, activeTool, windows, minimized.length, isDark, trashIcon, dockTools.map((t) => t.id).join()])
 
   const restWidth = items.reduce((sum, it) => sum + it.w, 0) + GAP * (items.length - 1)
 
@@ -327,14 +353,39 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
               const inset = item.inset ?? 0
               const art   = item.glyph ? 0.44 : 1 - inset * 2
               const art_html = item.file ? platelessArt(item.file) : null
+              // A drag is overhead and aimed at the basket
+              const dropTarget = item.trash && overTrash
 
               const tile = (
                 <>
 
-                  <Tip label={item.label} placement="top">
+                  <Tip
+                    label={item.label}
+                    placement="top"
+                    open={Boolean(item.trash && dragging)}
+                    hidden={Boolean(item.trash && trashMenu)}
+                  >
                   <motion.button
                     onClick={item.onClick}
+                    onContextMenu={item.trash
+                      ? (e) => {
+                          e.preventDefault()
+                          // Dock menus rise out of the icon, centred on it —
+                          // they never drop down over the dock itself.
+                          const r = e.currentTarget.getBoundingClientRect()
+                          setTrashMenu({
+                            x: r.left + r.width / 2,
+                            y: r.top - 10,
+                            placement: 'above',
+                            align:     'center',
+                            // Option turns Empty Trash into the no-questions
+                            // version, the way it does in the real menu.
+                            immediate: e.altKey,
+                          })
+                        }
+                      : undefined}
                     aria-label={item.label}
+                    data-trash-tile={item.trash ? '' : undefined}
                     data-min-slot={item.minOf}
                     whileTap={{ scale: 0.88 }}
                     animate={bouncing === item.id ? { y: [0, -17, 0, -6, 0, -2, 0] } : { y: 0 }}
@@ -356,6 +407,13 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
                       willChange:    'width, height',
                     }}
                   >
+                    {/* Drop highlight — macOS lights a well behind the icon
+                        while a drag hovers it, so the target is unmistakable
+                        before you let go. */}
+                    {item.trash && (
+                      <span className="dock-tahoe__well" data-on={dropTarget || undefined} />
+                    )}
+
                     {item.thumb ? (
                       <WindowThumb id={item.minOf} width={wide} height={size} />
                     ) : (
@@ -383,7 +441,8 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
                             ? 'grayscale(0.6) opacity(0.45)'
                             : 'drop-shadow(0 1px 2px rgba(0,0,0,0.22))',
                         opacity: item.glyph ? (item.active ? 1 : 0.72) : 1,
-                        transition: 'opacity 0.2s ease',
+                        transform: dropTarget ? 'scale(1.09)' : 'none',
+                        transition: 'opacity 0.2s ease, transform 0.14s ease',
                       }}
                     />
                     )}
@@ -439,6 +498,32 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Right-click the basket: Open, and Empty Trash — dimmed when there is
+          nothing in it, which is how macOS tells you so before you look. */}
+      <ContextMenu
+        at={trashMenu}
+        onClose={() => setTrashMenu(null)}
+        items={[
+          { label: 'Open', onClick: () => { play('open'); openFinderAt('trash') } },
+          { sep: true },
+          {
+            label: trashMenu?.immediate ? 'Empty Trash Immediately' : 'Empty Trash',
+            disabled: !trashFull,
+            onClick: () => (trashMenu?.immediate ? doEmptyTrash() : setConfirmEmpty(true)),
+          },
+        ]}
+      />
+
+      <MacAlert
+        open={confirmEmpty}
+        icon={trashIcon}
+        title="Are you sure you want to permanently erase the items in the Trash?"
+        message="You can't undo this action."
+        confirmLabel="Empty Trash"
+        onConfirm={doEmptyTrash}
+        onCancel={() => setConfirmEmpty(false)}
+      />
     </motion.div>
   )
 }

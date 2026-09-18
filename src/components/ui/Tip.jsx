@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import DockTip, { TIP_H, TIP_DEPTH } from '@/components/dock/DockTip'
@@ -16,19 +16,44 @@ import DockTip, { TIP_H, TIP_DEPTH } from '@/components/dock/DockTip'
  *
  * `placement` is which side of the control the bubble sits on; the tail always
  * points back at it.
+ *
+ * `open` forces the bubble up with no hover. macOS drops the hover delay the
+ * moment a drag starts — the dock labels its drop targets immediately, because
+ * you are no longer browsing the dock, you are aiming at it.
  */
-export default function Tip({ label, placement = 'bottom', children }) {
+export default function Tip({ label, placement = 'bottom', open = false, hidden = false, children }) {
   const ref = useRef(null)
   const [at, setAt] = useState(null)
 
   const show = useCallback(() => {
     const el = ref.current
-    if (!el) return
+    // A menu has taken over the control: macOS drops the label when one opens.
+    if (!el || hidden) return
     const r = el.getBoundingClientRect()
-    setAt({ cx: r.left + r.width / 2, top: r.top, bottom: r.bottom })
-  }, [])
+    const next = { cx: r.left + r.width / 2, top: r.top, bottom: r.bottom }
+    // Compared, not just assigned: the forced-open path re-measures every
+    // frame, and a fresh object each time would re-render the portal for
+    // nothing while the tile is standing still.
+    setAt((prev) =>
+      prev && prev.cx === next.cx && prev.top === next.top && prev.bottom === next.bottom
+        ? prev
+        : next
+    )
+  }, [hidden])
 
   const hide = useCallback(() => setAt(null), [])
+
+  // Forced open: keep measuring for as long as it stays forced. A dock tile
+  // magnifies while a drag crosses it, so a position taken once at the start
+  // leaves the label sitting over the icon instead of above it.
+  useEffect(() => {
+    if (hidden) { hide(); return }
+    if (!open)  { hide(); return }
+    let frame = 0
+    const tick = () => { show(); frame = requestAnimationFrame(tick) }
+    tick()
+    return () => cancelAnimationFrame(frame)
+  }, [open, hidden, show, hide])
 
   if (!label) return children
 
@@ -40,7 +65,7 @@ export default function Tip({ label, placement = 'bottom', children }) {
         ref={ref}
         className="tip-anchor"
         onMouseEnter={show}
-        onMouseLeave={hide}
+        onMouseLeave={() => { if (!open) hide() }}
         onFocusCapture={show}
         onBlurCapture={hide}
       >

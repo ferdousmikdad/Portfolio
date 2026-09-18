@@ -1,9 +1,14 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Window from '@/components/window/Window'
 import WindowControls from '@/components/window/WindowControls'
 import useWindowStore from '@/store/windowStore'
 import useSound from '@/hooks/useSound'
+import useTrashStore, { trashedFrom } from '@/store/trashStore'
+import useThemeStore from '@/store/themeStore'
+import useTrashDrag from '@/hooks/useTrashDrag'
+import ContextMenu from '@/components/ui/ContextMenu'
+import MacAlert from '@/components/ui/MacAlert'
 import TOOLS from '@/data/tools'
 
 import spotifyIconUrl   from '@/assets/icons/spotify.svg?url'
@@ -15,6 +20,10 @@ import toolsIconUrl     from '@/assets/icons/nav-tools.svg?url'
 import terminalAppIconUrl from '@/assets/icons/terminal.svg?url'
 import pacmanIconUrl    from '@/assets/icons/magic-icon.svg?url'
 import MacSearchIcon    from '@/assets/icons/macsearch.svg?react'
+import trashEmptyUrl     from '@/assets/icons/trash-empty.svg?url'
+import trashFullUrl      from '@/assets/icons/trash-full.svg?url'
+import trashEmptyDarkUrl from '@/assets/icons/trash-empty-dark.svg?url'
+import trashFullDarkUrl  from '@/assets/icons/trash-full-dark.svg?url'
 
 const NATIVE_APPS = [
   { id: 'terminal', label: 'Terminal',  icon: terminalAppIconUrl },
@@ -39,7 +48,7 @@ const glassPill = {
   boxShadow:            '0 2px 8px rgba(0,0,0,0.10)',
 }
 
-function SidebarItem({ icon, label, active, onClick }) {
+function SidebarItem({ icon, label, active, plainIcon, onClick }) {
   return (
     <button
       onClick={onClick}
@@ -49,7 +58,12 @@ function SidebarItem({ icon, label, active, onClick }) {
       <img
         src={icon}
         alt={label}
-        style={{ width: 13, height: 13, flexShrink: 0, opacity: active ? 1 : 0.55, filter: 'brightness(0) invert(1)' }}
+        style={{
+          width: 13, height: 13, flexShrink: 0,
+          opacity: active ? 1 : 0.55,
+          // Most sidebar glyphs are monochrome masks; the Trash keeps its art.
+          filter: plainIcon ? 'none' : 'brightness(0) invert(1)',
+        }}
       />
       <span className={`text-[12px] font-medium flex-1 truncate transition-colors
         ${active ? 'text-[#D0CDC4]' : 'text-[#5E5C53]'}`}
@@ -61,11 +75,19 @@ function SidebarItem({ icon, label, active, onClick }) {
   )
 }
 
-function GridItem({ icon, label, disabled, selected, onSingleClick, onDoubleClick }) {
+/* `thumb` draws the file as its own picture the way Finder previews an image,
+   clipped to a rounded rect with a hairline, instead of a generic icon.
+   `dragHandlers` is what makes a row draggable to the dock's Trash. */
+function GridItem({
+  icon, label, disabled, selected, thumb,
+  onSingleClick, onDoubleClick, onContextMenu, dragHandlers,
+}) {
   return (
     <button
       onClick={onSingleClick}
       onDoubleClick={onDoubleClick}
+      onContextMenu={onContextMenu}
+      {...dragHandlers}
       className="flex flex-col items-center gap-2 p-3 rounded-xl transition-all duration-150"
       style={{ background: 'transparent', border: '1px solid transparent', outline: 'none' }}
     >
@@ -79,10 +101,17 @@ function GridItem({ icon, label, disabled, selected, onSingleClick, onDoubleClic
         <img
           src={icon}
           alt={label}
-          style={{
-            width: 40, height: 40, objectFit: 'contain',
-            filter: disabled ? 'grayscale(0.6) opacity(0.4)' : 'none',
-          }}
+          draggable={false}
+          style={thumb
+            ? {
+                width: 44, height: 44, objectFit: 'cover',
+                borderRadius: 4,
+                boxShadow: '0 0 0 1px rgba(255,255,255,0.14), 0 1px 3px rgba(0,0,0,0.35)',
+              }
+            : {
+                width: 40, height: 40, objectFit: 'contain',
+                filter: disabled ? 'grayscale(0.6) opacity(0.4)' : 'none',
+              }}
         />
       </div>
       <span
@@ -100,21 +129,96 @@ function GridItem({ icon, label, disabled, selected, onSingleClick, onDoubleClic
   )
 }
 
+/* An app being dragged out of the Applications grid. Split out so the drag
+   hook gets its own component instance per row — hooks cannot live inside the
+   map that renders them. */
+function AppGridItem({ app, system, selected, onSelect, onOpen, onTrash, onBlocked }) {
+  const { handlers, guard } = useTrashDrag(
+    () => ({
+      id:     `app-${app.id}`,
+      name:   app.label,
+      kind:   'application',
+      icon:   app.icon,
+      size:   '—',
+      origin: { source: 'finder', id: app.id },
+    }),
+    {
+      /* macOS refuses to trash what the system needs and says so, rather than
+         quietly ignoring the drop. */
+      onDrop: (item) => (system ? onBlocked(app) : onTrash(item)),
+    },
+  )
+
+  return (
+    <GridItem
+      icon={app.icon}
+      label={app.label}
+      disabled={app.disabled}
+      selected={selected}
+      dragHandlers={handlers}
+      onSingleClick={guard(onSelect)}
+      onDoubleClick={guard(onOpen)}
+    />
+  )
+}
+
 export default function FinderWindow() {
   const { navigate, openTool, openWindow } = useWindowStore()
   const play = useSound()
-  // contentView: 'applications' | page id from FAVORITES
-  const [contentView,   setContentView]   = useState('applications')
+  /* The location Finder is showing lives in the store, not here: the dock's
+     basket points this window at the Trash, and that has to work whether the
+     window was already open or not. 'applications' | 'trash' | favourite id */
+  const contentView    = useWindowStore((st) => st.finderView)
+  const setContentView = useWindowStore((st) => st.setFinderView)
   const [selectedTool,  setSelectedTool]  = useState(null)
   const [search,        setSearch]        = useState('')
 
-  const visibleTools = useMemo(() => {
-    if (!search.trim()) return TOOLS
-    const q = search.toLowerCase()
-    return TOOLS.filter((t) => t.name.toLowerCase().includes(q))
-  }, [search])
+  const isDark      = useThemeStore((st) => st.isDark)
+  const trashItems  = useTrashStore((st) => st.items)
+  const trashItem   = useTrashStore((st) => st.trashItem)
+  const putBack     = useTrashStore((st) => st.putBack)
+  const eraseItem   = useTrashStore((st) => st.eraseItem)
+  const emptyTrash  = useTrashStore((st) => st.emptyTrash)
 
-  const currentPage = contentView !== 'applications' ? FAVORITES.find((f) => f.id === contentView) : null
+  const inTrash     = contentView === 'trash'
+  const trashFull   = trashItems.length > 0
+  const trashedApps = trashedFrom(trashItems, 'finder')
+
+  const trashIcon = trashFull
+    ? (isDark ? trashFullDarkUrl  : trashFullUrl)
+    : (isDark ? trashEmptyDarkUrl : trashEmptyUrl)
+
+  const [itemMenu,     setItemMenu]     = useState(null)   // { x, y, id }
+  const [confirmEmpty, setConfirmEmpty] = useState(false)
+  const [blockedApp,   setBlockedApp]   = useState(null)
+
+  // Selection belongs to a location — switching away from the Trash should
+  // not leave a trashed file highlighted behind the Applications grid.
+  useEffect(() => { setSelectedTool(null) }, [contentView])
+
+  const visibleTools = useMemo(() => {
+    // An app in the Trash is not installed, so it is not in the grid either.
+    const installed = TOOLS.filter((t) => !trashedApps.has(t.id))
+    if (!search.trim()) return installed
+    const q = search.toLowerCase()
+    return installed.filter((t) => t.name.toLowerCase().includes(q))
+  }, [search, trashItems])
+
+  const visibleNativeApps = NATIVE_APPS.filter((a) => !trashedApps.has(a.id))
+
+  const selectedTrashItem = inTrash
+    ? trashItems.find((i) => i.id === selectedTool) ?? null
+    : null
+
+  const doEmptyTrash = () => { play('emptyTrash'); emptyTrash(); setConfirmEmpty(false); setSelectedTool(null) }
+
+  const doPutBack = (id) => { play('open'); putBack(id); setSelectedTool(null) }
+
+  const trashApp = useCallback((item) => { play('trash'); trashItem(item) }, [play, trashItem])
+
+  const currentPage = contentView !== 'applications' && !inTrash
+    ? FAVORITES.find((f) => f.id === contentView)
+    : null
 
   const launchTool = (toolId) => {
     play('open')
@@ -134,7 +238,30 @@ export default function FinderWindow() {
 
   // ── Toolbar ──────────────────────────────────────────────────────────────────
   const toolbar = (
-    <div className="flex items-center" style={{ pointerEvents: 'auto' }}>
+    <div className="flex items-center gap-2" style={{ pointerEvents: 'auto' }}>
+
+      {/* Trash-only controls, where macOS puts them: Put Back appears once
+          something is selected, Empty sits at the end of the toolbar. */}
+      {inTrash && selectedTrashItem && (
+        <button
+          className="finder-tool-btn"
+          onClick={() => doPutBack(selectedTrashItem.id)}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          Put Back
+        </button>
+      )}
+      {inTrash && (
+        <button
+          className="finder-tool-btn"
+          disabled={!trashFull}
+          onClick={() => setConfirmEmpty(true)}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          Empty
+        </button>
+      )}
+
       <div
         className="flex items-center gap-2 px-3"
         style={{ ...glassPill, height: 26, minWidth: 200 }}
@@ -143,7 +270,7 @@ export default function FinderWindow() {
         <input
           value={search}
           onChange={(e) => { setSearch(e.target.value); setSelectedTool(null); setContentView('applications') }}
-          placeholder="Search tools…"
+          placeholder={inTrash ? 'Search' : 'Search tools…'}
           className="bg-transparent text-[11px] outline-none w-full placeholder:text-white/30"
           style={{ color: '#fff' }}
           onMouseDown={(e) => e.stopPropagation()}
@@ -191,6 +318,18 @@ export default function FinderWindow() {
               onClick={() => { setContentView(fav.id); setSelectedTool(null); setSearch('') }}
             />
           ))}
+
+          {/* Locations — the Trash is a place in Finder, not an app of its own,
+              which is why the dock's basket opens this window. */}
+          <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '6px 8px' }} />
+          <p className="px-3 pb-1 text-[10px] font-semibold tracking-wide" style={{ color: '#5E5C53' }}>Locations</p>
+          <SidebarItem
+            icon={trashIcon}
+            label="Trash"
+            plainIcon
+            active={inTrash}
+            onClick={() => { setContentView('trash'); setSelectedTool(null); setSearch('') }}
+          />
         </div>
       </div>
     </div>
@@ -198,7 +337,7 @@ export default function FinderWindow() {
 
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
-    <Window id="finder" title="Finder" toolbar={toolbar} sidebarContent={sidebarContent}>
+    <Window id="finder" title={inTrash ? 'Trash' : 'Finder'} toolbar={toolbar} sidebarContent={sidebarContent}>
       <div className="h-full overflow-y-auto window-scroll p-4">
         <AnimatePresence mode="wait">
 
@@ -216,15 +355,16 @@ export default function FinderWindow() {
                 <section className="mb-4">
                   <p className="text-[10px] font-semibold tracking-widest mb-3 px-1" style={{ color: '#5E5C53' }}>SYSTEM</p>
                   <div className="grid gap-1" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(88px, 1fr))' }}>
-                    {NATIVE_APPS.map((app) => (
-                      <GridItem
+                    {visibleNativeApps.map((app) => (
+                      <AppGridItem
                         key={app.id}
-                        icon={app.icon}
-                        label={app.label}
-                        disabled={false}
+                        app={app}
+                        system
                         selected={selectedTool === app.id}
-                        onSingleClick={() => setSelectedTool(app.id)}
-                        onDoubleClick={() => { play('open'); openWindow(app.id) }}
+                        onSelect={() => setSelectedTool(app.id)}
+                        onOpen={() => { play('open'); openWindow(app.id) }}
+                        onTrash={trashApp}
+                        onBlocked={setBlockedApp}
                       />
                     ))}
                   </div>
@@ -238,14 +378,14 @@ export default function FinderWindow() {
                   </p>
                   <div className="grid gap-1" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(88px, 1fr))' }}>
                     {visibleTools.map((tool) => (
-                      <GridItem
+                      <AppGridItem
                         key={tool.id}
-                        icon={tool.icon}
-                        label={tool.name}
-                        disabled={tool.url === null}
+                        app={{ id: tool.id, label: tool.name, icon: tool.icon, disabled: tool.url === null }}
                         selected={selectedTool === tool.id}
-                        onSingleClick={() => setSelectedTool(tool.id)}
-                        onDoubleClick={() => tool.url && launchTool(tool.id)}
+                        onSelect={() => setSelectedTool(tool.id)}
+                        onOpen={() => tool.url && launchTool(tool.id)}
+                        onTrash={trashApp}
+                        onBlocked={setBlockedApp}
                       />
                     ))}
                   </div>
@@ -254,6 +394,63 @@ export default function FinderWindow() {
                 <div className="flex flex-col items-center justify-center gap-2" style={{ paddingTop: 80 }}>
                   <MacSearchIcon width={28} height={28} style={{ opacity: 0.2 }} />
                   <p className="text-[12px]" style={{ color: 'var(--body)', opacity: 0.5 }}>No tools found</p>
+                </div>
+              )}
+            </motion.div>
+
+          ) : inTrash ? (
+            /* ── Trash ────────────────────────────────────────────────────
+               The folder itself. Right-click gives the two things macOS
+               gives you here — Put Back and Delete Immediately — and the
+               footer restates what emptying means, the way the real window
+               does above its file list. */
+            <motion.div
+              key="trash"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{    opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              style={{ minHeight: 'calc(100% - 32px)' }}
+              onClick={() => setSelectedTool(null)}
+            >
+              {trashFull ? (
+                <>
+                  <p className="text-[10px] font-semibold tracking-widest mb-3 px-1" style={{ color: '#5E5C53' }}>
+                    TRASH — {trashItems.length} ITEM{trashItems.length === 1 ? '' : 'S'}
+                  </p>
+                  <div className="grid gap-1" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(88px, 1fr))' }}>
+                    {trashItems.map((item) => (
+                      <GridItem
+                        key={item.id}
+                        icon={item.icon}
+                        label={item.name}
+                        thumb={item.kind === 'image'}
+                        selected={selectedTool === item.id}
+                        onSingleClick={(e) => { e.stopPropagation(); setSelectedTool(item.id) }}
+                        onContextMenu={(e) => {
+                          e.preventDefault()
+                          setSelectedTool(item.id)
+                          setItemMenu({ x: e.clientX, y: e.clientY, id: item.id })
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-[11px] mt-6 px-1" style={{ color: 'var(--body)', opacity: 0.45 }}>
+                    Items in the Trash are removed from where they were. Put one back to
+                    restore it, or empty the Trash to erase everything permanently.
+                  </p>
+                </>
+              ) : (
+                /* macOS states this in the middle of the window, in grey */
+                <div className="flex flex-col items-center justify-center gap-3" style={{ paddingTop: 96 }}>
+                  <img src={trashIcon} alt="" draggable={false} style={{ width: 52, height: 52, opacity: 0.45 }} />
+                  <p className="text-[13px] font-medium" style={{ color: 'var(--headline)', opacity: 0.7, fontFamily: "'SF Pro Text'" }}>
+                    Trash is Empty
+                  </p>
+                  <p className="text-[11px] text-center max-w-[260px]" style={{ color: 'var(--body)', opacity: 0.45 }}>
+                    Drag a file from the desktop, or an app from Applications, onto the
+                    Trash in the dock.
+                  </p>
                 </div>
               )}
             </motion.div>
@@ -299,6 +496,47 @@ export default function FinderWindow() {
 
         </AnimatePresence>
       </div>
+
+      {/* Right-click a trashed file */}
+      <ContextMenu
+        at={itemMenu}
+        onClose={() => setItemMenu(null)}
+        items={[
+          {
+            label: 'Put Back',
+            /* Seeded demo files have no origin to go back to, which is exactly
+               what macOS does with a file whose original folder is gone. */
+            disabled: !trashItems.find((i) => i.id === itemMenu?.id)?.origin,
+            onClick: () => doPutBack(itemMenu.id),
+          },
+          { sep: true },
+          {
+            label: 'Delete Immediately',
+            onClick: () => { play('emptyTrash'); eraseItem(itemMenu.id); setSelectedTool(null) },
+          },
+        ]}
+      />
+
+      <MacAlert
+        open={confirmEmpty}
+        icon={trashIcon}
+        title="Are you sure you want to permanently erase the items in the Trash?"
+        message="You can't undo this action."
+        confirmLabel="Empty Trash"
+        onConfirm={doEmptyTrash}
+        onCancel={() => setConfirmEmpty(false)}
+      />
+
+      {/* Dropping a required app on the Trash: macOS refuses out loud */}
+      <MacAlert
+        open={Boolean(blockedApp)}
+        icon={blockedApp?.icon}
+        title={`“${blockedApp?.label}” can't be modified or deleted because it's required by macOS.`}
+        cancelLabel={null}
+        confirmLabel="OK"
+        onConfirm={() => setBlockedApp(null)}
+        onCancel={() => setBlockedApp(null)}
+      />
     </Window>
   )
 }

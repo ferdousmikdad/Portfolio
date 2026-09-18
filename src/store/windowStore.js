@@ -213,6 +213,8 @@ const useWindowStore = create((set, get) => ({
   previewProject: null,
   noteRequest: null,
   mailTo: null,
+  // Which location Finder is showing: 'applications' | 'trash' | a favourite id
+  finderView: 'applications',
 
   navigate: (page) => set((state) => ({ activePage: page, navKey: state.navKey + 1 })),
 
@@ -252,6 +254,30 @@ const useWindowStore = create((set, get) => ({
       activeWindowId: 'mail',
     })),
   clearMailTo: () => set({ mailTo: null }),
+
+  /* The Trash is not its own app — on a Mac it is a folder Finder opens, so
+     the dock's basket brings up Finder pointed at that location. Already-open
+     Finder windows just change location, which is what a single click does
+     when a Finder window is already frontmost. */
+  openFinderAt: (view) =>
+    set((state) => ({
+      finderView: view,
+      windows: state.windows.map((w) => {
+        if (w.id !== 'finder') return w
+        return {
+          ...w,
+          isOpen: true,
+          isMinimized: false,
+          zIndex: ++topZ,
+          position: w.isOpen && !w.isMinimized
+            ? w.position
+            : centeredInUsableArea(finderW, finderH),
+        }
+      }),
+      activeWindowId: 'finder',
+    })),
+
+  setFinderView: (view) => set({ finderView: view }),
 
   openProjectPreview: (project) => {
     if (project?.slug) {

@@ -1997,3 +1997,234 @@ html.reduce-motion *::after {
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55));
   pointer-events: none;
 }
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Trash — the dock's drop well, the right-click menu, the erase alert, and
+   the translucent copy of a file being dragged out of a window.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Drop highlight behind the basket. macOS lights a well under the icon while
+   a drag hovers it, so the target is unmistakable before you let go. */
+.dock-tahoe__well {
+  position: absolute;
+  inset: 4%;
+  z-index: 0;
+  border-radius: 24%;
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.9);
+  /* Enough to read as a lit target behind the basket, not enough to wash the
+     artwork out or spill past the slab's rounded edge — so no outer glow. */
+  background: rgba(0, 0, 0, 0.09);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+  transition: opacity 0.14s ease, transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.dark .dock-tahoe__well {
+  background: rgba(255, 255, 255, 0.11);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+}
+.dock-tahoe__well[data-on] { opacity: 1; transform: scale(1); }
+
+/* The file riding under the cursor — icon plus its name, never fully opaque,
+   so the original always reads as the thing that still exists. */
+.drag-ghost {
+  position: fixed;
+  z-index: 2147483600;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 92px;
+  margin: -26px 0 0 -46px;   /* centred on the pointer */
+  pointer-events: none;
+}
+.drag-ghost img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.45));
+  transition: opacity 0.12s ease;
+}
+.drag-ghost__label {
+  max-width: 92px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-family: 'SF Pro Text', system-ui, sans-serif;
+  font-size: 10px;
+  line-height: 1.25;
+  text-align: center;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Right-click menu ──────────────────────────────────────────────────────
+   AppKit's proportions: an 8px corner on a vibrancy panel, a hairline rim,
+   13px rows with a 5px inset, and the highlight filling the row edge to edge.
+   A disabled row is dimmed rather than hidden — "Empty Trash" greyed out is
+   how you know the basket is empty before you ever open it. */
+.mac-menu {
+  position: fixed;
+  z-index: 2147483500;
+  min-width: 190px;
+  padding: 4px;
+  border-radius: 8px;
+  background: rgba(38, 38, 40, 0.84);
+  backdrop-filter: blur(28px) saturate(1.3);
+  -webkit-backdrop-filter: blur(28px) saturate(1.3);
+  box-shadow:
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.14),
+    0 8px 28px rgba(0, 0, 0, 0.42),
+    0 1px 3px rgba(0, 0, 0, 0.30);
+  transform-origin: top left;
+}
+
+.mac-menu__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  width: 100%;
+  padding: 3px 9px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  font-family: 'SF Pro Text', system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: left;
+  color: rgba(255, 255, 255, 0.92);
+  cursor: default;
+}
+.mac-menu__item:hover:not([data-disabled]) {
+  background: var(--brand, #0064d2);
+  color: #fff;
+}
+.mac-menu__item[data-disabled] {
+  color: rgba(255, 255, 255, 0.32);
+  cursor: default;
+}
+
+.mac-menu__key {
+  font-size: 12px;
+  opacity: 0.55;
+}
+
+.mac-menu__sep {
+  height: 1px;
+  margin: 4px 1px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* ── Alert ─────────────────────────────────────────────────────────────────
+   A narrow column with the icon above the text and the buttons bottom-right,
+   default one rightmost — so Return commits and Escape cancels. */
+.mac-alert__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483400;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 14vh;
+  background: rgba(0, 0, 0, 0.30);
+  backdrop-filter: blur(2.5px);
+  -webkit-backdrop-filter: blur(2.5px);
+}
+
+.mac-alert {
+  width: 274px;
+  padding: 18px 20px 14px;
+  border-radius: 12px;
+  text-align: center;
+  /* An NSAlert panel is opaque, not vibrancy: it has to be readable over
+     whatever it interrupts, and at 0.86 the portfolio's own artwork was
+     legible straight through the question being asked. */
+  background: rgba(43, 43, 45, 0.985);
+  backdrop-filter: blur(34px);
+  -webkit-backdrop-filter: blur(34px);
+  box-shadow:
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.16),
+    0 24px 60px rgba(0, 0, 0, 0.52);
+}
+
+.mac-alert__icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 10px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35));
+}
+
+.mac-alert__title {
+  font-family: 'SF Pro Text', system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #fff;
+}
+
+.mac-alert__body {
+  margin-top: 6px;
+  font-family: 'SF Pro Text', system-ui, sans-serif;
+  font-size: 11px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.mac-alert__buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.mac-alert__btn {
+  flex: 1;
+  padding: 4px 14px;
+  border: none;
+  border-radius: 6px;
+  font-family: 'SF Pro Text', system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.13);
+  box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.14);
+  cursor: default;
+  transition: background 0.12s ease;
+}
+.mac-alert__btn:hover { background: rgba(255, 255, 255, 0.19); }
+
+.mac-alert__btn[data-default='true'] {
+  background: var(--brand, #0064d2);
+  box-shadow:
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.22),
+    0 1px 2px rgba(0, 0, 0, 0.28);
+}
+.mac-alert__btn[data-default='true']:hover { filter: brightness(1.12); }
+.mac-alert__btn[data-default='true']:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--brand, #0064d2) 45%, transparent);
+  outline-offset: 1px;
+}
+
+/* Plain toolbar button — Put Back and Empty in the Trash window */
+.finder-tool-btn {
+  height: 26px;
+  padding: 0 11px;
+  border: none;
+  border-radius: 9999px;
+  font-family: 'SF Pro Text', system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.86);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.10);
+  white-space: nowrap;
+  cursor: default;
+  transition: background 0.12s ease, opacity 0.12s ease;
+}
+.finder-tool-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.14); }
+.finder-tool-btn:disabled { opacity: 0.35; }

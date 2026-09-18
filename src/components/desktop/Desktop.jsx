@@ -20,7 +20,10 @@ import FinderWindow from '@/components/apps/FinderWindow'
 import TerminalWindow from '@/components/apps/TerminalWindow'
 import useWindowStore, { TOOL_IDS } from '@/store/windowStore'
 import useSettingsStore from '@/store/settingsStore'
-import macDocumentUrl from '@/assets/icons/macDocument.png'
+import useTrashStore, { trashedFrom } from '@/store/trashStore'
+import useDragStore from '@/store/dragStore'
+import DragGhost from '@/components/ui/DragGhost'
+import DESKTOP_FILES from '@/data/desktopFiles'
 import useSound from '@/hooks/useSound'
 import MikudaChat from '@/components/apps/MikudaChat'
 import HomeWindow from '@/components/apps/HomeWindow'
@@ -30,23 +33,58 @@ import SettingsWindow from '@/components/apps/SettingsWindow'
 import MailWindow from '@/components/apps/MailWindow'
 import allProjects from '@/data/projects'
 
-function DesktopIcon({ src, label, initialX, initialY, onOpen, selected, onSelect }) {
-  const pos     = useRef({ x: initialX, y: initialY })
+/* Viewport coordinates for a framer drag. The native pointer event is the
+   reliable source — the dock is hit-tested in viewport space. */
+const pointOf = (event, info) =>
+  typeof event?.clientX === 'number'
+    ? { x: event.clientX, y: event.clientY }
+    : info.point
+
+function DesktopIcon({ file, initialX, onOpen, selected, onSelect, onTrash }) {
+  const pos     = useRef({ x: initialX, y: file.y })
   const [, rerender] = useState(0)
+  const [lifted, setLifted] = useState(false)
   const didDrag = useRef(false)
+
+  const beginDrag = useDragStore((s) => s.begin)
+  const moveDrag  = useDragStore((s) => s.move)
+  const endDrag   = useDragStore((s) => s.end)
+
+  /* What the Trash will be holding if this lands there. The origin is what
+     makes Put Back work: the desktop filters itself against the Trash, so
+     removing the item here is the same thing as the file reappearing. */
+  const payload = () => ({
+    id:     file.id,
+    name:   file.name,
+    kind:   file.kind,
+    icon:   file.icon,
+    size:   file.size,
+    origin: { source: 'desktop', id: file.id },
+  })
 
   return (
     <motion.div
       className={`desktop-icon${selected ? ' selected' : ''}`}
-      style={{ position: 'absolute', x: pos.current.x, y: pos.current.y, zIndex: 15 }}
+      /* Lifted above the dock while in hand: a file being dragged to the
+         Trash has to stay visible over the slab it is aimed at. */
+      style={{ position: 'absolute', x: pos.current.x, y: pos.current.y, zIndex: lifted ? 9999 : 15 }}
       drag
       dragMomentum={false}
       dragElastic={0}
-      onDragStart={() => { didDrag.current = false }}
-      onDrag={(_, info) => {
-        if (Math.abs(info.offset.x) > 3 || Math.abs(info.offset.y) > 3) didDrag.current = true
+      onDragStart={(event, info) => {
+        didDrag.current = false
+        setLifted(true)
+        beginDrag(payload(), pointOf(event, info))
       }}
-      onDragEnd={(_, info) => {
+      onDrag={(event, info) => {
+        if (Math.abs(info.offset.x) > 3 || Math.abs(info.offset.y) > 3) didDrag.current = true
+        moveDrag(pointOf(event, info))
+      }}
+      onDragEnd={(event, info) => {
+        setLifted(false)
+        // Dropped on the basket: the file leaves the desktop and the icon
+        // unmounts, so there is no position left to commit.
+        if (endDrag()) { onTrash(payload()); return }
         pos.current = { x: pos.current.x + info.offset.x, y: pos.current.y + info.offset.y }
         rerender((n) => n + 1)
       }}
@@ -60,10 +98,10 @@ function DesktopIcon({ src, label, initialX, initialY, onOpen, selected, onSelec
         e.stopPropagation()
         onOpen()
       }}
-      title={label}
+      title={file.name}
     >
-      <img src={src} alt={label} draggable={false} />
-      <span className="desktop-icon-label">{label}</span>
+      <img src={file.icon} alt={file.name} draggable={false} />
+      <span className="desktop-icon-label">{file.name}</span>
     </motion.div>
   )
 }
@@ -78,6 +116,9 @@ export default function Desktop() {
   const { openWindow, closeAllExcept, switchTool, activePage, navKey, navigate, previewProject, closeProjectPreview, openProjectPreview, openMailWindow } = useWindowStore()
   const isAnyMaximized    = useWindowStore((s) => s.windows.some((w) => w.isMaximized))
   const showDesktopIcons  = useSettingsStore((s) => s.showDesktopIcons)
+  const trashItems        = useTrashStore((s) => s.items)
+  const trashFile         = useTrashStore((s) => s.trashItem)
+  const trashedOnDesktop  = trashedFrom(trashItems, 'desktop')
   const setActivePage = navigate
   const play = useSound()
 
@@ -261,12 +302,22 @@ export default function Desktop() {
       {/* Animated background */}
       <Background />
 
-      {/* Desktop icons — toggleable via Settings */}
+      {/* Desktop icons — toggleable via Settings. A file in the Trash is not
+          on the desktop, so the list filters itself against it; Put Back in
+          the Trash window is what brings the icon back. */}
       {showDesktopIcons && (
         <>
-          <DesktopIcon src={macDocumentUrl} label="about_me.txt"  initialX={window.innerWidth - 96} initialY={80}  onOpen={() => openWindow('bio')}     selected={selectedIcon === 'bio'}     onSelect={() => setSelectedIcon('bio')}     />
-          <DesktopIcon src={macDocumentUrl} label="skills.txt"    initialX={window.innerWidth - 96} initialY={180} onOpen={() => openWindow('skills')}  selected={selectedIcon === 'skills'}  onSelect={() => setSelectedIcon('skills')}  />
-          <DesktopIcon src={macDocumentUrl} label="contact.txt"   initialX={window.innerWidth - 96} initialY={280} onOpen={() => openWindow('contact')} selected={selectedIcon === 'contact'} onSelect={() => setSelectedIcon('contact')} />
+          {DESKTOP_FILES.filter((f) => !trashedOnDesktop.has(f.id)).map((file) => (
+            <DesktopIcon
+              key={file.id}
+              file={file}
+              initialX={window.innerWidth - 96}
+              onOpen={() => openWindow(file.windowId)}
+              selected={selectedIcon === file.id}
+              onSelect={() => setSelectedIcon(file.id)}
+              onTrash={(item) => { play('trash'); trashFile(item) }}
+            />
+          ))}
         </>
       )}
 
@@ -356,6 +407,9 @@ export default function Desktop() {
         )}
 
       </div>
+
+      {/* Translucent copy of a file being dragged out of a window */}
+      <DragGhost />
 
       {/* Dock — tools dock on all pages */}
       <ToolsPageDock
