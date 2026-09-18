@@ -7,7 +7,7 @@ import { genieStage, flatten, afterMount } from '@/utils/genie'
 import { setSnapshot } from '@/utils/windowSnapshots'
 import { useResize, RESIZE_CURSORS } from '@/hooks/useResize'
 
-export default function Window({ id, title, children, actionLabel, onAction, hideControls, hideTitleBar, toolbar, sidebarContent, shellStyle, navSlot }) {
+export default function Window({ id, title, children, actionLabel, onAction, hideControls, hideTitleBar, toolbar, sidebarContent, shellStyle, navSlot, titleBarBorder = true }) {
   const { closeWindow, minimizeWindow, focusWindow, updatePosition, getWindow, toggleMaximize } = useWindowStore()
   const activeWindowId = useWindowStore((s) => s.activeWindowId)
   const restoring   = useWindowStore((s) => s.restoringId) === id
@@ -134,7 +134,7 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
               <div
                 className="window-titlebar relative"
                 style={{
-                  borderBottom: '1px solid var(--border)',
+                  borderBottom: titleBarBorder ? '1px solid var(--border)' : 'none',
                   cursor: win.isMaximized ? 'default' : 'grab',
                 }}
                 onPointerDown={(e) => { if (!win.isMaximized) dragControls.start(e) }}

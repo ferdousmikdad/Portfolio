@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Window from '@/components/window/Window'
 import WindowControls from '@/components/window/WindowControls'
@@ -20,6 +20,7 @@ import toolsIconUrl     from '@/assets/icons/nav-tools.svg?url'
 import terminalAppIconUrl from '@/assets/icons/terminal.svg?url'
 import pacmanIconUrl    from '@/assets/icons/magic-icon.svg?url'
 import MacSearchIcon    from '@/assets/icons/macsearch.svg?react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import trashEmptyUrl     from '@/assets/icons/trash-empty.svg?url'
 import trashFullUrl      from '@/assets/icons/trash-full.svg?url'
 import trashEmptyDarkUrl from '@/assets/icons/trash-empty-dark.svg?url'
@@ -206,10 +207,6 @@ export default function FinderWindow() {
 
   const visibleNativeApps = NATIVE_APPS.filter((a) => !trashedApps.has(a.id))
 
-  const selectedTrashItem = inTrash
-    ? trashItems.find((i) => i.id === selectedTool) ?? null
-    : null
-
   const doEmptyTrash = () => { play('emptyTrash'); emptyTrash(); setConfirmEmpty(false); setSelectedTool(null) }
 
   const doPutBack = (id) => { play('open'); putBack(id); setSelectedTool(null) }
@@ -219,6 +216,81 @@ export default function FinderWindow() {
   const currentPage = contentView !== 'applications' && !inTrash
     ? FAVORITES.find((f) => f.id === contentView)
     : null
+
+  /* The name of the location, shown twice the way Finder shows it: once in
+     the toolbar beside the arrows, once as the heading of the file area. */
+  const locationName = inTrash
+    ? 'Trash'
+    : contentView === 'applications'
+      ? 'Applications'
+      : currentPage?.label ?? ''
+
+  /* ── Back / forward ─────────────────────────────────────────────────────
+     Real arrows over a real history, dimmed when there is nowhere to go —
+     which is how the pair looks most of the time in a fresh Trash window.
+     The location itself lives in the store, because the dock can change it
+     from outside; `jumping` marks the changes this pair caused, so stepping
+     back does not itself get recorded as a step. */
+  const [past,   setPast]   = useState([])
+  const [future, setFuture] = useState([])
+  const jumping  = useRef(false)
+  const lastView = useRef(contentView)
+
+  useEffect(() => {
+    if (lastView.current === contentView) return
+    // Read into a local first: a state updater runs on the next render, by
+    // which time the ref below has already been reassigned — passing the ref
+    // straight in records the location just arrived at instead of the one
+    // being left, and Back then goes nowhere.
+    const from = lastView.current
+    lastView.current = contentView
+    if (jumping.current) jumping.current = false
+    else { setPast((p) => [...p, from]); setFuture([]) }
+  }, [contentView])
+
+  const goBack = () => {
+    if (!past.length) return
+    jumping.current = true
+    setFuture((f) => [contentView, ...f])
+    setPast((p) => p.slice(0, -1))
+    setContentView(past[past.length - 1])
+  }
+
+  const goForward = () => {
+    if (!future.length) return
+    jumping.current = true
+    setPast((p) => [...p, contentView])
+    setFuture((f) => f.slice(1))
+    setContentView(future[0])
+  }
+
+  /* ── Toolbar, left side ──────────────────────────────────────────────────
+     Arrows, then the window name right beside them — Finder does not centre
+     its title. Everything else lives on the right. */
+  const navSlot = (
+    <div className="finder-nav">
+      <div className="finder-arrows">
+        <button
+          aria-label="Back"
+          disabled={!past.length}
+          onClick={goBack}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <ChevronLeft size={17} strokeWidth={1.9} />
+        </button>
+        <span className="finder-arrows__sep" />
+        <button
+          aria-label="Forward"
+          disabled={!future.length}
+          onClick={goForward}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <ChevronRight size={17} strokeWidth={1.9} />
+        </button>
+      </div>
+      <span className="finder-nav__title">{locationName}</span>
+    </div>
+  )
 
   const launchTool = (toolId) => {
     play('open')
@@ -237,31 +309,11 @@ export default function FinderWindow() {
   }
 
   // ── Toolbar ──────────────────────────────────────────────────────────────────
+  /* Toolbar, right side. Finder keeps only view and search controls here —
+     Empty belongs to the row below, and Put Back is a menu item, not a
+     button, so neither appears in the chrome. */
   const toolbar = (
     <div className="flex items-center gap-2" style={{ pointerEvents: 'auto' }}>
-
-      {/* Trash-only controls, where macOS puts them: Put Back appears once
-          something is selected, Empty sits at the end of the toolbar. */}
-      {inTrash && selectedTrashItem && (
-        <button
-          className="finder-tool-btn"
-          onClick={() => doPutBack(selectedTrashItem.id)}
-          onMouseDown={(e) => e.stopPropagation()}
-        >
-          Put Back
-        </button>
-      )}
-      {inTrash && (
-        <button
-          className="finder-tool-btn"
-          disabled={!trashFull}
-          onClick={() => setConfirmEmpty(true)}
-          onMouseDown={(e) => e.stopPropagation()}
-        >
-          Empty
-        </button>
-      )}
-
       <div
         className="flex items-center gap-2 px-3"
         style={{ ...glassPill, height: 26, minWidth: 200 }}
@@ -337,8 +389,32 @@ export default function FinderWindow() {
 
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
-    <Window id="finder" title={inTrash ? 'Trash' : 'Finder'} toolbar={toolbar} sidebarContent={sidebarContent}>
-      <div className="h-full overflow-y-auto window-scroll p-4">
+    <Window
+      id="finder"
+      navSlot={navSlot}
+      toolbar={toolbar}
+      sidebarContent={sidebarContent}
+      titleBarBorder={false}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+
+        {/* The row under the toolbar: the location on the left, and in the
+            Trash the one button it gets — Empty, dimmed when it is empty. */}
+        <div className="finder-subbar">
+          <span className="finder-subbar__name">{locationName}</span>
+          {inTrash && (
+            <button
+              className="finder-empty-btn"
+              disabled={!trashFull}
+              onClick={() => setConfirmEmpty(true)}
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              Empty
+            </button>
+          )}
+        </div>
+
+      <div className="window-scroll px-4 pb-4 pt-1" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
         <AnimatePresence mode="wait">
 
           {contentView === 'applications' ? (
@@ -414,11 +490,7 @@ export default function FinderWindow() {
               onClick={() => setSelectedTool(null)}
             >
               {trashFull ? (
-                <>
-                  <p className="text-[10px] font-semibold tracking-widest mb-3 px-1" style={{ color: '#5E5C53' }}>
-                    TRASH — {trashItems.length} ITEM{trashItems.length === 1 ? '' : 'S'}
-                  </p>
-                  <div className="grid gap-1" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(88px, 1fr))' }}>
+                  <div className="grid gap-1 pt-1" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(88px, 1fr))' }}>
                     {trashItems.map((item) => (
                       <GridItem
                         key={item.id}
@@ -435,11 +507,6 @@ export default function FinderWindow() {
                       />
                     ))}
                   </div>
-                  <p className="text-[11px] mt-6 px-1" style={{ color: 'var(--body)', opacity: 0.45 }}>
-                    Items in the Trash are removed from where they were. Put one back to
-                    restore it, or empty the Trash to erase everything permanently.
-                  </p>
-                </>
               ) : (
                 /* macOS states this in the middle of the window, in grey */
                 <div className="flex flex-col items-center justify-center gap-3" style={{ paddingTop: 96 }}>
@@ -495,6 +562,7 @@ export default function FinderWindow() {
           )}
 
         </AnimatePresence>
+      </div>
       </div>
 
       {/* Right-click a trashed file */}

@@ -2210,21 +2210,107 @@ html.reduce-motion *::after {
   outline-offset: 1px;
 }
 
-/* Plain toolbar button — Put Back and Empty in the Trash window */
-.finder-tool-btn {
-  height: 26px;
-  padding: 0 11px;
+/* ─────────────────────────────────────────────────────────────────────────────
+   Finder chrome, measured off the real Trash window (920x436 at 2x):
+
+     toolbar   back/forward capsule 72x20 with a hairline rim and a divider
+               between the halves, then the location name 15px semibold right
+               beside it — Finder never centres its title — then the view and
+               search controls at the trailing edge. No rule underneath: the
+               toolbar and the file area are one surface.
+     row below  the location name again at 12px semibold grey on the left, and
+               in the Trash a single "Empty" button on the right, 16px tall
+               with a 5px corner, its fill only 16/255 lighter than the
+               window behind it.
+   ───────────────────────────────────────────────────────────────────────── */
+.finder-nav {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  flex-shrink: 0;
+  /* Finder starts the arrows ~5px after the sidebar; the shared titlebar
+     pads 12px, so the nav pulls itself back the difference. */
+  margin-left: -7px;
+}
+
+.finder-arrows {
+  display: flex;
+  align-items: center;
+  height: 20px;
+  border-radius: 7px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.10);
+}
+.dark .finder-arrows { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.09); }
+
+.finder-arrows button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 20px;
   border: none;
-  border-radius: 9999px;
+  background: transparent;
+  color: var(--headline);
+  cursor: default;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.finder-arrows button:first-child { border-radius: 7px 0 0 7px; }
+.finder-arrows button:last-child  { border-radius: 0 7px 7px 0; }
+/* Dimmed rather than hidden when there is nowhere to go — which is how the
+   pair looks in a Trash window you have just opened. */
+.finder-arrows button:disabled { color: rgba(128, 128, 128, 0.55); }
+.finder-arrows button:not(:disabled):hover { background: rgba(0, 0, 0, 0.06); }
+.dark .finder-arrows button:not(:disabled):hover { background: rgba(255, 255, 255, 0.07); }
+
+.finder-arrows__sep {
+  width: 1px;
+  height: 12px;
+  background: rgba(0, 0, 0, 0.12);
+}
+.dark .finder-arrows__sep { background: rgba(255, 255, 255, 0.12); }
+
+.finder-nav__title {
+  font-family: 'SF Pro Display', system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--headline);
+  white-space: nowrap;
+}
+
+.finder-subbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 32px;
+  padding: 0 17px;
+  flex-shrink: 0;
+}
+
+.finder-subbar__name {
+  font-family: 'SF Pro Text', system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.50);
+}
+.dark .finder-subbar__name { color: rgba(255, 255, 255, 0.58); }
+
+.finder-empty-btn {
+  height: 16px;
+  padding: 0 7px;
+  border: none;
+  border-radius: 5px;
   font-family: 'SF Pro Text', system-ui, sans-serif;
   font-size: 11px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.86);
-  background: rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.10);
   white-space: nowrap;
+  color: rgba(0, 0, 0, 0.78);
+  background: rgba(0, 0, 0, 0.08);
   cursor: default;
   transition: background 0.12s ease, opacity 0.12s ease;
 }
-.finder-tool-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.14); }
-.finder-tool-btn:disabled { opacity: 0.35; }
+.dark .finder-empty-btn {
+  color: rgba(255, 255, 255, 0.80);
+  background: rgba(255, 255, 255, 0.075);
+}
+.finder-empty-btn:hover:not(:disabled)      { background: rgba(0, 0, 0, 0.13); }
+.dark .finder-empty-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.13); }
+.finder-empty-btn:disabled { opacity: 0.4; }
