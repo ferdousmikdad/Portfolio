@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import Window from '@/components/window/Window'
-import WindowControls from '@/components/window/WindowControls'
+import WindowSidebar from '@/components/window/WindowSidebar'
 
 // ── Playlists / artists to embed ─────────────────────────────────────────────
 // Add more entries here later — each needs an embedUrl from Spotify
@@ -88,50 +88,36 @@ export default function SpotifyWindow() {
   const current = PLAYLISTS.find((p) => p.id === activeId) ?? PLAYLISTS[0]
 
   const sidebarContent = ({ onClose, onMinimize, onMaximize }) => (
-    <div style={{ width: 220, padding: '6px 0 6px 6px', height: '100%', boxSizing: 'border-box' }}>
-      <div style={{
-        background: '#000000',
-        border: '1px solid #282828',
-        borderRadius: 18,
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-      }}>
-        {/* Traffic lights */}
-        <div style={{ height: 40, display: 'flex', alignItems: 'center', padding: '0 12px', flexShrink: 0 }}>
-          <WindowControls onClose={onClose} onMinimize={onMinimize} onMaximize={onMaximize} />
-        </div>
+    <WindowSidebar width={220} gutter="6px 0 6px 6px" tone="spotify" controls={{ onClose, onMinimize, onMaximize }}>
 
-        {/* Spotify wordmark */}
-        <div style={{ padding: '4px 16px 16px', flexShrink: 0 }}>
-          <SpotifyLogo />
-        </div>
-
-        {/* Library */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '0 8px 12px' }}>
-          <p style={{
-            fontSize: 10,
-            fontWeight: 700,
-            color: '#6b6b6b',
-            letterSpacing: '0.1em',
-            padding: '0 8px 8px',
-            margin: 0,
-            fontFamily: "'SF Pro Text', sans-serif",
-          }}>
-            YOUR LIBRARY
-          </p>
-          {PLAYLISTS.map((item) => (
-            <LibraryItem
-              key={item.id}
-              item={item}
-              active={activeId === item.id}
-              onClick={() => setActiveId(item.id)}
-            />
-          ))}
-        </div>
-      </div>
+    {/* Spotify wordmark */}
+    <div style={{ padding: '4px 16px 16px', flexShrink: 0 }}>
+      <SpotifyLogo />
     </div>
+
+    {/* Library */}
+    <div style={{ flex: 1, overflowY: 'auto', padding: '0 8px 12px' }}>
+      <p style={{
+        fontSize: 10,
+        fontWeight: 700,
+        color: '#6b6b6b',
+        letterSpacing: '0.1em',
+        padding: '0 8px 8px',
+        margin: 0,
+        fontFamily: "'SF Pro Text', sans-serif",
+      }}>
+        YOUR LIBRARY
+      </p>
+      {PLAYLISTS.map((item) => (
+        <LibraryItem
+          key={item.id}
+          item={item}
+          active={activeId === item.id}
+          onClick={() => setActiveId(item.id)}
+        />
+      ))}
+    </div>
+    </WindowSidebar>
   )
 
   return (
@@ -139,7 +125,8 @@ export default function SpotifyWindow() {
       id="spotify"
       sidebarContent={sidebarContent}
       hideTitleBar={false}
-      shellStyle={{ background: '#121212', border: '1px solid #282828' }}
+      shellStyle={{ border: '1px solid #282828' }}
+      paneStyle={{ background: '#121212' }}
     >
       <iframe
         key={current.embedUrl}

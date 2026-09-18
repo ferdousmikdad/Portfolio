@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, ArrowUp, Search } from 'lucide-react'
 import useWindowStore from '@/store/windowStore'
 import Window from '@/components/window/Window'
-import WindowControls from '@/components/window/WindowControls'
+import WindowSidebar from '@/components/window/WindowSidebar'
 import mikdadPhoto from '@/assets/images/mikdad.jpg'
 import {
   CONTACT, SOCIAL_LINKS, WORKER_URL, FALLBACK,
@@ -467,56 +467,40 @@ function ChatPanel() {
 
 export default function HomeWindow() {
   const sidebarContent = ({ onClose, onMinimize, onMaximize }) => (
-    <div style={{ width: 220, padding: '6px 0 6px 6px', height: '100%', boxSizing: 'border-box' }}>
-      <div
-        style={{
-          background: '#1B1B1B',
-          border: '1px solid #404040',
-          borderRadius: 18,
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-        }}
-      >
-        {/* Traffic lights */}
-        <div style={{ height: 40, display: 'flex', alignItems: 'center', padding: '0 12px', flexShrink: 0 }}>
-          <WindowControls onClose={onClose} onMinimize={onMinimize} onMaximize={onMaximize} />
-        </div>
+    <WindowSidebar width={220} gutter="6px 0 6px 6px" controls={{ onClose, onMinimize, onMaximize }}>
 
-        {/* Profile content */}
-        <div className="hw-sidebar-scroll">
-          <img src={mikdadPhoto} alt="Mikdad" className="hw-profile-photo" draggable={false} />
+    {/* Profile content */}
+    <div className="hw-sidebar-scroll">
+      <img src={mikdadPhoto} alt="Mikdad" className="hw-profile-photo" draggable={false} />
 
-          <p className="hw-profile-name">Ferdous Mikdad</p>
-          <p className="hw-profile-role">UI/UX Designer &amp; Web Developer</p>
+      <p className="hw-profile-name">Ferdous Mikdad</p>
+      <p className="hw-profile-role">UI/UX Designer &amp; Web Developer</p>
 
-          <span className="hw-available-badge">
-            <span className="hw-available-dot" />
-            Available for projects
-          </span>
+      <span className="hw-available-badge">
+        <span className="hw-available-dot" />
+        Available for projects
+      </span>
 
-          <div className="hw-sidebar-divider" />
+      <div className="hw-sidebar-divider" />
 
-          <p className="hw-sidebar-bio">
-            Designing digital experiences that blend creativity with usability. 5+ years in branding, web design, and creative development.
-          </p>
+      <p className="hw-sidebar-bio">
+        Designing digital experiences that blend creativity with usability. 5+ years in branding, web design, and creative development.
+      </p>
 
-          <div className="hw-social-links">
-            {SIDEBAR_SOCIALS.map((s) => (
-              <a key={s.label} href={s.href} target="_blank" rel="noreferrer" className="hw-social-icon-btn" title={s.label}
-                style={{ background: `${s.color}18`, color: s.color }}>
-                {s.icon}
-              </a>
-            ))}
-            <a href={`mailto:${CONTACT.email}`} className="hw-social-icon-btn" title="Email me"
-              style={{ background: 'rgba(207,5,6,0.12)', color: '#cf0506' }}>
-              ✉
-            </a>
-          </div>
-        </div>
+      <div className="hw-social-links">
+        {SIDEBAR_SOCIALS.map((s) => (
+          <a key={s.label} href={s.href} target="_blank" rel="noreferrer" className="hw-social-icon-btn" title={s.label}
+            style={{ background: `${s.color}18`, color: s.color }}>
+            {s.icon}
+          </a>
+        ))}
+        <a href={`mailto:${CONTACT.email}`} className="hw-social-icon-btn" title="Email me"
+          style={{ background: 'rgba(207,5,6,0.12)', color: '#cf0506' }}>
+          ✉
+        </a>
       </div>
     </div>
+    </WindowSidebar>
   )
 
   return (

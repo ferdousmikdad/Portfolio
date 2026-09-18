@@ -8,7 +8,7 @@ import noteUrl      from '@/assets/icons/note.png?url'
 import homeUrl      from '@/assets/icons/Home.png?url'
 import terminalUrl  from '@/assets/icons/terminal.svg?url'
 import finderUrl    from '@/assets/icons/finder.svg?url'
-import settingsUrl  from '@/assets/icons/macsetting.svg?url'
+import settingsUrl  from '@/assets/icons/mac-system-settings.svg?url'
 import spotifyUrl   from '@/assets/icons/spotify.svg?url'
 
 /* Icon shown on a window's dock tile while it is minimised. Tools carry their

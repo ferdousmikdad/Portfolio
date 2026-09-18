@@ -77,6 +77,22 @@ html.reduce-motion *::after {
   --mk-input-color:     #1c1c1e;
   --mk-input-ph:        #9a9690;
   --window-bg:      #F7F5F0;
+  /* Sidebar vibrancy — the tint laid over the blurred desktop. Two stops, so
+     the pane always carries a vertical gradient instead of one flat fill.
+
+     These stay dark in the light theme as well, because every sidebar's rows
+     are drawn in light-on-dark greys (#D0CDC4 active, #5E5C53 idle). A light
+     material here would leave those labels invisible; a sidebar that stays
+     dark in both themes is also what this app has always shipped. Swapping
+     them for a light set is a one-line change once the rows use tokens. */
+  --sb-tint-top:    rgba(32, 33, 36, 0.68);
+  --sb-tint-bot:    rgba(15, 16, 18, 0.82);
+  --sb-panel-top:   rgba(255, 255, 255, 0.070);
+  --sb-panel-bot:   rgba(255, 255, 255, 0.018);
+  --sb-panel-line:  rgba(255, 255, 255, 0.115);
+  --sb-panel-lit:   rgba(255, 255, 255, 0.085);
+  --sb-noise:       0.045;
+  --sb-gutter:      var(--window-bg);
   --sidebar-bg:     #EFECE5;
   --titlebar-bg:    #EFECE5;
   --dock-bg:        rgba(255, 255, 255, 0.55);
@@ -135,6 +151,14 @@ html.reduce-motion *::after {
   --mk-input-color:     #d0cdc4;
   --mk-input-ph:        #4a4845;
   --window-bg:      #1E1F20;
+  --sb-tint-top:    rgba(32, 33, 36, 0.68);
+  --sb-tint-bot:    rgba(15, 16, 18, 0.82);
+  --sb-panel-top:   rgba(255, 255, 255, 0.070);
+  --sb-panel-bot:   rgba(255, 255, 255, 0.018);
+  --sb-panel-line:  rgba(255, 255, 255, 0.115);
+  --sb-panel-lit:   rgba(255, 255, 255, 0.085);
+  --sb-noise:       0.045;
+  --sb-gutter:      var(--window-bg);
   --sidebar-bg:     #1C1D1E;
   --titlebar-bg:    #1C1D1E;
   --dock-bg:        rgba(30, 31, 32, 0.85);
@@ -264,17 +288,43 @@ html.reduce-motion *::after {
       0 64px 96px rgba(0, 0, 0, 0.20);
   }
 
+  /* A window with a sidebar paints nothing itself: the content pane carries
+     the opaque fill and the sidebar is left transparent, so its backdrop
+     filter can reach past the window to the desktop underneath. */
+  .window-shell--split { background: transparent; }
+
+  .window-pane {
+    background: var(--window-bg);
+  }
+
+  /* Finder's toolbar is not a bar — it is the top of the content surface, no
+     fill and no rule under it. Every window now wears it the same way. */
   .window-titlebar {
     height: 40px;
     display: flex;
     align-items: center;
+    gap: 13px;
     padding: 0 12px;
-    background: var(--titlebar-bg);
-    border-bottom: 1px solid var(--border);
+    background: transparent;
+    border-bottom: none;
     cursor: grab;
     flex-shrink: 0;
   }
   .window-titlebar:active { cursor: grabbing; }
+
+  /* Finder sets its name beside the controls at 15px semibold — never
+     centred, which is the give-away of a window that is not a Mac window. */
+  .window-titlebar__title {
+    font-family: 'SF Pro Display', system-ui, sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--headline);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  /* Inactive windows let their title fall back, as macOS does. */
+  .window-shell:not(.focused) .window-titlebar__title { opacity: 0.55; }
 
   .traffic-light {
     width: 12px;
@@ -2233,28 +2283,44 @@ html.reduce-motion *::after {
   margin-left: -7px;
 }
 
+/* Every Finder toolbar control is a pill of the same glass as the dock —
+   measured off the real window: the back/forward pair is 72x28 with fully
+   rounded ends, a 20px divider between the halves, and chevrons half the
+   pill's height. `--lg-blur` is softer than the dock's and the filter layer
+   reaches less far out, because these surfaces are a fraction of its size. */
+.finder-glass {
+  position: relative;
+  border-radius: 9999px;
+  --lg-blur: 10px;
+}
+.finder-glass > *:not(.lg-glass) { position: relative; z-index: 1; }
+.finder-glass .lg-glass__filter  { inset: -10px; }
+
 .finder-arrows {
   display: flex;
   align-items: center;
-  height: 20px;
-  border-radius: 7px;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.10);
+  height: 26px;
+  flex-shrink: 0;
 }
-.dark .finder-arrows { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.09); }
 
 .finder-arrows button {
   display: grid;
   place-items: center;
   width: 36px;
-  height: 20px;
+  height: 26px;
   border: none;
+  border-radius: 9999px;
   background: transparent;
   color: var(--headline);
   cursor: default;
   transition: background 0.12s ease, color 0.12s ease;
 }
-.finder-arrows button:first-child { border-radius: 7px 0 0 7px; }
-.finder-arrows button:last-child  { border-radius: 0 7px 7px 0; }
+/* Finder's chevrons are drawn with mitred joins, not the rounded ones the
+   icon set ships by default — the difference is the whole character of them. */
+.finder-arrows svg {
+  stroke-linejoin: miter;
+  stroke-linecap: butt;
+}
 /* Dimmed rather than hidden when there is nowhere to go — which is how the
    pair looks in a Trash window you have just opened. */
 .finder-arrows button:disabled { color: rgba(128, 128, 128, 0.55); }
@@ -2263,10 +2329,21 @@ html.reduce-motion *::after {
 
 .finder-arrows__sep {
   width: 1px;
-  height: 12px;
-  background: rgba(0, 0, 0, 0.12);
+  height: 20px;
+  flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.14);
 }
-.dark .finder-arrows__sep { background: rgba(255, 255, 255, 0.12); }
+.dark .finder-arrows__sep { background: rgba(255, 255, 255, 0.14); }
+
+.finder-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 26px;
+  min-width: 200px;
+  padding: 0 12px;
+  flex-shrink: 0;
+}
 
 .finder-nav__title {
   font-family: 'SF Pro Display', system-ui, sans-serif;
@@ -2314,3 +2391,164 @@ html.reduce-motion *::after {
 .finder-empty-btn:hover:not(:disabled)      { background: rgba(0, 0, 0, 0.13); }
 .dark .finder-empty-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.13); }
 .finder-empty-btn:disabled { opacity: 0.4; }
+
+/* ── Sidebar vibrancy ───────────────────────────────────────────────────────
+   What macOS actually does, and what this reproduces:
+
+   The sidebar is not painted a colour. `backdrop-filter` samples whatever is
+   behind the window — the wallpaper, another window, a page full of red —
+   blurs it past the point where any shape survives, and pushes the saturation
+   up so what is left is the *colour* of the backdrop and nothing else. The
+   tint on top is a two-stop gradient rather than a flat fill, so the top of
+   the pane carries the average colour of what is behind its top and the
+   bottom carries the bottom's: drag the window and the whole column drifts.
+
+   The blur has to be large (48px) or the backdrop reads as a frosted
+   screenshot instead of a wash of colour, and the saturation has to be over
+   100% or the tint flattens everything back to grey.                        */
+
+/* The gutter around the card is NOT glass. It is the same solid fill as the
+   content pane on the right, so the window has one continuous body and the
+   glass is contained to the card — which is the part that reads as a sidebar.
+
+   It is a *border*, not a background: anything opaque behind the card would
+   be all its backdrop-filter could sample, and the vibrancy would collapse to
+   a blur of one flat colour. A border paints outside the card's box and never
+   underneath it, and unlike a spread shadow its outer corners are square —
+   so the window's own 22px corner clips them cleanly instead of leaving a
+   sliver of desktop where the two radii disagree. Widths come from the
+   component's `gutter`. */
+.window-sidebar {
+  position: relative;
+  height: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  background: transparent;
+  border-style: solid;
+  border-color: var(--sb-gutter);
+}
+
+/* The card: its own border on all four sides, and the highlight along its top
+   edge that every layered macOS surface has. It paints no fill of its own —
+   the three layers below do that. */
+.window-sidebar__panel {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 18px;
+  /* The card's own hairline is drawn by the fill layer, not as a border here:
+     `overflow` clips the layers to the padding box, so a border would be a
+     ring the glass could not reach — and with no fill of its own on this
+     element, that ring showed the desktop straight through, unblurred. */
+  /* The spread below covers the straight run of the gutter and, being square
+     on the outside, lets the window's own corner clip it cleanly. What it
+     cannot fill is the four wedges inside it, where the card's 18px radius
+     curves away from the square inner corner — those showed as slivers of
+     desktop. An 8px spread on the card covers exactly those, and paints
+     outside the card, so the glass still samples. Both, not either. */
+  box-shadow: 0 0 0 8px var(--sb-gutter);
+}
+
+/* Layer 1 — the vibrancy, across the whole card. The blur has to be large
+   (48px) or the backdrop reads as a frosted screenshot instead of a wash of
+   colour, and the saturation has to be well over 100% or the tint flattens
+   everything back to grey. */
+.window-sidebar__glass {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  /* Its own radius, not the parent's overflow clip. A backdrop-filtered layer
+     composites its sampled backdrop separately, and against an ancestor clip
+     alone it leaks a 2px rim of raw unfiltered backdrop around the corner
+     arc — which read as a bright outline where the card's border belongs. */
+  border-radius: inherit;
+  /* The tint runs along the same diagonal as the fill above it, thinnest at
+     the top-left — the only part left visible — so the sampled colour is
+     actually legible there rather than a smudge under flat grey. */
+  background: linear-gradient(
+    to bottom right,
+    var(--sb-tint-top) 0%,
+    var(--sb-tint-bot) 34%
+  );
+  backdrop-filter: blur(48px) saturate(190%);
+  -webkit-backdrop-filter: blur(48px) saturate(190%);
+  transition: backdrop-filter 0.35s ease;
+}
+
+/* Layer 2 — the window's own colour, over the glass, opening up only at the
+   top-left. Nothing at that corner, fully solid a fifth of the way down the
+   diagonal, so most of the pane is plain window colour and the sampled
+   backdrop survives as a slight corner wash. The band in between is the two
+   mixed, which is the gradient a real sidebar shows.
+
+   Over, never under: beneath the glass this would be the only thing the
+   filter had to sample. */
+.window-sidebar__fill {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(
+    to bottom right,
+    transparent 0%,
+    transparent 4%,
+    var(--sb-gutter) 22%
+  );
+  /* The card's border. It lives here rather than on the panel because the
+     panel's overflow clips the layers to the padding box — a real border
+     there would be a ring nothing could fill, showing the desktop through it
+     unblurred. Drawn over the fill, so it reads at full strength. */
+  box-shadow:
+    inset 0 0 0 1px var(--sb-panel-line),
+    inset 0 1px 0 var(--sb-panel-lit);
+}
+
+/* The frost. Vibrancy is never perfectly smooth — a trace of grain is what
+   stops a large blur reading as cheap plastic. Over both layers, under the
+   rows. */
+.window-sidebar__panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background-image: url('/noise.png');
+  background-repeat: repeat;
+  opacity: var(--sb-noise);
+  pointer-events: none;
+}
+
+.window-sidebar__panel > *:not(.window-sidebar__glass):not(.window-sidebar__fill) {
+  position: relative;
+  z-index: 2;
+}
+
+/* An inactive window stops sampling colour and settles towards grey — the
+   single cue that tells you at a glance which window has the keyboard. */
+.window-shell:not(.focused) .window-sidebar__glass {
+  backdrop-filter: blur(48px) saturate(48%);
+  -webkit-backdrop-filter: blur(48px) saturate(48%);
+}
+
+.window-sidebar__lights {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  flex-shrink: 0;
+}
+
+/* Spotify keeps its own near-black, but still samples: the colour behind the
+   window reaches through, it just arrives much darker. */
+.window-sidebar--spotify {
+  --sb-tint-top:   rgba(12, 12, 12, 0.72);
+  --sb-tint-bot:   rgba(0, 0, 0, 0.86);
+  --sb-panel-top:  rgba(255, 255, 255, 0.050);
+  --sb-panel-bot:  rgba(255, 255, 255, 0.010);
+  --sb-panel-line: rgba(255, 255, 255, 0.090);
+  --sb-panel-lit:  rgba(255, 255, 255, 0.055);
+  --sb-gutter:     #121212;
+}

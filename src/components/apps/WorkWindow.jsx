@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import useWindowStore from '@/store/windowStore'
 import Window from '@/components/window/Window'
-import WindowControls from '@/components/window/WindowControls'
+import WindowSidebar from '@/components/window/WindowSidebar'
 import projects, { CATEGORIES, TAGS } from '@/data/projects'
 import AllIcon           from '@/assets/icons/work-all.svg?react'
 import RecentsIcon       from '@/assets/icons/work-recents.svg?react'
@@ -195,103 +195,79 @@ export default function WorkWindow() {
 
   // ── Sidebar panel (passed as render prop to Window) ──────────────────────
   const sidebarContent = ({ onClose, onMinimize, onMaximize }) => (
-    <div style={{ width: 210, padding: '6px 4px 6px 6px', height: '100%', boxSizing: 'border-box' }}>
-      <div
-        style={{
-          background: '#1B1B1B',
-          border: '1px solid #404040',
-          borderRadius: 18,
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-        }}
+    <WindowSidebar width={210} controls={{ onClose, onMinimize, onMaximize }}>
+
+
+    {/* Navigation list */}
+    <div className="flex flex-col overflow-y-auto window-scroll px-2 py-3 gap-0.5" style={{ flex: 1 }}>
+      {/* All */}
+      <button
+        onClick={() => { setSelectedItem(null); setSelectedType(null) }}
+        className={`w-full flex items-center gap-2 px-3 py-[5px] rounded-md text-left transition-colors group
+          ${!selectedType ? 'bg-white/5' : 'hover:bg-white/5'}`}
       >
-        {/* Traffic lights row */}
-        <div
-          style={{
-            height: 40,
-            display: 'flex',
-            alignItems: 'center',
-            padding: '0 12px',
-            flexShrink: 0,
-          }}
-        >
-          <WindowControls onClose={onClose} onMinimize={onMinimize} onMaximize={onMaximize} />
-        </div>
+        <AllIcon
+          width={13} height={13}
+          style={{ flexShrink: 0 }}
+          className={`transition-colors ${!selectedType ? 'text-[#D0CDC4]' : 'text-[#5E5C53] group-hover:text-brand'}`}
+        />
+        <span className={`text-[12px] font-medium transition-colors ${!selectedType ? 'text-[#D0CDC4]' : 'text-[#5E5C53]'}`}>All</span>
+      </button>
 
+      {/* Recents */}
+      <button
+        onClick={() => select('recent', 'recent')}
+        className={`w-full flex items-center gap-2 px-3 py-[5px] rounded-md text-left transition-colors group
+          ${selectedType === 'recent' ? 'bg-white/5' : 'hover:bg-white/5'}`}
+      >
+        <RecentsIcon
+          width={13} height={13}
+          style={{ flexShrink: 0 }}
+          className={`transition-colors ${selectedType === 'recent' ? 'text-[#D0CDC4]' : 'text-[#5E5C53] group-hover:text-brand'}`}
+        />
+        <span className={`text-[12px] font-medium transition-colors ${selectedType === 'recent' ? 'text-[#D0CDC4]' : 'text-[#5E5C53]'}`}>Recents</span>
+      </button>
 
-        {/* Navigation list */}
-        <div className="flex flex-col overflow-y-auto window-scroll px-2 py-3 gap-0.5" style={{ flex: 1 }}>
-          {/* All */}
-          <button
-            onClick={() => { setSelectedItem(null); setSelectedType(null) }}
-            className={`w-full flex items-center gap-2 px-3 py-[5px] rounded-md text-left transition-colors group
-              ${!selectedType ? 'bg-white/5' : 'hover:bg-white/5'}`}
-          >
-            <AllIcon
-              width={13} height={13}
-              style={{ flexShrink: 0 }}
-              className={`transition-colors ${!selectedType ? 'text-[#D0CDC4]' : 'text-[#5E5C53] group-hover:text-brand'}`}
-            />
-            <span className={`text-[12px] font-medium transition-colors ${!selectedType ? 'text-[#D0CDC4]' : 'text-[#5E5C53]'}`}>All</span>
-          </button>
+      <div className="h-1.5" />
 
-          {/* Recents */}
-          <button
-            onClick={() => select('recent', 'recent')}
-            className={`w-full flex items-center gap-2 px-3 py-[5px] rounded-md text-left transition-colors group
-              ${selectedType === 'recent' ? 'bg-white/5' : 'hover:bg-white/5'}`}
-          >
-            <RecentsIcon
-              width={13} height={13}
-              style={{ flexShrink: 0 }}
-              className={`transition-colors ${selectedType === 'recent' ? 'text-[#D0CDC4]' : 'text-[#5E5C53] group-hover:text-brand'}`}
-            />
-            <span className={`text-[12px] font-medium transition-colors ${selectedType === 'recent' ? 'text-[#D0CDC4]' : 'text-[#5E5C53]'}`}>Recents</span>
-          </button>
-
-          <div className="h-1.5" />
-
-          {/* Categories */}
-          {CATEGORIES.map((cat) => (
-            <div key={cat.section} className="mb-2">
-              <p className="px-3 pb-1 text-[10px] font-semibold tracking-wide" style={{ color: '#5E5C53' }}>
-                {cat.section}
-              </p>
-              {cat.items.map((item) => {
-                const Icon = ICON_MAP[item.id]
-                return (
-                  <SidebarItem
-                    key={item.id}
-                    label={item.label}
-                    icon={Icon}
-                    tag={item.tag}
-                    active={selectedType === 'category' && selectedItem === item.id}
-                    onClick={() => select('category', item.id)}
-                  />
-                )
-              })}
-            </div>
-          ))}
-
-          {/* Tags */}
-          <div>
-            <p className="px-3 pb-1 text-[10px] font-semibold tracking-wide" style={{ color: '#5E5C53' }}>
-              Tags
-            </p>
-            {TAGS.map((tag) => (
-              <TagRow
-                key={tag.id}
-                tag={tag}
-                active={selectedType === 'tag' && selectedItem === tag.id}
-                onClick={() => select('tag', tag.id)}
+      {/* Categories */}
+      {CATEGORIES.map((cat) => (
+        <div key={cat.section} className="mb-2">
+          <p className="px-3 pb-1 text-[10px] font-semibold tracking-wide" style={{ color: '#5E5C53' }}>
+            {cat.section}
+          </p>
+          {cat.items.map((item) => {
+            const Icon = ICON_MAP[item.id]
+            return (
+              <SidebarItem
+                key={item.id}
+                label={item.label}
+                icon={Icon}
+                tag={item.tag}
+                active={selectedType === 'category' && selectedItem === item.id}
+                onClick={() => select('category', item.id)}
               />
-            ))}
-          </div>
+            )
+          })}
         </div>
+      ))}
+
+      {/* Tags */}
+      <div>
+        <p className="px-3 pb-1 text-[10px] font-semibold tracking-wide" style={{ color: '#5E5C53' }}>
+          Tags
+        </p>
+        {TAGS.map((tag) => (
+          <TagRow
+            key={tag.id}
+            tag={tag}
+            active={selectedType === 'tag' && selectedItem === tag.id}
+            onClick={() => select('tag', tag.id)}
+          />
+        ))}
       </div>
     </div>
+    </WindowSidebar>
   )
 
   return (

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, Download, Trash2, Minus } from 'lucide-react'
 import Window from '@/components/window/Window'
-import WindowControls from '@/components/window/WindowControls'
+import WindowSidebar from '@/components/window/WindowSidebar'
 import { CATEGORIES, NOTES } from '@/data/notes.js'
 import useWindowStore from '@/store/windowStore'
 
@@ -328,42 +328,26 @@ export default function NotesWindow() {
   }
 
   const sidebarContent = ({ onClose, onMinimize, onMaximize }) => (
-    <div style={{ width: 210, padding: '6px 4px 6px 6px', height: '100%', boxSizing: 'border-box' }}>
-      <div
-        style={{
-          background: '#1B1B1B',
-          border: '1px solid #404040',
-          borderRadius: 18,
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-        }}
-      >
-        {/* Traffic lights row */}
-        <div style={{ height: 40, display: 'flex', alignItems: 'center', padding: '0 12px', flexShrink: 0 }}>
-          <WindowControls onClose={onClose} onMinimize={onMinimize} onMaximize={onMaximize} />
-        </div>
+    <WindowSidebar width={210} controls={{ onClose, onMinimize, onMaximize }}>
 
-        {/* Navigation list */}
-        <div className="flex flex-col overflow-y-auto window-scroll px-2 py-3 gap-0.5" style={{ flex: 1 }}>
-          <p className="px-3 pb-1 text-[10px] font-semibold tracking-wide" style={{ color: '#5E5C53' }}>
-            Categories
-          </p>
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => handleCategoryChange(cat.id)}
-              className={`w-full flex items-center px-3 py-[5px] rounded-md text-left text-[12px] font-medium transition-colors
-                ${activeCategory === cat.id ? 'bg-white/5 text-[#D0CDC4]' : 'text-[#5E5C53] hover:bg-white/5'}`}
-              style={{ fontFamily: "'SF Pro Text'" }}
-            >
-              {cat.label}
-            </button>
-          ))}
-        </div>
-      </div>
+    {/* Navigation list */}
+    <div className="flex flex-col overflow-y-auto window-scroll px-2 py-3 gap-0.5" style={{ flex: 1 }}>
+      <p className="px-3 pb-1 text-[10px] font-semibold tracking-wide" style={{ color: '#5E5C53' }}>
+        Categories
+      </p>
+      {CATEGORIES.map((cat) => (
+        <button
+          key={cat.id}
+          onClick={() => handleCategoryChange(cat.id)}
+          className={`w-full flex items-center px-3 py-[5px] rounded-md text-left text-[12px] font-medium transition-colors
+            ${activeCategory === cat.id ? 'bg-white/5 text-[#D0CDC4]' : 'text-[#5E5C53] hover:bg-white/5'}`}
+          style={{ fontFamily: "'SF Pro Text'" }}
+        >
+          {cat.label}
+        </button>
+      ))}
     </div>
+    </WindowSidebar>
   )
 
   return (

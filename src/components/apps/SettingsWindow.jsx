@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import { Palette, Monitor, Volume2, MousePointer2, ChevronRight, ChevronLeft } from 'lucide-react'
 import Window from '@/components/window/Window'
-import WindowControls from '@/components/window/WindowControls'
+import WindowSidebar from '@/components/window/WindowSidebar'
 import useThemeStore from '@/store/themeStore'
 import useSoundStore from '@/store/soundStore'
 import useSettingsStore, { ACCENT_PRESETS } from '@/store/settingsStore'
@@ -343,81 +343,67 @@ export default function SettingsWindow() {
 
   // Left sidebar — exact Notes style: padded outer, inner rounded card
   const sidebarContent = ({ onClose, onMinimize, onMaximize }) => (
-    <div style={{ width: 210, padding: '6px 4px 6px 6px', height: '100%', boxSizing: 'border-box' }}>
+    <WindowSidebar width={210} controls={{ onClose, onMinimize, onMaximize }}>
+
+    {/* Profile card */}
+    <button
+      onClick={() => navigate('about')}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 9,
+        margin: '0 8px 6px', padding: '8px 10px', borderRadius: 10,
+        background: active === 'about' ? 'rgba(255,255,255,0.07)' : 'transparent',
+        cursor: 'pointer', textAlign: 'left',
+        transition: 'background 0.12s',
+      }}
+    >
       <div style={{
-        background: '#1B1B1B',
-        border: '1px solid #404040',
-        borderRadius: 18,
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
+        width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
+        background: 'rgba(255,255,255,0.06)',
+        border: '1.5px solid rgba(255,255,255,0.1)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
         overflow: 'hidden',
       }}>
-        {/* Traffic lights */}
-        <div style={{ height: 40, display: 'flex', alignItems: 'center', padding: '0 12px', flexShrink: 0 }}>
-          <WindowControls onClose={onClose} onMinimize={onMinimize} onMaximize={onMaximize} />
-        </div>
-
-        {/* Profile card */}
-        <button
-          onClick={() => navigate('about')}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 9,
-            margin: '0 8px 6px', padding: '8px 10px', borderRadius: 10,
-            background: active === 'about' ? 'rgba(255,255,255,0.07)' : 'transparent',
-            cursor: 'pointer', textAlign: 'left',
-            transition: 'background 0.12s',
-          }}
-        >
-          <div style={{
-            width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
-            background: 'rgba(255,255,255,0.06)',
-            border: '1.5px solid rgba(255,255,255,0.1)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            overflow: 'hidden',
-          }}>
-            <img src={mikdadHeadUrl} alt="" style={{ width: '80%', height: '80%', objectFit: 'contain' }} />
-          </div>
-          <div>
-            <p style={{ fontSize: 12.5, fontWeight: 600, color: '#D0CDC4', fontFamily: "'SF Pro Text'", lineHeight: 1.3 }}>Ferdous Mikdad</p>
-            <p style={{ fontSize: 10, color: '#5E5C53', fontFamily: "'SF Pro Text'", marginTop: 1 }}>Portfolio Account</p>
-          </div>
-        </button>
-
-        {/* Divider */}
-        <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '0 12px 6px' }} />
-
-        {/* Nav items */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '0 8px 8px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <p style={{ padding: '0 4px 4px 4px', fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', color: '#5E5C53', fontFamily: "'SF Pro Text'" }}>
-            Settings
-          </p>
-          {SECTIONS.map(({ id, label, icon: Icon, iconBg, iconBgLight }) => {
-            const isActive = active === id
-            return (
-              <button
-                key={id}
-                onClick={() => navigate(id)}
-                className={`w-full flex items-center px-3 py-[5px] rounded-md text-left text-[12px] font-medium transition-colors
-                  ${isActive ? 'bg-white/5 text-[#D0CDC4]' : 'text-[#5E5C53] hover:bg-white/5'}`}
-                style={{ fontFamily: "'SF Pro Text'", gap: 8 }}
-              >
-                {/* Small glass icon square */}
-                <div style={{
-                  width: 20, height: 20, borderRadius: 5, flexShrink: 0,
-                  background: `linear-gradient(145deg, ${iconBgLight} 0%, ${iconBg} 100%)`,
-                  boxShadow: '0 1px 0 rgba(255,255,255,0.2) inset, 0 1px 4px rgba(0,0,0,0.4)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <Icon size={12} color="white" />
-                </div>
-                {label}
-              </button>
-            )
-          })}
-        </div>
+        <img src={mikdadHeadUrl} alt="" style={{ width: '80%', height: '80%', objectFit: 'contain' }} />
       </div>
+      <div>
+        <p style={{ fontSize: 12.5, fontWeight: 600, color: '#D0CDC4', fontFamily: "'SF Pro Text'", lineHeight: 1.3 }}>Ferdous Mikdad</p>
+        <p style={{ fontSize: 10, color: '#5E5C53', fontFamily: "'SF Pro Text'", marginTop: 1 }}>Portfolio Account</p>
+      </div>
+    </button>
+
+    {/* Divider */}
+    <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '0 12px 6px' }} />
+
+    {/* Nav items */}
+    <div style={{ flex: 1, overflowY: 'auto', padding: '0 8px 8px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <p style={{ padding: '0 4px 4px 4px', fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', color: '#5E5C53', fontFamily: "'SF Pro Text'" }}>
+        Settings
+      </p>
+      {SECTIONS.map(({ id, label, icon: Icon, iconBg, iconBgLight }) => {
+        const isActive = active === id
+        return (
+          <button
+            key={id}
+            onClick={() => navigate(id)}
+            className={`w-full flex items-center px-3 py-[5px] rounded-md text-left text-[12px] font-medium transition-colors
+              ${isActive ? 'bg-white/5 text-[#D0CDC4]' : 'text-[#5E5C53] hover:bg-white/5'}`}
+            style={{ fontFamily: "'SF Pro Text'", gap: 8 }}
+          >
+            {/* Small glass icon square */}
+            <div style={{
+              width: 20, height: 20, borderRadius: 5, flexShrink: 0,
+              background: `linear-gradient(145deg, ${iconBgLight} 0%, ${iconBg} 100%)`,
+              boxShadow: '0 1px 0 rgba(255,255,255,0.2) inset, 0 1px 4px rgba(0,0,0,0.4)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Icon size={12} color="white" />
+            </div>
+            {label}
+          </button>
+        )
+      })}
     </div>
+    </WindowSidebar>
   )
 
   return (

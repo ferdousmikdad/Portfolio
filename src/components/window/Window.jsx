@@ -7,7 +7,7 @@ import { genieStage, flatten, afterMount } from '@/utils/genie'
 import { setSnapshot } from '@/utils/windowSnapshots'
 import { useResize, RESIZE_CURSORS } from '@/hooks/useResize'
 
-export default function Window({ id, title, children, actionLabel, onAction, hideControls, hideTitleBar, toolbar, sidebarContent, shellStyle, navSlot, titleBarBorder = true }) {
+export default function Window({ id, title, children, actionLabel, onAction, hideControls, hideTitleBar, toolbar, sidebarContent, shellStyle, paneStyle, navSlot, titleBarBorder = false }) {
   const { closeWindow, minimizeWindow, focusWindow, updatePosition, getWindow, toggleMaximize } = useWindowStore()
   const activeWindowId = useWindowStore((s) => s.activeWindowId)
   const restoring   = useWindowStore((s) => s.restoringId) === id
@@ -85,7 +85,7 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
     <motion.div
       ref={winRef}
       data-window={id}
-      className={`window-shell absolute${isActive ? ' focused' : ''}`}
+      className={`window-shell absolute${sidebarContent ? ' window-shell--split' : ''}${isActive ? ' focused' : ''}`}
       style={{
         // Geometry via motion values — updated directly, never spring-animated
         x:      mx,
@@ -99,9 +99,16 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
         visibility:    restoring ? 'hidden' : undefined,
         ...shellStyle,
       }}
-      // animate only controls entrance/exit appearance — NOT geometry
-      initial={restoring ? false : { opacity: 0, scale: 0.92 }}
-      animate={{ opacity: 1, scale: 1, borderRadius: win.isMaximized ? 0 : 22 }}
+      // animate only controls entrance/exit appearance — NOT geometry.
+      //
+      // Deliberately no opacity on the way in. An element whose opacity is
+      // below 1 becomes a backdrop root, and `backdrop-filter` inside it has
+      // nothing left to sample — so for the length of the entrance the
+      // sidebar's glass would show the desktop through it stone sharp, then
+      // snap to blurred the instant opacity landed on 1. Scale alone opens
+      // the window just as well and never breaks the sampling.
+      initial={restoring ? false : { scale: 0.92 }}
+      animate={{ scale: 1, borderRadius: win.isMaximized ? 0 : 22 }}
       exit={{ opacity: 0, scale: 0.88, transition: { duration: 0.15 } }}
       transition={{ type: 'spring', stiffness: 300, damping: 28 }}
       drag={!win.isMaximized}
@@ -119,7 +126,7 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
       {sidebarContent ? (
         /* ── Sidebar-panel layout ─────────────────────────────────────────── */
         <div style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
-          {/* Left: sidebar panel (full height) */}
+          {/* Left: the vibrant pane, full height, traffic lights on it */}
           <div style={{ flexShrink: 0, height: '100%' }}>
             {sidebarContent({
               onClose:    () => { play('close'); closeWindow(id) },
@@ -128,8 +135,10 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
             })}
           </div>
 
-          {/* Right: titlebar (drag handle, no traffic lights) + content */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          {/* Right: titlebar (drag handle, no traffic lights) + content. This
+              is the pane that is opaque — the contrast against the glass on
+              the left is what sells the sidebar as sitting on the desktop. */}
+          <div className="window-pane" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', ...paneStyle }}>
             {!hideTitleBar && (
               <div
                 className="window-titlebar relative"
@@ -140,14 +149,7 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
                 onPointerDown={(e) => { if (!win.isMaximized) dragControls.start(e) }}
               >
                 {navSlot}
-                {title && (
-                  <span
-                    className="absolute left-1/2 -translate-x-1/2 text-xs font-medium"
-                    style={{ color: 'var(--body)', fontFamily: "'SF Pro Display'" }}
-                  >
-                    {title}
-                  </span>
-                )}
+                {title && <span className="window-titlebar__title">{title}</span>}
                 {toolbar && <div className="ml-auto flex items-center gap-2">{toolbar}</div>}
                 {actionLabel && !toolbar && (
                   <span className="ml-auto text-xs text-brand font-medium cursor-pointer hover:opacity-80 transition-opacity" onClick={onAction}>
@@ -169,7 +171,7 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
             <div
               className="window-titlebar relative"
               style={{
-                borderBottom: toolbar ? '1px solid var(--border)' : 'none',
+                borderBottom: titleBarBorder ? '1px solid var(--border)' : 'none',
                 cursor: win.isMaximized ? 'default' : 'grab',
               }}
               onPointerDown={(e) => {
@@ -184,14 +186,7 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
                 />
               )}
               {navSlot}
-              {title && (
-                <span
-                  className="absolute left-1/2 -translate-x-1/2 text-xs font-medium"
-                  style={{ color: 'var(--body)', fontFamily: "'SF Pro Display'" }}
-                >
-                  {title}
-                </span>
-              )}
+              {title && <span className="window-titlebar__title">{title}</span>}
               {toolbar && <div className="ml-auto flex items-center gap-2">{toolbar}</div>}
               {actionLabel && !toolbar && (
                 <span className="ml-auto text-xs text-brand font-medium cursor-pointer hover:opacity-80 transition-opacity" onClick={onAction}>

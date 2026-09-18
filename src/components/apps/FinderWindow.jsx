@@ -1,22 +1,27 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Window from '@/components/window/Window'
-import WindowControls from '@/components/window/WindowControls'
+import WindowSidebar from '@/components/window/WindowSidebar'
 import useWindowStore from '@/store/windowStore'
 import useSound from '@/hooks/useSound'
 import useTrashStore, { trashedFrom } from '@/store/trashStore'
 import useThemeStore from '@/store/themeStore'
 import useTrashDrag from '@/hooks/useTrashDrag'
 import ContextMenu from '@/components/ui/ContextMenu'
+import GlassLayers from '@/components/ui/LiquidGlass'
 import MacAlert from '@/components/ui/MacAlert'
 import TOOLS from '@/data/tools'
 
 import spotifyIconUrl   from '@/assets/icons/spotify.svg?url'
-import homeIconUrl      from '@/assets/icons/nav-home.svg?url'
-import portfolioIconUrl from '@/assets/icons/nav-portfolio.svg?url'
-import notesIconUrl     from '@/assets/icons/nav-notes.svg?url'
-import shopIconUrl      from '@/assets/icons/nav-shop.svg?url'
-import toolsIconUrl     from '@/assets/icons/nav-tools.svg?url'
+/* Sidebar rows carry the real artwork, not the flat nav glyphs: Finder shows
+   a place the way the place actually looks. Applications is the plain macOS
+   folder, Portfolio the image folder, and the rest are the same app icons the
+   dock uses, so one thing is never drawn two ways. */
+import homeIconUrl      from '@/assets/icons/Home.png?url'
+import portfolioIconUrl from '@/assets/icons/mac-folder-images.svg?url'
+import notesIconUrl     from '@/assets/icons/note.png?url'
+import shopIconUrl      from '@/assets/icons/App Store.png?url'
+import toolsIconUrl     from '@/assets/icons/Folder.png?url'
 import terminalAppIconUrl from '@/assets/icons/terminal.svg?url'
 import pacmanIconUrl    from '@/assets/icons/magic-icon.svg?url'
 import MacSearchIcon    from '@/assets/icons/macsearch.svg?react'
@@ -39,36 +44,25 @@ const FAVORITES = [
   { id: 'shop',      label: 'Shop',      icon: shopIconUrl },
 ]
 
-const glassPill = {
-  backgroundColor:      'rgba(40,40,40,0.20)',
-  backgroundImage:      'linear-gradient(-45deg, rgba(255,255,255,0.165) 0%, rgba(255,255,255,0.04) 50%, rgba(255,255,255,0.00) 100%)',
-  backdropFilter:       'blur(10px) saturate(1.4) brightness(1.025)',
-  WebkitBackdropFilter: 'blur(10px) saturate(1.4) brightness(1.025)',
-  borderRadius:          9999,
-  border:               '1px solid rgba(255,255,255,0.07)',
-  boxShadow:            '0 2px 8px rgba(0,0,0,0.10)',
-}
-
-function SidebarItem({ icon, label, active, plainIcon, onClick }) {
+function SidebarItem({ icon, label, active, onClick }) {
   return (
     <button
       onClick={onClick}
       className={`w-full flex items-center gap-2 px-3 py-[5px] rounded-md text-left transition-colors group
-        ${active ? 'bg-white/5' : 'hover:bg-white/5'}`}
+        ${active ? 'bg-white/10' : 'hover:bg-white/5'}`}
     >
       <img
         src={icon}
         alt={label}
-        style={{
-          width: 13, height: 13, flexShrink: 0,
-          opacity: active ? 1 : 0.55,
-          // Most sidebar glyphs are monochrome masks; the Trash keeps its art.
-          filter: plainIcon ? 'none' : 'brightness(0) invert(1)',
-        }}
+        style={{ width: 15, height: 15, flexShrink: 0, objectFit: 'contain' }}
       />
-      <span className={`text-[12px] font-medium flex-1 truncate transition-colors
-        ${active ? 'text-[#D0CDC4]' : 'text-[#5E5C53]'}`}
-        style={{ fontFamily: "'SF Pro Text'" }}
+      <span
+        className="text-[13px] flex-1 truncate transition-colors"
+        style={{
+          fontFamily: "'SF Pro Text'",
+          fontWeight: active ? 500 : 400,
+          color: 'rgba(255, 255, 255, 0.94)',
+        }}
       >
         {label}
       </span>
@@ -269,14 +263,15 @@ export default function FinderWindow() {
      its title. Everything else lives on the right. */
   const navSlot = (
     <div className="finder-nav">
-      <div className="finder-arrows">
+      <div className="finder-arrows finder-glass">
+        <GlassLayers small />
         <button
           aria-label="Back"
           disabled={!past.length}
           onClick={goBack}
           onPointerDown={(e) => e.stopPropagation()}
         >
-          <ChevronLeft size={17} strokeWidth={1.9} />
+          <ChevronLeft size={28} strokeWidth={1.7} />
         </button>
         <span className="finder-arrows__sep" />
         <button
@@ -285,7 +280,7 @@ export default function FinderWindow() {
           onClick={goForward}
           onPointerDown={(e) => e.stopPropagation()}
         >
-          <ChevronRight size={17} strokeWidth={1.9} />
+          <ChevronRight size={28} strokeWidth={1.7} />
         </button>
       </div>
       <span className="finder-nav__title">{locationName}</span>
@@ -314,17 +309,14 @@ export default function FinderWindow() {
      button, so neither appears in the chrome. */
   const toolbar = (
     <div className="flex items-center gap-2" style={{ pointerEvents: 'auto' }}>
-      <div
-        className="flex items-center gap-2 px-3"
-        style={{ ...glassPill, height: 26, minWidth: 200 }}
-      >
-        <MacSearchIcon width={11} height={11} style={{ color: 'rgba(255,255,255,0.4)', flexShrink: 0 }} />
+      <div className="finder-search finder-glass">
+        <GlassLayers small />
+        <MacSearchIcon width={11} height={11} style={{ flexShrink: 0 }} />
         <input
           value={search}
           onChange={(e) => { setSearch(e.target.value); setSelectedTool(null); setContentView('applications') }}
           placeholder={inTrash ? 'Search' : 'Search tools…'}
-          className="bg-transparent text-[11px] outline-none w-full placeholder:text-white/30"
-          style={{ color: '#fff' }}
+          className="bg-transparent text-[11px] outline-none w-full"
           onMouseDown={(e) => e.stopPropagation()}
         />
       </div>
@@ -333,58 +325,42 @@ export default function FinderWindow() {
 
   // ── Sidebar ──────────────────────────────────────────────────────────────────
   const sidebarContent = ({ onClose, onMinimize, onMaximize }) => (
-    <div style={{ width: 200, padding: '6px 4px 6px 6px', height: '100%', boxSizing: 'border-box' }}>
-      <div style={{
-        background: '#1B1B1B',
-        border:      '1px solid #404040',
-        borderRadius: 18,
-        height:      '100%',
-        display:     'flex',
-        flexDirection:'column',
-        overflow:    'hidden',
-      }}>
-        {/* Traffic lights */}
-        <div style={{ height: 40, display: 'flex', alignItems: 'center', padding: '0 12px', flexShrink: 0 }}>
-          <WindowControls onClose={onClose} onMinimize={onMinimize} onMaximize={onMaximize} />
-        </div>
+    <WindowSidebar width={200} controls={{ onClose, onMinimize, onMaximize }}>
+    <div className="flex flex-col overflow-y-auto window-scroll px-2 py-2 gap-0.5" style={{ flex: 1 }}>
+      {/* Applications — top entry */}
+      <SidebarItem
+        icon={toolsIconUrl}
+        label="Applications"
+        active={contentView === 'applications'}
+        onClick={goToApplications}
+      />
 
-        <div className="flex flex-col overflow-y-auto window-scroll px-2 py-2 gap-0.5" style={{ flex: 1 }}>
-          {/* Applications — top entry */}
-          <SidebarItem
-            icon={toolsIconUrl}
-            label="Applications"
-            active={contentView === 'applications'}
-            onClick={goToApplications}
-          />
+      <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '6px 8px' }} />
 
-          <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '6px 8px' }} />
+      {/* Favorites */}
+      <p className="px-3 pb-1 text-[11px] font-semibold" style={{ color: 'rgba(255,255,255,0.56)' }}>Favorites</p>
+      {FAVORITES.map((fav) => (
+        <SidebarItem
+          key={fav.id}
+          icon={fav.icon}
+          label={fav.label}
+          active={contentView === fav.id}
+          onClick={() => { setContentView(fav.id); setSelectedTool(null); setSearch('') }}
+        />
+      ))}
 
-          {/* Favorites */}
-          <p className="px-3 pb-1 text-[10px] font-semibold tracking-wide" style={{ color: '#5E5C53' }}>Favorites</p>
-          {FAVORITES.map((fav) => (
-            <SidebarItem
-              key={fav.id}
-              icon={fav.icon}
-              label={fav.label}
-              active={contentView === fav.id}
-              onClick={() => { setContentView(fav.id); setSelectedTool(null); setSearch('') }}
-            />
-          ))}
-
-          {/* Locations — the Trash is a place in Finder, not an app of its own,
-              which is why the dock's basket opens this window. */}
-          <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '6px 8px' }} />
-          <p className="px-3 pb-1 text-[10px] font-semibold tracking-wide" style={{ color: '#5E5C53' }}>Locations</p>
-          <SidebarItem
-            icon={trashIcon}
-            label="Trash"
-            plainIcon
-            active={inTrash}
-            onClick={() => { setContentView('trash'); setSelectedTool(null); setSearch('') }}
-          />
-        </div>
-      </div>
+      {/* Locations — the Trash is a place in Finder, not an app of its own,
+          which is why the dock's basket opens this window. */}
+      <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '6px 8px' }} />
+      <p className="px-3 pb-1 text-[11px] font-semibold" style={{ color: 'rgba(255,255,255,0.56)' }}>Locations</p>
+      <SidebarItem
+        icon={trashIcon}
+        label="Trash"
+        active={inTrash}
+        onClick={() => { setContentView('trash'); setSelectedTool(null); setSearch('') }}
+      />
     </div>
+    </WindowSidebar>
   )
 
   // ── Render ───────────────────────────────────────────────────────────────────
