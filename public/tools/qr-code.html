@@ -135,8 +135,6 @@
       font-size: 10px;
       font-weight: 600;
       color: var(--body);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
       opacity: 0.7;
     }
 
@@ -371,8 +369,6 @@
       font-size: 10px;
       font-weight: 600;
       color: var(--body);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
       opacity: 0.7;
     }
 
@@ -409,13 +405,15 @@
       flex-shrink: 0;
     }
 
+    /* A macOS push button: 28px tall, 6px corners, 13px regular text. The
+       34px/8px/500 it replaced is web-button geometry. */
     .action-btn {
-      height: 34px;
-      padding: 0 16px;
-      font-family: 'SF Pro Display', system-ui, sans-serif;
-      font-size: 12px;
-      font-weight: 500;
-      border-radius: 8px;
+      height: 28px;
+      padding: 0 14px;
+      font-family: 'SF Pro Text', system-ui, sans-serif;
+      font-size: 13px;
+      font-weight: 400;
+      border-radius: 6px;
       cursor: pointer;
       transition: background .15s, border-color .15s, color .15s, opacity .15s;
       outline: none;
@@ -425,7 +423,7 @@
       border: 1px solid var(--border);
       color: var(--body);
     }
-    .action-btn-ghost:hover { border-color: rgba(207,5,6,0.4); color: var(--accent); }
+    .action-btn-ghost:hover { background: rgba(127,127,127,0.14); color: var(--headline); }
     .action-btn-solid {
       background: var(--accent);
       border: 1px solid var(--accent);
@@ -514,7 +512,7 @@
         <!-- Content input -->
         <div class="ctrl-group" id="inputGroup">
           <div class="ctrl-label-row">
-            <span class="ctrl-label" id="inputLabel">Type Something</span>
+            <span class="ctrl-label" id="inputLabel">Type something</span>
           </div>
           <input type="text" id="mainInput" class="ctrl-input" placeholder="https://example.com" value="https://www.ferdousmikdad.com/" autocomplete="off" />
         </div>
@@ -522,7 +520,7 @@
         <!-- WiFi fields -->
         <div id="wifiFields">
           <div class="ctrl-group">
-            <div class="ctrl-label-row"><span class="ctrl-label">Network Name</span></div>
+            <div class="ctrl-label-row"><span class="ctrl-label">Network name</span></div>
             <input type="text" id="wifiSSID" class="ctrl-input" placeholder="MyNetwork" autocomplete="off" />
           </div>
           <div class="ctrl-group">
@@ -577,12 +575,12 @@
         <div id="customColorSection">
           <div class="color-ctrl-row">
             <div class="color-ctrl-item">
-              <span class="ctrl-label">Dot Color</span>
+              <span class="ctrl-label">Dot color</span>
               <button class="color-swatch-btn" id="dotColorSwatch" title="Pick dot color"></button>
               <span class="color-hex-val" id="dotColorVal">#1C1C1E</span>
             </div>
             <div class="color-ctrl-item">
-              <span class="ctrl-label">Corner Box</span>
+              <span class="ctrl-label">Corner box</span>
               <button class="color-swatch-btn" id="cornerColorSwatch" title="Pick corner color"></button>
               <span class="color-hex-val" id="cornerColorVal">#CF0506</span>
             </div>
@@ -617,7 +615,7 @@
       </div>
       <div class="actions-row">
         <button id="svgBtn"  class="action-btn action-btn-ghost" disabled>SVG</button>
-        <button id="pngBtn"  class="action-btn action-btn-solid" disabled>↓ PNG Download</button>
+        <button id="pngBtn"  class="action-btn action-btn-solid" disabled>Download PNG</button>
       </div>
     </div>
   </div>
@@ -770,10 +768,10 @@ setupDropdown('wifiSecBtn', 'wifiSecMenu', val => {
 
 /* ── Input area update ── */
 const INPUT_CONFIG = {
-  url:   { label: 'Type Something', placeholder: 'https://example.com',  type: 'text'  },
-  text:  { label: 'Type Something', placeholder: 'Enter any text…',       type: 'text'  },
-  email: { label: 'Email Address',  placeholder: 'hello@example.com',     type: 'email' },
-  phone: { label: 'Phone Number',   placeholder: '+1 234 567 8900',       type: 'tel'   },
+  url:   { label: 'Type something', placeholder: 'https://example.com',  type: 'text'  },
+  text:  { label: 'Type something', placeholder: 'Enter any text…',       type: 'text'  },
+  email: { label: 'Email address',  placeholder: 'hello@example.com',     type: 'email' },
+  phone: { label: 'Phone number',   placeholder: '+1 234 567 8900',       type: 'tel'   },
 };
 
 function updateInputArea() {

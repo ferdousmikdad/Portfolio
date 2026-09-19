@@ -271,25 +271,28 @@ function ArticleView({ note, onBack }) {
 }
 
 // ── Notes Entry Row ───────────────────────────────────────────────────────────
+/* A row in the note list. Two things here are what make it read as Notes
+   rather than as a styled <ul>: the selected row takes the accent colour (a
+   grey wash is what an *unfocused* macOS list shows), and the hairline between
+   rows starts at the text rather than at the pane edge — every inset list on
+   the system divides that way. The divider is a child so the selected row can
+   swallow it, which is also what AppKit does. */
 function NoteRow({ note, active, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="w-full text-left px-4 py-3 transition-colors"
-      style={{
-        background: active ? 'var(--social-hover)' : 'transparent',
-        borderBottom: '1px solid var(--border)',
-      }}
+      className={`notes-row w-full text-left px-4 py-3 transition-colors${active ? ' notes-row--on' : ''}`}
     >
       <p
-        className="text-[12.5px] font-medium leading-tight truncate"
-        style={{ color: 'var(--headline)', fontFamily: "'SF Pro Display'" }}
+        className="notes-row__title text-[12.5px] font-medium leading-tight truncate"
+        style={{ fontFamily: "'SF Pro Display'" }}
       >
         {note.title}
       </p>
-      <p className="text-[11px] mt-0.5 truncate" style={{ color: 'var(--body)' }}>
+      <p className="notes-row__sub text-[11px] mt-0.5 truncate">
         {note.date} — {note.preview}
       </p>
+      <span className="notes-row__rule" />
     </button>
   )
 }
@@ -418,7 +421,16 @@ export default function NotesPanel({
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
             >
-              <span style={{ fontSize: 32, opacity: 0.15 }}>📝</span>
+              {/* A raster emoji sat here, which no Mac app would use for an
+                  empty state. This is the Notes glyph drawn as a symbol, in
+                  the same muted weight AppKit gives a placeholder. */}
+              <svg width="34" height="34" viewBox="0 0 16 16" fill="none"
+                   style={{ color: 'var(--body)', opacity: 0.28 }}>
+                <rect x="2.6" y="1.9" width="10.8" height="12.2" rx="2.2"
+                      stroke="currentColor" strokeWidth="1.1" />
+                <path d="M5.3 5.6h5.4M5.3 8h5.4M5.3 10.4h3.2"
+                      stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
+              </svg>
               <p className="text-body text-xs">Select a note to read</p>
             </motion.div>
           )}

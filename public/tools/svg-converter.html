@@ -155,7 +155,6 @@
     }
     .ctrl-panel-title {
       font-size: 11px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 0.14em;
       color: var(--body); opacity: 0.5;
     }
 
@@ -178,7 +177,6 @@
     }
     .ctrl-label {
       font-size: 10px; font-weight: 600;
-      text-transform: uppercase; letter-spacing: 0.1em;
       color: var(--body); opacity: 0.6;
     }
     .ctrl-value {
@@ -241,7 +239,6 @@
     }
     .presets-label {
       font-size: 11px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 0.14em;
       color: var(--body); opacity: 0.5;
       margin-right: 2px;
     }
@@ -279,7 +276,6 @@
     }
     .img-pane-label {
       font-size: 10px; font-weight: 600;
-      text-transform: uppercase; letter-spacing: 0.12em;
       color: var(--body); opacity: 0.5;
       flex-shrink: 0;
     }
@@ -331,7 +327,6 @@
     #processingOverlay.show { display: flex; }
     .processing-label {
       font-size: 10px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 0.12em;
       color: var(--accent);
     }
 
@@ -340,10 +335,11 @@
       display: flex; align-items: center; gap: 8px;
       flex-shrink: 0;
     }
+    /* macOS push-button geometry: 28px tall, 6px corners, 13px regular. */
     .action-btn {
-      height: 32px; padding: 0 16px;
-      border-radius: 8px;
-      font-size: 12px; font-weight: 600;
+      height: 28px; padding: 0 14px;
+      border-radius: 6px;
+      font-size: 13px; font-weight: 400;
       cursor: pointer; font-family: inherit;
       transition: background .15s, opacity .15s, color .15s;
       white-space: nowrap;
@@ -460,7 +456,7 @@
           <!-- Stroke Width -->
           <div class="ctrl-group">
             <div class="ctrl-label-row">
-              <span class="ctrl-label">Stroke Width</span>
+              <span class="ctrl-label">Stroke width</span>
               <span class="ctrl-value" id="strokeVal">0</span>
             </div>
             <input type="range" id="strokeSlider" min="0" max="5" value="0" />
@@ -497,7 +493,7 @@
           </div>
         </div>
         <div class="img-pane">
-          <span class="img-pane-label">SVG Output</span>
+          <span class="img-pane-label">SVG output</span>
           <div class="img-pane-body checker">
             <div id="svgResult"></div>
             <div id="processingOverlay">
@@ -510,7 +506,7 @@
       <!-- Actions -->
       <div class="actions-row">
         <button id="copySvgBtn" class="action-btn action-btn-ghost">Copy SVG</button>
-        <button id="downloadSvgBtn" class="action-btn action-btn-solid">↓ Download</button>
+        <button id="downloadSvgBtn" class="action-btn action-btn-solid">Download</button>
       </div>
 
     </div>

@@ -154,7 +154,6 @@
     }
     .ctrl-panel-title {
       font-size: 11px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 0.14em;
       color: var(--body); opacity: 0.5;
     }
 
@@ -179,7 +178,6 @@
     }
     .ctrl-label {
       font-size: 10px; font-weight: 600;
-      text-transform: uppercase; letter-spacing: 0.1em;
       color: var(--body); opacity: 0.6;
     }
     .ctrl-value {
@@ -297,7 +295,6 @@
     }
     .presets-label {
       font-size: 11px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 0.14em;
       color: var(--body); opacity: 0.5;
       margin-right: 2px;
     }
@@ -333,7 +330,6 @@
     }
     .img-pane-label {
       font-size: 10px; font-weight: 600;
-      text-transform: uppercase; letter-spacing: 0.12em;
       color: var(--body); opacity: 0.5;
       flex-shrink: 0;
     }
@@ -364,7 +360,6 @@
     #processingOverlay.show { display: flex; }
     .processing-label {
       font-size: 10px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 0.12em;
       color: var(--accent);
     }
 
@@ -373,10 +368,11 @@
       display: flex; align-items: center; gap: 8px;
       flex-shrink: 0;
     }
+    /* macOS push-button geometry: 28px tall, 6px corners, 13px regular. */
     .action-btn {
-      height: 32px; padding: 0 16px;
-      border-radius: 8px;
-      font-size: 12px; font-weight: 600;
+      height: 28px; padding: 0 14px;
+      border-radius: 6px;
+      font-size: 13px; font-weight: 400;
       cursor: pointer; font-family: inherit;
       transition: background .15s, opacity .15s, color .15s;
       white-space: nowrap;
@@ -515,7 +511,7 @@
 
           <!-- Dot Shape -->
           <div class="ctrl-group">
-            <span class="ctrl-label">Dot Shape</span>
+            <span class="ctrl-label">Dot shape</span>
             <div class="shape-toggle">
               <button class="shape-btn active" data-shape="circle">● Circle</button>
               <button class="shape-btn" data-shape="square">■ Square</button>
@@ -527,7 +523,7 @@
           <!-- Dot Spacing -->
           <div class="ctrl-group">
             <div class="ctrl-label-row">
-              <span class="ctrl-label">Dot Spacing</span>
+              <span class="ctrl-label">Dot spacing</span>
               <span id="spacingVal" class="ctrl-value">10px</span>
             </div>
             <input type="range" id="spacing" min="4" max="40" value="10" />
@@ -537,14 +533,14 @@
           <div class="ctrl-pair">
             <div class="ctrl-group">
               <div class="ctrl-label-row">
-                <span class="ctrl-label">Max Dot</span>
+                <span class="ctrl-label">Max dot</span>
                 <span id="maxSizeVal" class="ctrl-value">90%</span>
               </div>
               <input type="range" id="maxSize" min="10" max="100" value="90" />
             </div>
             <div class="ctrl-group">
               <div class="ctrl-label-row">
-                <span class="ctrl-label">Min Dot</span>
+                <span class="ctrl-label">Min dot</span>
                 <span id="minSizeVal" class="ctrl-value">0%</span>
               </div>
               <input type="range" id="minSize" min="0" max="50" value="0" />
@@ -566,12 +562,12 @@
           <div class="ctrl-group">
             <div class="color-ctrl-row">
               <div class="color-ctrl-item">
-                <span class="ctrl-label">Dot Color</span>
+                <span class="ctrl-label">Dot color</span>
                 <button class="color-swatch-btn" id="dotColorSwatch" title="Pick dot color"></button>
                 <span id="dotColorVal" class="color-hex-val">#000000</span>
               </div>
               <div class="color-ctrl-item">
-                <span class="ctrl-label">BG Color</span>
+                <span class="ctrl-label">BG color</span>
                 <button class="color-swatch-btn" id="bgColorSwatch" title="Pick background color"></button>
                 <span id="bgColorVal" class="color-hex-val">#FFFFFF</span>
               </div>
@@ -637,7 +633,7 @@
       <!-- Actions -->
       <div class="actions-row">
         <button id="svgBtn" class="action-btn action-btn-ghost">SVG</button>
-        <button id="downloadBtn" class="action-btn action-btn-solid">↓ Download</button>
+        <button id="downloadBtn" class="action-btn action-btn-solid">Download</button>
       </div>
 
     </div>

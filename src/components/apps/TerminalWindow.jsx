@@ -5,7 +5,11 @@ import useSound from '@/hooks/useSound'
 import TOOLS from '@/data/tools'
 
 /* ── Palette ──────────────────────────────────────────────────────── */
-const FONT = "'SF Pro Text'"
+/* Terminal.app renders everything in a fixed-pitch face — `ui-monospace` is
+   what resolves to SF Mono on Apple platforms, with Menlo (Terminal's older
+   default) behind it. A proportional face here makes the block-drawing
+   characters in the boot bar kern into a ragged smear. */
+const FONT = "ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Monaco, monospace"
 const G  = '#4af08e'
 const C  = '#56b6c2'
 const R  = '#ff6b6b'
@@ -27,7 +31,7 @@ const ln = (type, content) => ({ id: _lid++, type, content })
 const BOOT = [
   { text: 'Initializing portfolio OS...',     delay: 0    },
   { text: 'Loading Ferdous.exe...',           delay: 500  },
-  { text: '▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ 100%',      delay: 1050 },
+  { text: '█████████████████████ 100%',      delay: 1050 },
   { text: 'All systems operational. ✓',       delay: 1350 },
   { text: '',                                 delay: 1550 },
   { text: "Type 'help' to get started.",      delay: 1650 },
@@ -292,7 +296,7 @@ export default function TerminalWindow() {
           clearInterval(hackTimer.current)
           setHackRows(null)
           addLines([
-            ln('success', '▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ BREACH COMPLETE'),
+            ln('success', '████████████████████ BREACH COMPLETE'),
             ln('output',  ''),
             ln('output',  'Access granted. Welcome to the matrix. 🟢'),
             ln('output',  ''),
@@ -619,7 +623,7 @@ export default function TerminalWindow() {
   }
 
   return (
-    <Window id="terminal" title="ferdous@portfolio ~ — zsh">
+    <Window id="terminal" title="ferdous@portfolio ~ — zsh" centerTitle>
       <div
         onClick={() => inputRef.current?.focus()}
         style={{ height: '100%', display: 'flex', flexDirection: 'column', background: BG, cursor: 'text' }}
@@ -631,7 +635,7 @@ export default function TerminalWindow() {
           {/* mikuda install progress bar */}
           {installProgress !== null && (
             <div style={{ fontFamily: FONT, fontSize: 12.5, lineHeight: '1.6', padding: '0 16px' }}>
-              <span style={{ color: G }}>{'▓'.repeat(Math.floor(installProgress / 5))}</span>
+              <span style={{ color: G }}>{'█'.repeat(Math.floor(installProgress / 5))}</span>
               <span style={{ color: D }}>{'░'.repeat(20 - Math.floor(installProgress / 5))}</span>
               <span style={{ color: W }}> {installProgress}%</span>
             </div>

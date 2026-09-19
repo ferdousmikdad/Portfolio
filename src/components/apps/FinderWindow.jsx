@@ -464,18 +464,17 @@ export default function FinderWindow() {
   const sidebarContent = ({ onClose, onMinimize, onMaximize }) => (
     <WindowSidebar width={200} controls={{ onClose, onMinimize, onMaximize }}>
     <div className="flex flex-col overflow-y-auto window-scroll px-2 py-2 gap-0.5" style={{ flex: 1 }}>
-      {/* Applications — top entry */}
+      {/* Favorites. Applications is the first row *inside* this section —
+          in Finder it is a favourite like any other, not a heading of its own.
+          It used to sit above the "Favorites" label with a rule under it,
+          which left the label orphaned from the row it names. */}
+      <p className="px-3 pb-1 text-[11px] font-semibold" style={{ color: 'rgba(255,255,255,0.56)' }}>Favorites</p>
       <SidebarItem
         icon={toolsIconUrl}
         label="Applications"
         active={contentView === 'applications'}
         onClick={goToApplications}
       />
-
-      <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '6px 8px' }} />
-
-      {/* Favorites */}
-      <p className="px-3 pb-1 text-[11px] font-semibold" style={{ color: 'rgba(255,255,255,0.56)' }}>Favorites</p>
       {FAVORITES.map((fav) => (
         <div key={fav.id}>
           <SidebarItem

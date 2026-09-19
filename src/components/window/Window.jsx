@@ -7,7 +7,7 @@ import { genieStage, flatten, rasterizeFrames, afterMount } from '@/utils/genie'
 import { setSnapshot } from '@/utils/windowSnapshots'
 import { useResize, RESIZE_CURSORS } from '@/hooks/useResize'
 
-export default function Window({ id, title, children, actionLabel, onAction, hideControls, hideTitleBar, toolbar, sidebarContent, shellStyle, paneStyle, navSlot, minSize, disableMaximize, titleBarBorder = false }) {
+export default function Window({ id, title, children, actionLabel, onAction, hideControls, hideTitleBar, toolbar, sidebarContent, shellStyle, paneStyle, navSlot, minSize, disableMaximize, titleBarBorder = false, centerTitle = false }) {
   const { closeWindow, minimizeWindow, focusWindow, updatePosition, getWindow, toggleMaximize } = useWindowStore()
   const activeWindowId = useWindowStore((s) => s.activeWindowId)
   const restoring   = useWindowStore((s) => s.restoringId) === id
@@ -200,7 +200,11 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
                 />
               )}
               {navSlot}
-              {title && <span className="window-titlebar__title">{title}</span>}
+              {title && (
+                <span className={`window-titlebar__title${centerTitle ? ' window-titlebar__title--center' : ''}`}>
+                  {title}
+                </span>
+              )}
               {toolbar && <div className="ml-auto flex items-center gap-2">{toolbar}</div>}
               {actionLabel && !toolbar && (
                 <span className="ml-auto text-xs text-brand font-medium cursor-pointer hover:opacity-80 transition-opacity" onClick={onAction}>

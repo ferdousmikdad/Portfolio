@@ -171,7 +171,6 @@
       display: block;
       font-size: 10px; font-weight: 600;
       color: var(--muted);
-      text-transform: uppercase; letter-spacing: .07em;
       margin-bottom: 7px;
     }
 
@@ -240,11 +239,12 @@
       border-top: 1px solid var(--border);
     }
 
+    /* macOS prominent push button: 6px corners, 13px regular. */
     .btn-dl {
       width: 100%; background: var(--red); color: #fff;
-      border: none; border-radius: 8px;
-      padding: 10px 14px;
-      font-family: inherit; font-size: 13px; font-weight: 500;
+      border: none; border-radius: 6px;
+      padding: 7px 14px;
+      font-family: inherit; font-size: 13px; font-weight: 400;
       cursor: pointer;
       display: flex; align-items: center; justify-content: center; gap: 6px;
       transition: background .15s, transform .1s;
@@ -389,7 +389,7 @@
     <div class="settings-section">
 
       <div>
-        <label class="s-label" for="bookNameInput">Book Name</label>
+        <label class="s-label" for="bookNameInput">Book name</label>
         <input type="text" class="s-input" id="bookNameInput" placeholder="Type your book name…" />
       </div>
 
@@ -404,7 +404,7 @@
                 <polyline points="20 6 9 17 4 12"/>
               </svg>
             </span>
-            <span class="chk-text">Print Mark</span>
+            <span class="chk-text">Print mark</span>
           </label>
 
           <label class="tog-label">
@@ -426,7 +426,7 @@
           <path d="M12 10v6m0 0l-3-3m3 3l3-3" stroke-linecap="round"/>
           <path d="M20 17v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2" stroke-linecap="round"/>
         </svg>
-        <span class="dl-lbl">Download pdf</span>
+        <span class="dl-lbl">Download PDF</span>
       </button>
     </div>
 

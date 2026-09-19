@@ -13,7 +13,9 @@ const notesW     = 900, notesH     = 580
 const finderW    = 900, finderH    = 560
 const terminalW  = 700, terminalH  = 460
 const smallW     = 420, smallH     = 360
-const shopW      = 980, shopH      = 620
+/* Shop gained a 200px sidebar; the window grows by it so the card grid keeps
+   the width it was designed at instead of squeezing a column. */
+const shopW      = 1180, shopH     = 620
 const mailW      = 560, mailH      = 430
 const calcW      = 272, calcH      = 462
 const initW      = vw <= 1440 ? Math.round(portfolioW * 0.9) : portfolioW
@@ -45,6 +47,7 @@ export const TOOL_IDS = [
   'image-converter',
   'image-text',
   'typing-tool',
+  'print-setup',
 ]
 
 const toolWindows = TOOL_IDS.map((id, i) => ({

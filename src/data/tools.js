@@ -7,6 +7,7 @@ import qrCodeUrl          from '@/assets/icons/qrcode.svg?url'
 import imageConverterUrl  from '@/assets/icons/image-converter.svg?url'
 import imageTextUrl       from '@/assets/icons/image-text.svg?url'
 import typingToolUrl      from '@/assets/icons/typing-tool.svg?url'
+import printSetupUrl     from '@/assets/icons/print-setup.svg?url'
 
 const TOOLS = [
   {
@@ -62,6 +63,12 @@ const TOOLS = [
     name: 'Typing Practice',
     icon: typingToolUrl,
     url:  '/tools/typing-practice.html',
+  },
+  {
+    id:   'print-setup',
+    name: 'Print Setup',
+    icon: printSetupUrl,
+    url:  '/tools/print-setup.html',
   },
 ]
 

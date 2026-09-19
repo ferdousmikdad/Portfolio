@@ -262,7 +262,6 @@
     }
     .ctrl-panel-title {
       font-size: 11px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 0.14em;
       color: var(--body); opacity: 0.5;
     }
     .ctrl-panel-body {
@@ -276,7 +275,6 @@
     .ctrl-label-row { display:flex; align-items:center; justify-content:space-between; }
     .ctrl-label {
       font-size: 10px; font-weight: 600;
-      text-transform: uppercase; letter-spacing: 0.1em;
       color: var(--body); opacity: 0.6;
     }
     .ctrl-value {
@@ -419,7 +417,6 @@
     .img-pane { display:flex; flex-direction:column; gap:8px; }
     .img-pane-label {
       font-size: 10px; font-weight: 600;
-      text-transform: uppercase; letter-spacing: 0.12em;
       color: var(--body); opacity: 0.5;
       flex-shrink: 0;
     }
@@ -461,7 +458,6 @@
     #imgLoading.show { display: flex; }
     .loading-text {
       font-size: 10px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 0.12em;
       color: var(--accent);
     }
 
@@ -470,10 +466,11 @@
       display: flex; align-items: center; gap: 8px;
       flex-shrink: 0;
     }
+    /* macOS push-button geometry: 28px tall, 6px corners, 13px regular. */
     .action-btn {
-      height: 32px; padding: 0 16px;
-      border-radius: 8px;
-      font-size: 12px; font-weight: 600;
+      height: 28px; padding: 0 14px;
+      border-radius: 6px;
+      font-size: 13px; font-weight: 400;
       cursor: pointer; font-family: inherit;
       transition: background .15s, opacity .15s, color .15s;
       white-space: nowrap;
@@ -637,7 +634,7 @@
         </div>
         <div class="text-output-actions">
           <button id="svgCopyBtn" class="action-btn action-btn-ghost">SVG</button>
-          <button id="downloadTextBtn" class="action-btn action-btn-solid">↓ Download</button>
+          <button id="downloadTextBtn" class="action-btn action-btn-solid">Download</button>
         </div>
       </div>
 
@@ -697,7 +694,7 @@
             <!-- Font Size -->
             <div class="ctrl-group">
               <div class="ctrl-label-row">
-                <span class="ctrl-label">Font Size</span>
+                <span class="ctrl-label">Font size</span>
                 <span id="fontSizeVal" class="ctrl-value">6px</span>
               </div>
               <input type="range" id="imgFontSize" min="4" max="14" value="6" />
@@ -746,7 +743,7 @@
             </div>
           </div>
           <div class="img-pane">
-            <span class="img-pane-label">ASCII Output</span>
+            <span class="img-pane-label">ASCII output</span>
             <div class="img-pane-body ascii-pane-body">
               <pre id="imgAsciiOutput"></pre>
               <div id="imgLoading"><span class="loading-text">Generating…</span></div>
@@ -757,7 +754,7 @@
         <!-- Actions -->
         <div class="actions-row">
           <button id="imgSvgBtn"    class="action-btn action-btn-ghost">SVG</button>
-          <button id="downloadPngBtn" class="action-btn action-btn-solid">↓ Download</button>
+          <button id="downloadPngBtn" class="action-btn action-btn-solid">Download</button>
         </div>
 
       </div>
