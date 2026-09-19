@@ -43,7 +43,6 @@ export const TOOL_IDS = [
   'image-trace',
   'qr-code',
   'image-converter',
-  'print-setup',
   'image-text',
   'typing-tool',
 ]
@@ -160,8 +159,8 @@ const defaultWindows = [
     title: 'Settings',
     isOpen: false,
     isMinimized: false,
-    position: centeredInUsableArea(700, 480),
-    size: { width: 700, height: 480 },
+    position: centeredInUsableArea(880, 620),
+    size: { width: 880, height: 620 },
     zIndex: 3,
   },
   {

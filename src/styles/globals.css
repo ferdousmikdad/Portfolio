@@ -3074,3 +3074,1058 @@ button:hover > .finder-disclosure { opacity: 0.7; }
     inset 0 0 0 0.5px rgba(255, 255, 255, 0.3);
 }
 .calc-key--op.active:hover { background: #ffffff; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   macOS Tahoe — System Settings, Control Centre, Spotlight
+   Measurements taken off macOS 26.5.1 on this machine rather than estimated:
+   the settings card is the window fill plus ~3.5% white, its rows are 38px
+   with a hairline that starts at the label inset, the switch is 38×22 and the
+   slider knob is 20px over a 4px track. Control Centre tiles are capsules —
+   in Tahoe every one of them is fully rounded.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --screen-dim:  0;
+
+  --mac-card:      rgba(0, 0, 0, 0.035);
+  --mac-card-line: rgba(0, 0, 0, 0.08);
+  --mac-label:     #1c1c1e;
+  --mac-secondary: rgba(60, 60, 67, 0.6);
+  --mac-control:   rgba(120, 120, 128, 0.16);
+  --mac-control-2: rgba(120, 120, 128, 0.24);
+  --mac-knob:      #ffffff;
+}
+
+.dark {
+  --mac-card:      rgba(255, 255, 255, 0.055);
+  --mac-card-line: rgba(255, 255, 255, 0.075);
+  --mac-label:     #f2f2f7;
+  --mac-secondary: rgba(235, 235, 245, 0.55);
+  --mac-control:   rgba(120, 120, 128, 0.32);
+  --mac-control-2: rgba(255, 255, 255, 0.11);
+  --mac-knob:      #ffffff;
+}
+
+/* Screen brightness scrim — see settingsStore.applyBrightness */
+.screen-dim {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: #000;
+  opacity: var(--screen-dim);
+  transition: opacity 0.12s linear;
+}
+
+/* ── Shared control vocabulary ────────────────────────────────────────────── */
+
+.mac-group { margin-bottom: 20px; }
+.mac-group:last-child { margin-bottom: 4px; }
+
+.mac-group__title {
+  font-family: 'SF Pro Display', 'SF Pro Text', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--mac-label);
+  margin: 0 0 8px 2px;
+}
+
+.mac-group__note {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--mac-secondary);
+  margin: 6px 2px 0;
+  font-family: 'SF Pro Text', sans-serif;
+}
+
+.mac-card {
+  background: var(--mac-card);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+/* Rows. The divider is drawn on the row rather than between them so the last
+   one can drop it without a :last-child selector reaching into the card. */
+.mac-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 38px;
+  padding: 9px 14px;
+  text-align: left;
+  position: relative;
+  font-family: 'SF Pro Text', sans-serif;
+}
+.mac-row + .mac-row::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 14px; right: 0;
+  height: 1px;
+  background: var(--mac-card-line);
+}
+.mac-row--action { cursor: pointer; transition: background 0.12s ease; }
+.mac-row--action:hover { background: rgba(128, 128, 128, 0.07); }
+
+/* A row with no label on the left — the wallpaper grid, the resolution strip.
+   Without this the control keeps its margin-left:auto and collapses right. */
+.mac-row--bare > .mac-row__control {
+  margin-left: 0;
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+}
+
+.mac-row--stack {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding: 12px 14px;
+}
+
+.mac-row__icon { display: flex; flex-shrink: 0; align-items: center; }
+.mac-row__glyph { width: 22px; height: 22px; display: block; }
+
+.mac-row__text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.mac-row__label {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--mac-label);
+  line-height: 1.25;
+}
+.mac-row--stack > .mac-row__label { font-weight: 400; }
+.mac-row__secondary {
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--mac-secondary);
+}
+.mac-row__control {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.mac-row__value { font-size: 13px; color: var(--mac-secondary); }
+.mac-row__chevron { color: var(--mac-secondary); opacity: 0.7; flex-shrink: 0; }
+
+/* Switch — 38×22 with a 18px knob, exactly as AppKit draws it */
+.mac-switch {
+  width: 38px;
+  height: 22px;
+  border-radius: 11px;
+  background: var(--mac-control);
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.18s ease;
+  cursor: pointer;
+}
+.mac-switch[data-on="true"] { background: var(--brand); }
+.mac-switch__knob {
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--mac-knob);
+  box-shadow: 0 1px 2.5px rgba(0, 0, 0, 0.32), 0 0 0 0.5px rgba(0, 0, 0, 0.06);
+  transition: transform 0.18s cubic-bezier(0.3, 0.8, 0.4, 1);
+}
+.mac-switch[data-on="true"] .mac-switch__knob { transform: translateX(16px); }
+
+/* Pop-up button — value text, then the chevron pair in a tinted square */
+.mac-popup {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  font-family: 'SF Pro Text', sans-serif;
+}
+.mac-popup select {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  font-size: 13px;
+}
+.mac-popup__value {
+  font-size: 13px;
+  color: var(--mac-label);
+  white-space: nowrap;
+}
+.mac-popup__chevrons {
+  width: 17px; height: 19px;
+  border-radius: 5px;
+  background: var(--mac-control-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mac-label);
+  opacity: 0.85;
+  flex-shrink: 0;
+}
+
+/* Slider */
+.mac-slider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+.mac-slider__cap {
+  font-size: 11px;
+  color: var(--mac-secondary);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.mac-slider__track {
+  position: relative;
+  flex: 1;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+.mac-slider__track::before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--mac-control);
+}
+.mac-slider__fill {
+  position: absolute;
+  left: 0;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--brand);
+}
+.mac-slider[data-tone="neutral"] .mac-slider__fill { background: var(--mac-label); }
+.mac-slider__knob {
+  position: absolute;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--mac-knob);
+  transform: translateX(-50%);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.34), 0 0 0 0.5px rgba(0, 0, 0, 0.1);
+  pointer-events: none;
+}
+
+/* Radio & checkbox */
+.mac-radio, .mac-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  font-family: 'SF Pro Text', sans-serif;
+}
+.mac-radio__dot {
+  width: 15px; height: 15px;
+  border-radius: 50%;
+  background: var(--mac-control-2);
+  box-shadow: inset 0 0 0 1px rgba(128, 128, 128, 0.25);
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.14s;
+}
+.mac-radio[data-on="true"] .mac-radio__dot { background: var(--brand); box-shadow: none; }
+.mac-radio[data-on="true"] .mac-radio__dot::after {
+  content: '';
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 5px; height: 5px;
+  margin: -2.5px 0 0 -2.5px;
+  border-radius: 50%;
+  background: #fff;
+}
+.mac-radio__label, .mac-check__label { font-size: 13px; color: var(--mac-label); }
+
+.mac-check__box {
+  width: 15px; height: 15px;
+  border-radius: 4px;
+  background: var(--mac-control-2);
+  box-shadow: inset 0 0 0 1px rgba(128, 128, 128, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: transparent;
+  flex-shrink: 0;
+  transition: background 0.14s;
+}
+.mac-check[data-on="true"] .mac-check__box {
+  background: var(--brand);
+  box-shadow: none;
+  color: #fff;
+}
+
+/* Push button — the small bordered capsule AppKit uses inside settings rows */
+.mac-button {
+  font-family: 'SF Pro Text', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--mac-label);
+  padding: 4px 11px;
+  border-radius: 7px;
+  background: var(--mac-control-2);
+  box-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.18);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: filter 0.12s ease;
+}
+.mac-button:hover { filter: brightness(1.18); }
+.mac-button--prominent { background: var(--brand); color: #fff; }
+
+/* Thumbnail option */
+.mac-thumb-row { display: flex; gap: 12px; align-items: flex-start; }
+.mac-thumb {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+.mac-thumb__frame {
+  position: relative;
+  display: block;
+  width: 76px;
+  height: 48px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--mac-control);
+  box-shadow: 0 0 0 1px rgba(128, 128, 128, 0.22);
+  transition: box-shadow 0.14s ease;
+}
+.mac-thumb[data-on="true"] .mac-thumb__frame {
+  box-shadow: 0 0 0 2.5px var(--brand);
+}
+.mac-thumb__caption {
+  font-family: 'SF Pro Text', sans-serif;
+  font-size: 11px;
+  color: var(--mac-secondary);
+  white-space: nowrap;
+}
+.mac-thumb[data-on="true"] .mac-thumb__caption {
+  color: var(--mac-label);
+  font-weight: 600;
+}
+
+/* Accent swatches */
+.mac-swatch-row { display: flex; gap: 9px; align-items: center; flex-wrap: wrap; }
+.mac-swatch {
+  width: 21px; height: 21px;
+  border-radius: 50%;
+  cursor: pointer;
+  flex-shrink: 0;
+  box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.18);
+  transition: box-shadow 0.14s ease;
+}
+.mac-swatch[data-on="true"] {
+  box-shadow: 0 0 0 2px var(--window-bg), 0 0 0 4px var(--brand),
+              inset 0 0 0 0.5px rgba(0, 0, 0, 0.18);
+}
+
+/* ── Settings window shell ────────────────────────────────────────────────── */
+
+.set-content {
+  height: 100%;
+  overflow-y: auto;
+  padding: 14px 20px 22px;
+  box-sizing: border-box;
+}
+
+/* Back / forward, drawn as one segmented capsule the way Tahoe does */
+.mac-nav {
+  display: inline-flex;
+  align-items: center;
+  background: var(--mac-control-2);
+  border-radius: 999px;
+  height: 26px;
+  padding: 0 2px;
+  flex-shrink: 0;
+}
+.mac-nav button {
+  width: 28px; height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mac-label);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: opacity 0.14s ease, background 0.14s ease;
+}
+.mac-nav button:disabled { opacity: 0.28; cursor: default; }
+.mac-nav button:not(:disabled):hover { background: rgba(128, 128, 128, 0.22); }
+.mac-nav__div { width: 1px; height: 13px; background: rgba(128, 128, 128, 0.3); }
+
+.set-sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  padding-top: 6px;
+}
+
+/* Sidebar search field */
+.set-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 10px 10px;
+  height: 26px;
+  padding: 0 8px;
+  border-radius: 7px;
+  background: rgba(128, 128, 128, 0.18);
+  color: var(--mac-secondary);
+  flex-shrink: 0;
+}
+.set-search input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  outline: none;
+  border: none;
+  font-family: 'SF Pro Text', sans-serif;
+  font-size: 12px;
+  color: var(--mac-label);
+}
+.set-search input::placeholder { color: var(--mac-secondary); }
+.set-search button { display: flex; color: var(--mac-secondary); cursor: pointer; }
+
+/* Apple Account row */
+.set-account {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 8px 8px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  text-align: left;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.12s ease;
+}
+.set-account:hover { background: rgba(128, 128, 128, 0.14); }
+.set-account.is-active { background: var(--brand); }
+.set-account.is-active .set-account__name,
+.set-account.is-active .set-account__sub { color: #fff; }
+.set-account > span:last-child { display: flex; flex-direction: column; min-width: 0; }
+.set-account__name {
+  font-family: 'SF Pro Text', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mac-label);
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.set-account__sub {
+  font-family: 'SF Pro Text', sans-serif;
+  font-size: 11px;
+  color: var(--mac-secondary);
+  line-height: 1.3;
+}
+
+/* Avatar */
+.mac-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: rgba(128, 128, 128, 0.2);
+  box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.14);
+}
+.mac-avatar img { width: 78%; height: 78%; object-fit: contain; }
+.mac-avatar--sm { width: 22px; height: 22px; }
+.mac-avatar--md { width: 32px; height: 32px; }
+.mac-avatar--lg { width: 64px; height: 64px; }
+
+/* Sidebar nav */
+.set-nav {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 8px 10px;
+}
+.set-nav ul { list-style: none; margin: 0 0 12px; padding: 0; }
+.set-nav ul:last-child { margin-bottom: 0; }
+.set-nav button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 3px 8px;
+  border-radius: 7px;
+  text-align: left;
+  cursor: pointer;
+  font-family: 'SF Pro Text', sans-serif;
+  font-size: 13px;
+  color: var(--mac-label);
+  transition: background 0.1s ease;
+  min-height: 28px;
+}
+.set-nav button img { width: 20px; height: 20px; flex-shrink: 0; }
+.set-nav button span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.set-nav button:hover { background: rgba(128, 128, 128, 0.14); }
+.set-nav button.is-active { background: var(--brand); color: #fff; }
+.set-nav__empty {
+  font-family: 'SF Pro Text', sans-serif;
+  font-size: 12px;
+  color: var(--mac-secondary);
+  padding: 10px 8px;
+}
+
+/* ── Pane-specific pieces ─────────────────────────────────────────────────── */
+
+.mac-hero {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.mac-hero__preview {
+  position: relative;
+  width: 168px;
+  height: 106px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--mac-control);
+  box-shadow: 0 0 0 1px rgba(128, 128, 128, 0.2);
+}
+.mac-hero__body {
+  flex: 1;
+  min-width: 0;
+  background: var(--mac-card);
+  border-radius: 10px;
+  padding: 11px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: 'SF Pro Text', sans-serif;
+}
+.mac-hero__head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.mac-hero__title { font-size: 13px; font-weight: 600; color: var(--mac-label); }
+.mac-hero__note { font-size: 11px; line-height: 1.4; color: var(--mac-secondary); }
+.mac-hero__row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: auto; padding-top: 6px;
+}
+
+.mac-wall-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+.mac-wall-grid .mac-thumb__frame { width: 104px; height: 64px; }
+
+.mac-res-row { display: flex; gap: 10px; align-items: flex-end; }
+.mac-res-row .mac-thumb__frame { width: 58px; height: 40px; display: flex; align-items: center; justify-content: center; }
+.mac-res-tile { display: flex; flex-direction: column; gap: 3px; width: 34px; }
+.mac-res-tile span { height: 3px; border-radius: 2px; background: var(--mac-secondary); display: block; }
+.mac-res-tile span:nth-child(2) { width: 70%; }
+.mac-res-tile span:nth-child(3) { width: 45%; }
+.mac-res-legend {
+  display: flex; justify-content: space-between;
+  font-family: 'SF Pro Text', sans-serif;
+  font-size: 11px; color: var(--mac-secondary);
+}
+
+.mac-cursor-tile {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.mac-cursor-dot { width: 11px; height: 11px; border-radius: 50%; background: var(--brand); }
+
+.mac-battery-bar {
+  height: 10px;
+  border-radius: 5px;
+  background: var(--mac-control);
+  overflow: hidden;
+}
+.mac-battery-bar > div { height: 100%; background: #63c76a; border-radius: 5px; }
+
+.mac-storage { margin-bottom: 20px; font-family: 'SF Pro Text', sans-serif; }
+.mac-storage__head { display: flex; align-items: baseline; gap: 7px; margin-bottom: 8px; }
+.mac-storage__free { font-size: 17px; font-weight: 600; color: var(--mac-label); }
+.mac-storage__total { font-size: 12px; color: var(--mac-secondary); }
+.mac-storage__bar {
+  display: flex; height: 16px; border-radius: 5px; overflow: hidden;
+  background: var(--mac-control);
+}
+.mac-storage__bar span { display: block; height: 100%; }
+.mac-storage__legend {
+  display: flex; flex-wrap: wrap; gap: 12px; margin-top: 9px;
+  font-size: 11px; color: var(--mac-secondary);
+}
+.mac-storage__legend span { display: inline-flex; align-items: center; gap: 5px; }
+.mac-storage__legend i { width: 8px; height: 8px; border-radius: 2px; display: block; }
+
+.mac-account {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+  font-family: 'SF Pro Text', sans-serif;
+}
+.mac-account__name { font-size: 17px; font-weight: 600; color: var(--mac-label); }
+.mac-account__mail { font-size: 12px; color: var(--mac-secondary); margin-top: 2px; }
+.mac-account .mac-button { margin-left: auto; }
+
+.mac-about { text-align: center; padding: 6px 0 20px; font-family: 'SF Pro Text', sans-serif; }
+.mac-about__icon { width: 92px; height: 92px; margin: 0 auto 6px; display: block; }
+.mac-about__name { font-size: 19px; font-weight: 600; color: var(--mac-label); }
+.mac-about__sub { font-size: 12px; color: var(--mac-secondary); margin-top: 2px; }
+
+/* ── Menu-bar extras ──────────────────────────────────────────────────────── */
+
+.topbar-extras {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+/* Spotlight and Control Centre are separate controls, so they get a real gap
+   between them rather than reading as one cluster. */
+.topbar-extras > .tip-anchor + .relative,
+.topbar-extras > .relative + .tip-anchor { margin-left: 6px; }
+.topbar-icon-btn--wide { width: 34px; }
+
+/* ── Control Centre ───────────────────────────────────────────────────────── */
+
+/* Anchored to the screen edge, not to the button. Control Centre hangs off
+   the right of the menu bar wherever its icon happens to sit — measured at
+   ~22pt from the screen edge on macOS 26, which puts the panel's rim just
+   inside the clock. Positioning it against the button left a 165px gap.
+
+   The panel itself draws nothing: no fill, no blur, no shadow. A container
+   that blurs its whole area reads as a plate laid over the desktop, so the
+   glass moved down onto the tiles — each capsule, card and circle frosts its
+   own patch of what is behind it and the gaps between them stay clear. */
+.cc-panel {
+  position: fixed;
+  top: 32px;
+  right: 16px;
+  width: 302px;
+  z-index: 9000;
+  font-family: 'SF Pro Text', sans-serif;
+  background: none;
+  box-shadow: none;
+}
+
+/* Two columns: the capsules run down the wide one, Now Playing spans the
+   narrow one. Exactly how Tahoe stacks it. */
+.cc-grid {
+  display: grid;
+  grid-template-columns: 1.28fr 1fr;
+  gap: 8px;
+  grid-template-areas:
+    "wifi np"
+    "bt   np"
+    "ad   sq"
+    "tg   tg"
+    "disp disp"
+    "snd  snd";
+}
+.cc-a-wifi    { grid-area: wifi; }
+.cc-a-bt      { grid-area: bt; }
+.cc-a-ad      { grid-area: ad; }
+.cc-a-np      { grid-area: np; }
+.cc-a-sq      { grid-area: sq; display: flex; gap: 8px; align-items: center; justify-content: space-between; }
+.cc-a-toggles { grid-area: tg; display: flex; gap: 8px; align-items: stretch; }
+.cc-a-display { grid-area: disp; }
+.cc-a-sound   { grid-area: snd; }
+
+/* Every tile is its own piece of glass: it frosts the backdrop inside its own
+   shape, carries a translucent wash over it and a lit top edge, and casts a
+   small shadow so it sits above the desktop rather than in a panel.
+
+   `backdrop-filter` samples from the element's own box, so each tile only
+   blurs what is directly behind it — which is exactly what is wanted here. */
+.cc-tile {
+  background: rgba(118, 118, 128, 0.32);
+  backdrop-filter: blur(22px) saturate(180%);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.22),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.09),
+    0 6px 18px rgba(0, 0, 0, 0.26);
+  color: #f2f2f7;
+  cursor: pointer;
+  transition: background 0.14s ease;
+}
+.cc-tile:hover { background: rgba(140, 140, 152, 0.42); }
+html:not(.dark) .cc-tile {
+  background: rgba(255, 255, 255, 0.62);
+  color: #1c1c1e;
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.85),
+    inset 0 0 0 0.5px rgba(0, 0, 0, 0.05),
+    0 6px 18px rgba(0, 0, 0, 0.14);
+}
+html:not(.dark) .cc-tile:hover { background: rgba(255, 255, 255, 0.76); }
+
+.cc-capsule {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 12px 8px 8px;
+  border-radius: 999px;
+  min-height: 56px;
+  text-align: left;
+}
+.cc-capsule__text { display: flex; flex-direction: column; min-width: 0; }
+.cc-capsule__title {
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cc-capsule__sub {
+  font-size: 11.5px;
+  line-height: 1.25;
+  opacity: 0.62;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The round badge inside a capsule — white with a blue glyph when on, and a
+   flat grey wash when off. That inversion is the only state cue Tahoe gives. */
+.cc-badge {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.22);
+  color: #f2f2f7;
+  transition: background 0.16s ease, color 0.16s ease;
+}
+.cc-badge[data-on="true"] { background: #fff; color: #0a84ff; }
+.cc-badge--plain { width: 28px; height: 28px; }
+.cc-badge--plain[data-on="true"] { background: #fff; color: #5e5ce6; }
+
+/* Square toggles — Stage Manager, Screen Mirroring */
+.cc-square {
+  flex: 1;
+  aspect-ratio: 1;
+  max-width: 62px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cc-square[data-on="true"] { background: #fff; color: #0a84ff; }
+.cc-square[data-on="true"]:hover { background: #f0f0f2; }
+
+/* Round toggles — appearance, sound */
+.cc-round {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.cc-round[data-on="true"] { background: #fff; color: #1c1c1e; }
+.cc-round[data-on="true"]:hover { background: #f0f0f2; }
+
+.cc-focus {
+  flex: 1;
+  border-radius: 999px;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 14px 0 9px;
+}
+.cc-focus[data-on="true"] { background: rgba(94, 92, 230, 0.55); }
+
+/* Now Playing */
+.cc-nowplaying {
+  border-radius: 18px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  min-height: 120px;
+}
+.cc-np__art {
+  width: 40px; height: 40px;
+  border-radius: 5px;
+  margin-bottom: 6px;
+  background: linear-gradient(140deg, #cf0506, #5a1a1a 70%, #241014);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  flex-shrink: 0;
+}
+.cc-np__title {
+  font-size: 12px; font-weight: 600; line-height: 1.25;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cc-np__artist {
+  font-size: 11px; opacity: 0.6; line-height: 1.25;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cc-np__transport {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 8px; padding: 0 4px; opacity: 0.85;
+}
+
+/* Slider cards. The fill is white and the glyph rides on top of it. */
+.cc-slidercard {
+  border-radius: 18px;
+  padding: 9px 11px 11px;
+  cursor: default;
+  flex: 1;
+  min-width: 0;
+}
+.cc-slidercard:hover { background: rgba(255, 255, 255, 0.09); }
+html:not(.dark) .cc-slidercard:hover { background: rgba(0, 0, 0, 0.06); }
+.cc-slidercard__label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.cc-trough {
+  position: relative;
+  height: 24px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.16);
+  overflow: hidden;
+  cursor: pointer;
+}
+html:not(.dark) .cc-trough { background: rgba(0, 0, 0, 0.1); }
+.cc-trough__fill {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  border-radius: 12px;
+  background: #fff;
+  transition: width 0.05s linear;
+}
+.cc-trough__glyph {
+  position: absolute;
+  left: 6px; top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  color: #6b6b70;
+  pointer-events: none;
+}
+
+.cc-slidercard__body { display: flex; align-items: center; gap: 8px; }
+.cc-slidercard__body > .cc-trough { flex: 1; min-width: 0; }
+.cc-airplay {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: inherit;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.16);
+  transition: background 0.14s ease;
+}
+.cc-airplay:hover { background: rgba(255, 255, 255, 0.26); }
+html:not(.dark) .cc-airplay { background: rgba(0, 0, 0, 0.1); }
+
+/* Light mode inverts the "on" treatment: a dark tile turns white with a blue
+   glyph, but a light tile has to go blue with a white glyph or the active
+   state disappears into the panel. Checked against System Settings in Light
+   appearance on macOS 26. */
+html:not(.dark) .cc-badge {
+  background: rgba(0, 0, 0, 0.1);
+  color: #3c3c43;
+}
+html:not(.dark) .cc-badge[data-on="true"] {
+  background: #0a84ff;
+  color: #fff;
+}
+html:not(.dark) .cc-badge--plain[data-on="true"] { background: #5e5ce6; }
+html:not(.dark) .cc-square[data-on="true"],
+html:not(.dark) .cc-round[data-on="true"] {
+  background: #0a84ff;
+  color: #fff;
+}
+html:not(.dark) .cc-square[data-on="true"]:hover,
+html:not(.dark) .cc-round[data-on="true"]:hover { background: #0b76e0; }
+html:not(.dark) .cc-focus[data-on="true"] { background: rgba(94, 92, 230, 0.22); }
+html:not(.dark) .cc-trough__glyph { color: #8a8a8f; }
+
+.cc-edit {
+  display: block;
+  margin: 8px auto 0;
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #f2f2f7;
+  background: rgba(118, 118, 128, 0.32);
+  backdrop-filter: blur(22px) saturate(180%);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.22),
+    0 6px 18px rgba(0, 0, 0, 0.26);
+  cursor: pointer;
+  transition: background 0.14s ease;
+}
+.cc-edit:hover { background: rgba(140, 140, 152, 0.42); }
+html:not(.dark) .cc-edit {
+  color: #1c1c1e;
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.85), 0 6px 18px rgba(0, 0, 0, 0.14);
+}
+
+/* ── Spotlight ────────────────────────────────────────────────────────────── */
+
+.spotlight-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 9500;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 16vh;
+}
+.spotlight-stack {
+  width: min(680px, 78vw);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* The capsule. Radius is half the height, which is what makes it read as
+   Tahoe rather than as a rounded box. */
+.spotlight-pill {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 62px;
+  padding: 0 24px;
+  border-radius: 31px;
+  overflow: hidden;
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.5),
+    0 4px 14px rgba(0, 0, 0, 0.3),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+}
+.spotlight-pill > *:not(.lg-glass) { position: relative; z-index: 1; }
+.spotlight-pill .lg-glass__overlay { background: rgba(24, 24, 26, 0.5); }
+.spotlight-pill .lg-glass__filter {
+  inset: -30px;
+  backdrop-filter: blur(26px) saturate(180%);
+  -webkit-backdrop-filter: blur(26px) saturate(180%);
+}
+html:not(.dark) .spotlight-pill .lg-glass__overlay { background: rgba(250, 250, 252, 0.6); }
+
+.spotlight-pill__icon {
+  display: flex;
+  color: rgba(235, 235, 245, 0.55);
+  flex-shrink: 0;
+}
+html:not(.dark) .spotlight-pill__icon { color: rgba(60, 60, 67, 0.5); }
+
+.spotlight-pill__input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: 'SF Pro Display', 'SF Pro Text', sans-serif;
+  font-size: 25px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--headline);
+}
+.spotlight-pill__input::placeholder { color: rgba(235, 235, 245, 0.42); }
+html:not(.dark) .spotlight-pill__input::placeholder { color: rgba(60, 60, 67, 0.4); }
+
+.spotlight-results {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  padding: 8px;
+  max-height: 46vh;
+  overflow-y: auto;
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+}
+.spotlight-results > *:not(.lg-glass) { position: relative; z-index: 1; }
+.spotlight-results .lg-glass__overlay { background: rgba(24, 24, 26, 0.55); }
+.spotlight-results .lg-glass__filter {
+  inset: -26px;
+  backdrop-filter: blur(26px) saturate(180%);
+  -webkit-backdrop-filter: blur(26px) saturate(180%);
+}
+html:not(.dark) .spotlight-results .lg-glass__overlay { background: rgba(250, 250, 252, 0.62); }
+.spotlight-results ul { list-style: none; margin: 0; padding: 0; }
+
+.spotlight-results__group {
+  font-family: 'SF Pro Text', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mac-secondary);
+  padding: 8px 10px 4px;
+}
+
+.spotlight-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 10px;
+  text-align: left;
+  cursor: pointer;
+  font-family: 'SF Pro Text', sans-serif;
+}
+.spotlight-row.is-active { background: var(--brand); }
+.spotlight-row__icon { width: 26px; height: 26px; object-fit: contain; flex-shrink: 0; }
+.spotlight-row__thumb {
+  width: 34px; height: 26px; border-radius: 4px; overflow: hidden; flex-shrink: 0;
+  background: var(--mac-control);
+}
+.spotlight-row__thumb img { width: 100%; height: 100%; object-fit: cover; }
+.spotlight-row__title {
+  font-size: 13.5px;
+  color: var(--headline);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.spotlight-row__sub { font-size: 11.5px; color: var(--mac-secondary); flex-shrink: 0; }
+.spotlight-row.is-active .spotlight-row__title,
+.spotlight-row.is-active .spotlight-row__sub { color: #fff; }
+
+/* Reduce transparency — the Accessibility switch actually does something */
+.reduce-transparency .lg-glass__filter { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+.reduce-transparency .cc-tile,
+.reduce-transparency .cc-edit {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: #2c2c2e;
+}
+.reduce-transparency .spotlight-pill .lg-glass__overlay,
+.reduce-transparency .spotlight-results .lg-glass__overlay { background: #1c1c1e; }

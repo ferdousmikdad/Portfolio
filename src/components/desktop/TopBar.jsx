@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Search, X, Check, Wifi } from 'lucide-react'
+import { AnimatePresence } from 'framer-motion'
 import useWindowStore from '@/store/windowStore'
-import GlassLayers from '@/components/ui/LiquidGlass'
+import useSettingsStore from '@/store/settingsStore'
+import ControlCenter from './ControlCenter'
+import Spotlight from './Spotlight'
 import Tip from '@/components/ui/Tip'
 import mikdadHeadUrl from '@/assets/icons/mikdad-head.svg?url'
-import macSettingUrl  from '@/assets/icons/macsetting.svg?url'
-import macFitUrl      from '@/assets/icons/macfit.svg?url'
-import projects from '@/data/projects'
+import macSettingUrl from '@/assets/icons/macsetting.svg?url'
+import macSearchUrl  from '@/assets/icons/macsearch.svg?url'
+import macFitUrl     from '@/assets/icons/macfit.svg?url'
 
 // ── Nav items (left side) ─────────────────────────────────────────────────────
 const NAV_ITEMS = [
@@ -22,293 +23,190 @@ const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov
 
 function Clock() {
   const [time, setTime] = useState(() => new Date())
+  const showDate    = useSettingsStore(s => s.menuBarShowDate)
+  const showSeconds = useSettingsStore(s => s.menuBarShowSeconds)
+  const clock24     = useSettingsStore(s => s.menuBarClock24)
+
   useEffect(() => {
     const t = setInterval(() => setTime(new Date()), 1000)
     return () => clearInterval(t)
   }, [])
-  const day   = DAYS[time.getDay()]
-  const month = MONTHS[time.getMonth()]
-  const date  = time.getDate()
-  const h     = time.getHours()
-  const m     = String(time.getMinutes()).padStart(2, '0')
-  const ampm  = h >= 12 ? 'PM' : 'AM'
-  const h12   = h % 12 || 12
+
+  const h    = time.getHours()
+  const m    = String(time.getMinutes()).padStart(2, '0')
+  const sec  = String(time.getSeconds()).padStart(2, '0')
+  const ampm = h >= 12 ? 'PM' : 'AM'
+  const hh   = clock24 ? String(h).padStart(2, '0') : String(h % 12 || 12)
+
+  const date = showDate
+    ? `${DAYS[time.getDay()]} ${MONTHS[time.getMonth()]} ${time.getDate()} `
+    : ''
+
   return (
     <span className="topbar-label select-none tabular-nums" style={{ whiteSpace: 'nowrap' }}>
-      {day} {month} {date} {h12}:{m}{ampm}
+      {date}{hh}:{m}{showSeconds ? `:${sec}` : ''}{clock24 ? '' : ` ${ampm}`}
     </span>
   )
 }
 
-// ── Tiny panel wrapper ────────────────────────────────────────────────────────
-function Panel({ children, align = 'left', style = {}, className = '' }) {
+// ── Menu-bar Wi-Fi and battery ────────────────────────────────────────────────
+
+function WifiStatus({ on }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -6, scale: 0.97 }}
-      animate={{ opacity: 1, y: 0,  scale: 1     }}
-      exit={{    opacity: 0, y: -4, scale: 0.97  }}
-      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-      className={`topbar-panel${className ? ` ${className}` : ''}`}
-      style={{
-        position: 'absolute',
-        top: '100%',
-        marginTop: 4,
-        minWidth: 220,
-        ...(align === 'right' ? { right: 0 } : { left: 0 }),
-        ...style,
-      }}
-    >
-      <GlassLayers small />
-      {children}
-    </motion.div>
+    <svg width="15" height="11" viewBox="0 0 20 15" fill="currentColor" style={{ opacity: on ? 1 : 0.45 }}>
+      <path d="M10 11.4a1.8 1.8 0 1 0 0 3.6 1.8 1.8 0 0 0 0-3.6Z" />
+      <path d="M10 6.9c1.58 0 3.02.61 4.09 1.61a.88.88 0 1 1-1.2 1.28A4.17 4.17 0 0 0 10 8.66c-1.08 0-2.07.41-2.85 1.11a.88.88 0 1 1-1.18-1.3A6 6 0 0 1 10 6.9Z" />
+      <path d="M10 2.8a9.9 9.9 0 0 1 6.88 2.77.88.88 0 1 1-1.22 1.27A8.13 8.13 0 0 0 10 4.57a8.13 8.13 0 0 0-5.66 2.27.88.88 0 1 1-1.22-1.27A9.9 9.9 0 0 1 10 2.8Z" />
+      {!on && <path d="M2.6 1 17.6 13.6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />}
+    </svg>
   )
 }
 
-// ── Search panel ──────────────────────────────────────────────────────────────
-function SearchPanel({ onClose, onNavigate }) {
-  const [query, setQuery] = useState('')
-  const inputRef = useRef(null)
-
-  useEffect(() => { inputRef.current?.focus() }, [])
-
-  const results = query.trim()
-    ? projects.filter((p) =>
-        p.title.toLowerCase().includes(query.toLowerCase()) ||
-        p.category.toLowerCase().includes(query.toLowerCase())
-      ).slice(0, 6)
-    : []
-
+function BatteryStatus({ level = 87 }) {
   return (
-    <Panel align="right" style={{ minWidth: 280, right: -80 }}>
-      <div className="topbar-panel-row" style={{ borderBottom: '1px solid var(--border)', paddingBottom: 8, marginBottom: 4 }}>
-        <Search size={12} style={{ color: 'var(--body)', flexShrink: 0 }} />
-        <input
-          ref={inputRef}
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => e.key === 'Escape' && onClose()}
-          placeholder="Search portfolio…"
-          className="topbar-search-input"
-        />
-        {query && (
-          <button onClick={() => setQuery('')} style={{ color: 'var(--body)', lineHeight: 1 }}>
-            <X size={11} />
-          </button>
-        )}
-      </div>
-      {results.length > 0 ? (
-        results.map((p) => (
-          <button
-            key={p.id}
-            className="topbar-panel-item"
-            onClick={() => { onNavigate('portfolio'); onClose() }}
-          >
-            <div
-              className="flex-shrink-0 rounded overflow-hidden"
-              style={{ width: 28, height: 28, background: 'var(--wall-bg)' }}
-            >
-              <img src={p.thumbnail} alt="" className="w-full h-full object-cover" />
-            </div>
-            <span className="flex-1 truncate text-[12px]" style={{ color: 'var(--headline)' }}>{p.title}</span>
-            <span className="text-[10px]" style={{ color: 'var(--body)' }}>{p.category}</span>
-          </button>
-        ))
-      ) : query ? (
-        <p className="topbar-empty">No results for "{query}"</p>
-      ) : (
-        <p className="topbar-empty">Type to search projects…</p>
-      )}
-    </Panel>
-  )
-}
-
-// ── Status panel ──────────────────────────────────────────────────────────────
-const STATUS_OPTIONS = [
-  { id: 'available', label: 'Available for work', color: '#cf0506' },
-  { id: 'busy',      label: 'Currently busy',     color: '#f59e0b' },
-  { id: 'away',      label: 'Away',               color: '#6b7280' },
-]
-
-function StatusPanel({ status, onChange, onClose }) {
-  return (
-    <Panel align="right" style={{ minWidth: 200 }}>
-      <p className="topbar-section-label">Availability</p>
-      {STATUS_OPTIONS.map((opt) => (
-        <button
-          key={opt.id}
-          className="topbar-panel-item"
-          onClick={() => { onChange(opt.id); onClose() }}
-        >
-          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: opt.color }} />
-          <span className="flex-1 text-[12px]" style={{ color: 'var(--headline)' }}>{opt.label}</span>
-          {status === opt.id && <Check size={11} style={{ color: '#cf0506', flexShrink: 0 }} />}
-        </button>
-      ))}
-    </Panel>
+    <svg width="25" height="12" viewBox="0 0 27 13" fill="none">
+      <rect x="0.6" y="0.6" width="22" height="11.8" rx="3.4"
+            stroke="currentColor" strokeOpacity="0.45" strokeWidth="1.1" />
+      <rect x="2.2" y="2.2" width={Math.max(2, (level / 100) * 18.8)} height="8.6" rx="2.1"
+            fill="currentColor" />
+      <path d="M24.6 4.4c.9.35 1.5 1.2 1.5 2.1s-.6 1.75-1.5 2.1V4.4Z"
+            fill="currentColor" fillOpacity="0.45" />
+    </svg>
   )
 }
 
 // ── Main TopBar ───────────────────────────────────────────────────────────────
-export default function TopBar() {
-  const { navigate, activePage, openWindow } = useWindowStore()
 
-  const [openPanel,    setOpenPanel]    = useState(null) // 'search' | 'status'
-  const [status,       setStatus]       = useState('available')
+export default function TopBar() {
+  const { navigate, activePage } = useWindowStore()
+  const wifi          = useSettingsStore(s => s.wifi)
+  const showBattery   = useSettingsStore(s => s.menuBarShowBattery)
+
+  const [openPanel,    setOpenPanel]    = useState(null) // 'control' | null
+  const [spotOpen,     setSpotOpen]     = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
 
   const barRef = useRef(null)
 
-  const currentStatus = STATUS_OPTIONS.find((s) => s.id === status) ?? STATUS_OPTIONS[0]
-
-  // ── Fullscreen toggle ─────────────────────────────────────────────────────
   const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen?.()
-    } else {
-      document.exitFullscreen?.()
-    }
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen?.()
+    else document.exitFullscreen?.()
   }
 
-  // Track actual fullscreen state (Esc key is handled natively by the browser)
   useEffect(() => {
     const handler = () => setIsFullscreen(!!document.fullscreenElement)
     document.addEventListener('fullscreenchange', handler)
     return () => document.removeEventListener('fullscreenchange', handler)
   }, [])
 
-  // Close panels on outside click
+  // Close the Control Centre on an outside click
   useEffect(() => {
     if (!openPanel) return
     const handler = (e) => {
-      if (barRef.current && !barRef.current.contains(e.target)) {
-        setOpenPanel(null)
-      }
+      if (barRef.current && !barRef.current.contains(e.target)) setOpenPanel(null)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [openPanel])
 
-  // Close panels on Escape
+  // ⌘Space opens Spotlight, Escape closes whatever is up
   useEffect(() => {
-    const handler = (e) => { if (e.key === 'Escape') setOpenPanel(null) }
+    const handler = (e) => {
+      if (e.key === 'Escape') { setOpenPanel(null); setSpotOpen(false); return }
+      if (e.code === 'Space' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault()
+        setOpenPanel(null)
+        setSpotOpen(v => !v)
+      }
+    }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
-  const toggle = (panel) => setOpenPanel((v) => (v === panel ? null : panel))
-
   return (
-    <div
-      ref={barRef}
-      className="topbar"
-      style={{ zIndex: 50 }}
-    >
-      {/* ── Left: logo + nav ───────────────────────────────────────────────── */}
-      <div className="flex items-center gap-0.5">
-        {/* Logo / home */}
-        <Tip label="Home">
-          <button
-            className="topbar-logo"
-            onClick={() => { navigate('home'); setOpenPanel(null) }}
-          >
-            <img src={mikdadHeadUrl} alt="Mikdad" width={16} height={16} className="object-contain" />
-          </button>
-        </Tip>
-
-        <div className="topbar-sep" />
-
-        {/* Nav items */}
-        {NAV_ITEMS.map((item) => (
-          <button
-            key={item.id}
-            className={`topbar-nav-item ${activePage === item.id ? 'active' : ''}`}
-            onClick={() => { navigate(item.id); setOpenPanel(null) }}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
-
-      {/* ── Right: utilities ───────────────────────────────────────────────── */}
-      <div className="flex items-center gap-0.5">
-
-        {/* WiFi */}
-        <Tip label="Wi-Fi">
-          <button className="topbar-icon-btn">
-            <Wifi size={12} />
-          </button>
-        </Tip>
-
-        {/* Search */}
-        <div className="relative">
-          <Tip label="Search">
-            <button
-              className={`topbar-icon-btn ${openPanel === 'search' ? 'active' : ''}`}
-              onClick={() => toggle('search')}
-            >
-              <Search size={12} />
+    <>
+      <div ref={barRef} className="topbar" style={{ zIndex: 50 }}>
+        {/* ── Left: logo + nav ─────────────────────────────────────────────── */}
+        <div className="flex items-center gap-0.5">
+          <Tip label="Home">
+            <button className="topbar-logo" onClick={() => { navigate('home'); setOpenPanel(null) }}>
+              <img src={mikdadHeadUrl} alt="Mikdad" width={16} height={16} className="object-contain" />
             </button>
           </Tip>
-          <AnimatePresence>
-            {openPanel === 'search' && (
-              <SearchPanel
-                onClose={() => setOpenPanel(null)}
-                onNavigate={navigate}
-              />
-            )}
-          </AnimatePresence>
+
+          <div className="topbar-sep" />
+
+          {NAV_ITEMS.map((item) => (
+            <button
+              key={item.id}
+              className={`topbar-nav-item ${activePage === item.id ? 'active' : ''}`}
+              onClick={() => { navigate(item.id); setOpenPanel(null) }}
+            >
+              {item.label}
+            </button>
+          ))}
         </div>
 
-        {/* Settings — opens Settings window */}
-        <Tip label="Settings">
-          <button
-            className="topbar-icon-btn"
-            onClick={() => openWindow('settings')}
-          >
-            <img src={macSettingUrl} alt="settings" width={13} height={13} style={{ opacity: 0.85 }} />
-          </button>
-        </Tip>
+        {/* ── Right: menu-bar extras ───────────────────────────────────────── */}
+        <div className="topbar-extras">
 
-        {/* Status dot */}
-        <div className="relative">
-          <Tip label={currentStatus.label ?? 'Availability'}>
-            <button
-              className={`topbar-status-btn ${openPanel === 'status' ? 'active' : ''}`}
-              onClick={() => toggle('status')}
-            >
-              <span
-                className="topbar-status-dot"
-                style={{ background: currentStatus.color }}
-              />
+          {showBattery && (
+            <Tip label="Battery — 87%">
+              <button className="topbar-icon-btn topbar-icon-btn--wide">
+                <BatteryStatus />
+              </button>
+            </Tip>
+          )}
+
+          <Tip label={wifi ? 'Wi-Fi: On' : 'Wi-Fi: Off'}>
+            <button className="topbar-icon-btn" onClick={() => setOpenPanel(p => p === 'control' ? null : 'control')}>
+              <WifiStatus on={wifi} />
             </button>
           </Tip>
-          <AnimatePresence>
-            {openPanel === 'status' && (
-              <StatusPanel
-                status={status}
-                onChange={setStatus}
-                onClose={() => setOpenPanel(null)}
-              />
-            )}
-          </AnimatePresence>
+
+          {/* Spotlight — its own control, set apart from Control Centre */}
+          <Tip label="Spotlight Search (⌘Space)" hidden={spotOpen}>
+            <button
+              className={`topbar-icon-btn ${spotOpen ? 'active' : ''}`}
+              onClick={() => { setOpenPanel(null); setSpotOpen(v => !v) }}
+            >
+              <img src={macSearchUrl} alt="" width={13} height={13} />
+            </button>
+          </Tip>
+
+          {/* Control Centre */}
+          <div className="relative">
+            <Tip label="Control Centre" hidden={openPanel === 'control'}>
+              <button
+                className={`topbar-icon-btn ${openPanel === 'control' ? 'active' : ''}`}
+                onClick={() => { setSpotOpen(false); setOpenPanel(p => p === 'control' ? null : 'control') }}
+              >
+                <img src={macSettingUrl} alt="" width={13} height={13} />
+              </button>
+            </Tip>
+            <AnimatePresence>
+              {openPanel === 'control' && <ControlCenter onClose={() => setOpenPanel(null)} />}
+            </AnimatePresence>
+          </div>
+
+          <Tip label={isFullscreen ? 'Exit fullscreen (Esc)' : 'Fit to screen'}>
+            <button
+              className={`topbar-icon-btn ${isFullscreen ? 'active' : ''}`}
+              onClick={toggleFullscreen}
+            >
+              <img src={macFitUrl} alt="fit" width={13} height={13} style={{ opacity: isFullscreen ? 1 : 0.85 }} />
+            </button>
+          </Tip>
+
+          <div className="topbar-sep" />
+
+          <Clock />
         </div>
-
-        {/* Fit / Fullscreen */}
-        <Tip label={isFullscreen ? 'Exit fullscreen (Esc)' : 'Fit to screen'}>
-          <button
-            className={`topbar-icon-btn ${isFullscreen ? 'active' : ''}`}
-            onClick={toggleFullscreen}
-          >
-            <img src={macFitUrl} alt="fit" width={13} height={13} style={{ opacity: isFullscreen ? 1 : 0.85 }} />
-          </button>
-        </Tip>
-
-        <div className="topbar-sep" />
-
-        {/* Clock */}
-        <Clock />
-
       </div>
-    </div>
+
+      <AnimatePresence>
+        {spotOpen && <Spotlight onClose={() => setSpotOpen(false)} />}
+      </AnimatePresence>
+    </>
   )
 }

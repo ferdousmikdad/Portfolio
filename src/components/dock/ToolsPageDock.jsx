@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import mikdadHeadUrl   from '@/assets/icons/mikdad-head.svg?url'
 import finderIconUrl   from '@/assets/icons/finder.svg?url'
 import terminalIconUrl from '@/assets/icons/terminal.svg?url'
+import settingsIconUrl from '@/assets/icons/mac-system-settings.svg?url'
 import homeIconUrl       from '@/assets/icons/Home.png?url'
 import portfolioIconUrl  from '@/assets/icons/Folder.png?url'
 import notesIconUrl      from '@/assets/icons/note.png?url'
@@ -90,7 +91,7 @@ const PAGE_NAV = [
 ]
 
 // Tools always visible in the dock
-const PINNED_TOOL_IDS = ['color-contrast', 'color-palette', 'retro-dot', 'print-setup']
+const PINNED_TOOL_IDS = ['color-contrast', 'color-palette', 'retro-dot', 'qr-code']
 
 /* Raised-cosine bell: 1 at the cursor, easing to exactly 1 at the edge of the
    range with zero slope, so neighbouring tiles never kink. */
@@ -191,7 +192,7 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
 
   const openApp = (id) => {
     play('open')
-    if (!activePage) closeAllExcept(['finder', 'terminal'])
+    if (!activePage) closeAllExcept(['finder', 'terminal', 'settings'])
     openWindow(id)
   }
 
@@ -216,6 +217,12 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
       {
         id: 'terminal', label: 'Terminal', icon: terminalIconUrl, file: 'terminal',
         onClick: () => openApp('terminal'), active: isLive('terminal'),
+      },
+      /* No `file`: the settings art is a full-colour app icon with no baked
+         glass plate, so it goes in as-is rather than through platelessArt. */
+      {
+        id: 'settings', label: 'System Settings', icon: settingsIconUrl,
+        onClick: () => openApp('settings'), active: isLive('settings'),
       },
       ...dockTools.map((tool) => ({
         id: tool.id, label: tool.name, icon: tool.icon, file: FILE_ALIAS[tool.id] ?? tool.id,

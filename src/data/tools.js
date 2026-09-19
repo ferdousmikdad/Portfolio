@@ -5,7 +5,6 @@ import asciiArtUrl        from '@/assets/icons/ascii-art.svg?url'
 import imageTraceUrl      from '@/assets/icons/image-trace.svg?url'
 import qrCodeUrl          from '@/assets/icons/qrcode.svg?url'
 import imageConverterUrl  from '@/assets/icons/image-converter.svg?url'
-import printSetupUrl      from '@/assets/icons/print-setup.svg?url'
 import imageTextUrl       from '@/assets/icons/image-text.svg?url'
 import typingToolUrl      from '@/assets/icons/typing-tool.svg?url'
 
@@ -51,12 +50,6 @@ const TOOLS = [
     name: 'Image Converter',
     icon: imageConverterUrl,
     url:  '/tools/image-converter.html',
-  },
-  {
-    id:   'print-setup',
-    name: 'Print Setup',
-    icon: printSetupUrl,
-    url:  '/tools/print-setup.html',
   },
   {
     id:   'image-text',

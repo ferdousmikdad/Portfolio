@@ -230,14 +230,26 @@ function StaticBackground({ isDark }) {
 }
 
 export default function Background() {
-  const isDark  = useThemeStore((s) => s.isDark)
-  const storeBg = useSettingsStore((s) => s.background)
-  const config  = useBackgroundConfig()
+  const isDark    = useThemeStore((s) => s.isDark)
+  const storeBg   = useSettingsStore((s) => s.background)
+  const wallpaper = useSettingsStore((s) => s.wallpaper)
+  const config    = useBackgroundConfig()
 
-  if (storeBg === 'static') {
-    return config.wallpaper
-      ? <WallpaperBackground image={config.image} />
-      : <StaticBackground isDark={isDark} />
-  }
-  return <AnimatedBackground isDark={isDark} />
+  /* The Wallpaper pane picks an image explicitly; bg-config.md still decides
+     what a plain "static" desktop falls back to. */
+  const layer = storeBg === 'wallpaper'
+    ? <WallpaperBackground image={wallpaper} />
+    : storeBg === 'static'
+      ? (config.wallpaper ? <WallpaperBackground image={config.image} /> : <StaticBackground isDark={isDark} />)
+      : <AnimatedBackground isDark={isDark} />
+
+  return (
+    <>
+      {layer}
+      {/* Display brightness. A scrim rather than a filter on the root — a
+          filter there would make every backdrop-filter in the app sample
+          nothing. */}
+      <div className="screen-dim" aria-hidden="true" />
+    </>
+  )
 }
