@@ -10,6 +10,9 @@ import corner2Raw  from '@/assets/icons/macCorner-2.svg?raw'
 
 const svgUri = (raw) => `data:image/svg+xml,${encodeURIComponent(raw)}`
 
+/* The floor a window is dragged down to. Most windows want the default; one
+   that is drawn to a fixed proportion — the Calculator's round keys — passes
+   its own, so the first pull of a handle does not snap it wider. */
 const MIN_W = 320
 const MIN_H = 220
 
@@ -26,7 +29,10 @@ export const RESIZE_CURSORS = {
 
 // mx, my, mw, mh are framer-motion MotionValues — .set() updates the DOM
 // instantly with zero React re-renders or spring interpolation.
-export function useResize(id, mx, my, mw, mh) {
+export function useResize(id, mx, my, mw, mh, minSize) {
+  const minW = minSize?.width  ?? MIN_W
+  const minH = minSize?.height ?? MIN_H
+
   const { updateSizePosition } = useWindowStore()
   const active = useRef(null)
 
@@ -61,14 +67,14 @@ export function useResize(id, mx, my, mw, mh) {
       let newPX = r.startPX
       let newPY = r.startPY
 
-      if (r.direction.includes('right'))  newW  = Math.max(MIN_W, r.startW + dx)
-      if (r.direction.includes('bottom')) newH  = Math.max(MIN_H, r.startH + dy)
+      if (r.direction.includes('right'))  newW  = Math.max(minW, r.startW + dx)
+      if (r.direction.includes('bottom')) newH  = Math.max(minH, r.startH + dy)
       if (r.direction.includes('left')) {
-        newW  = Math.max(MIN_W, r.startW - dx)
+        newW  = Math.max(minW, r.startW - dx)
         newPX = r.startPX + (r.startW - newW)
       }
       if (r.direction.includes('top')) {
-        newH  = Math.max(MIN_H, r.startH - dy)
+        newH  = Math.max(minH, r.startH - dy)
         newPY = r.startPY + (r.startH - newH)
       }
 
@@ -95,7 +101,7 @@ export function useResize(id, mx, my, mw, mh) {
 
     window.addEventListener('mousemove', onMove)
     window.addEventListener('mouseup',   onUp)
-  }, [id, mx, my, mw, mh, updateSizePosition])
+  }, [id, mx, my, mw, mh, minW, minH, updateSizePosition])
 
   return { startResize }
 }

@@ -7,7 +7,7 @@ import { genieStage, flatten, afterMount } from '@/utils/genie'
 import { setSnapshot } from '@/utils/windowSnapshots'
 import { useResize, RESIZE_CURSORS } from '@/hooks/useResize'
 
-export default function Window({ id, title, children, actionLabel, onAction, hideControls, hideTitleBar, toolbar, sidebarContent, shellStyle, paneStyle, navSlot, titleBarBorder = false }) {
+export default function Window({ id, title, children, actionLabel, onAction, hideControls, hideTitleBar, toolbar, sidebarContent, shellStyle, paneStyle, navSlot, minSize, disableMaximize, titleBarBorder = false }) {
   const { closeWindow, minimizeWindow, focusWindow, updatePosition, getWindow, toggleMaximize } = useWindowStore()
   const activeWindowId = useWindowStore((s) => s.activeWindowId)
   const restoring   = useWindowStore((s) => s.restoringId) === id
@@ -32,7 +32,7 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
   useEffect(() => { win && mw.set(win.size.width)  }, [win?.size.width])
   useEffect(() => { win && mh.set(win.size.height) }, [win?.size.height])
 
-  const { startResize } = useResize(id, mx, my, mw, mh)
+  const { startResize } = useResize(id, mx, my, mw, mh, minSize)
 
   const handleMaximize = () => {
     play('open')
@@ -77,7 +77,7 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
     afterMount(`[data-min-slot="${id}"]`).then((slotEl) => {
       if (slotEl) slot = slotEl.getBoundingClientRect()
       stage.place(rect, slot)
-      stage.run(540, 0, 1).then(stage.destroy)
+      stage.run(820, 0, 1).then(stage.destroy)
     })
   }
 
@@ -132,6 +132,7 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
               onClose:    () => { play('close'); closeWindow(id) },
               onMinimize: handleMinimize,
               onMaximize: handleMaximize,
+              maximizeDisabled: disableMaximize,
             })}
           </div>
 
@@ -183,6 +184,7 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
                   onClose={() => { play('close'); closeWindow(id) }}
                   onMinimize={handleMinimize}
                   onMaximize={handleMaximize}
+                  maximizeDisabled={disableMaximize}
                 />
               )}
               {navSlot}

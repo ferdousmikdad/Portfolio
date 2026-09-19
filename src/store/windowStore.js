@@ -15,6 +15,7 @@ const terminalW  = 700, terminalH  = 460
 const smallW     = 420, smallH     = 360
 const shopW      = 980, shopH      = 620
 const mailW      = 560, mailH      = 430
+const calcW      = 272, calcH      = 462
 const initW      = vw <= 1440 ? Math.round(portfolioW * 0.9) : portfolioW
 const initH      = vw <= 1440 ? Math.round(portfolioH * 0.9) : portfolioH
 
@@ -191,6 +192,15 @@ const defaultWindows = [
     zIndex: 3,
   },
   {
+    id: 'calculator',
+    title: 'Calculator',
+    isOpen: false,
+    isMinimized: false,
+    position: centeredInUsableArea(calcW, calcH),
+    size: { width: calcW, height: calcH },
+    zIndex: 3,
+  },
+  {
     id: 'spotify',
     title: 'Spotify',
     isOpen: false,
@@ -307,6 +317,16 @@ const useWindowStore = create((set, get) => ({
             zIndex: ++topZ,
             size:     { width: portfolioW, height: portfolioH },
             position: centeredInUsableArea(portfolioW, portfolioH),
+          }
+        }
+        if (id === 'calculator') {
+          return {
+            ...w,
+            isOpen: true,
+            isMinimized: false,
+            zIndex: ++topZ,
+            size:     { width: calcW, height: calcH },
+            position: centeredInUsableArea(calcW, calcH),
           }
         }
         if (id === 'spotify') {

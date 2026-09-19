@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Sparkles } from 'lucide-react'
 import TopBar from './TopBar'
 import WelcomeModal from './WelcomeModal'
 import RightControls from './RightControls'
@@ -31,7 +30,9 @@ import SpotifyWindow from '@/components/apps/SpotifyWindow'
 import ProjectPreviewWindow from '@/components/apps/ProjectPreviewWindow'
 import SettingsWindow from '@/components/apps/SettingsWindow'
 import MailWindow from '@/components/apps/MailWindow'
+import CalculatorWindow from '@/components/apps/CalculatorWindow'
 import allProjects from '@/data/projects'
+import siriIconUrl from '@/assets/icons/siri.png?url'
 
 /* Viewport coordinates for a framer drag. The native pointer event is the
    reliable source — the dock is hit-tested in viewport space. */
@@ -342,6 +343,7 @@ export default function Desktop() {
           <TerminalWindow />
           <SettingsWindow />
           <MailWindow />
+          <CalculatorWindow />
         </AnimatePresence>
       </div>
 
@@ -387,7 +389,7 @@ export default function Desktop() {
                     transition={{ duration: 0.15 }}
                     style={{ display: 'flex' }}
                   >
-                    <Sparkles size={18} style={{ color: '#cf0506' }} />
+                    <img src={siriIconUrl} alt="" className="mikuda-fab__siri" draggable={false} />
                   </motion.span>
                 ) : (
                   <motion.span
@@ -398,7 +400,7 @@ export default function Desktop() {
                     transition={{ duration: 0.15 }}
                     style={{ display: 'flex' }}
                   >
-                    <Sparkles size={18} />
+                    <img src={siriIconUrl} alt="" className="mikuda-fab__siri" draggable={false} />
                   </motion.span>
                 )}
               </AnimatePresence>

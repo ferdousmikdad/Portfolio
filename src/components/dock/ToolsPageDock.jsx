@@ -185,7 +185,7 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
         stage = genieStage(snap.node, r.width, r.height)
       }
       stage.place(r, slot)
-      stage.run(500, 1, 0).then(done)
+      stage.run(760, 1, 0).then(done)
     })
   }
 

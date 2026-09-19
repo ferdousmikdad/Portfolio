@@ -341,6 +341,32 @@ html.reduce-motion *::after {
   .traffic-light-minimize { background: #ffbd2e; }
   .traffic-light-maximize { background: #28c840; }
 
+  .traffic-lights { display: flex; align-items: center; gap: 8px; }
+
+  /* The glyph fills its dot — the artwork already carries the inset, so the
+     bars land at the size the Mac draws them. All three appear together the
+     moment the pointer is anywhere over the group, never one at a time. */
+  .traffic-light__glyph {
+    width: 100%;
+    height: 100%;
+    fill: currentColor;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+  .traffic-lights:hover .traffic-light__glyph { opacity: 1; }
+  .traffic-light-close    { color: #7e0508; }
+  .traffic-light-minimize { color: #985712; }
+  .traffic-light-maximize { color: #0b650d; }
+
+  /* A button the window does not answer: the Mac drains the colour out of it
+     and leaves it flat. Grey as a translucent neutral rather than a fixed
+     value, so it lands correctly on a dark window and a light one alike. */
+  .traffic-light--disabled {
+    background: rgba(128, 128, 128, 0.55);
+    cursor: default;
+  }
+  .traffic-light--disabled:hover { opacity: 1; }
+
   .dock-bar {
     background: var(--dock-bg);
     backdrop-filter: blur(16px);
@@ -1112,7 +1138,24 @@ html.reduce-motion *::after {
   transition: color 0.15s ease, background 0.15s ease, transform 0.15s ease;
 }
 .mikuda-fab:hover { color: var(--headline); transform: scale(1.06); }
-.mikuda-fab.active { color: #cf0506; }
+
+/* The Siri mark carries its own colour, so the button marks the open state by
+   sitting lit rather than by tinting the glyph. */
+.mikuda-fab__siri {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+  transition: filter 0.15s ease;
+}
+.mikuda-fab.active {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+.mikuda-fab.active .mikuda-fab__siri {
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.35));
+}
 
 /* ── Home Chat Window ────────────────────────────────────────────────────────── */
 
@@ -2857,3 +2900,169 @@ button:hover > .finder-disclosure { opacity: 0.7; }
   background: rgba(52, 211, 153, 0.14);
   color: #34d399;
 }
+
+/* ── Calculator ───────────────────────────────────────────────────────────────
+   Round keys, Apple's three colours, and a display that carries the sum above
+   the number. The keypad is sized from the window's width — a key is a circle,
+   so its height follows — and the display takes whatever is left, which is why
+   the window can be resized without the keys going oval. */
+
+.calc-shell {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 0 11px 12px;
+  background: #1c1c1e;
+  user-select: none;
+  min-height: 0;
+}
+
+/* Both lines are right-aligned and clipped on the left, so a long sum runs
+   off the far end and the digits that matter stay in view. */
+.calc-display {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: stretch;
+  padding: 0 8px 10px;
+  overflow: hidden;
+  font-family: 'SF Pro Display', system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+.calc-trail {
+  display: flex;
+  justify-content: flex-end;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: 0.01em;
+  color: rgba(255, 255, 255, 0.42);
+  white-space: nowrap;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.calc-result {
+  display: flex;
+  justify-content: flex-end;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.calc-pad {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  /* Key labels are sized against this box, so they hold their proportion to
+     the circles at any window width. */
+  container-type: inline-size;
+  /* Pulled wide, the window gives its extra room to the number rather than
+     growing the keys past the size a thumb would ever want. */
+  width: 100%;
+  max-width: 460px;
+  margin: 0 auto;
+}
+
+/* A key is a circle: the grid hands it a width, `aspect-ratio` gives it the
+   matching height, and the row sizes itself around that. The wide zero keeps
+   the same height and stretches into a pill, which is the one key the Mac
+   does not draw round. */
+.calc-key {
+  aspect-ratio: 1;
+  border: none;
+  border-radius: 999px;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  font-family: 'SF Pro Display', system-ui, sans-serif;
+  font-weight: 400;
+  transition: background 0.1s ease, color 0.1s ease;
+}
+
+/* The glass lives on the rim and nowhere else: a hairline ring right round the
+   key, lit a little brighter along the top edge where a rounded piece of glass
+   catches the light. The face underneath stays solid, so the keys read as
+   solid keys with a glassy edge rather than as translucent beads. */
+.calc-key {
+  box-shadow:
+    inset 0 0.8px 0 rgba(255, 255, 255, 0.16),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.07);
+}
+
+/* The zero is the one key the Mac does not draw round: it stretches into a
+   pill across two columns, and its label stays over the first of them rather
+   than sliding to the middle of the pill. */
+.calc-key--wide {
+  grid-column: span 2;
+  aspect-ratio: auto;
+  justify-content: flex-start;
+}
+.calc-key--wide .calc-key__label {
+  width: calc((100% - 8px) / 2);   /* one column, the swallowed gap removed */
+  text-align: center;
+}
+/* Clicking a key must not leave a focus ring behind it — the Calculator's own
+   keys never show one, and the keyboard reaches them through the window's
+   handler rather than through the tab order. */
+.calc-key:focus { outline: none; }
+
+/* The glyph is sized off the key itself, so every label keeps its proportion
+   as the window is resized. */
+.calc-key__label {
+  /* 8.4% of the keypad's width is a third of one key — the proportion the
+     Mac's own digits sit at. */
+  font-size: clamp(14px, 8.4cqw, 26px);
+  line-height: 1;
+}
+
+/* Apple's three key colours, flat — the pale functions, the dark digits, the
+   orange column. Each carries its own rim: the brighter the face, the more
+   light its edge has to catch before the ring shows at all. */
+.calc-key--num        { background: #333333; color: #ffffff; }
+.calc-key--num:hover  { background: #404040; }
+.calc-key--num:active { background: #737373; }
+
+.calc-key--fn {
+  background: #a5a5a5;
+  color: #1c1c1e;
+  font-weight: 500;
+  box-shadow:
+    inset 0 0.8px 0 rgba(255, 255, 255, 0.42),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.20);
+}
+.calc-key--fn:hover  { background: #b5b5b5; }
+.calc-key--fn:active { background: #d9d9d9; }
+
+.calc-key--op {
+  background: #ff9f0a;
+  color: #ffffff;
+  box-shadow:
+    inset 0 0.8px 0 rgba(255, 255, 255, 0.26),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.13);
+}
+.calc-key--op .calc-key__label { font-size: clamp(16px, 9.8cqw, 30px); }
+.calc-key--op:hover  { background: #ffae2e; }
+.calc-key--op:active { background: #ffc16b; }
+
+/* A held operator inverts — white key, orange glyph — and stays that way
+   until the number it is waiting on arrives. */
+.calc-key--op.active {
+  background: #ffffff;
+  color: #ff9f0a;
+  box-shadow:
+    inset 0 0.8px 0 rgba(255, 255, 255, 0.6),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.3);
+}
+.calc-key--op.active:hover { background: #ffffff; }
