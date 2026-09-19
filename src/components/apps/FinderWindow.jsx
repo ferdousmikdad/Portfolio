@@ -11,6 +11,8 @@ import ContextMenu from '@/components/ui/ContextMenu'
 import ChatPanel from '@/components/apps/ChatPanel'
 import PortfolioPanel from '@/components/apps/PortfolioPanel'
 import NotesPanel from '@/components/apps/NotesPanel'
+import ShopPanel from '@/components/apps/ShopPanel'
+import { SHOP_CATEGORIES } from '@/data/stickResources'
 import { CATEGORIES, TAGS } from '@/data/projects'
 import { CATEGORIES as NOTE_CATEGORIES } from '@/data/notes.js'
 import GlassLayers from '@/components/ui/LiquidGlass'
@@ -53,7 +55,10 @@ const NATIVE_APPS = [
 ]
 
 /* The favourites that hold something Finder can disclose beneath them. */
-const EXPANDABLE = new Set(['portfolio', 'notes'])
+const EXPANDABLE = new Set(['portfolio', 'notes', 'shop'])
+
+/* The Shop's sections come from the shelf's own list, so stocking a resource
+   in an existing section needs nothing here. */
 
 const FAVORITES = [
   { id: 'home',      label: 'Home',      icon: homeIconUrl },
@@ -244,6 +249,8 @@ export default function FinderWindow() {
   const [pfView,        setPfView]        = useState('grid')
   /* Which category of Notes is showing. */
   const [noteCat,       setNoteCat]       = useState('all')
+  /* Which section of the Shop is showing — null for the whole shelf. */
+  const [shopCat,       setShopCat]       = useState(null)
   /* Finder keeps a folder closed until you ask for it, so the favourites that
      have something inside them start collapsed and their row toggles them
      open and shut. Holds the ids currently disclosed. */
@@ -263,8 +270,9 @@ export default function FinderWindow() {
   const isHome      = contentView === 'home'
   const isPortfolio = contentView === 'portfolio'
   const isNotes     = contentView === 'notes'
+  const isShop      = contentView === 'shop'
   /* Whichever of them is showing brings its own padding and scrolling. */
-  const isEmbedded  = isHome || isPortfolio || isNotes
+  const isEmbedded  = isHome || isPortfolio || isNotes || isShop
   const trashFull   = trashItems.length > 0
   const trashedApps = trashedFrom(trashItems, 'finder')
 
@@ -425,11 +433,12 @@ export default function FinderWindow() {
             /* Typing inside a location that has its own contents narrows
                those; anywhere else it is a search of the Applications
                folder. */
-            if (!isPortfolio && !isNotes) setContentView('applications')
+            if (!isPortfolio && !isNotes && !isShop) setContentView('applications')
           }}
           placeholder={
             isPortfolio ? 'Search projects…'
               : isNotes  ? 'Search notes…'
+              : isShop   ? 'Search resources…'
               : inTrash  ? 'Search'
               : 'Search tools…'
           }
@@ -528,6 +537,35 @@ export default function FinderWindow() {
                   />
                 ))}
               </div>
+            </motion.div>
+          )}
+
+          {/* The Shop's tags, gathered from the shelf itself */}
+          {fav.id === 'shop' && isShop && openFavs.has('shop') && (
+            <motion.div
+              key="shop-tree"
+              className="flex flex-col gap-0.5 pt-0.5 pb-1"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{    height: 0, opacity: 0 }}
+              transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
+              style={{ overflow: 'hidden' }}
+            >
+              <SidebarSubItem
+                icon={AllIcon}
+                label="All resources"
+                active={!shopCat}
+                onClick={() => setShopCat(null)}
+              />
+              {SHOP_CATEGORIES.map((cat) => (
+                <SidebarSubItem
+                  key={cat}
+                  dot="rgba(255,255,255,0.32)"
+                  label={cat}
+                  active={shopCat === cat}
+                  onClick={() => setShopCat(shopCat === cat ? null : cat)}
+                />
+              ))}
             </motion.div>
           )}
 
@@ -735,6 +773,22 @@ export default function FinderWindow() {
               style={{ height: '100%', width: '100%' }}
             >
               <NotesPanel category={noteCat} onCategoryChange={setNoteCat} search={search} />
+            </motion.div>
+
+          ) : isShop ? (
+            /* ── Shop — the animation shelf ───────────────────────────────
+               Its tags moved into Finder's sidebar and its search into
+               Finder's toolbar, so the location is navigated with Finder's
+               own chrome. */
+            <motion.div
+              key="shop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{    opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              style={{ height: '100%', width: '100%' }}
+            >
+              <ShopPanel category={shopCat} search={search} heading={false} />
             </motion.div>
 
           ) : inTrash ? (

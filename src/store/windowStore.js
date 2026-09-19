@@ -13,6 +13,7 @@ const notesW     = 900, notesH     = 580
 const finderW    = 900, finderH    = 560
 const terminalW  = 700, terminalH  = 460
 const smallW     = 420, smallH     = 360
+const shopW      = 980, shopH      = 620
 const mailW      = 560, mailH      = 430
 const initW      = vw <= 1440 ? Math.round(portfolioW * 0.9) : portfolioW
 const initH      = vw <= 1440 ? Math.round(portfolioH * 0.9) : portfolioH
@@ -130,8 +131,9 @@ const defaultWindows = [
     title: 'Shop',
     isOpen: false,
     isMinimized: false,
-    position: { x: Math.max(20, (vw - smallW) / 2), y: Math.max(20, (vh - smallH) / 2) },
-    size: { width: smallW, height: smallH },
+    /* A shelf of animation cards needs the room a grid needs. */
+    position: { x: Math.max(20, (vw - shopW) / 2), y: Math.max(20, (vh - shopH) / 2) },
+    size: { width: Math.min(shopW, vw - 40), height: Math.min(shopH, vh - 140) },
     zIndex: 3,
   },
   {

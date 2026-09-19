@@ -2602,3 +2602,258 @@ button:hover > .finder-disclosure { opacity: 0.7; }
   --sb-panel-lit:  rgba(255, 255, 255, 0.055);
   --sb-gutter:     #121212;
 }
+
+/* ── Shop — the stick-man animation shelf ───────────────────────────────────
+   The cards hold live snippets rather than pictures of them, so the only way
+   to keep ten of them quiet is to pause their animations and let a hover start
+   them. `animation-play-state` does that without touching the snippet's own
+   CSS, which has to stay exactly what the visitor copies away.              */
+
+.sm-frame,
+.shop-card .sm-frame * { animation-play-state: paused; }
+.shop-card:hover .sm-frame,
+.shop-card:hover .sm-frame * { animation-play-state: running; }
+.sm-frame--live,
+.sm-frame--live * { animation-play-state: running !important; }
+
+.shop-body {
+  height: 100%;
+  overflow-y: auto;
+  padding: 18px 20px 24px;
+}
+
+.shop-head { margin-bottom: 16px; }
+.shop-head__title {
+  font-family: 'SF Pro Display', system-ui, sans-serif;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--headline);
+}
+.shop-head__sub {
+  margin-top: 3px;
+  font-size: 11.5px;
+  color: var(--body);
+  opacity: 0.8;
+}
+
+.shop-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(232px, 1fr));
+}
+
+/* ── Card ─────────────────────────────────────────────────────────────────── */
+
+.shop-card {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--wall-bg);
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
+.shop-card:hover {
+  border-color: rgba(207, 5, 6, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
+}
+
+.shop-card__stage { position: relative; padding: 10px 10px 0; }
+
+/* The hint sits in the corner rather than across the middle: a snippet may
+   carry its own caption down there, and two labels fighting reads as a bug.
+   It steps out of the way the moment the animation starts. */
+.shop-card__hint {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  font-family: 'SF Mono', ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.62);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.shop-card:hover .shop-card__hint { opacity: 0; transform: translateY(-3px); }
+
+.shop-card__foot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 11px 13px 12px;
+}
+.shop-card__title {
+  font-family: 'SF Pro Text', system-ui, sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--headline);
+}
+.shop-card__tags {
+  margin-top: 2px;
+  font-size: 10.5px;
+  color: var(--body);
+  opacity: 0.7;
+}
+.shop-card__cta {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 7px;
+  border: 1px solid rgba(207, 5, 6, 0.28);
+  background: rgba(207, 5, 6, 0.12);
+  font-family: 'SF Pro Text', system-ui, sans-serif;
+  font-size: 10.5px;
+  font-weight: 500;
+  color: #ff5a5b;
+  white-space: nowrap;
+  transition: background 0.16s ease;
+}
+.shop-card:hover .shop-card__cta { background: rgba(207, 5, 6, 0.22); }
+
+/* ── Detail ───────────────────────────────────────────────────────────────── */
+
+.shop-detail { display: flex; flex-direction: column; gap: 14px; height: 100%; }
+
+.shop-detail__bar { display: flex; align-items: center; gap: 14px; }
+
+.shop-back {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  padding: 4px 9px 4px 6px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--social-bg);
+  font-family: 'SF Pro Text', system-ui, sans-serif;
+  font-size: 11px;
+  color: var(--body);
+  transition: background 0.14s ease, color 0.14s ease;
+}
+.shop-back:hover { background: var(--social-hover); color: var(--headline); }
+
+.shop-detail__title {
+  font-family: 'SF Pro Display', system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--headline);
+}
+.shop-detail__blurb {
+  margin-top: 1px;
+  font-size: 11px;
+  color: var(--body);
+  opacity: 0.8;
+}
+
+.shop-detail__cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+}
+.shop-detail__cols[data-stacked='true'] { grid-template-columns: minmax(0, 1fr); }
+
+.shop-pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--wall-bg);
+  overflow: hidden;
+}
+
+.shop-pane__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-shrink: 0;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border);
+  font-family: 'SF Pro Text', system-ui, sans-serif;
+  font-size: 10.5px;
+  color: var(--body);
+}
+.shop-pane__tags { opacity: 0.6; }
+
+.shop-pane__body { flex: 1; min-height: 0; }
+.shop-pane__body--preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+}
+.shop-pane__body--preview .sm-frame { width: 100%; max-width: 330px; }
+.shop-pane__body--code { overflow: auto; }
+
+/* The code pane keeps its own dark surface in both themes: these token
+   colours are a dark-editor palette, and on the light wallpaper the grey text
+   all but disappears. It also pairs with the preview stage, which is dark by
+   design — the snippet ships that way. */
+.shop-pane--code {
+  background: #101014;
+  border-color: rgba(255, 255, 255, 0.09);
+}
+.shop-pane--code .shop-pane__head {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+  color: rgba(214, 211, 199, 0.66);
+}
+.shop-pane--code .shop-copy-btn {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(214, 211, 199, 0.8);
+}
+.shop-pane--code .shop-copy-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+.shop-pane--code .shop-copy-btn[data-copied='true'] {
+  border-color: rgba(52, 211, 153, 0.4);
+  background: rgba(52, 211, 153, 0.16);
+  color: #34d399;
+}
+
+.shop-code {
+  margin: 0;
+  padding: 12px 14px;
+  font-family: 'SF Mono', ui-monospace, 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  line-height: 1.62;
+  color: rgba(214, 211, 199, 0.92);
+  white-space: pre;
+  tab-size: 2;
+}
+.shop-tok-tag     { color: #ff7b72; }
+.shop-tok-attr    { color: #d2a8ff; }
+.shop-tok-str     { color: #a5d6ff; }
+.shop-tok-at      { color: #ffa657; }
+.shop-tok-comment { color: rgba(139, 148, 158, 0.85); font-style: italic; }
+
+.shop-copy-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--social-bg);
+  font-family: 'SF Pro Text', system-ui, sans-serif;
+  font-size: 10.5px;
+  color: var(--body);
+  transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
+}
+.shop-copy-btn:hover { background: var(--social-hover); color: var(--headline); }
+.shop-copy-btn[data-copied='true'] {
+  border-color: rgba(52, 211, 153, 0.4);
+  background: rgba(52, 211, 153, 0.14);
+  color: #34d399;
+}

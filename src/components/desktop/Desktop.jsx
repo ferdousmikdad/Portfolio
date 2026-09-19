@@ -13,7 +13,7 @@ import AboutMeWindow from '@/components/apps/AboutMeWindow'
 import PacmanWindow from '@/components/apps/PacmanWindow'
 import DocWindow from '@/components/apps/BioWindow'
 import WorkWindow from '@/components/apps/WorkWindow'
-import ComingSoonWindow from '@/components/apps/ComingSoonWindow'
+import ShopWindow from '@/components/apps/ShopWindow'
 import NotesWindow from '@/components/apps/NotesWindow'
 import ToolWindow from '@/components/apps/ToolWindow'
 import FinderWindow from '@/components/apps/FinderWindow'
@@ -331,7 +331,7 @@ export default function Desktop() {
           <DocWindow id="skills" />
           <DocWindow id="contact" />
           <WorkWindow />
-          <ComingSoonWindow id="shop" />
+          <ShopWindow />
           <NotesWindow />
           {TOOL_IDS.map((toolId) => (
             <ToolWindow key={toolId} toolId={toolId} />
