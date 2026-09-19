@@ -2392,6 +2392,56 @@ html.reduce-motion *::after {
 .dark .finder-empty-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.13); }
 .finder-empty-btn:disabled { opacity: 0.4; }
 
+/* Grid / list switch — the Portfolio's one control, sitting in the sub-bar
+   where the Trash keeps Empty, and built from the same quiet fill so the two
+   read as one family of per-location buttons. */
+.finder-viewswitch {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.055);
+}
+.dark .finder-viewswitch { background: rgba(255, 255, 255, 0.06); }
+
+.finder-viewswitch button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 18px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: rgba(0, 0, 0, 0.45);
+  cursor: default;
+  transition: background 0.12s ease, color 0.12s ease, opacity 0.12s ease;
+}
+.dark .finder-viewswitch button { color: rgba(255, 255, 255, 0.45); }
+
+.finder-viewswitch button img { opacity: 0.45; transition: opacity 0.12s ease; }
+
+.finder-viewswitch button:hover      { background: rgba(0, 0, 0, 0.07); }
+.dark .finder-viewswitch button:hover { background: rgba(255, 255, 255, 0.07); }
+
+.finder-viewswitch button[data-active='true'] {
+  background: rgba(0, 0, 0, 0.10);
+  color: rgba(0, 0, 0, 0.82);
+}
+.dark .finder-viewswitch button[data-active='true'] {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+.finder-viewswitch button[data-active='true'] img { opacity: 1; }
+
+/* Disclosure chevron on an expandable sidebar row — it turns down rather than
+   swapping glyphs, which is the motion macOS uses for the same control. */
+.finder-disclosure {
+  transition: transform 0.18s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.15s ease;
+}
+button:hover > .finder-disclosure { opacity: 0.7; }
+
 /* ── Sidebar vibrancy ───────────────────────────────────────────────────────
    What macOS actually does, and what this reproduces:
 

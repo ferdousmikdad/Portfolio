@@ -8,6 +8,11 @@ import useTrashStore, { trashedFrom } from '@/store/trashStore'
 import useThemeStore from '@/store/themeStore'
 import useTrashDrag from '@/hooks/useTrashDrag'
 import ContextMenu from '@/components/ui/ContextMenu'
+import ChatPanel from '@/components/apps/ChatPanel'
+import PortfolioPanel from '@/components/apps/PortfolioPanel'
+import NotesPanel from '@/components/apps/NotesPanel'
+import { CATEGORIES, TAGS } from '@/data/projects'
+import { CATEGORIES as NOTE_CATEGORIES } from '@/data/notes.js'
 import GlassLayers from '@/components/ui/LiquidGlass'
 import MacAlert from '@/components/ui/MacAlert'
 import TOOLS from '@/data/tools'
@@ -25,6 +30,16 @@ import toolsIconUrl     from '@/assets/icons/Folder.png?url'
 import terminalAppIconUrl from '@/assets/icons/terminal.svg?url'
 import pacmanIconUrl    from '@/assets/icons/magic-icon.svg?url'
 import MacSearchIcon    from '@/assets/icons/macsearch.svg?react'
+import MacGridIcon      from '@/assets/icons/macgrid.svg?react'
+import macListPng       from '@/assets/icons/maclist.png'
+import AllIcon          from '@/assets/icons/work-all.svg?react'
+import RecentsIcon      from '@/assets/icons/work-recents.svg?react'
+import LogoIcon         from '@/assets/icons/work-logo.svg?react'
+import ArabicLogoIcon   from '@/assets/icons/work-arabic-logo.svg?react'
+import BrandIcon        from '@/assets/icons/work-brand-identity.svg?react'
+import LandingIcon      from '@/assets/icons/work-landing-pages.svg?react'
+import DashboardsIcon   from '@/assets/icons/work-dashboards.svg?react'
+import MobileIcon       from '@/assets/icons/work-mobile-ui.svg?react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import trashEmptyUrl     from '@/assets/icons/trash-empty.svg?url'
 import trashFullUrl      from '@/assets/icons/trash-full.svg?url'
@@ -37,6 +52,9 @@ const NATIVE_APPS = [
   { id: 'spotify',  label: 'Spotify',   icon: spotifyIconUrl },
 ]
 
+/* The favourites that hold something Finder can disclose beneath them. */
+const EXPANDABLE = new Set(['portfolio', 'notes'])
+
 const FAVORITES = [
   { id: 'home',      label: 'Home',      icon: homeIconUrl },
   { id: 'portfolio', label: 'Portfolio', icon: portfolioIconUrl },
@@ -44,7 +62,19 @@ const FAVORITES = [
   { id: 'shop',      label: 'Shop',      icon: shopIconUrl },
 ]
 
-function SidebarItem({ icon, label, active, onClick }) {
+const CATEGORY_ICONS = {
+  'logo':           LogoIcon,
+  'arabic-logo':    ArabicLogoIcon,
+  'brand-identity': BrandIcon,
+  'landing-pages':  LandingIcon,
+  'dashboards':     DashboardsIcon,
+  'mobile-ui':      MobileIcon,
+}
+
+/* `expandable` marks a row that has something inside it. Finder puts the
+   disclosure chevron at the trailing edge of the row and turns it down when
+   the folder is open; the whole row is the hit target, as it is here. */
+function SidebarItem({ icon, label, active, expandable, expanded, onClick }) {
   return (
     <button
       onClick={onClick}
@@ -62,6 +92,46 @@ function SidebarItem({ icon, label, active, onClick }) {
           fontFamily: "'SF Pro Text'",
           fontWeight: active ? 500 : 400,
           color: 'rgba(255, 255, 255, 0.94)',
+        }}
+      >
+        {label}
+      </span>
+      {expandable && (
+        <ChevronRight
+          size={12}
+          strokeWidth={2.4}
+          className="finder-disclosure"
+          style={{
+            flexShrink: 0,
+            transform: `rotate(${expanded ? 90 : 0}deg)`,
+            opacity: expanded ? 0.72 : 0.38,
+          }}
+        />
+      )}
+    </button>
+  )
+}
+
+/* A row inside an expanded favourite — Finder indents the contents of a
+   folder under the folder itself, and the Portfolio's categories are exactly
+   that. Takes a glyph component or a tag dot, rather than the artwork URLs
+   the top-level rows carry. */
+function SidebarSubItem({ icon: Icon, dot, label, active, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full flex items-center gap-2 pl-7 pr-3 py-[4px] rounded-md text-left transition-colors group
+        ${active ? 'bg-white/10' : 'hover:bg-white/5'}`}
+    >
+      {dot
+        ? <span style={{ width: 9, height: 9, borderRadius: 9999, flexShrink: 0, background: dot }} />
+        : Icon && <Icon width={12} height={12} style={{ flexShrink: 0, color: active ? '#fff' : 'rgba(255,255,255,0.55)' }} />}
+      <span
+        className="text-[12px] flex-1 truncate"
+        style={{
+          fontFamily: "'SF Pro Text'",
+          fontWeight: active ? 500 : 400,
+          color: active ? 'rgba(255,255,255,0.94)' : 'rgba(255,255,255,0.66)',
         }}
       >
         {label}
@@ -167,6 +237,17 @@ export default function FinderWindow() {
   const setContentView = useWindowStore((st) => st.setFinderView)
   const [selectedTool,  setSelectedTool]  = useState(null)
   const [search,        setSearch]        = useState('')
+  /* Which slice of the Portfolio is showing: 'recent' | 'category' | 'tag',
+     chosen from the rows nested under the Portfolio favourite. */
+  const [pfType,        setPfType]        = useState(null)
+  const [pfItem,        setPfItem]        = useState(null)
+  const [pfView,        setPfView]        = useState('grid')
+  /* Which category of Notes is showing. */
+  const [noteCat,       setNoteCat]       = useState('all')
+  /* Finder keeps a folder closed until you ask for it, so the favourites that
+     have something inside them start collapsed and their row toggles them
+     open and shut. Holds the ids currently disclosed. */
+  const [openFavs,      setOpenFavs]      = useState(() => new Set())
 
   const isDark      = useThemeStore((st) => st.isDark)
   const trashItems  = useTrashStore((st) => st.items)
@@ -176,6 +257,14 @@ export default function FinderWindow() {
   const emptyTrash  = useTrashStore((st) => st.emptyTrash)
 
   const inTrash     = contentView === 'trash'
+  /* Home and Portfolio are the favourites that are places rather than
+     signposts: they hold the real thing — Mikuda's chat, the project wall —
+     instead of an Open button. */
+  const isHome      = contentView === 'home'
+  const isPortfolio = contentView === 'portfolio'
+  const isNotes     = contentView === 'notes'
+  /* Whichever of them is showing brings its own padding and scrolling. */
+  const isEmbedded  = isHome || isPortfolio || isNotes
   const trashFull   = trashItems.length > 0
   const trashedApps = trashedFrom(trashItems, 'finder')
 
@@ -297,6 +386,22 @@ export default function FinderWindow() {
     navigate(pageId)
   }
 
+  /* Arriving at a favourite opens it; clicking the row you are already on
+     shuts it again. */
+  const discloseFav = (id, alreadyThere) => setOpenFavs((prev) => {
+    const next = new Set(prev)
+    if (alreadyThere && next.has(id)) next.delete(id)
+    else next.add(id)
+    return next
+  })
+
+  /* Clicking the row you are already on clears the filter, which is how the
+     Portfolio window's own sidebar behaves. */
+  const selectSlice = (type, id) => {
+    if (type && pfType === type && pfItem === id) { setPfType(null); setPfItem(null) }
+    else { setPfType(type); setPfItem(id) }
+  }
+
   const goToApplications = () => {
     setContentView('applications')
     setSelectedTool(null)
@@ -314,8 +419,20 @@ export default function FinderWindow() {
         <MacSearchIcon width={11} height={11} style={{ flexShrink: 0 }} />
         <input
           value={search}
-          onChange={(e) => { setSearch(e.target.value); setSelectedTool(null); setContentView('applications') }}
-          placeholder={inTrash ? 'Search' : 'Search tools…'}
+          onChange={(e) => {
+            setSearch(e.target.value)
+            setSelectedTool(null)
+            /* Typing inside a location that has its own contents narrows
+               those; anywhere else it is a search of the Applications
+               folder. */
+            if (!isPortfolio && !isNotes) setContentView('applications')
+          }}
+          placeholder={
+            isPortfolio ? 'Search projects…'
+              : isNotes  ? 'Search notes…'
+              : inTrash  ? 'Search'
+              : 'Search tools…'
+          }
           className="bg-transparent text-[11px] outline-none w-full"
           onMouseDown={(e) => e.stopPropagation()}
         />
@@ -340,13 +457,103 @@ export default function FinderWindow() {
       {/* Favorites */}
       <p className="px-3 pb-1 text-[11px] font-semibold" style={{ color: 'rgba(255,255,255,0.56)' }}>Favorites</p>
       {FAVORITES.map((fav) => (
-        <SidebarItem
-          key={fav.id}
-          icon={fav.icon}
-          label={fav.label}
-          active={contentView === fav.id}
-          onClick={() => { setContentView(fav.id); setSelectedTool(null); setSearch('') }}
-        />
+        <div key={fav.id}>
+          <SidebarItem
+            icon={fav.icon}
+            label={fav.label}
+            active={contentView === fav.id}
+            expandable={EXPANDABLE.has(fav.id)}
+            expanded={openFavs.has(fav.id)}
+            onClick={() => {
+              /* Coming from elsewhere, the first click both goes there and
+                 opens it; once you are inside, the row is a toggle. */
+              if (EXPANDABLE.has(fav.id)) discloseFav(fav.id, contentView === fav.id)
+              setContentView(fav.id)
+              setSelectedTool(null)
+              setSearch('')
+            }}
+          />
+          {/* Open the Portfolio and its categories unfold beneath it, the way
+              Finder discloses what is inside a folder. */}
+          <AnimatePresence initial={false}>
+          {fav.id === 'portfolio' && isPortfolio && openFavs.has('portfolio') && (
+            <motion.div
+              key="portfolio-tree"
+              className="flex flex-col gap-0.5 pt-0.5 pb-1"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{    height: 0, opacity: 0 }}
+              transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
+              style={{ overflow: 'hidden' }}
+            >
+              <SidebarSubItem
+                icon={AllIcon}
+                label="All"
+                active={!pfType}
+                onClick={() => selectSlice(null, null)}
+              />
+              <SidebarSubItem
+                icon={RecentsIcon}
+                label="Recents"
+                active={pfType === 'recent'}
+                onClick={() => selectSlice('recent', 'recent')}
+              />
+              {CATEGORIES.map((cat) => (
+                <div key={cat.section} className="pt-1">
+                  <p className="pl-7 pb-0.5 text-[10px] font-semibold tracking-wide" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                    {cat.section}
+                  </p>
+                  {cat.items.map((item) => (
+                    <SidebarSubItem
+                      key={item.id}
+                      icon={CATEGORY_ICONS[item.id]}
+                      label={item.label}
+                      active={pfType === 'category' && pfItem === item.id}
+                      onClick={() => selectSlice('category', item.id)}
+                    />
+                  ))}
+                </div>
+              ))}
+              <div className="pt-1">
+                <p className="pl-7 pb-0.5 text-[10px] font-semibold tracking-wide" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                  Tags
+                </p>
+                {TAGS.map((tag) => (
+                  <SidebarSubItem
+                    key={tag.id}
+                    dot={tag.color}
+                    label={tag.label}
+                    active={pfType === 'tag' && pfItem === tag.id}
+                    onClick={() => selectSlice('tag', tag.id)}
+                  />
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Notes keeps its categories in the same place, under its own row */}
+          {fav.id === 'notes' && isNotes && openFavs.has('notes') && (
+            <motion.div
+              key="notes-tree"
+              className="flex flex-col gap-0.5 pt-0.5 pb-1"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{    height: 0, opacity: 0 }}
+              transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
+              style={{ overflow: 'hidden' }}
+            >
+              {NOTE_CATEGORIES.map((cat) => (
+                <SidebarSubItem
+                  key={cat.id}
+                  label={cat.label}
+                  active={noteCat === cat.id}
+                  onClick={() => setNoteCat(cat.id)}
+                />
+              ))}
+            </motion.div>
+          )}
+          </AnimatePresence>
+        </div>
       ))}
 
       {/* Locations — the Trash is a place in Finder, not an app of its own,
@@ -388,9 +595,36 @@ export default function FinderWindow() {
               Empty
             </button>
           )}
+          {/* The wall's own view switch, in the row where the Trash keeps
+              Empty — Finder's per-location controls live here. */}
+          {isPortfolio && (
+            <div className="finder-viewswitch">
+              <button
+                aria-label="Grid view"
+                data-active={pfView === 'grid'}
+                onClick={() => setPfView('grid')}
+                onPointerDown={(e) => e.stopPropagation()}
+              >
+                <MacGridIcon width={12} height={12} />
+              </button>
+              <button
+                aria-label="List view"
+                data-active={pfView === 'list'}
+                onClick={() => setPfView('list')}
+                onPointerDown={(e) => e.stopPropagation()}
+              >
+                <img src={macListPng} alt="" width={12} height={12} draggable={false} />
+              </button>
+            </div>
+          )}
         </div>
 
-      <div className="window-scroll px-4 pb-4 pt-1" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+      {/* The chat and the project wall bring their own padding and do their
+          own scrolling, so the file-area gutters step aside for them. */}
+      <div
+        className={isEmbedded ? '' : 'window-scroll px-4 pb-4 pt-1'}
+        style={{ flex: 1, minHeight: 0, overflowY: isEmbedded ? 'hidden' : 'auto' }}
+      >
         <AnimatePresence mode="wait">
 
           {contentView === 'applications' ? (
@@ -448,6 +682,59 @@ export default function FinderWindow() {
                   <p className="text-[12px]" style={{ color: 'var(--body)', opacity: 0.5 }}>No tools found</p>
                 </div>
               )}
+            </motion.div>
+
+          ) : isHome ? (
+            /* ── Home — Mikuda herself ────────────────────────────────────
+               The Home favourite is not a signpost to another window: it is
+               the chat, running here. Selecting it in the sidebar is the
+               whole interaction, so there is no Open button to press. */
+            <motion.div
+              key="home"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{    opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              style={{ height: '100%' }}
+            >
+              <ChatPanel />
+            </motion.div>
+
+          ) : isPortfolio ? (
+            /* ── Portfolio — the project wall ─────────────────────────────
+               Same grid the Portfolio window shows; its categories moved
+               into Finder's sidebar and its search into Finder's toolbar,
+               so the location is navigated with Finder's own chrome. */
+            <motion.div
+              key="portfolio"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{    opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              style={{ height: '100%', width: '100%' }}
+            >
+              <PortfolioPanel
+                type={pfType}
+                item={pfItem}
+                search={search}
+                viewMode={pfView}
+                columns="repeat(auto-fill, minmax(170px, 1fr))"
+              />
+            </motion.div>
+
+          ) : isNotes ? (
+            /* ── Notes — the entries, the reader and the canvas ───────────
+               Its categories moved into Finder's sidebar, so the location is
+               navigated with Finder's own chrome. */
+            <motion.div
+              key="notes"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{    opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              style={{ height: '100%', width: '100%' }}
+            >
+              <NotesPanel category={noteCat} onCategoryChange={setNoteCat} search={search} />
             </motion.div>
 
           ) : inTrash ? (
