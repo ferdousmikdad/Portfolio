@@ -2405,6 +2405,14 @@ html.reduce-motion *::after {
   flex-shrink: 0;
 }
 
+.finder-subbar[data-bare='true'] { height: 6px; }
+
+/* Finder's own item labels: the plain label colour of a Finder window, which
+   is full white on a dark window rather than the page's softer body text. */
+.finder-grid-label { color: #1c1c1e; }
+.dark .finder-grid-label { color: #fff; }
+
+
 .finder-subbar__name {
   font-family: 'SF Pro Text', system-ui, sans-serif;
   font-size: 12px;

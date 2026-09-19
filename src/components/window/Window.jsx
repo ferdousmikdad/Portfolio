@@ -3,7 +3,7 @@ import { motion, useDragControls, useMotionValue } from 'framer-motion'
 import WindowControls from './WindowControls'
 import useWindowStore from '@/store/windowStore'
 import useSoundStore from '@/store/soundStore'
-import { genieStage, flatten, afterMount } from '@/utils/genie'
+import { genieStage, flatten, rasterizeFrames, afterMount } from '@/utils/genie'
 import { setSnapshot } from '@/utils/windowSnapshots'
 import { useResize, RESIZE_CURSORS } from '@/hooks/useResize'
 
@@ -48,8 +48,6 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
   // window is still up, because building it is the only costly part and a
   // frame lost to it at the start is the one thing the eye always catches.
   const handleMinimize = () => {
-    play('minimize')
-
     const el = winRef.current
     if (!el) { minimizeWindow(id); return }
 
@@ -60,25 +58,39 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
     // Flattening has to happen while the window is still live — that is the
     // only moment its canvases still have pixels to read.
     const flat = flatten(el)
-    setSnapshot(id, flat, { width: rect.width, height: rect.height })
 
-    // Somewhere below the window, for the frame before the dock tile exists
-    const cx = rect.left + rect.width / 2
-    let slot = { left: cx - 24, right: cx + 24, width: 48,
-                 top: window.innerHeight - 8, bottom: window.innerHeight + 40, height: 48 }
+    const start = () => {
+      play('minimize')
+      setSnapshot(id, flat, { width: rect.width, height: rect.height })
 
-    // Sits exactly on the window at rest, so putting it up changes nothing
-    const stage = genieStage(flat, rect.width, rect.height)
-    stage.place(rect, slot)
-    stage.draw(0)
+      // Somewhere below the window, for the frame before the dock tile exists
+      const cx = rect.left + rect.width / 2
+      let slot = { left: cx - 24, right: cx + 24, width: 48,
+                   top: window.innerHeight - 8, bottom: window.innerHeight + 40, height: 48 }
 
-    minimizeWindow(id)
-
-    afterMount(`[data-min-slot="${id}"]`).then((slotEl) => {
-      if (slotEl) slot = slotEl.getBoundingClientRect()
+      // Sits exactly on the window at rest, so putting it up changes nothing
+      const stage = genieStage(flat, rect.width, rect.height)
       stage.place(rect, slot)
-      stage.run(820, 0, 1).then(stage.destroy)
-    })
+      stage.draw(0)
+
+      minimizeWindow(id)
+
+      afterMount(`[data-min-slot="${id}"]`).then((slotEl) => {
+        if (slotEl) slot = slotEl.getBoundingClientRect()
+        stage.place(rect, slot)
+        stage.run(820, 0, 1).then(stage.destroy)
+      })
+    }
+
+    /* A window with a frame in it — every one of the tool apps — needs that
+       frame drawn into a picture before the bands are cut, or the whole warp is
+       a grey plate. The decode is waited on here, with the window still up and
+       nothing yet in motion, so the wait costs a few milliseconds nobody can
+       see rather than the first frames of the animation. Windows without a
+       frame get no promise back and carry straight on, as they always did. */
+    const drawn = rasterizeFrames(flat)
+    if (drawn) drawn.then(start)
+    else start()
   }
 
   return (

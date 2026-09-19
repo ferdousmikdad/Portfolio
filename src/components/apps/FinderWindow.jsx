@@ -164,7 +164,7 @@ function GridItem({
       style={{ background: 'transparent', border: '1px solid transparent', outline: 'none' }}
     >
       <div style={{
-        width: 52, height: 52,
+        width: 64, height: 64,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         borderRadius: 12,
         background: selected ? 'rgba(255,255,255,0.07)' : 'transparent',
@@ -176,22 +176,24 @@ function GridItem({
           draggable={false}
           style={thumb
             ? {
-                width: 44, height: 44, objectFit: 'cover',
+                width: 56, height: 56, objectFit: 'cover',
                 borderRadius: 4,
                 boxShadow: '0 0 0 1px rgba(255,255,255,0.14), 0 1px 3px rgba(0,0,0,0.35)',
               }
             : {
-                width: 40, height: 40, objectFit: 'contain',
+                width: 52, height: 52, objectFit: 'contain',
                 filter: disabled ? 'grayscale(0.6) opacity(0.4)' : 'none',
               }}
         />
       </div>
       <span
-        className="text-[10px] text-center leading-tight px-1.5 py-0.5 rounded"
+        className="finder-grid-label text-[10px] text-center leading-tight px-1.5 py-0.5 rounded"
         style={{
           fontFamily:  "'SF Pro Text'",
           background:  selected ? '#0064d2' : 'transparent',
-          color:       selected ? '#fff' : 'var(--body)',
+          /* Unselected takes its colour from the class, so a light window
+             still gets a readable label; selected is white on the blue. */
+          ...(selected ? { color: '#fff' } : null),
           transition:  'background 0.12s, color 0.12s',
         }}
       >
@@ -290,15 +292,20 @@ export default function FinderWindow() {
   // not leave a trashed file highlighted behind the Applications grid.
   useEffect(() => { setSelectedTool(null) }, [contentView])
 
-  const visibleTools = useMemo(() => {
+  /* One Applications folder, the way the real one looks: the apps that come
+     with the machine and the ones that were installed sit in the same grid,
+     sorted by name, with no headings dividing them. */
+  const visibleApps = useMemo(() => {
+    const all = [
+      ...NATIVE_APPS.map((a) => ({ id: a.id, label: a.label, icon: a.icon, system: true })),
+      ...TOOLS.map((t) => ({ id: t.id, label: t.name, icon: t.icon, disabled: t.url === null })),
+    ]
     // An app in the Trash is not installed, so it is not in the grid either.
-    const installed = TOOLS.filter((t) => !trashedApps.has(t.id))
-    if (!search.trim()) return installed
-    const q = search.toLowerCase()
-    return installed.filter((t) => t.name.toLowerCase().includes(q))
+    const installed = all.filter((a) => !trashedApps.has(a.id))
+    const q = search.trim().toLowerCase()
+    const found = q ? installed.filter((a) => a.label.toLowerCase().includes(q)) : installed
+    return found.sort((a, b) => a.label.localeCompare(b.label))
   }, [search, trashItems])
-
-  const visibleNativeApps = NATIVE_APPS.filter((a) => !trashedApps.has(a.id))
 
   const doEmptyTrash = () => { play('emptyTrash'); emptyTrash(); setConfirmEmpty(false); setSelectedTool(null) }
 
@@ -622,9 +629,13 @@ export default function FinderWindow() {
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
 
         {/* The row under the toolbar: the location on the left, and in the
-            Trash the one button it gets — Empty, dimmed when it is empty. */}
-        <div className="finder-subbar">
-          <span className="finder-subbar__name">{locationName}</span>
+            Trash the one button it gets — Empty, dimmed when it is empty.
+            Applications names itself in the title bar only, the way the real
+            Applications folder does, so the row collapses to nothing there. */}
+        <div className="finder-subbar" data-bare={contentView === 'applications'}>
+          {contentView !== 'applications' && (
+            <span className="finder-subbar__name">{locationName}</span>
+          )}
           {inTrash && (
             <button
               className="finder-empty-btn"
@@ -676,46 +687,24 @@ export default function FinderWindow() {
               exit={{    opacity: 0 }}
               transition={{ duration: 0.15 }}
             >
-              {/* Native apps (Terminal etc.) — always shown, not affected by search */}
-              {!search.trim() && (
-                <section className="mb-4">
-                  <p className="text-[10px] font-semibold tracking-widest mb-3 px-1" style={{ color: '#5E5C53' }}>SYSTEM</p>
-                  <div className="grid gap-1" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(88px, 1fr))' }}>
-                    {visibleNativeApps.map((app) => (
-                      <AppGridItem
-                        key={app.id}
-                        app={app}
-                        system
-                        selected={selectedTool === app.id}
-                        onSelect={() => setSelectedTool(app.id)}
-                        onOpen={() => { play('open'); openWindow(app.id) }}
-                        onTrash={trashApp}
-                        onBlocked={setBlockedApp}
-                      />
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              {visibleTools.length > 0 ? (
-                <section>
-                  <p className="text-[10px] font-semibold tracking-widest mb-3 px-1" style={{ color: '#5E5C53' }}>
-                    APPLICATIONS — {visibleTools.length}
-                  </p>
-                  <div className="grid gap-1" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(88px, 1fr))' }}>
-                    {visibleTools.map((tool) => (
-                      <AppGridItem
-                        key={tool.id}
-                        app={{ id: tool.id, label: tool.name, icon: tool.icon, disabled: tool.url === null }}
-                        selected={selectedTool === tool.id}
-                        onSelect={() => setSelectedTool(tool.id)}
-                        onOpen={() => tool.url && launchTool(tool.id)}
-                        onTrash={trashApp}
-                        onBlocked={setBlockedApp}
-                      />
-                    ))}
-                  </div>
-                </section>
+              {visibleApps.length > 0 ? (
+                <div className="grid gap-1 pt-2" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(104px, 1fr))' }}>
+                  {visibleApps.map((app) => (
+                    <AppGridItem
+                      key={app.id}
+                      app={app}
+                      system={app.system}
+                      selected={selectedTool === app.id}
+                      onSelect={() => setSelectedTool(app.id)}
+                      onOpen={() => {
+                        if (app.system) { play('open'); openWindow(app.id) }
+                        else if (!app.disabled) launchTool(app.id)
+                      }}
+                      onTrash={trashApp}
+                      onBlocked={setBlockedApp}
+                    />
+                  ))}
+                </div>
               ) : (
                 <div className="flex flex-col items-center justify-center gap-2" style={{ paddingTop: 80 }}>
                   <MacSearchIcon width={28} height={28} style={{ opacity: 0.2 }} />
@@ -809,7 +798,7 @@ export default function FinderWindow() {
               onClick={() => setSelectedTool(null)}
             >
               {trashFull ? (
-                  <div className="grid gap-1 pt-1" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(88px, 1fr))' }}>
+                  <div className="grid gap-1 pt-1" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(104px, 1fr))' }}>
                     {trashItems.map((item) => (
                       <GridItem
                         key={item.id}

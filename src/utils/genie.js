@@ -1,3 +1,5 @@
+import { stashFrameDoc, getFrameDoc } from '@/utils/windowSnapshots'
+
 // ── macOS Genie Effect ── pure requestAnimationFrame, no dependencies ─────────
 
 /* The window is cut into horizontal bands and every band is given its own
@@ -117,6 +119,66 @@ function freezeFrame(src, w, h) {
 }
 
 /**
+ * A same-origin frame's document, frozen as standalone HTML, or null when the
+ * frame is cross-origin or not loaded.
+ *
+ * The result is meant to be handed to a sandboxed `srcdoc` frame: scripts come
+ * out so it is a picture rather than a second running copy of the app, a
+ * `<base>` goes in so its stylesheets and images still resolve, and canvases
+ * and typed-in values are carried over the same way they are in the parent —
+ * neither survives being serialised on its own.
+ */
+function readFrame(frame) {
+  try {
+    const doc = frame.contentDocument
+    if (!doc || !doc.body || !doc.documentElement) return null
+
+    const root = doc.documentElement.cloneNode(true)
+    root.querySelectorAll('script').forEach((s) => s.remove())
+
+    const liveCanvas = doc.querySelectorAll('canvas, video')
+    root.querySelectorAll('canvas, video').forEach((node, i) => {
+      const from = liveCanvas[i]
+      const r = from ? from.getBoundingClientRect() : { width: 0, height: 0 }
+      const shot = from && r.width ? freezeFrame(from, r.width, r.height) : null
+      const box = shellOf(node, shot ? 'img' : 'div')
+      if (shot) box.src = shot.src
+      else box.style.background = 'rgba(127,127,127,0.16)'
+      node.replaceWith(box)
+    })
+
+    // What someone typed lives on the property, never on the attribute, so a
+    // serialised form comes back blank unless it is written across by hand.
+    const liveFields = doc.querySelectorAll('input, textarea, select')
+    root.querySelectorAll('input, textarea, select').forEach((node, i) => {
+      const from = liveFields[i]
+      if (!from) return
+      if (node.tagName === 'TEXTAREA') node.textContent = from.value
+      else if (node.tagName === 'SELECT') {
+        node.querySelectorAll('option').forEach((o) => {
+          if (o.value === from.value) o.setAttribute('selected', '')
+          else o.removeAttribute('selected')
+        })
+      } else if (from.type === 'checkbox' || from.type === 'radio') {
+        if (from.checked) node.setAttribute('checked', '')
+        else node.removeAttribute('checked')
+      } else node.setAttribute('value', from.value)
+    })
+
+    const head = root.querySelector('head') ?? root.insertBefore(doc.createElement('head'), root.firstChild)
+    if (!head.querySelector('base')) {
+      const base = document.createElement('base')
+      base.href = doc.baseURI
+      head.insertBefore(base, head.firstChild)
+    }
+
+    return `<!doctype html>${root.outerHTML}`
+  } catch {
+    return null   // cross-origin: nothing to read, and nothing to be done
+  }
+}
+
+/**
  * A copy of `source` that is cheap to composite.
  *
  * iframes and videos start loading the instant a clone is attached to the
@@ -149,14 +211,107 @@ export function flatten(source) {
     return box
   })
 
-  // Nothing can be read out of a cross-origin frame, so it becomes a plate.
+  // A frame cannot be cloned — attaching the copy reloads it — so it becomes a
+  // plate. A same-origin frame's document can still be read, though, so the
+  // plate carries the markup with it and whoever needs a real picture of the
+  // frame (the dock tile) can rebuild one from it. Cross-origin frames stay
+  // the plain grey plate, which is all the genie ever needs.
   swap('iframe', (from, node) => {
     const box = shellOf(node)
     box.style.background = 'rgba(127,127,127,0.16)'
+    const doc = from && readFrame(from)
+    if (doc) {
+      const r = from.getBoundingClientRect()
+      box.dataset.frameDoc = stashFrameDoc(doc)
+      box.dataset.frameW = Math.round(r.width)
+      box.dataset.frameH = Math.round(r.height)
+    }
     return box
   })
 
   return clone
+}
+
+/** The frozen frame drawn into an SVG, so it can be loaded as a picture. */
+function frameImage(html, w, h) {
+  try {
+    // foreignObject is XML, and HTML's void tags are not — so it goes through
+    // the XML serialiser, which also stamps on the xhtml namespace it needs.
+    const doc = new DOMParser().parseFromString(html, 'text/html')
+    const xml = new XMLSerializer().serializeToString(doc.documentElement)
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">`
+      + `<foreignObject width="100%" height="100%">${xml}</foreignObject></svg>`
+    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Draw the real page back into the plates `flatten` left behind.
+ *
+ * The genie cuts the window into a dozen bands and every band is its own copy,
+ * so whatever stands in for the frame is paid for a dozen times. A frame is far
+ * too expensive at that multiple — a dozen `srcdoc` documents to parse and lay
+ * out, right at the moment the animation starts, which is exactly where a
+ * dropped frame is impossible not to see. A picture costs nothing to clone, so
+ * the frame is rasterised once, here, before the bands are cut.
+ *
+ * Returns null when there is no frame to draw — the common case, and one that
+ * must not cost the caller so much as a microtask. Otherwise a promise: the
+ * decode is awaited while the window is still standing, where the wait is
+ * invisible, rather than during the warp, where it would not be.
+ */
+export function rasterizeFrames(root) {
+  const plates = [...root.querySelectorAll('[data-frame-doc]')]
+  if (!plates.length) return null
+
+  return Promise.all(plates.map(async (plate) => {
+    const html = getFrameDoc(plate.dataset.frameDoc)
+    const w = Number(plate.dataset.frameW) || 0
+    const h = Number(plate.dataset.frameH) || 0
+    const url = html && w && h ? frameImage(html, w, h) : null
+    if (!url) return
+
+    const img = new Image()
+    img.src = url
+    // An SVG that will not decode leaves the grey plate exactly as it was,
+    // which is the behaviour this replaced — never a blank window.
+    try { await img.decode() } catch { return }
+
+    img.style.cssText = 'width:100%;height:100%;display:block'
+    plate.style.background = 'transparent'
+    plate.replaceChildren(img)
+  }))
+}
+
+/**
+ * The same picture, as a live frame — the fallback for a plate `rasterizeFrames`
+ * could not draw. Only ever one of these at a time (a dock tile that is just
+ * sitting there), so the cost the genie cannot afford is fine here.
+ */
+export function hydrateFrames(root) {
+  root.querySelectorAll('[data-frame-doc]').forEach((plate) => {
+    if (plate.firstChild) return   // already drawn
+    const html = getFrameDoc(plate.dataset.frameDoc)
+    if (!html) return
+
+    const frame = document.createElement('iframe')
+    frame.setAttribute('sandbox', '')        // a picture, not a second running app
+    frame.setAttribute('aria-hidden', 'true')
+    frame.setAttribute('tabindex', '-1')
+    frame.setAttribute('scrolling', 'no')
+    frame.srcdoc = html
+    frame.style.cssText = [
+      `width:${plate.dataset.frameW || plate.offsetWidth}px`,
+      `height:${plate.dataset.frameH || plate.offsetHeight}px`,
+      'border:none', 'display:block', 'pointer-events:none',
+    ].join(';')
+
+    plate.style.background = 'transparent'
+    plate.replaceChildren(frame)
+  })
+  return root
 }
 
 // ── The warp ─────────────────────────────────────────────────────────────────
