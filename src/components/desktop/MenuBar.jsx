@@ -52,10 +52,16 @@ export default function MenuBar({ onOpenSpotlight, onMenuOpen }) {
   const [open, setOpen] = useState(null)      // menu id, or null
   const [isFullscreen, setIsFullscreen] = useState(false)
   const rootRef = useRef(null)
+  /* Which menu the *pointer* opened. Without this, moving onto a sibling
+     while a menu is down hover-opens it and the click that follows reads as
+     "already open → close", so clicking a neighbouring title shut the bar
+     instead of switching to it. */
+  const hoverOpened = useRef(null)
 
   const {
     activeWindowId, windows, openWindow, navigate,
     closeWindow, minimizeWindow, toggleMaximize, closeAllExcept,
+    toggleMissionControl,
   } = useWindowStore()
   const { isDark, toggleTheme } = useThemeStore()
 
@@ -75,9 +81,12 @@ export default function MenuBar({ onOpenSpotlight, onMenuOpen }) {
   useEffect(() => {
     if (!open) return
     const onDown = (e) => {
-      if (rootRef.current && !rootRef.current.contains(e.target)) setOpen(null)
+      if (rootRef.current && !rootRef.current.contains(e.target)) {
+        hoverOpened.current = null
+        setOpen(null)
+      }
     }
-    const onKey = (e) => { if (e.key === 'Escape') setOpen(null) }
+    const onKey = (e) => { if (e.key === 'Escape') { hoverOpened.current = null; setOpen(null) } }
     document.addEventListener('mousedown', onDown)
     window.addEventListener('keydown', onKey)
     return () => {
@@ -106,6 +115,7 @@ export default function MenuBar({ onOpenSpotlight, onMenuOpen }) {
     },
     toggleTheme,
     openSpotlight: () => onOpenSpotlight?.(),
+    missionControl: toggleMissionControl,
   })
 
   return (
@@ -116,10 +126,20 @@ export default function MenuBar({ onOpenSpotlight, onMenuOpen }) {
             type="button"
             className={`mb__title${menu.apple ? ' mb__title--apple' : ''}${menu.bold ? ' mb__title--app' : ''}`}
             data-open={open === menu.id}
-            onClick={() => setOpen((v) => (v === menu.id ? null : menu.id))}
+            onClick={() => {
+              // A hover-switch already put this menu up; the click that
+              // completes the gesture should leave it up, not toggle it off.
+              if (hoverOpened.current === menu.id) { hoverOpened.current = null; return }
+              hoverOpened.current = null
+              setOpen((v) => (v === menu.id ? null : menu.id))
+            }}
             // Hover only switches while a menu is already down — that is how
             // AppKit behaves, and it stops the bar firing on a passing cursor.
-            onMouseEnter={() => setOpen((v) => (v ? menu.id : v))}
+            onMouseEnter={() => setOpen((v) => {
+              if (!v || v === menu.id) return v
+              hoverOpened.current = menu.id
+              return menu.id
+            })}
           >
             {menu.apple
               ? <img src={mikdadHeadUrl} alt="Apple menu" width={16} height={16} />

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import GlassLayers from '@/components/ui/LiquidGlass'
+import useSoundStore from '@/store/soundStore'
 import mikdadHeadUrl from '@/assets/icons/mikdad-head.svg?url'
 
 /* ── Welcome card ──────────────────────────────────────────────────────────
@@ -18,6 +19,7 @@ const TEXT =
 
 export default function WelcomeModal() {
   const [show, setShow] = useState(false)
+  const play = useSoundStore((s) => s.play)
 
   useEffect(() => {
     if (!sessionStorage.getItem(STORAGE_KEY)) setShow(true)
@@ -29,6 +31,10 @@ export default function WelcomeModal() {
   }
 
   const fitWindow = () => {
+    // The machine booting. This click is the first real gesture on the page,
+    // so it is also the first moment the browser's autoplay policy will let
+    // any sound through — which is exactly why the chime lives here.
+    play('chime')
     document.documentElement.requestFullscreen?.().catch(() => {})
     dismiss()
   }

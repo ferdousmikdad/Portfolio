@@ -1,6 +1,15 @@
 /**
  * Generates macOS-style UI sound effects as WAV files.
- * Run with: node generate.js
+ * Run with: node generate.cjs
+ *
+ * One extra step for the chime only: it is 2.4s long, which is ~207 KB as
+ * 16-bit PCM, so it ships as AAC instead (~15 KB, no audible loss):
+ *
+ *   node generate.cjs
+ *   afconvert -f m4af -d aac -b 96000 chime.wav chime.m4a
+ *   cp chime.m4a ../../../public/sounds/
+ *
+ * The intermediate chime.wav is not kept — it is reproducible from here.
  */
 
 const fs = require('fs');
@@ -151,10 +160,59 @@ function generateNotification() {
   writeWav('notification.wav', samples);
 }
 
+/**
+ * Power-on chime.
+ *
+ * Deliberately an original composition, not a copy of Apple's startup sound —
+ * that chime is a registered trademark and has no business being bundled into
+ * a portfolio. This is a plain G-major spread (G3 · B3 · D4 · G4) with the
+ * voices struck a few milliseconds apart, a soft attack and a long decay, so
+ * it reads as "machine waking up" without borrowing anything.
+ */
+function generateChime() {
+  const duration = 2.4;
+  const samples = new Float32Array(Math.floor(SAMPLE_RATE * duration));
+
+  // G major, low to high. The tiny stagger stops it sounding like an organ
+  // stab — real struck chords never land perfectly together.
+  const voices = [
+    { freq: 196.00, delay: 0.000, gain: 0.30 },
+    { freq: 246.94, delay: 0.012, gain: 0.26 },
+    { freq: 293.66, delay: 0.024, gain: 0.24 },
+    { freq: 392.00, delay: 0.036, gain: 0.20 },
+  ];
+
+  for (let i = 0; i < samples.length; i++) {
+    const t = i / SAMPLE_RATE;
+    let s = 0;
+
+    for (const v of voices) {
+      if (t < v.delay) continue;
+      const nt = t - v.delay;
+      // 25ms attack, then an exponential tail. Slow enough that the onset is
+      // a swell rather than a click.
+      const attack = Math.min(1, nt / 0.025);
+      const decay = Math.exp(-nt * 1.5);
+      const env = attack * decay;
+      // Second and third harmonics, each quieter — a little body without
+      // turning it into a sawtooth.
+      s += Math.sin(2 * Math.PI * v.freq * nt) * env * v.gain
+         + Math.sin(2 * Math.PI * v.freq * 2 * nt) * env * v.gain * 0.22
+         + Math.sin(2 * Math.PI * v.freq * 3 * nt) * env * v.gain * 0.08;
+    }
+
+    // Gentle fade to silence so the tail never cuts off on a non-zero sample.
+    const fade = t > duration - 0.3 ? (duration - t) / 0.3 : 1;
+    samples[i] = Math.max(-1, Math.min(1, s * fade));
+  }
+  writeWav('chime.wav', samples);
+}
+
 generateClick();
 generateOpen();
 generateClose();
 generateMinimize();
 generateNotification();
+generateChime();
 
 console.log('All sounds generated!');

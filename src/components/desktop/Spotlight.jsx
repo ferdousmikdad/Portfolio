@@ -14,6 +14,7 @@ import GlassLayers from '@/components/ui/LiquidGlass'
 import projects from '@/data/projects'
 import TOOLS from '@/data/tools'
 import { PANE_ICONS, SIDEBAR_GROUPS } from '@/data/settingsPanes'
+import spotlightAnswer from '@/utils/spotlightMath'
 import finderUrl   from '@/assets/icons/finder.svg?url'
 import folderUrl   from '@/assets/icons/Folder.png'
 import noteUrl     from '@/assets/icons/note.png'
@@ -48,7 +49,7 @@ export default function Spotlight({ onClose }) {
     { id: 'notes',      name: 'Notes',       icon: noteUrl,     run: () => openWindow('notes') },
     { id: 'terminal',   name: 'Terminal',    icon: terminalUrl, run: () => openWindow('terminal') },
     { id: 'calculator', name: 'Calculator',  icon: calcUrl,     run: () => openWindow('calculator') },
-    { id: 'shop',       name: 'Shop',        icon: appStoreUrl, run: () => openWindow('shop') },
+    { id: 'shop',       name: 'Store',       icon: appStoreUrl, run: () => openWindow('shop') },
     { id: 'spotify',    name: 'Spotify',     icon: spotifyUrl,  run: () => openWindow('spotify') },
     { id: 'settings',   name: 'System Settings', icon: PANE_ICONS.general, run: () => openWindow('settings') },
     { id: 'portfolio',  name: 'Portfolio',   icon: folderUrl,   run: () => navigate('portfolio') },
@@ -71,6 +72,21 @@ export default function Spotlight({ onClose }) {
                    sub: p.category, thumb: p.thumbnail,
                    run: () => openProjectPreview(p) }))
 
+    /* Spotlight answers arithmetic and unit conversions itself, above
+       everything else — the way the real one puts the result on top. Enter
+       copies it, which is what the Mac does too. */
+    const answer = spotlightAnswer(query)
+    const calc = answer
+      ? [{
+          key: 'calc',
+          group: 'Calculator',
+          title: answer.value,
+          sub: answer.label,
+          icon: calcUrl,
+          run: () => navigator.clipboard?.writeText(answer.value).catch(() => {}),
+        }]
+      : []
+
     const panes = SIDEBAR_GROUPS.flat()
       .filter(pane => hit(pane.label))
       .slice(0, 3)
@@ -78,7 +94,7 @@ export default function Spotlight({ onClose }) {
                       sub: 'Settings', icon: PANE_ICONS[pane.icon],
                       run: () => openWindow('settings') }))
 
-    return [...apps, ...tools, ...works, ...panes].slice(0, 9)
+    return [...calc, ...apps, ...tools, ...works, ...panes].slice(0, 9)
   }, [query, APPS, navigate, openTool, openProjectPreview, openWindow])
 
   useEffect(() => { setCursor(0) }, [query])

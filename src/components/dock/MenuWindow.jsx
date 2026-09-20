@@ -9,7 +9,7 @@ const menuItems = [
   { id: 'home',      label: 'Home',      icon: HomeIcon,      shortcut: 'Shift + H' },
   { id: 'about',     label: 'About me',  icon: AboutIcon,     shortcut: 'Shift + A' },
   { id: 'portfolio', label: 'Portfolio', icon: PortfolioIcon, shortcut: 'Shift + P' },
-  { id: 'shop',      label: 'Shop',      icon: ShopIcon,      shortcut: 'Shift + S' },
+  { id: 'shop',      label: 'Store',     icon: ShopIcon,      shortcut: 'Shift + S' },
   { id: 'notes',     label: 'Notes',     icon: NotesIcon,     shortcut: 'Shift + N' },
 ]
 

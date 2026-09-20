@@ -25,8 +25,8 @@ Same symbols as `PROGRESS.md`, so the two files read the same way.
 | Field | Value |
 |---|---|
 | **Currently working on** | — nothing in flight — |
-| **Last completed** | ✅ F2 — Real menu-bar menus |
-| **Next up** | Your call — F3 finishes Tier 1, or F4/F5 for quick wins |
+| **Last completed** | ✅ F9 — Dock launch bounce · **Tier 2 half done** |
+| **Next up** | F10 (Quick Look) · F11 (Trash Put Back) — the rest of Tier 2 |
 
 > **How to use this:** tell me an ID (“let’s do F4”) and I’ll flip it to 🔄, do the
 > work, then flip it to ✅ with a note. If you want to know where we are, just ask
@@ -50,13 +50,13 @@ These are already done and are why several items below are cheap.
 
 ## Tier 1 — Highest payoff for a portfolio
 
-Do these first. Best “this person sweats details” per hour.
+Do these first. Best “this person sweats details” per hour. **All three shipped.**
 
 | ID | Task | Status | Effort | Notes |
 |---|---|---|---|---|
 | F1 | **About This Mac** | ✅ | S | Done. `AboutMacWindow.jsx` + `AppleMenu.jsx`. Specs are **real facts** pulled from `BioWindow`/`AboutMeWindow` (5+ years, Figma·Illustrator·AE, React·Tailwind·Framer, print & branding origin) — only the chip name is a gag. Buttons: More Info… → About window, Contact… → `contact.txt`. Both verified. |
 | F2 | **Real menu-bar menus** | ✅ | M | Done. `MenuBar.jsx` + `data/menuBar.js`. Apple · **App** · File · Edit · View · Go · Window · Help, rebuilt from the front window — app name tracks focus (verified Color Contrast → Terminal → Finder → Notes). Hover-to-switch between open menus, Esc/outside-click dismiss, disabled items dimmed not hidden. ⚠️ The three nav buttons moved into **Go** — see note below. |
-| F3 | **Mission Control (F3)** | 📋 | M | All open windows zoom out to a non-overlapping grid. `windowStore` already holds positions + sizes, so it is mostly one layout animation. Doubles as “see everything at once”. |
+| F3 | **Mission Control (F3)** | ✅ | M | Done. `MissionControl.jsx`. Tiles are DOM clones of the live windows — reuses the `windowSnapshots` trick the dock's minimised thumbnails already use, so no canvas library was needed. FLIP zoom from each window's real rect into a non-overlapping grid; click a tile to focus and dismiss; Esc or click-through to exit. Verified: 4 windows, no overlap, correct labels, focus follows the pick. ⚠️ F3 key usually eaten by macOS itself — **Window › Mission Control** is the reliable way in. |
 
 ---
 
@@ -64,12 +64,12 @@ Do these first. Best “this person sweats details” per hour.
 
 | ID | Task | Status | Effort | Notes |
 |---|---|---|---|---|
-| F4 | Startup chime on “Fit Window” | 📋 | XS | `soundStore` exists. Iconic; huge vibe return for the effort. |
-| F5 | `neofetch` in Terminal | 📋 | S | ASCII Apple logo + fake specs. Pairs with F1 (same joke data). |
-| F6 | More Terminal easter eggs | 📋 | S | `sudo` → “Nice try.”, `cowsay`, `open finder`, `whoami`. |
-| F7 | Spotlight math + conversions | 📋 | S | Type `12*9` or `340 usd to bdt` → inline result row. Spotlight and Calculator both exist. |
-| F8 | Dock right-click menus | 📋 | S | Options / Show in Finder / Quit. `ContextMenu.jsx` already exists. |
-| F9 | Dock launch bounce | 📋 | XS | Icon bounces while an app opens. |
+| F4 | Startup chime on “Fit Window” | ✅ | XS | Done. **Original** G-major chord synthesised by `assets/sounds/generate.cjs` — deliberately *not* Apple's chime, which is a registered trademark. Encoded to AAC (15 KB vs 207 KB WAV). Fires on Fit Window, which is also the first gesture that satisfies autoplay policy. Verified: fetched, ctx running, peak 0.877 / 2.3s decay. |
+| F5 | `neofetch` in Terminal | ✅ | S | **Was already implemented** — FM ASCII logo + spec block. Real work done instead: the facts were duplicated across `neofetch` and About This Mac and had already drifted (Stack said “React · Figma · Motion”). Both now read `data/systemProfile.js`. Also fixed an off-by-one gutter in the neofetch renderer. |
+| F6 | More Terminal commands | ✅ | S | `whoami`/`open` already existed. Added **working** shell commands — `pwd`, `ls` (lists the real `desktopFiles`), `echo`, `history`, `uname -a`, `man`, `say` (real speech synthesis) — plus `cowsay` and a `sudo` catch-all. All listed in `help`. Fixed a stale-closure bug found on the way: `execute` is a `useCallback` with no state deps, so `history` always read `[]`; now mirrored in `historyRef`, matching the existing `aiActiveRef` pattern. |
+| F7 | Spotlight math + conversions | ✅ | S | Done. `utils/spotlightMath.js` — a real tokeniser + shunting-yard, **not `eval`**: this parses visitor input, so `eval`/`new Function` would be a script-injection hole. Result shows in a Calculator group above everything; Enter copies it. 32 unit tests pass, incl. precedence, right-assoc `^`, unary minus, unbalanced brackets and injection strings all returning null. ⚠️ **Currency deliberately omitted** — see Open decisions. |
+| F8 | Dock right-click menus | ✅ | S | The Trash already had one; this adds menus to every **app** tile, state-dependent the way macOS is — running → Hide·Quit, hidden → Show·Quit, closed → Open — plus Show in Finder. Rises out of the icon, centred (`placement:'above'`). Verified in all three states. Also fixed a **pre-existing** `ContextMenu` bug: Escape never dismissed any menu (Trash and Finder included). |
+| F9 | Dock launch bounce | ✅ | XS | **Was already built** — keyframes and trigger both existed. Fixed two gaps: the trigger reports a *window* id but tiles compared `item.id`, so the four page tiles (Home/Portfolio/Notes/Store) never bounced; and coming back from minimised counted as a launch, which macOS does not bounce for. Measured: both tile kinds now reach the full −17px, restore stays at 0. |
 | F10 | Quick Look (spacebar) | 📋 | M | Select a desktop file or Finder item → space → preview panel. Ideal for project images. |
 | F11 | Trash “Put Back” | 📋 | S | Restore path for trashed desktop files. Empty Trash alert already uses `MacAlert`. |
 
@@ -111,6 +111,8 @@ Visual spectacle. Worth it once Tier 1 is in.
 | **Nav moved into Go** (F2) | Portfolio / About Me / Notes were loose buttons on the menu bar, which no Mac has. They now live in **Go** alongside Home, Shop and Utilities. One extra click. Say the word and I will put the inline buttons back next to the menus. |
 | **⌘ hints are decorative** (F2) | The menus draw ⌘W, ⌘M, ⌘Q, ⌘, the way AppKit does, but a web page cannot intercept those — the browser and OS claim them first. Clicking the items works. Drawn anyway because a Mac menu without them does not read as one. |
 | **Focus after Minimize** (F2) | Minimising the front window leaves the app name as “Finder” rather than moving focus to the next visible window. Fixing it means changing `minimizeWindow` in `windowStore`, which is outside F2's scope. |
+| **No currency in Spotlight** (F7) | `340 usd to bdt` was on the original wish-list but is not implemented. Rates move daily, so a hard-coded number would confidently print a wrong answer — worse than printing none. Only fixed-ratio conversions ship (length, mass, temperature, data). A live rate API would make it real. |
+| **F3 key is unreliable** (F3) | macOS claims F3 for its own Mission Control before the page sees it. The key is wired anyway for non-Mac keyboards; Window › Mission Control always works. |
 
 ---
 
@@ -136,3 +138,11 @@ Prefer finishing a few of these properly over starting many.
 | 2026-09-20 | File created; F0.1–F0.4 recorded as shipped, F1–F24 planned |
 | 2026-09-20 | ✅ F1 About This Mac shipped, with the Apple menu (F1.1) as its entry point |
 | 2026-09-20 | ✅ F2 Menu bar shipped; Apple menu folded into `MenuBar`, nav moved to Go |
+| 2026-09-20 | ✅ F3 Mission Control shipped — **Tier 1 complete** |
+| 2026-09-20 | ✅ F4 Startup chime shipped (original composition, AAC) |
+| 2026-09-20 | ✅ F5 `neofetch` already existed; facts unified into `systemProfile.js` |
+| 2026-09-20 | ✅ F6 Terminal shell commands + `historyRef` stale-closure fix |
+| 2026-09-20 | Defaults: blue accent + Sonoma Horizon wallpaper; Shop renamed to Store |
+| 2026-09-20 | ✅ F7 Spotlight calculator; fixed menu-bar hover/click conflict found while testing |
+| 2026-09-20 | ✅ F8 Dock app-tile menus; fixed pre-existing ContextMenu Escape bug |
+| 2026-09-20 | ✅ F9 Launch bounce already existed; fixed page-tile id mismatch + un-minimise |

@@ -87,7 +87,7 @@ const PAGE_NAV = [
   { id: 'home',      label: 'Home',      icon: homeIconUrl },
   { id: 'portfolio', label: 'Portfolio', icon: portfolioIconUrl },
   { id: 'notes',     label: 'Notes',     icon: notesIconUrl },
-  { id: 'shop',      label: 'Shop',      icon: shopIconUrl },
+  { id: 'shop',      label: 'Store',     icon: shopIconUrl },
 ]
 
 // Tools always visible in the dock
@@ -109,7 +109,7 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
   const sheenRef = useRef(null)
   const slabRef  = useRef(null)
 
-  const { windows, openTool, openWindow, closeAllExcept, activePage, setRestoring, openFinderAt } = useWindowStore()
+  const { windows, openTool, openWindow, closeWindow, minimizeWindow, closeAllExcept, activePage, setRestoring, openFinderAt } = useWindowStore()
   const isDark = useThemeStore((s) => s.isDark)
 
   /* ── Trash ──────────────────────────────────────────────────────────────
@@ -121,6 +121,9 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
   const dragging    = useDragStore((s) => s.payload)
   const overTrash   = useDragStore((s) => s.overTrash)
   const [trashMenu,  setTrashMenu]  = useState(null)   // { x, y, immediate }
+  /* Right-click on an app tile. Same anchoring as the basket's menu — rising
+     out of the icon — but the items depend on what the app is doing. */
+  const [appMenu,    setAppMenu]    = useState(null)   // { x, y, winId, label }
   const [confirmEmpty, setConfirmEmpty] = useState(false)
 
   const trashIcon = trashFull
@@ -205,27 +208,27 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
         inset: 0.10,
       },
       ...PAGE_NAV.map((page) => ({
-        id: `__page_${page.id}__`, label: page.label, icon: page.icon,
+        id: `__page_${page.id}__`, label: page.label, icon: page.icon, winId: page.id,
         onClick: () => { play('open'); onNavigate?.(page.id) },
         active: activePage === page.id,
         glyph: page.glyph,
       })),
       {
-        id: 'finder', label: 'Finder', icon: finderIconUrl, file: 'finder',
+        id: 'finder', label: 'Finder', icon: finderIconUrl, file: 'finder', winId: 'finder',
         onClick: () => openApp('finder'), active: isLive('finder'),
       },
       {
-        id: 'terminal', label: 'Terminal', icon: terminalIconUrl, file: 'terminal',
+        id: 'terminal', label: 'Terminal', icon: terminalIconUrl, file: 'terminal', winId: 'terminal',
         onClick: () => openApp('terminal'), active: isLive('terminal'),
       },
       /* No `file`: the settings art is a full-colour app icon with no baked
          glass plate, so it goes in as-is rather than through platelessArt. */
       {
-        id: 'settings', label: 'System Settings', icon: settingsIconUrl,
+        id: 'settings', label: 'System Settings', icon: settingsIconUrl, winId: 'settings',
         onClick: () => openApp('settings'), active: isLive('settings'),
       },
       ...dockTools.map((tool) => ({
-        id: tool.id, label: tool.name, icon: tool.icon, file: FILE_ALIAS[tool.id] ?? tool.id,
+        id: tool.id, label: tool.name, icon: tool.icon, file: FILE_ALIAS[tool.id] ?? tool.id, winId: tool.id,
         onClick: () => { play('open'); openTool(tool.id) },
         active: activeTool === tool.id,
         dim: tool.url === null,
@@ -240,6 +243,7 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
           id: `__min_${win.id}__`,
           label: win.title,
           minOf: win.id,
+          winId: win.id,
           thumb: true,
           w: thumbWidth(aspect, TILE),
           onClick: () => restoreWindow(win.id),
@@ -278,20 +282,35 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
   }
   const onMouseLeave = () => setMouseX(null)
 
-  /* Launch bounce — a tile hops once when its window first opens */
+  /* A minimised tile is the window's own slot and is mid-genie when it
+     appears, so it never bounces — only the app tile does. */
+  const isBouncing = (item) =>
+    bouncing != null && !item.minOf && (bouncing === item.id || bouncing === item.winId)
+
+  /* Launch bounce — a tile hops once when its window first opens.
+
+     Coming back from minimised is not a launch: macOS does not bounce for
+     it, and the genie already says what happened. So a window that was in
+     the minimised set last tick is excluded. */
   const prevOpen = useRef(null)
+  const prevMin  = useRef(new Set())
   useEffect(() => {
     const open = new Set(windows.filter((w) => w.isOpen && !w.isMinimized).map((w) => w.id))
+    const min  = new Set(windows.filter((w) => w.isMinimized).map((w) => w.id))
     if (prevOpen.current) {
-      const launched = [...open].find((id) => !prevOpen.current.has(id))
+      const launched = [...open].find(
+        (id) => !prevOpen.current.has(id) && !prevMin.current.has(id),
+      )
       if (launched) {
         setBouncing(launched)
         const tid = setTimeout(() => setBouncing(null), 620)
         prevOpen.current = open
+        prevMin.current  = min
         return () => clearTimeout(tid)
       }
     }
     prevOpen.current = open
+    prevMin.current  = min
   }, [windows])
 
   const sizing = mouseX === null
@@ -370,7 +389,7 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
                     label={item.label}
                     placement="top"
                     open={Boolean(item.trash && dragging)}
-                    hidden={Boolean(item.trash && trashMenu)}
+                    hidden={Boolean((item.trash && trashMenu) || (item.winId && appMenu?.winId === item.winId))}
                   >
                   <motion.button
                     onClick={item.onClick}
@@ -390,13 +409,30 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
                             immediate: e.altKey,
                           })
                         }
-                      : undefined}
+                      : item.winId
+                        ? (e) => {
+                            e.preventDefault()
+                            const r = e.currentTarget.getBoundingClientRect()
+                            setAppMenu({
+                              x: r.left + r.width / 2,
+                              y: r.top - 10,
+                              placement: 'above',
+                              align:     'center',
+                              winId: item.winId,
+                              label: item.label,
+                            })
+                          }
+                        : undefined}
                     aria-label={item.label}
                     data-trash-tile={item.trash ? '' : undefined}
                     data-min-slot={item.minOf}
                     whileTap={{ scale: 0.88 }}
-                    animate={bouncing === item.id ? { y: [0, -17, 0, -6, 0, -2, 0] } : { y: 0 }}
-                    transition={bouncing === item.id
+                    /* Match on winId as well as id: the page tiles are keyed
+                       `__page_portfolio__` while the launch that triggers the
+                       bounce reports the window id `portfolio`, so comparing
+                       ids alone left every page tile sitting still. */
+                    animate={isBouncing(item) ? { y: [0, -17, 0, -6, 0, -2, 0] } : { y: 0 }}
+                    transition={isBouncing(item)
                       ? { duration: 0.62, times: [0, 0.22, 0.44, 0.62, 0.8, 0.9, 1], ease: 'easeOut' }
                       : { duration: 0.2 }}
                     style={{
@@ -520,6 +556,36 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
             onClick: () => (trashMenu?.immediate ? doEmptyTrash() : setConfirmEmpty(true)),
           },
         ]}
+      />
+
+      {/* Right-click an app tile. macOS changes these with what the app is
+          doing — a running app offers Hide and Quit, a hidden one offers
+          Show, a closed one only Open — so the list is built per state
+          rather than being one fixed menu with most of it dimmed. */}
+      <ContextMenu
+        at={appMenu}
+        onClose={() => setAppMenu(null)}
+        items={(() => {
+          if (!appMenu) return []
+          const win = windows.find((w) => w.id === appMenu.winId)
+          const isOpen = !!win?.isOpen
+          const isMin  = !!win?.isMinimized
+          const rows = []
+
+          if (isOpen && isMin) {
+            rows.push({ label: 'Show', onClick: () => restoreWindow(appMenu.winId) })
+          } else if (isOpen) {
+            rows.push({ label: 'Hide', onClick: () => { play('minimize'); minimizeWindow(appMenu.winId) } })
+          } else {
+            rows.push({ label: 'Open', onClick: () => { play('open'); openWindow(appMenu.winId) } })
+          }
+          if (isOpen) {
+            rows.push({ label: 'Quit', onClick: () => { play('close'); closeWindow(appMenu.winId) } })
+          }
+          rows.push({ sep: true })
+          rows.push({ label: 'Show in Finder', onClick: () => { play('open'); openFinderAt('applications') } })
+          return rows
+        })()}
       />
 
       <MacAlert

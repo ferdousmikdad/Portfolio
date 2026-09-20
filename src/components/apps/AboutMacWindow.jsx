@@ -1,6 +1,7 @@
 import Window from '@/components/window/Window'
 import useWindowStore from '@/store/windowStore'
 import mikdadHeadUrl from '@/assets/icons/mikdad-head.svg?url'
+import SYS from '@/data/systemProfile'
 
 /* ── About This Mac ────────────────────────────────────────────────────────
    The panel the Apple menu puts up, with the résumé in place of the spec
@@ -15,12 +16,12 @@ import mikdadHeadUrl from '@/assets/icons/mikdad-head.svg?url'
    plainly a gag and reads as one.                                          */
 
 const SPECS = [
-  ['Chip',         'Mikdad M5 Pro'],
-  ['Memory',       '5+ years experience'],
-  ['Graphics',     'Figma · Illustrator · After Effects'],
-  ['Engineering',  'React · Tailwind · Framer'],
-  ['Startup Disk', 'Print & Branding'],
-  ['Serial Number', 'AVAILABLE-FOR-HIRE'],
+  ['Chip',          SYS.chip],
+  ['Memory',        SYS.experience],
+  ['Graphics',      SYS.design],
+  ['Engineering',   SYS.engineering],
+  ['Startup Disk',  SYS.origin],
+  ['Serial Number', SYS.serial],
 ]
 
 export default function AboutMacWindow() {
@@ -31,8 +32,8 @@ export default function AboutMacWindow() {
       <div className="atm">
         <img className="atm__art" src={mikdadHeadUrl} alt="" draggable={false} />
 
-        <p className="atm__model">Ferdous Mikdad</p>
-        <p className="atm__sub">Creative &amp; UI/UX Designer</p>
+        <p className="atm__model">{SYS.name}</p>
+        <p className="atm__sub">{SYS.role}</p>
 
         <dl className="atm__specs">
           {SPECS.map(([label, value]) => (

@@ -24,7 +24,7 @@ const APP_NAMES = {
   about: 'About Me',
   pacman: 'Pac-Man',
   portfolio: 'Portfolio',
-  shop: 'App Store',
+  shop: 'Store',
   notes: 'Notes',
   terminal: 'Terminal',
   settings: 'System Settings',
@@ -53,7 +53,7 @@ export function buildMenus(ctx) {
   const {
     appName, hasWindow, isFullscreen, isDark,
     openWindow, navigate, closeActive, minimizeActive, zoomActive,
-    closeAll, toggleFullscreen, toggleTheme, openSpotlight,
+    closeAll, toggleFullscreen, toggleTheme, openSpotlight, missionControl,
   } = ctx
 
   return [
@@ -64,7 +64,7 @@ export function buildMenus(ctx) {
         { label: 'About This Mac', onClick: () => openWindow('about-mac') },
         { sep: true },
         { label: 'System Settings…', key: '⌘,', onClick: () => openWindow('settings') },
-        { label: 'App Store…', onClick: () => openWindow('shop') },
+        { label: 'Store…', onClick: () => openWindow('shop') },
         { sep: true },
         { label: 'Sleep', disabled: true },
         { label: 'Restart…', disabled: true },
@@ -146,7 +146,7 @@ export function buildMenus(ctx) {
         { label: 'About Me', onClick: () => navigate('about') },
         { label: 'Notes', onClick: () => navigate('notes') },
         { sep: true },
-        { label: 'Shop', onClick: () => openWindow('shop') },
+        { label: 'Store', onClick: () => openWindow('shop') },
         { label: 'Utilities', onClick: () => openWindow('finder') },
       ],
     },
@@ -157,6 +157,9 @@ export function buildMenus(ctx) {
       items: [
         { label: 'Minimize', key: '⌘M', disabled: !hasWindow, onClick: minimizeActive },
         { label: 'Zoom', disabled: !hasWindow, onClick: zoomActive },
+        { sep: true },
+        /* The reliable way in: macOS usually claims F3 before the page. */
+        { label: 'Mission Control', key: 'F3', onClick: missionControl },
         { sep: true },
         { label: 'Bring All to Front', disabled: true },
       ],

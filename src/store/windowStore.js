@@ -131,7 +131,7 @@ const defaultWindows = [
   },
   {
     id: 'shop',
-    title: 'Shop',
+    title: 'Store',
     isOpen: false,
     isMinimized: false,
     /* A shelf of animation cards needs the room a grid needs. */
@@ -241,6 +241,12 @@ const useWindowStore = create((set, get) => ({
   finderView: 'applications',
 
   navigate: (page) => set((state) => ({ activePage: page, navKey: state.navKey + 1 })),
+
+  /* Mission Control. Lives here rather than in Desktop's local state so the
+     menu bar and the dock can both raise it. */
+  missionControl: false,
+  toggleMissionControl: () => set((s) => ({ missionControl: !s.missionControl })),
+  closeMissionControl: () => set({ missionControl: false }),
 
   openNoteRequest: (category, noteId) => {
     const liveVW = window.innerWidth

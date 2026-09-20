@@ -3,6 +3,8 @@ import Window from '@/components/window/Window'
 import useWindowStore from '@/store/windowStore'
 import useSound from '@/hooks/useSound'
 import TOOLS from '@/data/tools'
+import SYS from '@/data/systemProfile'
+import DESKTOP_FILES from '@/data/desktopFiles'
 
 /* ── Palette ──────────────────────────────────────────────────────── */
 /* Terminal.app renders everything in a fixed-pitch face — `ui-monospace` is
@@ -49,15 +51,20 @@ const ASCII_ART = [
   '                       ',
   '                       ',
 ]
+/* Same facts About This Mac shows, in neofetch's clothes — see
+   data/systemProfile.js. Labels are this surface's own; values are shared. */
 const NFO_INFO = [
   { t: 'user' },
   { t: 'sep'  },
-  { t: 'kv', k: 'OS',     v: 'Portfolio OS v2.0'           },
-  { t: 'kv', k: 'Role',   v: 'UI/UX Designer & Developer'  },
-  { t: 'kv', k: 'Stack',  v: 'React · Figma · Motion'      },
-  { t: 'kv', k: 'Shell',  v: 'portfolio-zsh 1.0'           },
-  { t: 'kv', k: 'Theme',  v: 'Dark Mode (obviously)'       },
-  { t: 'kv', k: 'Status', v: 'Available for hire ✅'        },
+  { t: 'kv', k: 'OS',       v: SYS.os          },
+  { t: 'kv', k: 'Host',     v: SYS.chip        },
+  { t: 'kv', k: 'Role',     v: SYS.roleLong    },
+  { t: 'kv', k: 'Uptime',   v: SYS.experience  },
+  { t: 'kv', k: 'Design',   v: SYS.design      },
+  { t: 'kv', k: 'Stack',    v: SYS.engineering },
+  { t: 'kv', k: 'Shell',    v: SYS.shell       },
+  { t: 'kv', k: 'Theme',    v: 'Dark Mode (obviously)' },
+  { t: 'kv', k: 'Status',   v: `${SYS.status} ✅` },
 ]
 
 /* ── JSX helpers ──────────────────────────────────────────────────── */
@@ -75,7 +82,7 @@ const KVRow = ({ k, v }) => (
   </span>
 )
 const NfoInfo = ({ row }) => {
-  if (row.t === 'user') return <span><span style={{ color: G }}>ferdous</span><span style={{ color: W }}>@</span><span style={{ color: G }}>portfolio</span></span>
+  if (row.t === 'user') return <span><span style={{ color: G }}>{SYS.user}</span><span style={{ color: W }}>@</span><span style={{ color: G }}>{SYS.host}</span></span>
   if (row.t === 'sep')  return <span style={{ color: D }}>─────────────────────────────</span>
   return <span><span style={{ color: C }}>{row.k}</span><span style={{ color: D }}>: </span><span style={{ color: W }}>{row.v}</span></span>
 }
@@ -103,6 +110,10 @@ export default function TerminalWindow() {
   const [lines,       setLines]       = useState([])
   const [input,       setInput]       = useState('')
   const [history,     setHistory]     = useState([])
+  /* `execute` is a useCallback that deliberately does not depend on state —
+     it would be rebuilt on every keystroke otherwise — so anything it reads
+     at call time needs a ref, the same way aiActiveRef works. */
+  const historyRef = useRef([])
   const [histIdx,     setHistIdx]     = useState(-1)
   const [booted,      setBooted]      = useState(false)
   const [hackRows,      setHackRows]      = useState(null)
@@ -141,6 +152,7 @@ export default function TerminalWindow() {
   useEffect(() => {
     if (!win?.isOpen) return
     setLines([]); setBooted(false); setInput('')
+    historyRef.current = []
     setHistory([]); setHistIdx(-1); setHackRows(null)
     setAiActive(false); aiActiveRef.current = false; setInstallProgress(null)
     if (hackTimer.current)    clearInterval(hackTimer.current)
@@ -165,6 +177,7 @@ export default function TerminalWindow() {
     if (!cmd) return
     setLines(p => [...p, ln('input', cmd)])
     setHistory(h => [cmd, ...h])
+    historyRef.current = [cmd, ...historyRef.current]
     setHistIdx(-1)
     setInput('')
 
@@ -324,8 +337,18 @@ export default function TerminalWindow() {
         ln('jsx', <HelpRow cmd="clear"         desc="Clear terminal"                    />),
         ln('jsx', <HelpRow cmd="whoami"        desc="Who are you?"                      />),
         ln('output', ''),
+        ln('info',   '  Shell ────────────────────────────────────────────'),
+        ln('jsx', <HelpRow cmd="ls"            desc="List the home directory"           />),
+        ln('jsx', <HelpRow cmd="pwd"           desc="Print working directory"           />),
+        ln('jsx', <HelpRow cmd="echo <text>"   desc="Print text back"                   />),
+        ln('jsx', <HelpRow cmd="history"       desc="Commands you have run"             />),
+        ln('jsx', <HelpRow cmd="uname -a"      desc="System identification"             />),
+        ln('jsx', <HelpRow cmd="man <cmd>"     desc="Manual page"                       />),
+        ln('jsx', <HelpRow cmd="say <text>"    desc="Speak it out loud 🔊"               />),
+        ln('output', ''),
         ln('info',   '  Easter Eggs ──────────────────────────────────────'),
         ln('jsx', <HelpRow cmd="sudo hire me"  desc="👀"   />),
+        ln('jsx', <HelpRow cmd="cowsay <text>" desc="🐄"   />),
         ln('jsx', <HelpRow cmd="rm -rf life"   desc="💀"   />),
         ln('jsx', <HelpRow cmd="ls feelings"   desc="📂"   />),
         ln('jsx', <HelpRow cmd="ping happiness"desc="📡"   />),
@@ -437,8 +460,12 @@ export default function TerminalWindow() {
     if (lo === 'neofetch') {
       const rows = [ln('output', '')]
       const max = Math.max(ASCII_ART.length, NFO_INFO.length)
+      // The info column is taller than the logo, so the rows past its end pad
+      // with blanks — measured off the art rather than hard-coded, or the
+      // continuation lines land a character out from the ones beside the art.
+      const gutter = Math.max(...ASCII_ART.map((l) => l.length))
       for (let i = 0; i < max; i++) {
-        const a = ASCII_ART[i] ?? '                       '
+        const a = (ASCII_ART[i] ?? '').padEnd(gutter, ' ')
         const n = NFO_INFO[i]
         rows.push(ln('jsx', (
           <span style={{ display: 'block', padding: '0 16px', fontFamily: FONT, fontSize: 12.5, lineHeight: '1.6' }}>
@@ -526,6 +553,130 @@ export default function TerminalWindow() {
         ln('success', ' Uncommitted changes: 1 (life goals)'),
         ln('output',  ''),
       ], 35)
+      return
+    }
+
+    /* ── Real shell commands ─────────────────────────────────────────────
+       These do the actual thing rather than print a joke. A terminal that
+       answers `pwd` with a gag is a toy; one that answers it correctly and
+       *then* has jokes underneath is a terminal. */
+
+    /* pwd */
+    if (lo === 'pwd') {
+      addLines([ln('output', ''), ln('output', ` /Users/${SYS.user}`), ln('output', '')], 25)
+      return
+    }
+
+    /* ls — the home directory, with the real desktop files in it */
+    if (lo === 'ls' || lo === 'ls -l' || lo === 'ls -la' || lo === 'll') {
+      const dirs  = ['Applications', 'Desktop', 'Documents', 'Downloads', 'Projects']
+      const files = DESKTOP_FILES.map(f => f.name)
+      addLines([
+        ln('output', ''),
+        ...dirs.map(d => ln('jsx', (
+          <span style={{ display: 'block', padding: '0 16px', fontFamily: FONT, fontSize: 12.5, lineHeight: '1.6' }}>
+            <span style={{ color: C }}>{d}/</span>
+          </span>
+        ))),
+        ...files.map(f => ln('output', ` ${f}`)),
+        ln('output', ''),
+      ], 20)
+      return
+    }
+
+    /* echo */
+    if (lo.startsWith('echo ')) {
+      addLines([ln('output', ''), ln('output', ' ' + cmd.slice(5)), ln('output', '')], 20)
+      return
+    }
+
+    /* history — the real one, oldest first the way the shell prints it */
+    if (lo === 'history') {
+      // Drop the `history` call itself — the shell lists what ran before it.
+      const past = [...historyRef.current].slice(1).reverse()
+      addLines([
+        ln('output', ''),
+        ...(past.length
+          ? past.map((h, i) => ln('output', ` ${String(i + 1).padStart(4)}  ${h}`))
+          : [ln('info', ' (no history yet)')]),
+        ln('output', ''),
+      ], 14)
+      return
+    }
+
+    /* uname */
+    if (lo === 'uname' || lo === 'uname -a') {
+      addLines([
+        ln('output', ''),
+        ln('output', lo === 'uname'
+          ? ' Darwin'
+          : ` Darwin ${SYS.host}.local 26.0.0 ${SYS.os} arm64 ${SYS.chip}`),
+        ln('output', ''),
+      ], 25)
+      return
+    }
+
+    /* say — macOS really does have this, and the browser really can do it */
+    if (lo.startsWith('say ')) {
+      const phrase = cmd.slice(4).trim()
+      const synth = window.speechSynthesis
+      if (!synth) {
+        addLines([ln('output', ''), ln('error', ' say: no speech synthesiser available'), ln('output', '')])
+        return
+      }
+      synth.cancel()
+      synth.speak(new SpeechSynthesisUtterance(phrase))
+      addLines([ln('output', ''), ln('info', ` 🔊 "${phrase}"`), ln('output', '')], 20)
+      return
+    }
+
+    /* cowsay — bubble sized to the text, as the real one does */
+    if (lo === 'cowsay' || lo.startsWith('cowsay ')) {
+      const text = cmd.slice(6).trim() || 'moo'
+      const bar  = '─'.repeat(text.length + 2)
+      addLines([
+        ln('output', ''),
+        ln('output', ` ╭${bar}╮`),
+        ln('output', ` │ ${text} │`),
+        ln('output', ` ╰${bar}╯`),
+        ln('output', '         \\   ^__^'),
+        ln('output', '          \\  (oo)\\_______'),
+        ln('output', '             (__)\\       )\\/\\'),
+        ln('output', '                 ||----w |'),
+        ln('output', '                 ||     ||'),
+        ln('output', ''),
+      ], 18)
+      return
+    }
+
+    /* man */
+    if (lo.startsWith('man ')) {
+      const what = cmd.slice(4).trim()
+      addLines([
+        ln('output', ''),
+        ln('info',   ` ${what.toUpperCase()}(1)`),
+        ln('output', ''),
+        ln('output', ' NAME'),
+        ln('output', `        ${what} — no manual entry.`),
+        ln('output', ''),
+        ln('output', ' SEE ALSO'),
+        ln('output', "        help(1)"),
+        ln('output', ''),
+      ], 18)
+      return
+    }
+
+    /* sudo — anything other than the one that works. Must sit after the
+       specific `sudo hire me` above, or it would swallow it. */
+    if (lo === 'sudo' || lo.startsWith('sudo ')) {
+      addLines([
+        ln('output', ''),
+        ln('error',  ` ${SYS.user} is not in the sudoers file.`),
+        ln('output', ' This incident has been reported.'),
+        ln('output', ''),
+        ln('info',   " (Try 'sudo hire me'.)"),
+        ln('output', ''),
+      ], 25)
       return
     }
 

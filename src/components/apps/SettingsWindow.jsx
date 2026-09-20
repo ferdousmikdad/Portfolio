@@ -700,7 +700,7 @@ function ScreenTimePane() {
 }
 
 function SpotlightPane() {
-  const cats = ['Applications', 'Projects', 'Notes', 'Tools', 'Shop Items', 'Contacts', 'Developer']
+  const cats = ['Applications', 'Projects', 'Notes', 'Tools', 'Store Items', 'Contacts', 'Developer']
   return (
     <>
       <Group title="Search Results"

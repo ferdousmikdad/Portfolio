@@ -39,22 +39,31 @@ export default function ContextMenu({ at, items, onClose }) {
     setPos({ x: Math.max(MARGIN, x), y: Math.max(MARGIN, y) })
   }, [at])
 
+  /* Callers pass `onClose` as an inline arrow, so its identity changes on
+     every render of the host. The dock re-renders on every mousemove while
+     it magnifies, so keeping `onClose` in the dependency list tore these
+     listeners down and rebuilt them dozens of times a second — and Escape
+     went unheard. Held in a ref, the subscription happens once per open. */
+  const closeRef = useRef(onClose)
+  useEffect(() => { closeRef.current = onClose }, [onClose])
+
   useEffect(() => {
     if (!at) return
-    const onKey  = (e) => { if (e.key === 'Escape') onClose() }
-    const onDown = (e) => { if (!ref.current?.contains(e.target)) onClose() }
+    const close  = () => closeRef.current?.()
+    const onKey  = (e) => { if (e.key === 'Escape') { e.preventDefault(); close() } }
+    const onDown = (e) => { if (!ref.current?.contains(e.target)) close() }
     window.addEventListener('keydown', onKey)
     // Capture phase: close before the click reaches whatever is underneath.
     window.addEventListener('mousedown', onDown, true)
     window.addEventListener('contextmenu', onDown, true)
-    window.addEventListener('blur', onClose)
+    window.addEventListener('blur', close)
     return () => {
       window.removeEventListener('keydown', onKey)
       window.removeEventListener('mousedown', onDown, true)
       window.removeEventListener('contextmenu', onDown, true)
-      window.removeEventListener('blur', onClose)
+      window.removeEventListener('blur', close)
     }
-  }, [at, onClose])
+  }, [at])
 
   return createPortal(
     <AnimatePresence>

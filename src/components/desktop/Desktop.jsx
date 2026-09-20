@@ -32,6 +32,7 @@ import SettingsWindow from '@/components/apps/SettingsWindow'
 import MailWindow from '@/components/apps/MailWindow'
 import CalculatorWindow from '@/components/apps/CalculatorWindow'
 import AboutMacWindow from '@/components/apps/AboutMacWindow'
+import MissionControl from '@/components/desktop/MissionControl'
 import allProjects from '@/data/projects'
 import siriIconUrl from '@/assets/icons/siri.png?url'
 
@@ -115,6 +116,7 @@ export default function Desktop() {
   const menuRef  = useRef(null)
   const chatRef  = useRef(null)
   const fabRef   = useRef(null)
+  const missionControl = useWindowStore((s) => s.missionControl)
   const { openWindow, closeAllExcept, switchTool, activePage, navKey, navigate, previewProject, closeProjectPreview, openProjectPreview, openMailWindow } = useWindowStore()
   const isAnyMaximized    = useWindowStore((s) => s.windows.some((w) => w.isMaximized))
   const showDesktopIcons  = useSettingsStore((s) => s.showDesktopIcons)
@@ -324,7 +326,17 @@ export default function Desktop() {
       )}
 
       {/* Windows layer — z-index lifts to 9999 when any window is maximized */}
-      <div className="absolute inset-0" style={{ zIndex: isAnyMaximized ? 9999 : 20, pointerEvents: 'none' }}>
+      <div
+        className="absolute inset-0"
+        /* Hidden, not unmounted, while Mission Control is up: the tiles are
+           clones of these nodes and unmounting would pull them out from
+           under the exit animation. */
+        style={{
+          zIndex: isAnyMaximized ? 9999 : 20,
+          pointerEvents: 'none',
+          opacity: missionControl ? 0 : 1,
+        }}
+      >
         <AnimatePresence>
           <ProfileCard />
           <AboutMeWindow />
@@ -348,6 +360,8 @@ export default function Desktop() {
           <AboutMacWindow />
         </AnimatePresence>
       </div>
+
+      <MissionControl />
 
       {/* Menu window */}
       <MenuWindow

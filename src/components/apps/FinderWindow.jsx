@@ -68,7 +68,7 @@ const FAVORITES = [
   { id: 'home',      label: 'Home',      icon: homeIconUrl },
   { id: 'portfolio', label: 'Portfolio', icon: portfolioIconUrl },
   { id: 'notes',     label: 'Notes',     icon: notesIconUrl },
-  { id: 'shop',      label: 'Shop',      icon: shopIconUrl },
+  { id: 'shop',      label: 'Store',     icon: shopIconUrl },
 ]
 
 const CATEGORY_ICONS = {

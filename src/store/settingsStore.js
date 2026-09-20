@@ -53,9 +53,11 @@ const useSettingsStore = create(
   persist(
     (set) => ({
       // ── Appearance ────────────────────────────────────────────────────────
-      background:       'animated',       // 'animated' | 'static' | 'wallpaper'
-      wallpaper:        'wallpaper.jpg',
-      accentColor:      '#cf0506',
+      /* Sonoma Horizon out of the box. `background` has to say 'wallpaper'
+         too — `wallpaper` alone only names which image would be used. */
+      background:       'wallpaper',       // 'animated' | 'static' | 'wallpaper'
+      wallpaper:        'wallpaper.jpg',   // Sonoma Horizon
+      accentColor:      '#0a84ff',   // Blue, matching the ACCENT_PRESETS entry
       sidebarIconSize:  'medium',         // 'small' | 'medium' | 'large'
       reduceMotion:     false,
       reduceTransparency: false,
