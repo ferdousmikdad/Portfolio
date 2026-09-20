@@ -1,13 +1,16 @@
 import { useState, useEffect, useRef } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import useSettingsStore from '@/store/settingsStore'
+import useWindowStore from '@/store/windowStore'
 import ControlCenter from './ControlCenter'
 import MenuBar from './MenuBar'
 import Spotlight from './Spotlight'
+import MikudaAsk from './MikudaAsk'
 import Tip from '@/components/ui/Tip'
 import macSettingUrl from '@/assets/icons/macsetting.svg?url'
 import macSearchUrl  from '@/assets/icons/macsearch.svg?url'
 import macFitUrl     from '@/assets/icons/macfit.svg?url'
+import siriIconUrl   from '@/assets/icons/siri.png?url'
 
 // ── Live clock ────────────────────────────────────────────────────────────────
 const DAYS   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
@@ -73,11 +76,29 @@ export default function TopBar() {
   const wifi          = useSettingsStore(s => s.wifi)
   const showBattery   = useSettingsStore(s => s.menuBarShowBattery)
 
+  const toggleNotificationCenter = useWindowStore((s) => s.toggleNotificationCenter)
+
   const [openPanel,    setOpenPanel]    = useState(null) // 'apple' | 'control' | null
-  const [spotOpen,     setSpotOpen]     = useState(false)
+  /* Spotlight's open state lives in the store, not here: the What's New
+     window raises it from the other side of the app. */
+  const spotOpen        = useWindowStore((s) => s.spotlight)
+  const setSpotlight    = useWindowStore((s) => s.openSpotlight)
+  const closeSpotlight  = useWindowStore((s) => s.closeSpotlight)
+  const toggleSpotlight = useWindowStore((s) => s.toggleSpotlight)
+  /* Mikuda's ask field, likewise: the menu bar raises it, the field itself
+     and the chat window close it. */
+  const askOpen        = useWindowStore((s) => s.mikudaAsk)
+  const toggleMikudaAsk = useWindowStore((s) => s.toggleMikudaAsk)
+  const closeMikudaAsk  = useWindowStore((s) => s.closeMikudaAsk)
+  /* The home page already has the full chat on screen, so the extra drops off
+     the bar there rather than opening a second one — the same rule the
+     floating button used to follow. */
+  const activePage     = useWindowStore((s) => s.activePage)
+  const showMikuda     = activePage !== 'home'
   const [isFullscreen, setIsFullscreen] = useState(false)
 
-  const barRef = useRef(null)
+  const barRef  = useRef(null)
+  const siriRef = useRef(null)
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) document.documentElement.requestFullscreen?.()
@@ -103,11 +124,12 @@ export default function TopBar() {
   // ⌘Space opens Spotlight, Escape closes whatever is up
   useEffect(() => {
     const handler = (e) => {
-      if (e.key === 'Escape') { setOpenPanel(null); setSpotOpen(false); return }
+      if (e.key === 'Escape') { setOpenPanel(null); closeSpotlight(); closeMikudaAsk(); return }
       if (e.code === 'Space' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault()
         setOpenPanel(null)
-        setSpotOpen(v => !v)
+        closeMikudaAsk()
+        toggleSpotlight()
       }
     }
     window.addEventListener('keydown', handler)
@@ -122,8 +144,8 @@ export default function TopBar() {
              menu: no Mac puts loose page links on the menu bar, and Go is
              where Finder keeps navigation. */}
         <MenuBar
-          onOpenSpotlight={() => { setOpenPanel(null); setSpotOpen(true) }}
-          onMenuOpen={() => { setOpenPanel(null); setSpotOpen(false) }}
+          onOpenSpotlight={() => { setOpenPanel(null); setSpotlight() }}
+          onMenuOpen={() => { setOpenPanel(null); closeSpotlight() }}
         />
 
         {/* ── Right: menu-bar extras ───────────────────────────────────────── */}
@@ -147,7 +169,7 @@ export default function TopBar() {
           <Tip label="Spotlight Search (⌘Space)" hidden={spotOpen}>
             <button
               className={`topbar-icon-btn ${spotOpen ? 'active' : ''}`}
-              onClick={() => { setOpenPanel(null); setSpotOpen(v => !v) }}
+              onClick={() => { setOpenPanel(null); toggleSpotlight() }}
             >
               <img src={macSearchUrl} alt="" width={13} height={13} />
             </button>
@@ -158,7 +180,7 @@ export default function TopBar() {
             <Tip label="Control Centre" hidden={openPanel === 'control'}>
               <button
                 className={`topbar-icon-btn ${openPanel === 'control' ? 'active' : ''}`}
-                onClick={() => { setSpotOpen(false); setOpenPanel(p => p === 'control' ? null : 'control') }}
+                onClick={() => { closeSpotlight(); setOpenPanel(p => p === 'control' ? null : 'control') }}
               >
                 <img src={macSettingUrl} alt="" width={13} height={13} />
               </button>
@@ -167,6 +189,21 @@ export default function TopBar() {
               {openPanel === 'control' && <ControlCenter onClose={() => setOpenPanel(null)} />}
             </AnimatePresence>
           </div>
+
+          {/* Mikuda — sits right of Control Centre, which is where macOS puts
+              Siri. The orb keeps its own colour: it is the one menu-bar extra
+              Apple does not draw as a monochrome template. */}
+          {showMikuda && (
+            <Tip label="Mikuda" hidden={askOpen}>
+              <button
+                ref={siriRef}
+                className={`topbar-icon-btn topbar-icon-btn--siri ${askOpen ? 'active' : ''}`}
+                onClick={() => { setOpenPanel(null); closeSpotlight(); toggleMikudaAsk() }}
+              >
+                <img src={siriIconUrl} alt="" width={16} height={16} draggable={false} />
+              </button>
+            </Tip>
+          )}
 
           <Tip label={isFullscreen ? 'Exit fullscreen (Esc)' : 'Fit to screen'}>
             <button
@@ -179,12 +216,23 @@ export default function TopBar() {
 
           <div className="topbar-sep" />
 
-          <Clock />
+          {/* Clicking the clock opens Notification Centre — that is how you
+              reach it on a Mac. */}
+          <button
+            className="topbar-clock-btn"
+            onClick={() => { setOpenPanel(null); closeSpotlight(); toggleNotificationCenter() }}
+          >
+            <Clock />
+          </button>
         </div>
       </div>
 
       <AnimatePresence>
-        {spotOpen && <Spotlight onClose={() => setSpotOpen(false)} />}
+        {spotOpen && <Spotlight onClose={closeSpotlight} />}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {askOpen && showMikuda && <MikudaAsk anchorRef={siriRef} />}
       </AnimatePresence>
     </>
   )

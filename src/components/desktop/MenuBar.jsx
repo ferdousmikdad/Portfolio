@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import GlassLayers from '@/components/ui/LiquidGlass'
 import useWindowStore from '@/store/windowStore'
 import useThemeStore from '@/store/themeStore'
+import useUpdateStore from '@/store/updateStore'
+import MacAlert from '@/components/ui/MacAlert'
 import { buildMenus, appNameFor } from '@/data/menuBar'
 import mikdadHeadUrl from '@/assets/icons/mikdad-head.svg?url'
 
@@ -40,6 +42,7 @@ function MenuDropdown({ menu, onClose }) {
             onClick={() => { item.onClick?.(); onClose() }}
           >
             <span className="mb-menu__label">{item.label}</span>
+            {item.badge && <span className="mac-badge">{item.badge}</span>}
             {item.key && <span className="mb-menu__key">{item.key}</span>}
           </button>
         ),
@@ -50,6 +53,7 @@ function MenuDropdown({ menu, onClose }) {
 
 export default function MenuBar({ onOpenSpotlight, onMenuOpen }) {
   const [open, setOpen] = useState(null)      // menu id, or null
+  const [confirmRestart, setConfirmRestart] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const rootRef = useRef(null)
   /* Which menu the *pointer* opened. Without this, moving onto a sibling
@@ -61,9 +65,11 @@ export default function MenuBar({ onOpenSpotlight, onMenuOpen }) {
   const {
     activeWindowId, windows, openWindow, navigate,
     closeWindow, minimizeWindow, toggleMaximize, closeAllExcept,
-    toggleMissionControl,
+    toggleMissionControl, toggleLaunchpad, startScreenSaver, lock, openSettingsAt,
+    openShortcuts, sleep, restart,
   } = useWindowStore()
   const { isDark, toggleTheme } = useThemeStore()
+  const updatePending = useUpdateStore((s) => s.stage !== 'installed')
 
   // The front window only counts if it is actually on screen.
   const front = windows.find(
@@ -95,8 +101,17 @@ export default function MenuBar({ onOpenSpotlight, onMenuOpen }) {
     }
   }, [open])
 
-  // Let the parent close its own panels when a menu takes over.
-  useEffect(() => { if (open) onMenuOpen?.() }, [open, onMenuOpen])
+  /* Let the parent close its own panels when a menu takes over.
+
+     The callback is held in a ref rather than listed as a dependency. TopBar
+     passes a fresh arrow on every render, so depending on it meant: effect
+     fires → parent setState → parent re-renders → new arrow → effect fires
+     again, which React eventually stops with "Maximum update depth
+     exceeded" and unmounts the whole menu bar. Same shape as the
+     ContextMenu Escape bug. */
+  const onMenuOpenRef = useRef(onMenuOpen)
+  useEffect(() => { onMenuOpenRef.current = onMenuOpen })
+  useEffect(() => { if (open) onMenuOpenRef.current?.() }, [open])
 
   const menus = buildMenus({
     appName,
@@ -116,6 +131,14 @@ export default function MenuBar({ onOpenSpotlight, onMenuOpen }) {
     toggleTheme,
     openSpotlight: () => onOpenSpotlight?.(),
     missionControl: toggleMissionControl,
+    launchpad: toggleLaunchpad,
+    screenSaver: startScreenSaver,
+    lock,
+    openSettingsAt,
+    updatePending,
+    shortcuts: openShortcuts,
+    sleep,
+    restart: () => setConfirmRestart(true),
   })
 
   return (
@@ -153,6 +176,18 @@ export default function MenuBar({ onOpenSpotlight, onMenuOpen }) {
           </AnimatePresence>
         </div>
       ))}
+
+      {/* What "Restart…" promises. Wording lifted from the real panel, which
+          asks the question and then answers what it is about to do. */}
+      <MacAlert
+        open={confirmRestart}
+        icon={mikdadHeadUrl}
+        title="Are you sure you want to restart your computer now?"
+        message="Open windows will be closed. Nothing is saved anywhere, so nothing is lost."
+        confirmLabel="Restart"
+        onConfirm={() => { setConfirmRestart(false); restart() }}
+        onCancel={() => setConfirmRestart(false)}
+      />
     </div>
   )
 }

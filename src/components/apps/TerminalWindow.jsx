@@ -3,7 +3,9 @@ import Window from '@/components/window/Window'
 import useWindowStore from '@/store/windowStore'
 import useSound from '@/hooks/useSound'
 import TOOLS from '@/data/tools'
-import SYS from '@/data/systemProfile'
+import SYS, { osString } from '@/data/systemProfile'
+import useUpdateStore from '@/store/updateStore'
+import { UPDATE_NAME, UPDATE_SIZE, UPDATE_VERSION } from '@/data/softwareUpdate'
 import DESKTOP_FILES from '@/data/desktopFiles'
 
 /* ── Palette ──────────────────────────────────────────────────────── */
@@ -53,10 +55,10 @@ const ASCII_ART = [
 ]
 /* Same facts About This Mac shows, in neofetch's clothes — see
    data/systemProfile.js. Labels are this surface's own; values are shared. */
-const NFO_INFO = [
+const nfoInfo = (os) => [
   { t: 'user' },
   { t: 'sep'  },
-  { t: 'kv', k: 'OS',       v: SYS.os          },
+  { t: 'kv', k: 'OS',       v: os              },
   { t: 'kv', k: 'Host',     v: SYS.chip        },
   { t: 'kv', k: 'Role',     v: SYS.roleLong    },
   { t: 'kv', k: 'Uptime',   v: SYS.experience  },
@@ -356,6 +358,7 @@ export default function TerminalWindow() {
         ln('jsx', <HelpRow cmd="hack"          desc="Try it..." />),
         ln('jsx', <HelpRow cmd="date"          desc="Current date & time" />),
         ln('jsx', <HelpRow cmd="neofetch"      desc="System info" />),
+        ln('jsx', <HelpRow cmd="softwareupdate" desc="Check for macOS updates" />),
         ln('jsx', <HelpRow cmd="coffee"        desc="☕" />),
         ln('jsx', <HelpRow cmd="exit"          desc="Close terminal" />),
         ln('output', ''),
@@ -458,15 +461,16 @@ export default function TerminalWindow() {
 
     /* neofetch */
     if (lo === 'neofetch') {
+      const info = nfoInfo(osString(useUpdateStore.getState().currentVersion()))
       const rows = [ln('output', '')]
-      const max = Math.max(ASCII_ART.length, NFO_INFO.length)
+      const max = Math.max(ASCII_ART.length, info.length)
       // The info column is taller than the logo, so the rows past its end pad
       // with blanks — measured off the art rather than hard-coded, or the
       // continuation lines land a character out from the ones beside the art.
       const gutter = Math.max(...ASCII_ART.map((l) => l.length))
       for (let i = 0; i < max; i++) {
         const a = (ASCII_ART[i] ?? '').padEnd(gutter, ' ')
-        const n = NFO_INFO[i]
+        const n = info[i]
         rows.push(ln('jsx', (
           <span style={{ display: 'block', padding: '0 16px', fontFamily: FONT, fontSize: 12.5, lineHeight: '1.6' }}>
             <span style={{ color: G }}>{a}</span>
@@ -604,13 +608,59 @@ export default function TerminalWindow() {
       return
     }
 
+    /* softwareupdate — macOS ships this CLI, and it is the honest place to
+       put the uninstall: nobody rolls a macOS update back from the
+       Software Update pane. */
+    if (lo === 'softwareupdate' || lo.startsWith('softwareupdate ')) {
+      const arg = lo.slice('softwareupdate'.length).trim()
+      const st = useUpdateStore.getState()
+      if (arg === '' || arg === '-h' || arg === '--help') {
+        addLines([
+          ln('output', ''),
+          ln('output', ' usage: softwareupdate -l | -i | --uninstall'),
+          ln('jsx', <HelpRow cmd="softwareupdate -l"          desc="List available updates" />),
+          ln('jsx', <HelpRow cmd="softwareupdate -i"          desc="Install them" />),
+          ln('jsx', <HelpRow cmd="softwareupdate --uninstall" desc="Put this Mac back on the old build" />),
+          ln('output', ''),
+        ], 14)
+        return
+      }
+      if (arg === '-l' || arg === '--list') {
+        addLines(st.stage === 'installed'
+          ? [ln('output', ''), ln('output', ' No new software available.'), ln('output', '')]
+          : [ln('output', ''),
+             ln('output', ' Software Update found the following new software:'),
+             ln('output', `   * Label: ${UPDATE_NAME}`),
+             ln('output', `     Title: ${UPDATE_NAME}, Version: ${UPDATE_VERSION}, Size: ${UPDATE_SIZE}`),
+             ln('output', '')], 22)
+        return
+      }
+      if (arg === '-i' || arg === '--install') {
+        if (st.stage === 'installed') {
+          addLines([ln('output', ''), ln('output', ' No updates are available.'), ln('output', '')], 22)
+        } else {
+          st.download()
+          useWindowStore.getState().openSettingsAt('softwareupdate')
+          addLines([ln('output', ''), ln('output', ` Downloading ${UPDATE_NAME}…`), ln('output', '')], 22)
+        }
+        return
+      }
+      if (arg === '--uninstall') {
+        st.reset()
+        addLines([ln('output', ''), ln('output', ` Reverted to ${osString()}.`), ln('output', '')], 22)
+        return
+      }
+      addLines([ln('error', ''), ln('error', ` softwareupdate: unrecognised option: ${arg}`), ln('error', '')], 14)
+      return
+    }
+
     /* uname */
     if (lo === 'uname' || lo === 'uname -a') {
       addLines([
         ln('output', ''),
         ln('output', lo === 'uname'
           ? ' Darwin'
-          : ` Darwin ${SYS.host}.local 26.0.0 ${SYS.os} arm64 ${SYS.chip}`),
+          : ` Darwin ${SYS.host}.local 26.0.0 ${osString(useUpdateStore.getState().currentVersion())} arm64 ${SYS.chip}`),
         ln('output', ''),
       ], 25)
       return

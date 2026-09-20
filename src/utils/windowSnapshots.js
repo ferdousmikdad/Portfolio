@@ -48,8 +48,21 @@ export function clearSnapshot(id) {
   snapshots.delete(id)
 }
 
-/** Strip the live window's positioning so the clone lays out inside a tile. */
+/** Strip the live window's positioning so the clone lays out inside a tile.
+
+    Also strips the attributes that identify a *window*. A clone is a picture
+    of one, and four separate places look a window up with
+    `[data-window="<id>"]` — Mission Control, Stage Manager, the dock's genie.
+    Leaving the id on the copy means two nodes answer to it and whichever
+    sits earlier in the DOM wins, so a clone can end up being cloned again or
+    animated in place of the real thing. */
 export function neutralise(node, size) {
+  node.removeAttribute('data-window')
+  node.removeAttribute('data-min-slot')
+  node.querySelectorAll('[data-window], [data-min-slot]').forEach((el) => {
+    el.removeAttribute('data-window')
+    el.removeAttribute('data-min-slot')
+  })
   node.classList.remove('absolute', 'focused')
   node.style.cssText = [
     'position:static',

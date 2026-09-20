@@ -105,6 +105,8 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
   const play = useSound()
   const [mouseX,    setMouseX]    = useState(null)
   const [bouncing,  setBouncing]  = useState(null)
+  /* Mirrors `bouncing` for the watcher below, which must not depend on it. */
+  const bouncingRef = useRef(null)
   const rowRef   = useRef(null)
   const sheenRef = useRef(null)
   const slabRef  = useRef(null)
@@ -193,10 +195,34 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
     })
   }
 
-  const openApp = (id) => {
+  /* How long the icon hops before the window shows up. On a Mac the bounce
+     *is* the launch — the window arrives when the app is ready, not the
+     instant you click — so opening immediately and bouncing afterwards had
+     the two playing over each other.
+
+     590ms is the first hop's landing: 0.07s delay + 0.55 of a 0.95s curve.
+     The window arrives exactly as the icon hits the floor. */
+  const LAUNCH_DELAY = 590
+
+  /** Bounce now, run `open` a beat later. Already-running apps skip both:
+      macOS does not bounce when you click an app that is already up. */
+  const launch = (bounceId, open, alreadyRunning) => {
+    if (alreadyRunning) { open(); return }
     play('open')
+    setBouncing(bounceId)
+    bouncingRef.current = bounceId
+    setTimeout(open, LAUNCH_DELAY)
+    // Clear once the curve itself is done — measured from the click, not
+    // from the window opening.
+    setTimeout(() => {
+      setBouncing(null)
+      bouncingRef.current = null
+    }, 1100)
+  }
+
+  const openApp = (id) => {
     if (!activePage) closeAllExcept(['finder', 'terminal', 'settings'])
-    openWindow(id)
+    launch(id, () => openWindow(id), isLive(id))
   }
 
   /* ── One flat list so magnification, tooltips and dots share a code path ── */
@@ -209,7 +235,7 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
       },
       ...PAGE_NAV.map((page) => ({
         id: `__page_${page.id}__`, label: page.label, icon: page.icon, winId: page.id,
-        onClick: () => { play('open'); onNavigate?.(page.id) },
+        onClick: () => launch(page.id, () => onNavigate?.(page.id), activePage === page.id),
         active: activePage === page.id,
         glyph: page.glyph,
       })),
@@ -229,7 +255,7 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
       },
       ...dockTools.map((tool) => ({
         id: tool.id, label: tool.name, icon: tool.icon, file: FILE_ALIAS[tool.id] ?? tool.id, winId: tool.id,
-        onClick: () => { play('open'); openTool(tool.id) },
+        onClick: () => launch(tool.id, () => openTool(tool.id), activeTool === tool.id),
         active: activeTool === tool.id,
         dim: tool.url === null,
         dynamic: !PINNED_TOOL_IDS.includes(tool.id),
@@ -301,9 +327,19 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
       const launched = [...open].find(
         (id) => !prevOpen.current.has(id) && !prevMin.current.has(id),
       )
-      if (launched) {
+      /* A dock click has already started this one and timed the window to
+         land mid-hop; restarting it here would snap the icon back to the
+         floor exactly as the window appears. Launches from anywhere else —
+         the menu bar, Spotlight, the Terminal — still bounce from here. */
+      if (launched && launched !== bouncingRef.current) {
         setBouncing(launched)
-        const tid = setTimeout(() => setBouncing(null), 620)
+        bouncingRef.current = launched
+        // Must outlast the animation (1.15s + 0.07s delay) or the tile is
+        // yanked back to rest mid-hop.
+        const tid = setTimeout(() => {
+          setBouncing(null)
+          bouncingRef.current = null
+        }, 1100)
         prevOpen.current = open
         prevMin.current  = min
         return () => clearTimeout(tid)
@@ -431,9 +467,33 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
                        `__page_portfolio__` while the launch that triggers the
                        bounce reports the window id `portfolio`, so comparing
                        ids alone left every page tile sitting still. */
-                    animate={isBouncing(item) ? { y: [0, -17, 0, -6, 0, -2, 0] } : { y: 0 }}
+                    /* Three hops under gravity. The whole sequence used to run
+                       in 0.62s on one easeOut curve, which reads as a twitch
+                       rather than a bounce — a real dock hop is about half a
+                       second on its own.
+
+                       Each leg gets its own easing: easeOut on the way up so
+                       the icon slows into the apex, easeIn on the way down so
+                       it accelerates into the floor. A single ease across all
+                       six legs is what made it look mechanical. The small
+                       delay is the beat between the click and the launch. */
+                    /* Two hops, not three. On a Mac the bouncing *is* the
+                       launch and stops once the app is up, so a long tail of
+                       hops playing after the window is already on screen is
+                       the thing that reads as out of sync. The window is
+                       timed to land as the icon touches down from the first
+                       hop (see LAUNCH_DELAY), leaving one small settling hop.
+
+                       Each leg keeps its own easing: easeOut up into the
+                       apex, easeIn down into the floor. */
+                    animate={isBouncing(item) ? { y: [0, -24, 0, -8, 0] } : { y: 0 }}
                     transition={isBouncing(item)
-                      ? { duration: 0.62, times: [0, 0.22, 0.44, 0.62, 0.8, 0.9, 1], ease: 'easeOut' }
+                      ? {
+                          duration: 0.95,
+                          delay: 0.07,
+                          times: [0, 0.28, 0.55, 0.78, 1],
+                          ease: ['easeOut', 'easeIn', 'easeOut', 'easeIn'],
+                        }
                       : { duration: 0.2 }}
                     style={{
                       width:          wide,

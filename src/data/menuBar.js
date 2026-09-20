@@ -33,7 +33,9 @@ const APP_NAMES = {
   home: 'Mikuda',
   calculator: 'Calculator',
   spotify: 'Music',
+  'photo-booth': 'Photo Booth',
   'about-mac': 'Finder',
+  'whats-new': 'System Settings',
 }
 
 export function appNameFor(windowId) {
@@ -53,7 +55,8 @@ export function buildMenus(ctx) {
   const {
     appName, hasWindow, isFullscreen, isDark,
     openWindow, navigate, closeActive, minimizeActive, zoomActive,
-    closeAll, toggleFullscreen, toggleTheme, openSpotlight, missionControl,
+    closeAll, toggleFullscreen, toggleTheme, openSpotlight, missionControl, launchpad,
+    screenSaver, lock, openSettingsAt, updatePending, shortcuts, sleep, restart,
   } = ctx
 
   return [
@@ -63,13 +66,20 @@ export function buildMenus(ctx) {
       items: [
         { label: 'About This Mac', onClick: () => openWindow('about-mac') },
         { sep: true },
-        { label: 'System Settings…', key: '⌘,', onClick: () => openWindow('settings') },
+        /* macOS badges this row while an update is waiting, and the count
+           is the number of pending updates — there is exactly one. */
+        { label: 'System Settings…', key: '⌘,', onClick: () => openWindow('settings'),
+          badge: updatePending ? '1' : undefined },
+        { label: 'Software Update…', onClick: () => openSettingsAt('softwareupdate'),
+          badge: updatePending ? '1' : undefined },
         { label: 'Store…', onClick: () => openWindow('shop') },
         { sep: true },
-        { label: 'Sleep', disabled: true },
-        { label: 'Restart…', disabled: true },
+        { label: 'Start Screen Saver', onClick: screenSaver },
+        { label: 'Sleep', onClick: sleep },
+        /* The ellipsis is a promise that it will ask first, so it does. */
+        { label: 'Restart…', onClick: restart },
         { sep: true },
-        { label: 'Lock Screen', disabled: true },
+        { label: 'Lock Screen', key: '⌃⌘Q', onClick: lock },
       ],
     },
 
@@ -160,6 +170,7 @@ export function buildMenus(ctx) {
         { sep: true },
         /* The reliable way in: macOS usually claims F3 before the page. */
         { label: 'Mission Control', key: 'F3', onClick: missionControl },
+        { label: 'Launchpad', key: 'F4', onClick: launchpad },
         { sep: true },
         { label: 'Bring All to Front', disabled: true },
       ],
@@ -170,6 +181,9 @@ export function buildMenus(ctx) {
       label: 'Help',
       items: [
         { label: 'Portfolio Help', onClick: openSpotlight },
+        /* The one ⌘ hint in the whole bar that is not decorative — the
+           browser lets ⌘/ through. */
+        { label: 'Keyboard Shortcuts', key: '⌘/', onClick: shortcuts },
         { sep: true },
         { label: 'About This Mac', onClick: () => openWindow('about-mac') },
       ],

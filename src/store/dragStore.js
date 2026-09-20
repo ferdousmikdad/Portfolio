@@ -12,18 +12,26 @@ import { create } from 'zustand'
 // macOS accepts a drop that lands near the basket, not only dead on it.
 const SLOP = 12
 
-function trashRect() {
-  const el = document.querySelector('[data-trash-tile]')
-  return el ? el.getBoundingClientRect() : null
-}
+/* Drop targets are found by attribute rather than registered, so a target can
+   appear anywhere — the dock's basket, a pane inside Finder — without the
+   drag knowing anything about it. First match wins. */
+const TARGETS = [
+  ['trash',   '[data-trash-tile]'],
+  ['airdrop', '[data-airdrop-target]'],
+]
 
-function isOverTrash(point) {
-  const r = trashRect()
-  if (!r) return false
-  return (
-    point.x >= r.left - SLOP && point.x <= r.right  + SLOP &&
-    point.y >= r.top  - SLOP && point.y <= r.bottom + SLOP
-  )
+function hitTarget(point) {
+  for (const [name, selector] of TARGETS) {
+    const el = document.querySelector(selector)
+    if (!el) continue
+    const r = el.getBoundingClientRect()
+    if (!r.width || !r.height) continue          // present but not on screen
+    if (
+      point.x >= r.left - SLOP && point.x <= r.right  + SLOP &&
+      point.y >= r.top  - SLOP && point.y <= r.bottom + SLOP
+    ) return name
+  }
+  return null
 }
 
 const useDragStore = create((set, get) => ({
@@ -33,27 +41,33 @@ const useDragStore = create((set, get) => ({
   point:     null,
   /* Whether that pointer is currently over the dock's Trash. */
   overTrash: false,
+  /* …or over an AirDrop target, wherever one happens to be mounted. */
+  overAirDrop: false,
   /* True only for drags that draw the shared ghost (Finder rows). Desktop
      icons move themselves, so they opt out. */
   ghost:     false,
 
   begin: (payload, point, { ghost = false } = {}) =>
-    set({ payload, point: point ?? null, overTrash: false, ghost }),
+    set({ payload, point: point ?? null, overTrash: false, overAirDrop: false, ghost }),
 
   move: (point) => {
     if (!get().payload) return
-    set({ point, overTrash: isOverTrash(point) })
+    const hit = hitTarget(point)
+    set({ point, overTrash: hit === 'trash', overAirDrop: hit === 'airdrop' })
   },
 
-  /* Ends the drag and reports the payload if it was dropped on the Trash,
-     so a caller can do `const hit = end(); if (hit) trashItem(hit)`. */
+  /* Ends the drag and says what it landed on:
+     `{ payload, target: 'trash' | 'airdrop' | null }`. */
   end: () => {
-    const { payload, overTrash } = get()
-    set({ payload: null, point: null, overTrash: false, ghost: false })
-    return overTrash ? payload : null
+    const { payload, overTrash, overAirDrop } = get()
+    const target = overTrash ? 'trash' : overAirDrop ? 'airdrop' : null
+    set({ payload: null, point: null, overTrash: false, overAirDrop: false, ghost: false })
+    return { payload, target }
   },
 
-  cancel: () => set({ payload: null, point: null, overTrash: false, ghost: false }),
+  cancel: () => set({
+    payload: null, point: null, overTrash: false, overAirDrop: false, ghost: false,
+  }),
 }))
 
 export default useDragStore

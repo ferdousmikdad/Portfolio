@@ -22,6 +22,24 @@ export const WALLPAPERS = [
   { id: 'static',          label: 'Solid Colour',   kind: 'static'   },
 ]
 
+/* ── Hot corners ───────────────────────────────────────────────────────────
+   What each corner of the screen does when the pointer reaches it.
+
+   macOS ships every corner set to nothing, and for good reason: a corner
+   that fires on a passing cursor is infuriating. Only the bottom-left is on
+   by default here — it is the one corner nothing else lives near, unlike the
+   top-right where a visitor is reaching for their browser's own controls. */
+export const HOT_CORNER_ACTIONS = [
+  { id: 'none',        label: '—' },
+  { id: 'mission',     label: 'Mission Control' },
+  { id: 'launchpad',   label: 'Launchpad' },
+  { id: 'desktop',     label: 'Show Desktop' },
+  { id: 'saver',       label: 'Start Screen Saver' },
+  { id: 'lock',        label: 'Lock Screen' },
+  { id: 'notes',       label: 'Notification Centre' },
+  { id: 'sleep',       label: 'Put Display to Sleep' },
+]
+
 export const AIRDROP_MODES = [
   { id: 'off',      label: 'No One'        },
   { id: 'contacts', label: 'Contacts Only' },
@@ -68,6 +86,12 @@ const useSettingsStore = create(
       dockSize:         52,
       autoHideDock:     false,
       stageManager:     false,
+      hotCorners: {
+        topLeft:     'none',
+        topRight:    'none',
+        bottomLeft:  'mission',
+        bottomRight: 'none',
+      },
 
       // ── Menu bar ──────────────────────────────────────────────────────────
       menuBarShowDate:    true,
@@ -118,6 +142,8 @@ const useSettingsStore = create(
       toggleBluetooth: () => set(s => ({ bluetooth: !s.bluetooth })),
       toggleFocus:     () => set(s => ({ focus: !s.focus })),
       setAirdrop:      (m) => set({ airdrop: m }),
+      setHotCorner: (corner, action) =>
+        set((st) => ({ hotCorners: { ...st.hotCorners, [corner]: action } })),
       update: (patch) => set(patch),
     }),
     {

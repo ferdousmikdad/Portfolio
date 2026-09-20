@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import TopBar from './TopBar'
 import WelcomeModal from './WelcomeModal'
-import RightControls from './RightControls'
 import Background from './Background'
 import ToolsPageDock from '@/components/dock/ToolsPageDock'
 import { GlassDefs } from '@/components/ui/LiquidGlass'
@@ -32,9 +31,20 @@ import SettingsWindow from '@/components/apps/SettingsWindow'
 import MailWindow from '@/components/apps/MailWindow'
 import CalculatorWindow from '@/components/apps/CalculatorWindow'
 import AboutMacWindow from '@/components/apps/AboutMacWindow'
+import PhotoBoothWindow from '@/components/apps/PhotoBoothWindow'
+import WhatsNewWindow from '@/components/apps/WhatsNewWindow'
+import ShortcutsOverlay from '@/components/desktop/ShortcutsOverlay'
+import PowerOverlay from '@/components/desktop/PowerOverlay'
 import MissionControl from '@/components/desktop/MissionControl'
+import QuickLook from '@/components/desktop/QuickLook'
+import Launchpad from '@/components/desktop/Launchpad'
+import ScreenSaver from '@/components/desktop/ScreenSaver'
+import LockScreen from '@/components/desktop/LockScreen'
+import StageManager from '@/components/desktop/StageManager'
+import NotificationCenter from '@/components/desktop/NotificationCenter'
+import AirDropSheet from '@/components/desktop/AirDropSheet'
+import useHotCorners from '@/hooks/useHotCorners'
 import allProjects from '@/data/projects'
-import siriIconUrl from '@/assets/icons/siri.png?url'
 
 /* Viewport coordinates for a framer drag. The native pointer event is the
    reliable source — the dock is hit-tested in viewport space. */
@@ -43,7 +53,7 @@ const pointOf = (event, info) =>
     ? { x: event.clientX, y: event.clientY }
     : info.point
 
-function DesktopIcon({ file, initialX, onOpen, selected, onSelect, onTrash }) {
+function DesktopIcon({ file, initialX, onOpen, selected, onSelect, onTrash, onAirDrop }) {
   const pos     = useRef({ x: initialX, y: file.y })
   const [, rerender] = useState(0)
   const [lifted, setLifted] = useState(false)
@@ -85,9 +95,11 @@ function DesktopIcon({ file, initialX, onOpen, selected, onSelect, onTrash }) {
       }}
       onDragEnd={(event, info) => {
         setLifted(false)
-        // Dropped on the basket: the file leaves the desktop and the icon
+        // Dropped on a target: the file leaves the desktop and the icon
         // unmounts, so there is no position left to commit.
-        if (endDrag()) { onTrash(payload()); return }
+        const drop = endDrag()
+        if (drop.target === 'trash')   { onTrash(payload()); return }
+        if (drop.target === 'airdrop') { onAirDrop(payload()); return }
         pos.current = { x: pos.current.x + info.offset.x, y: pos.current.y + info.offset.y }
         rerender((n) => n + 1)
       }}
@@ -111,12 +123,24 @@ function DesktopIcon({ file, initialX, onOpen, selected, onSelect, onTrash }) {
 
 export default function Desktop() {
   const [menuOpen,      setMenuOpen]      = useState(false)
-  const [mikudaOpen,    setMikudaOpen]    = useState(false)
   const [selectedIcon,  setSelectedIcon]  = useState(null)
+  const [quickLook,     setQuickLook]     = useState(null)   // the file, or null
+
+  useHotCorners()
   const menuRef  = useRef(null)
   const chatRef  = useRef(null)
-  const fabRef   = useRef(null)
+  /* Mikuda is raised from the menu bar now, so its open state lives in the
+     store rather than here. */
+  const mikudaOpen   = useWindowStore((s) => s.mikudaChat)
+  const mikudaPrompt = useWindowStore((s) => s.mikudaPrompt)
+  const closeMikuda  = useWindowStore((s) => s.closeMikudaChat)
+  const clearPrompt  = useWindowStore((s) => s.clearMikudaPrompt)
+  const airDrop        = useWindowStore((s) => s.startAirDrop)
   const missionControl = useWindowStore((s) => s.missionControl)
+  const launchpad      = useWindowStore((s) => s.launchpad)
+  const toggleLaunchpad = useWindowStore((s) => s.toggleLaunchpad)
+  const closeLaunchpad  = useWindowStore((s) => s.closeLaunchpad)
+  const toggleShortcuts = useWindowStore((s) => s.toggleShortcuts)
   const { openWindow, closeAllExcept, switchTool, activePage, navKey, navigate, previewProject, closeProjectPreview, openProjectPreview, openMailWindow } = useWindowStore()
   const isAnyMaximized    = useWindowStore((s) => s.windows.some((w) => w.isMaximized))
   const showDesktopIcons  = useSettingsStore((s) => s.showDesktopIcons)
@@ -230,20 +254,21 @@ export default function Desktop() {
     return () => document.removeEventListener('mousedown', handler)
   }, [menuOpen])
 
-  // Close chat on outside click (exclude the FAB toggle button)
+  /* Close chat on outside click. The menu bar is spared: the Siri button
+     lives there, and closing on its mousedown would fight the toggle. */
   useEffect(() => {
     if (!mikudaOpen) return
     const handler = (e) => {
       if (
         chatRef.current && !chatRef.current.contains(e.target) &&
-        fabRef.current  && !fabRef.current.contains(e.target)
+        !e.target.closest?.('.topbar')
       ) {
-        setMikudaOpen(false)
+        closeMikuda()
       }
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
-  }, [mikudaOpen])
+  }, [mikudaOpen, closeMikuda])
 
   // Open the right window when a menu item is selected
   useEffect(() => {
@@ -291,6 +316,56 @@ export default function Desktop() {
     return () => document.removeEventListener('click', handler)
   }, [openMailWindow])
 
+  /* F4 raises Launchpad, as on a Mac keyboard. Same caveat as Mission
+     Control's F3: macOS itself usually claims the key, so the menu bar
+     carries the reliable entry point. */
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'F4') { e.preventDefault(); toggleLaunchpad() }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [toggleLaunchpad])
+
+  /* ⌘/ lists every shortcut. Unlike ⌘W and friends the browser lets this one
+     through, which is half the reason it is the conventional key for it.
+     ⌃/ is here for anyone on a PC keyboard, and ⌘? — what ⌘⇧/ actually
+     produces — because that is what you get if you reach for the question
+     mark rather than the slash. */
+  useEffect(() => {
+    const onKey = (e) => {
+      if (!(e.metaKey || e.ctrlKey)) return
+      if (e.key !== '/' && e.key !== '?') return
+      e.preventDefault()
+      toggleShortcuts()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [toggleShortcuts])
+
+  /* Space previews the selected desktop file — Quick Look's own shortcut.
+     Guarded on the focused element: the Terminal, Spotlight and every search
+     field need their spaces, and stealing the key from a text box would be
+     far more annoying than the feature is useful. */
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.code !== 'Space' || e.metaKey || e.ctrlKey || e.altKey) return
+      const el = document.activeElement
+      const typing = el && (
+        el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable
+      )
+      if (typing) return
+      if (quickLook) return            // QuickLook owns the key while it is up
+      if (!selectedIcon) return
+      const file = DESKTOP_FILES.find((f) => f.id === selectedIcon)
+      if (!file) return
+      e.preventDefault()
+      setQuickLook(file)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [selectedIcon, quickLook])
+
   return (
     <div className="relative w-full h-full overflow-hidden" style={{ background: 'var(--bg)' }} onClick={() => setSelectedIcon(null)}>
 
@@ -320,6 +395,9 @@ export default function Desktop() {
               selected={selectedIcon === file.id}
               onSelect={() => setSelectedIcon(file.id)}
               onTrash={(item) => { play('trash'); trashFile(item) }}
+              /* Dropped on AirDrop: nothing is really sent, so the file stays
+                 put — the point is the handshake it opens. */
+              onAirDrop={() => { play('open'); airDrop() }}
             />
           ))}
         </>
@@ -334,7 +412,7 @@ export default function Desktop() {
         style={{
           zIndex: isAnyMaximized ? 9999 : 20,
           pointerEvents: 'none',
-          opacity: missionControl ? 0 : 1,
+          opacity: missionControl || launchpad ? 0 : 1,
         }}
       >
         <AnimatePresence>
@@ -358,10 +436,30 @@ export default function Desktop() {
           <MailWindow />
           <CalculatorWindow />
           <AboutMacWindow />
+          <PhotoBoothWindow />
+          <WhatsNewWindow />
         </AnimatePresence>
       </div>
 
       <MissionControl />
+
+      <QuickLook file={quickLook} onClose={() => setQuickLook(null)} />
+
+      <Launchpad open={launchpad} onClose={closeLaunchpad} />
+
+      <ShortcutsOverlay />
+
+      <PowerOverlay />
+
+      <ScreenSaver />
+
+      <StageManager />
+
+      <NotificationCenter />
+
+      <AirDropSheet />
+
+      <LockScreen />
 
       {/* Menu window */}
       <MenuWindow
@@ -375,55 +473,20 @@ export default function Desktop() {
       {/* Global project preview — opened from WorkWindow or MikudaChat */}
       <ProjectPreviewWindow project={previewProject} onClose={closeProjectPreview} />
 
-      {/* Bottom-left controls */}
-      <RightControls />
-
-      {/* Mikuda AI — own layer so pointer events aren't blocked */}
+      {/* Mikuda AI — own layer so pointer events aren't blocked. The button
+          that used to float here moved to the menu bar, where macOS keeps
+          Siri; only the chat window is left. */}
       <div style={{ position: 'absolute', inset: 0, zIndex: 60, pointerEvents: 'none' }}>
-
-        {/* Floating chat popup — hidden on home page (full chat is shown there) */}
+        {/* Hidden on the home page, where the full chat is already on screen */}
         {activePage !== 'home' && (
-          <MikudaChat isOpen={mikudaOpen} onClose={() => setMikudaOpen(false)} chatRef={chatRef} />
+          <MikudaChat
+            isOpen={mikudaOpen}
+            onClose={closeMikuda}
+            chatRef={chatRef}
+            initialPrompt={mikudaPrompt}
+            onPromptSent={clearPrompt}
+          />
         )}
-
-        {/* FAB button — hidden on home page */}
-        {activePage !== 'home' && (
-          <div ref={fabRef} style={{ position: 'absolute', bottom: 32, right: 20, pointerEvents: 'auto' }}>
-            <motion.button
-              className={`mikuda-fab ${mikudaOpen ? 'active' : ''}`}
-              onClick={() => setMikudaOpen((v) => !v)}
-              whileTap={{ scale: 0.92 }}
-              title="Ask Mikuda"
-            >
-              <AnimatePresence mode="wait">
-                {mikudaOpen ? (
-                  <motion.span
-                    key="close"
-                    initial={{ rotate: -45, opacity: 0 }}
-                    animate={{ rotate: 0,   opacity: 1 }}
-                    exit={{    rotate: 45,  opacity: 0 }}
-                    transition={{ duration: 0.15 }}
-                    style={{ display: 'flex' }}
-                  >
-                    <img src={siriIconUrl} alt="" className="mikuda-fab__siri" draggable={false} />
-                  </motion.span>
-                ) : (
-                  <motion.span
-                    key="open"
-                    initial={{ rotate: 45,  opacity: 0 }}
-                    animate={{ rotate: 0,   opacity: 1 }}
-                    exit={{    rotate: -45, opacity: 0 }}
-                    transition={{ duration: 0.15 }}
-                    style={{ display: 'flex' }}
-                  >
-                    <img src={siriIconUrl} alt="" className="mikuda-fab__siri" draggable={false} />
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </motion.button>
-          </div>
-        )}
-
       </div>
 
       {/* Translucent copy of a file being dragged out of a window */}

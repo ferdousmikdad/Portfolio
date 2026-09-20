@@ -33,6 +33,7 @@ import terminalAppIconUrl from '@/assets/icons/terminal.svg?url'
 import pacmanIconUrl    from '@/assets/icons/magic-icon.svg?url'
 import calculatorIconUrl from '@/assets/icons/Calculator@4x 1.png?url'
 import settingsIconUrl  from '@/assets/icons/mac-system-settings.svg?url'
+import photoBoothIconUrl from '@/assets/icons/photobooth.png?url'
 import MacSearchIcon    from '@/assets/icons/macsearch.svg?react'
 import MacGridIcon      from '@/assets/icons/macgrid.svg?react'
 import macListPng       from '@/assets/icons/maclist.png'
@@ -56,6 +57,7 @@ const NATIVE_APPS = [
   { id: 'spotify',    label: 'Spotify',         icon: spotifyIconUrl },
   { id: 'calculator', label: 'Calculator',      icon: calculatorIconUrl },
   { id: 'settings',   label: 'System Settings', icon: settingsIconUrl },
+  { id: 'photo-booth', label: 'Photo Booth',    icon: photoBoothIconUrl },
 ]
 
 /* The favourites that hold something Finder can disclose beneath them. */

@@ -3,6 +3,7 @@ import { motion, useDragControls, useMotionValue } from 'framer-motion'
 import WindowControls from './WindowControls'
 import useWindowStore from '@/store/windowStore'
 import useSoundStore from '@/store/soundStore'
+import useSettingsStore from '@/store/settingsStore'
 import { genieStage, flatten, rasterizeFrames, afterMount } from '@/utils/genie'
 import { setSnapshot } from '@/utils/windowSnapshots'
 import { useResize, RESIZE_CURSORS } from '@/hooks/useResize'
@@ -10,6 +11,7 @@ import { useResize, RESIZE_CURSORS } from '@/hooks/useResize'
 export default function Window({ id, title, children, actionLabel, onAction, hideControls, hideTitleBar, toolbar, sidebarContent, shellStyle, paneStyle, navSlot, minSize, disableMaximize, titleBarBorder = false, centerTitle = false }) {
   const { closeWindow, minimizeWindow, focusWindow, updatePosition, getWindow, toggleMaximize } = useWindowStore()
   const activeWindowId = useWindowStore((s) => s.activeWindowId)
+  const stageManager   = useSettingsStore((s) => s.stageManager)
   const restoring   = useWindowStore((s) => s.restoringId) === id
   const play        = useSoundStore((s) => s.play)
   const win         = getWindow(id)
@@ -107,8 +109,13 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
         zIndex:        win.zIndex,
         pointerEvents: 'auto',
         boxShadow:     win.isMaximized ? 'none' : undefined,
-        // held invisible while the genie draws it back out of the dock
-        visibility:    restoring ? 'hidden' : undefined,
+        /* Held invisible while the genie draws it back out of the dock —
+           and, in Stage Manager, whenever this window is not the one on the
+           stage. `visibility` rather than `opacity` on purpose: an element
+           below opacity 1 becomes a backdrop root and the glass inside it
+           stops sampling. Visibility keeps the layout, which is also what
+           lets the rail clone a window it is not showing. */
+        visibility:    restoring || (stageManager && !isActive) ? 'hidden' : undefined,
         ...shellStyle,
       }}
       // animate only controls entrance/exit appearance — NOT geometry.

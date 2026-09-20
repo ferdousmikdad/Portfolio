@@ -53,12 +53,9 @@ export const TOOL_IDS = [
 const toolWindows = TOOL_IDS.map((id, i) => ({
   id,
   title: id,           // overridden at render time by ToolWindow
-  isOpen: id === 'color-contrast',   // open color-contrast on first load
+  isOpen: false,       // no tool opens on first load — Portfolio is the landing window
   isMinimized: false,
-  // color-contrast gets a left-aligned position for the initial landing layout
-  position: id === 'color-contrast'
-    ? { x: Math.max(20, (vw - initW) / 2), y: Math.max(20, (vh - initH) / 2) }
-    : { x: toolX + i * 6, y: toolY + i * 4 },
+  position: { x: toolX + i * 6, y: toolY + i * 4 },
   size: { width: initW, height: initH },
   zIndex: 3,
 }))
@@ -125,9 +122,11 @@ const defaultWindows = [
     title: 'Portfolio',
     isOpen: true,    // open by default for the initial landing layout
     isMinimized: false,
-    position: { x: Math.max(20, (vw - initW) / 2), y: Math.max(20, (vh - initH) / 2) },
+    /* Centred in the usable area, not the raw viewport: the dock owns the
+       bottom strip, so viewport-centring reads as sitting low. */
+    position: centeredInUsableArea(initW, initH),
     size: { width: initW, height: initH },
-    zIndex: 4,  // above the tool window
+    zIndex: 4,
   },
   {
     id: 'shop',
@@ -213,6 +212,26 @@ const defaultWindows = [
     zIndex: 3,
   },
   {
+    /* What's New. Sized like the real release-notes sheet: narrow, tall,
+       and not worth resizing. */
+    id: 'whats-new',
+    title: '',
+    isOpen: false,
+    isMinimized: false,
+    position: centeredInUsableArea(460, 560),
+    size: { width: 460, height: 560 },
+    zIndex: 3,
+  },
+  {
+    id: 'photo-booth',
+    title: 'Photo Booth',
+    isOpen: false,
+    isMinimized: false,
+    position: centeredInUsableArea(660, 640),
+    size: { width: 660, height: 640 },
+    zIndex: 3,
+  },
+  {
     id: 'spotify',
     title: 'Spotify',
     isOpen: false,
@@ -228,7 +247,7 @@ let topZ = 10
 
 const useWindowStore = create((set, get) => ({
   windows: defaultWindows,
-  activeWindowId: 'color-contrast',
+  activeWindowId: 'portfolio',
   // The window a genie restore is currently drawing: it is mounted and
   // measurable but held invisible, so the warp lands on the real geometry.
   restoringId: null,
@@ -242,11 +261,117 @@ const useWindowStore = create((set, get) => ({
 
   navigate: (page) => set((state) => ({ activePage: page, navKey: state.navKey + 1 })),
 
+  /* Which pane Settings should jump to when it next renders. Settings keeps
+     its own history; this is only the request, cleared as soon as it lands,
+     so reopening Settings afterwards returns to where you left it. */
+  settingsPane: null,
+  openSettingsAt: (pane) => { get().openWindow('settings'); set({ settingsPane: pane }) },
+  clearSettingsPane: () => set({ settingsPane: null }),
+
+  /* Spotlight. It used to be local to TopBar, which meant nothing outside
+     the menu bar could raise it — the What's New window needs to. */
+  spotlight: false,
+  /* Both setters bail when the value is already what was asked for: these
+     are called from click handlers that fire on every menu open, and a
+     no-op `set` still hands every subscriber a new state object. */
+  openSpotlight:   () => set((s) => (s.spotlight ? s : { spotlight: true })),
+  closeSpotlight:  () => set((s) => (s.spotlight ? { spotlight: false } : s)),
+  toggleSpotlight: () => set((s) => ({ spotlight: !s.spotlight })),
+
+  /* The ⌘/ shortcuts sheet. A flag rather than a window: it is a reference
+     you read and dismiss, and a window would turn up in Mission Control and
+     the dock for no reason. */
+  shortcuts: false,
+  openShortcuts:   () => set((s) => (s.shortcuts ? s : { shortcuts: true })),
+  closeShortcuts:  () => set((s) => (s.shortcuts ? { shortcuts: false } : s)),
+  toggleShortcuts: () => set((s) => ({ shortcuts: !s.shortcuts })),
+
+  /* ── Mikuda ─────────────────────────────────────────────────────────
+     The Siri stand-in, in two halves: the ask field that drops out of the
+     menu bar, and the chat window on the desktop layer. Neither can own the
+     state — the menu bar opens the field and the field opens the chat — so
+     it lives here.
+
+     `mikudaPrompt` is the question the field handed over; the chat sends it
+     on mount and clears it, so reopening the chat later starts clean. */
+  mikudaAsk: false,
+  mikudaChat: false,
+  mikudaPrompt: null,
+  toggleMikudaAsk: () => set((s) => ({ mikudaAsk: !s.mikudaAsk })),
+  closeMikudaAsk:  () => set((s) => (s.mikudaAsk ? { mikudaAsk: false } : s)),
+  /* Asking closes the field and hands the question to the chat, the way
+     Siri drops its field once you commit to a question. */
+  askMikuda: (text) => set({ mikudaAsk: false, mikudaChat: true, mikudaPrompt: text }),
+  closeMikudaChat: () => set({ mikudaChat: false, mikudaPrompt: null }),
+  clearMikudaPrompt: () => set({ mikudaPrompt: null }),
+
   /* Mission Control. Lives here rather than in Desktop's local state so the
      menu bar and the dock can both raise it. */
   missionControl: false,
-  toggleMissionControl: () => set((s) => ({ missionControl: !s.missionControl })),
+  toggleMissionControl: () => set((s) => ({ missionControl: !s.missionControl, launchpad: false })),
   closeMissionControl: () => set({ missionControl: false }),
+
+  /* Launchpad. Mutually exclusive with Mission Control — macOS never shows
+     both, and either one covering the other reads as a bug. */
+  launchpad: false,
+  toggleLaunchpad: () => set((s) => ({ launchpad: !s.launchpad, missionControl: false })),
+  closeLaunchpad: () => set({ launchpad: false }),
+
+  /* ── Power ──────────────────────────────────────────────────────────
+     Sleep and Restart, the two Apple-menu rows that were drawn disabled.
+
+     The store only holds *which* state the machine is in; the timeline —
+     fade, boot bar, chime — belongs to `PowerOverlay`, which is always
+     mounted and so has nothing to survive.
+
+     Both clear every overlay first. Coming back from a restart to a
+     half-open Launchpad would give the game away immediately.           */
+  power: null,                       // null | 'sleeping' | 'restarting'
+  sleep: () => set({
+    power: 'sleeping',
+    launchpad: false, missionControl: false, screenSaver: false,
+    spotlight: false, shortcuts: false, notificationCenter: false,
+  }),
+  /* Waking hands you the lock screen, which is what a Mac does when it
+     comes back from sleep. */
+  wake: () => set({ power: null, locked: true }),
+
+  restart: () => set({
+    power: 'restarting',
+    launchpad: false, missionControl: false, screenSaver: false,
+    spotlight: false, shortcuts: false, notificationCenter: false, locked: false,
+  }),
+  /* A restart really does close your windows. Minimised ones go too — this
+     is the one place `closeAllExcept` is not the right tool, since it
+     deliberately spares them. */
+  finishRestart: () => set((state) => ({
+    power: null,
+    windows: state.windows.map((w) => ({ ...w, isOpen: false, isMinimized: false })),
+  })),
+
+  /* Screen saver. Starting it puts away anything else that is up, the way
+     the display going to sleep would. */
+  screenSaver: false,
+  startScreenSaver: () => set({ screenSaver: true, launchpad: false, missionControl: false }),
+  stopScreenSaver: () => set({ screenSaver: false }),
+
+  /* Lock screen. Clears the overlays under it so unlocking returns to a
+     plain desktop rather than whatever was mid-flight when it locked. */
+  locked: false,
+  lock: () => set({ locked: true, launchpad: false, missionControl: false, screenSaver: false }),
+  unlock: () => set({ locked: false }),
+
+  /* Notification Centre — the menu-bar clock and the side-rail bell. */
+  /* AirDrop. Nothing is transferred — the send is a handshake that ends at
+     the contact card, which is the only thing a visitor could usefully send
+     a file about. */
+  airDropping: false,
+  startAirDrop: () => set({ airDropping: true }),
+  finishAirDrop: () => set({ airDropping: false }),
+
+  notificationCenter: false,
+  toggleNotificationCenter: () => set((s) => ({ notificationCenter: !s.notificationCenter })),
+  closeNotificationCenter: () => set({ notificationCenter: false }),
 
   openNoteRequest: (category, noteId) => {
     const liveVW = window.innerWidth

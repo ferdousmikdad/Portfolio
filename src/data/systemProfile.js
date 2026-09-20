@@ -7,7 +7,7 @@
    the spec sheet listed Figma/Illustrator/After Effects and React/Tailwind/
    Framer. Whichever one you updated, the other quietly went stale.
 
-   Everything here except CHIP, OS and SHELL is a real fact taken from the
+   Everything here except CHIP, the OS name and SHELL is a real fact taken from the
    portfolio's own copy (`BioWindow`, `AboutMeWindow`). Those three are
    obvious gags and read as such. Change a value here and both surfaces
    follow.                                                                 */
@@ -31,8 +31,20 @@ const SYSTEM_PROFILE = {
 
   // The gags.
   chip: 'Mikdad M5 Pro',
-  os: 'Portfolio OS v2.0',
   shell: 'portfolio-zsh 1.0',
+
+  /* The OS, split into parts because Software Update has to be able to talk
+     about a version that is not the one running. `os` is composed rather
+     than written out so the Terminal, About This Mac and the update pane
+     cannot drift the way the spec lines once did. */
+  osName: 'macOS Mikdad',
+  osVersion: '26.0.1',
 }
+
+/** "macOS Mikdad 26.1" — the string every surface prints. */
+export const osString = (version = SYSTEM_PROFILE.osVersion) =>
+  `${SYSTEM_PROFILE.osName} ${version}`
+
+SYSTEM_PROFILE.os = osString()
 
 export default SYSTEM_PROFILE

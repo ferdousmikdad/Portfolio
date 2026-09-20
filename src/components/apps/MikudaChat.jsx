@@ -238,7 +238,7 @@ function SuggestionPill({ label, highlight, onClick }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export default function MikudaChat({ isOpen, onClose, chatRef }) {
+export default function MikudaChat({ isOpen, onClose, chatRef, initialPrompt = null, onPromptSent }) {
   const navigate           = useWindowStore((s) => s.navigate)
   const openProjectPreview = useWindowStore((s) => s.openProjectPreview)
   const isMobile           = useIsMobile()
@@ -355,6 +355,15 @@ export default function MikudaChat({ isOpen, onClose, chatRef }) {
       setLatestId(aiId)
     }, 600 + Math.random() * 350)
   }, [input, thinking])
+
+  /* A question handed over by the menu-bar ask field. It is sent as though it
+     had been typed here, then cleared at the source so reopening the chat
+     later does not replay it. */
+  useEffect(() => {
+    if (!isOpen || !initialPrompt) return
+    sendMessage(initialPrompt)
+    onPromptSent?.()
+  }, [isOpen, initialPrompt])
 
   const reset = () => {
     setMessages([])

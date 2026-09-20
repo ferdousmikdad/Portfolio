@@ -7,9 +7,11 @@ import useSoundStore from '@/store/soundStore'
 import useCursorStore, { CURSOR_PACKS } from '@/store/cursorStore'
 import useWindowStore from '@/store/windowStore'
 import useSettingsStore, {
-  ACCENT_PRESETS, WALLPAPERS, AIRDROP_MODES, RESOLUTIONS,
-} from '@/store/settingsStore'
+  ACCENT_PRESETS, WALLPAPERS, AIRDROP_MODES, RESOLUTIONS, HOT_CORNER_ACTIONS } from '@/store/settingsStore'
 import { PANE_ICONS, SIDEBAR_GROUPS, PANE_TITLES } from '@/data/settingsPanes'
+import useUpdateStore from '@/store/updateStore'
+import { osString } from '@/data/systemProfile'
+import { UPDATE_NAME, UPDATE_SIZE, UPDATE_SUMMARY } from '@/data/softwareUpdate'
 import {
   Group, Row, StackRow, Switch, Popup, Slider, GlassSlider, Checkbox,
   PushButton, ThumbOption, Swatch,
@@ -246,6 +248,33 @@ function WallpaperPane() {
   )
 }
 
+/* macOS puts the four corners behind a "Hot Corners…" button in a sheet; a
+   grouped card of four pop-ups says the same thing without a second layer of
+   chrome to build. */
+function HotCornersGroup() {
+  const hotCorners = useSettingsStore((st) => st.hotCorners)
+  const setHotCorner = useSettingsStore((st) => st.setHotCorner)
+  const corners = [
+    ['topLeft',     'Top left'],
+    ['topRight',    'Top right'],
+    ['bottomLeft',  'Bottom left'],
+    ['bottomRight', 'Bottom right'],
+  ]
+  return (
+    <Group title="Hot Corners" note="Move the pointer into a corner and hold for a moment.">
+      {corners.map(([id, label]) => (
+        <Row key={id} label={label}>
+          <Popup
+            value={hotCorners?.[id] ?? 'none'}
+            options={HOT_CORNER_ACTIONS.map((a) => ({ value: a.id, label: a.label }))}
+            onChange={(v) => setHotCorner(id, v)}
+          />
+        </Row>
+      ))}
+    </Group>
+  )
+}
+
 function DesktopDockPane() {
   const s = useSettingsStore()
   return (
@@ -296,6 +325,8 @@ function DesktopDockPane() {
           <Switch value onChange={() => {}} />
         </Row>
       </Group>
+
+      <HotCornersGroup />
     </>
   )
 }
@@ -987,16 +1018,64 @@ function StoragePane() {
   )
 }
 
+/* The one pane that actually does something rather than describing a Mac.
+   macOS draws the pending update as a headline row — icon, name, size, and a
+   prominent button — then swaps the button for a determinate bar while it
+   works. The stage machine lives in `updateStore`, so leaving the pane does
+   not stall the download. */
 function SoftwareUpdatePane() {
+  const stage    = useUpdateStore((s) => s.stage)
+  const progress = useUpdateStore((s) => s.progress)
+  const version  = useUpdateStore((s) => s.installedVersion)
+  const download = useUpdateStore((s) => s.download)
+  const openWindow = useWindowStore((s) => s.openWindow)
+
+  const busy = stage === 'downloading' || stage === 'installing'
+  const done = stage === 'installed'
+
+  /* Finishing opens the release notes, the way a real install lands you on
+     "What's New". Guarded on the transition rather than on `done` so it does
+     not reopen every time the pane is revisited. */
+  const wasBusy = useRef(false)
+  useEffect(() => {
+    if (wasBusy.current && done) openWindow('whats-new')
+    wasBusy.current = busy
+  }, [busy, done, openWindow])
+
   return (
     <>
       <Group>
-        <Row label="macOS Tahoe 26.5.1" secondary="Your Mac is up to date"
-             icon={<img src={PANE_ICONS.softwareupdate} alt="" className="mac-row__glyph" />}>
-          <PushButton onClick={() => {}}>Check Now</PushButton>
+        <Row
+          label={done ? osString(version) : UPDATE_NAME}
+          secondary={
+            done
+              ? 'Your Mac is up to date'
+              : busy
+                ? (stage === 'downloading'
+                    ? `Downloading — ${Math.round(progress)}%`
+                    : `Installing — ${Math.round(progress)}%`)
+                : `Update available — ${UPDATE_SIZE}`
+          }
+          align={busy ? 'top' : 'center'}
+          icon={<img src={PANE_ICONS.softwareupdate} alt="" className="mac-row__glyph" />}
+        >
+          {busy
+            ? <div className="mac-progress" role="progressbar"
+                   aria-valuenow={Math.round(progress)} aria-valuemin={0} aria-valuemax={100}>
+                <span style={{ width: `${progress}%` }} />
+              </div>
+            : done
+              ? <PushButton onClick={() => openWindow('whats-new')}>What&rsquo;s New…</PushButton>
+              : <PushButton prominent onClick={download}>Upgrade Now</PushButton>}
         </Row>
+        {!done && !busy && (
+          <Row label="" secondary={UPDATE_SUMMARY} />
+        )}
       </Group>
-      <Group title="Automatic Updates">
+      <Group title="Automatic Updates"
+             note={done
+               ? undefined
+               : 'Nothing is downloaded and nothing is installed — this Mac is a web page. The progress is theatre; the release notes are not.'}>
         <Row label="Check for updates"><Switch value onChange={() => {}} /></Row>
         <Row label="Download new updates when available"><Switch value onChange={() => {}} /></Row>
         <Row label="Install macOS updates"><Switch value={false} onChange={() => {}} /></Row>
@@ -1006,6 +1085,7 @@ function SoftwareUpdatePane() {
 }
 
 function GeneralPane({ onNavigate }) {
+  const updatePending = useUpdateStore((s) => s.stage !== 'installed')
   const rows = [
     { id: 'about',          label: 'About',              icon: 'about'          },
     { id: 'softwareupdate', label: 'Software Update',    icon: 'softwareupdate' },
@@ -1023,6 +1103,7 @@ function GeneralPane({ onNavigate }) {
         <Row key={r.id} label={r.label}
              icon={<img src={PANE_ICONS[r.icon]} alt="" className="mac-row__glyph" />}
              onClick={r.stub ? undefined : () => onNavigate(r.id)}>
+          {r.id === 'softwareupdate' && updatePending && <span className="mac-badge">1</span>}
           <ChevronRight size={13} className="mac-row__chevron" />
         </Row>
       ))}
@@ -1081,6 +1162,12 @@ export default function SettingsWindow() {
   const [histIndex, setHistIdx] = useState(0)
   const [query, setQuery]       = useState('')
   const scrollRef = useRef(null)
+  const updatePending = useUpdateStore((s) => s.stage !== 'installed')
+  /* Set by anything that wants Settings opened *at* a pane — the update
+     notification, the What's New window's Configure buttons. Consumed once
+     so reopening Settings later lands where you left it. */
+  const requestedPane = useWindowStore((s) => s.settingsPane)
+  const clearRequestedPane = useWindowStore((s) => s.clearSettingsPane)
 
   const active = history[histIndex]
   const canBack    = histIndex > 0
@@ -1094,6 +1181,12 @@ export default function SettingsWindow() {
 
   // A pane change starts at the top, the way pushing a settings pane does
   useEffect(() => { scrollRef.current?.scrollTo({ top: 0 }) }, [active])
+
+  useEffect(() => {
+    if (!requestedPane) return
+    navigate(requestedPane)
+    clearRequestedPane()
+  }, [requestedPane, navigate, clearRequestedPane])
 
   const allPanes = useMemo(() => SIDEBAR_GROUPS.flat(), [])
   const matches = query.trim()
@@ -1152,6 +1245,9 @@ export default function SettingsWindow() {
                       <button className={active === p.id ? 'is-active' : ''} onClick={() => navigate(p.id)}>
                         <img src={PANE_ICONS[p.icon]} alt="" />
                         <span>{p.label}</span>
+                        {p.id === 'softwareupdate' && updatePending && (
+                          <span className="mac-badge">1</span>
+                        )}
                       </button>
                     </li>
                   ))}
