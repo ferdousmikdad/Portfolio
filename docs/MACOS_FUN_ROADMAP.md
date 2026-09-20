@@ -25,8 +25,8 @@ Same symbols as `PROGRESS.md`, so the two files read the same way.
 | Field | Value |
 |---|---|
 | **Currently working on** | — nothing in flight — |
-| **Last completed** | ✅ F1 — About This Mac (+ Apple menu) |
-| **Next up** | Your call — F2 is now cheaper (Apple menu exists), or F4/F5 |
+| **Last completed** | ✅ F2 — Real menu-bar menus |
+| **Next up** | Your call — F3 finishes Tier 1, or F4/F5 for quick wins |
 
 > **How to use this:** tell me an ID (“let’s do F4”) and I’ll flip it to 🔄, do the
 > work, then flip it to ✅ with a note. If you want to know where we are, just ask
@@ -44,7 +44,7 @@ These are already done and are why several items below are cheap.
 | F0.2 | Liquid Glass slider (Displays › Brightness) | ✅ | `GlassSlider` in `MacControls.jsx` |
 | F0.3 | Same slider in Retro Dot tool + macOS inspector pane | ✅ | `public/tools/retro-dot-effect.html` |
 | F0.4 | Welcome card rebuilt on AppKit dialog grammar | ✅ | Glass, no typewriter, Esc/Return wired |
-| F1.1 | Apple menu on the logo | ✅ | Shipped as F1's entry point. Home moved inside it, nothing lost. Reuses the `.topbar-panel` glass class that was dead CSS. |
+| F1.1 | Apple menu on the logo | ✅ | Shipped as F1's entry point, then folded into `MenuBar` by F2 (one code path for all menus; `AppleMenu.jsx` removed). |
 
 ---
 
@@ -55,7 +55,7 @@ Do these first. Best “this person sweats details” per hour.
 | ID | Task | Status | Effort | Notes |
 |---|---|---|---|---|
 | F1 | **About This Mac** | ✅ | S | Done. `AboutMacWindow.jsx` + `AppleMenu.jsx`. Specs are **real facts** pulled from `BioWindow`/`AboutMeWindow` (5+ years, Figma·Illustrator·AE, React·Tailwind·Framer, print & branding origin) — only the chip name is a gag. Buttons: More Info… → About window, Contact… → `contact.txt`. Both verified. |
-| F2 | **Real menu-bar menus** | 📋 | M | Now cheaper: F1 shipped the **Apple menu** (`AppleMenu.jsx`) and the dropdown pattern/CSS, so this is the per-app File / Edit / View / Window / Help set that **changes with the focused window**. Close / Minimize / Enter Full Screen already exist in `windowStore`. |
+| F2 | **Real menu-bar menus** | ✅ | M | Done. `MenuBar.jsx` + `data/menuBar.js`. Apple · **App** · File · Edit · View · Go · Window · Help, rebuilt from the front window — app name tracks focus (verified Color Contrast → Terminal → Finder → Notes). Hover-to-switch between open menus, Esc/outside-click dismiss, disabled items dimmed not hidden. ⚠️ The three nav buttons moved into **Go** — see note below. |
 | F3 | **Mission Control (F3)** | 📋 | M | All open windows zoom out to a non-overlapping grid. `windowStore` already holds positions + sizes, so it is mostly one layout animation. Doubles as “see everything at once”. |
 
 ---
@@ -98,9 +98,19 @@ Visual spectacle. Worth it once Tier 1 is in.
 | F19 | **Photo Booth** | 📋 | M | Webcam with effects — and one effect is your own Retro Dot. Ties a tool you already built into the OS fiction. |
 | F20 | AirDrop → contact | 📋 | S | Drag a file onto AirDrop → “Sent to Mikdad” → opens the contact form. A funnel disguised as a joke. |
 | F21 | Software Update | 📋 | S | “macOS Mikdad 26.1 available” → installs → reveals a new project. |
-| F22 | Force Quit (⌘⌥Esc) | 📋 | S | With one app permanently “(not responding)”. |
+| F22 | Force Quit (⌘⌥Esc) | 📋 | S | With one app permanently “(not responding)”. Apple-menu row already there, disabled. |
 | F23 | Keyboard shortcuts overlay (⌘/) | 📋 | S | Also doubles as real discoverability for everything above. |
-| F24 | Sleep / Wake | 📋 | S | Apple menu → Sleep; screen fades to black, click to wake. |
+| F24 | Sleep / Wake | 📋 | S | Apple-menu rows (Sleep, Restart…, Lock Screen) already there, disabled — this wires them. |
+
+---
+
+## Open decisions
+
+| Topic | Note |
+|---|---|
+| **Nav moved into Go** (F2) | Portfolio / About Me / Notes were loose buttons on the menu bar, which no Mac has. They now live in **Go** alongside Home, Shop and Utilities. One extra click. Say the word and I will put the inline buttons back next to the menus. |
+| **⌘ hints are decorative** (F2) | The menus draw ⌘W, ⌘M, ⌘Q, ⌘, the way AppKit does, but a web page cannot intercept those — the browser and OS claim them first. Clicking the items works. Drawn anyway because a Mac menu without them does not read as one. |
+| **Focus after Minimize** (F2) | Minimising the front window leaves the app name as “Finder” rather than moving focus to the next visible window. Fixing it means changing `minimizeWindow` in `windowStore`, which is outside F2's scope. |
 
 ---
 
@@ -125,3 +135,4 @@ Prefer finishing a few of these properly over starting many.
 |---|---|
 | 2026-09-20 | File created; F0.1–F0.4 recorded as shipped, F1–F24 planned |
 | 2026-09-20 | ✅ F1 About This Mac shipped, with the Apple menu (F1.1) as its entry point |
+| 2026-09-20 | ✅ F2 Menu bar shipped; Apple menu folded into `MenuBar`, nav moved to Go |

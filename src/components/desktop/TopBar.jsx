@@ -1,22 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
 import { AnimatePresence } from 'framer-motion'
-import useWindowStore from '@/store/windowStore'
 import useSettingsStore from '@/store/settingsStore'
 import ControlCenter from './ControlCenter'
-import AppleMenu from './AppleMenu'
+import MenuBar from './MenuBar'
 import Spotlight from './Spotlight'
 import Tip from '@/components/ui/Tip'
-import mikdadHeadUrl from '@/assets/icons/mikdad-head.svg?url'
 import macSettingUrl from '@/assets/icons/macsetting.svg?url'
 import macSearchUrl  from '@/assets/icons/macsearch.svg?url'
 import macFitUrl     from '@/assets/icons/macfit.svg?url'
-
-// ── Nav items (left side) ─────────────────────────────────────────────────────
-const NAV_ITEMS = [
-  { id: 'portfolio', label: 'Portfolio' },
-  { id: 'about',     label: 'About Me'  },
-  { id: 'notes',     label: 'Notes'     },
-]
 
 // ── Live clock ────────────────────────────────────────────────────────────────
 const DAYS   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
@@ -79,7 +70,6 @@ function BatteryStatus({ level = 87 }) {
 // ── Main TopBar ───────────────────────────────────────────────────────────────
 
 export default function TopBar() {
-  const { navigate, activePage } = useWindowStore()
   const wifi          = useSettingsStore(s => s.wifi)
   const showBattery   = useSettingsStore(s => s.menuBarShowBattery)
 
@@ -127,35 +117,14 @@ export default function TopBar() {
   return (
     <>
       <div ref={barRef} className="topbar" style={{ zIndex: 50 }}>
-        {/* ── Left: logo + nav ─────────────────────────────────────────────── */}
-        <div className="flex items-center gap-0.5">
-          {/* The Apple menu. Home moved inside it rather than being lost. */}
-          <div className="relative">
-            <Tip label="Apple menu" hidden={openPanel === 'apple'}>
-              <button
-                className={`topbar-logo ${openPanel === 'apple' ? 'active' : ''}`}
-                onClick={() => { setSpotOpen(false); setOpenPanel(p => p === 'apple' ? null : 'apple') }}
-              >
-                <img src={mikdadHeadUrl} alt="Mikdad" width={16} height={16} className="object-contain" />
-              </button>
-            </Tip>
-            <AnimatePresence>
-              {openPanel === 'apple' && <AppleMenu onClose={() => setOpenPanel(null)} />}
-            </AnimatePresence>
-          </div>
-
-          <div className="topbar-sep" />
-
-          {NAV_ITEMS.map((item) => (
-            <button
-              key={item.id}
-              className={`topbar-nav-item ${activePage === item.id ? 'active' : ''}`}
-              onClick={() => { navigate(item.id); setOpenPanel(null) }}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
+        {/* ── Left: Apple menu + the front app's menus ─────────────────────
+             The three nav buttons that used to sit here moved into the Go
+             menu: no Mac puts loose page links on the menu bar, and Go is
+             where Finder keeps navigation. */}
+        <MenuBar
+          onOpenSpotlight={() => { setOpenPanel(null); setSpotOpen(true) }}
+          onMenuOpen={() => { setOpenPanel(null); setSpotOpen(false) }}
+        />
 
         {/* ── Right: menu-bar extras ───────────────────────────────────────── */}
         <div className="topbar-extras">

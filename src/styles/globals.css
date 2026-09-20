@@ -4294,22 +4294,67 @@ html:not(.dark) .welcome__hint { color: rgba(0, 0, 0, 0.32); }
 .reduce-transparency .welcome > .lg-glass { display: none; }
 .reduce-transparency .welcome { background: #2b2b2d; }
 
-/* ── Apple menu ──────────────────────────────────────────────────────────────
-   Hangs off the logo. .topbar-panel already carried the glass wiring and had
-   no consumer; this is it. */
-.apple-menu {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  min-width: 208px;
-  padding: 5px;
-  z-index: 9000;
+/* ── Menu bar ────────────────────────────────────────────────────────────────
+   Apple menu, the front app's name in semibold, then its menus. The titles
+   are flush-packed the way AppKit packs them — small horizontal padding, no
+   gaps — so the row reads as one bar rather than a toolbar of buttons. */
+.mb {
+  display: flex;
+  align-items: center;
+  height: 100%;
   font-family: 'SF Pro Text', system-ui, sans-serif;
 }
-.apple-menu__item {
-  display: block;
+.mb__slot { position: relative; height: 100%; display: flex; align-items: center; }
+
+.mb__title {
+  display: flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 9px;
+  border-radius: 5px;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1;
+  color: #F4F4F4;
+  white-space: nowrap;
+  cursor: default;
+  transition: background 0.1s ease;
+}
+.mb__title--app { font-weight: 600; }
+.mb__title--apple { padding: 0 8px; }
+.mb__title:hover { background: var(--topbar-hover); }
+/* An open menu keeps its title filled with the accent, not a grey wash. */
+.mb__title[data-open="true"],
+.mb__title[data-open="true"]:hover {
+  background: var(--brand, #0064d2);
+  color: #fff;
+}
+
+.mb-menu {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  min-width: 216px;
+  padding: 5px;
+  border-radius: 8px;
+  overflow: hidden;
+  z-index: 9000;
+  box-shadow:
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.12),
+    0 12px 36px rgba(0, 0, 0, 0.4);
+  /* Menus carry text over the desktop, so they frost harder than the bar. */
+  --lg-blur: 26px;
+  --lg-bg-color: var(--panel-fill);
+}
+.mb-menu > *:not(.lg-glass) { position: relative; z-index: 1; }
+
+.mb-menu__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
   width: 100%;
-  padding: 4px 10px;
+  padding: 4px 9px;
   border-radius: 5px;
   text-align: left;
   font-size: 13px;
@@ -4319,12 +4364,22 @@ html:not(.dark) .welcome__hint { color: rgba(0, 0, 0, 0.32); }
   cursor: default;
   white-space: nowrap;
 }
-/* AppKit fills the highlighted row with the accent, not a grey wash. */
-.apple-menu__item:hover {
+.mb-menu__item:hover:not(:disabled) {
   background: var(--brand, #0064d2);
   color: #fff;
 }
-.apple-menu__sep {
+/* AppKit dims an inapplicable item rather than hiding it, so the menu keeps
+   the same shape whatever the state. */
+.mb-menu__item:disabled { opacity: 0.32; cursor: default; }
+
+.mb-menu__key {
+  font-size: 12.5px;
+  color: var(--mac-secondary);
+  flex-shrink: 0;
+}
+.mb-menu__item:hover:not(:disabled) .mb-menu__key { color: rgba(255, 255, 255, 0.75); }
+
+.mb-menu__sep {
   height: 1px;
   margin: 5px 8px;
   background: var(--mac-card-line);
