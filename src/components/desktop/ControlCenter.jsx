@@ -7,7 +7,12 @@
 
    Below that: the round toggles (an active one inverts to a white fill with a
    black glyph, which is the only state signal Tahoe gives them), then the
-   Display and Sound slider cards, whose fill is white rather than accent.   */
+   Display and Sound slider cards, whose fill is white rather than accent.
+
+   Every tile is a piece of Liquid Glass built the same way the dock is: a
+   transparent container with <GlassLayers> clipped to its shape and the
+   content riding above it. An active toggle hides its glass and shows the
+   solid fill instead, because the on-state has to read at a glance.        */
 
 import { motion } from 'framer-motion'
 import { Moon, AirplayIcon } from 'lucide-react'
@@ -15,6 +20,7 @@ import useSettingsStore, { AIRDROP_MODES } from '@/store/settingsStore'
 import useThemeStore from '@/store/themeStore'
 import useSoundStore from '@/store/soundStore'
 import useWindowStore from '@/store/windowStore'
+import GlassLayers from '@/components/ui/LiquidGlass'
 
 // ── Glyphs ────────────────────────────────────────────────────────────────────
 
@@ -119,6 +125,7 @@ function VolumeGlyph({ level }) {
 function Capsule({ icon, title, sub, on, onClick, className = '' }) {
   return (
     <button className={`cc-tile cc-capsule ${className}`} onClick={onClick} type="button">
+      <GlassLayers small />
       <span className="cc-badge" data-on={!!on}>{icon}</span>
       <span className="cc-capsule__text">
         <span className="cc-capsule__title">{title}</span>
@@ -131,6 +138,7 @@ function Capsule({ icon, title, sub, on, onClick, className = '' }) {
 function SquareToggle({ children, label, on, onClick }) {
   return (
     <button className="cc-tile cc-square" data-on={!!on} onClick={onClick} type="button" aria-label={label}>
+      <GlassLayers small />
       {children}
     </button>
   )
@@ -139,6 +147,7 @@ function SquareToggle({ children, label, on, onClick }) {
 function RoundToggle({ children, label, on, onClick }) {
   return (
     <button className="cc-tile cc-round" data-on={!!on} onClick={onClick} type="button" aria-label={label}>
+      <GlassLayers small />
       {children}
     </button>
   )
@@ -165,6 +174,7 @@ function SliderCard({ label, value, onChange, glyph, trailing }) {
 
   return (
     <div className="cc-tile cc-slidercard">
+      <GlassLayers small />
       <span className="cc-slidercard__label">{label}</span>
       <div className="cc-slidercard__body">
         <div className="cc-trough" onPointerDown={onPointerDown}>
@@ -210,6 +220,7 @@ export default function ControlCenter({ onClose }) {
         />
 
         <button className="cc-tile cc-nowplaying cc-a-np" onClick={() => openWindow('spotify')} type="button">
+          <GlassLayers small />
           <span className="cc-np__art" />
           <span className="cc-np__title">Portfolio Radio</span>
           <span className="cc-np__artist">Ferdous Mikdad</span>
@@ -256,6 +267,7 @@ export default function ControlCenter({ onClose }) {
             <SoundBarsGlyph />
           </RoundToggle>
           <button className="cc-tile cc-focus" data-on={s.focus} onClick={s.toggleFocus} type="button">
+            <GlassLayers small />
             <span className="cc-badge cc-badge--plain" data-on={s.focus}><Moon size={15} fill="currentColor" /></span>
             <span className="cc-capsule__title">Focus</span>
           </button>
@@ -282,7 +294,11 @@ export default function ControlCenter({ onClose }) {
       </div>
 
       <button className="cc-edit" type="button" onClick={() => { openWindow('settings'); onClose?.() }}>
-        System Settings…
+        <GlassLayers small />
+        {/* Wrapped, not bare text: the z-index rule that lifts content above
+            the glass can only target element children, and a positioned
+            .lg-glass paints over a bare text node. */}
+        <span>System Settings…</span>
       </button>
     </motion.div>
   )

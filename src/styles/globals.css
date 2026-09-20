@@ -3766,34 +3766,73 @@ button:hover > .finder-disclosure { opacity: 0.7; }
 .cc-a-display { grid-area: disp; }
 .cc-a-sound   { grid-area: snd; }
 
-/* Every tile is its own piece of glass: it frosts the backdrop inside its own
-   shape, carries a translucent wash over it and a lit top edge, and casts a
-   small shadow so it sits above the desktop rather than in a panel.
+/* Every tile is a piece of Liquid Glass, built exactly the way the dock bar
+   is: a transparent container that carries the shadow, <GlassLayers> clipped
+   to its shape underneath, and the content riding above on z-index 1.
 
-   `backdrop-filter` samples from the element's own box, so each tile only
-   blurs what is directly behind it — which is exactly what is wanted here. */
+   This also fixes the weak frost the old per-tile `backdrop-filter` gave.
+   Chrome samples a backdrop-filter from the element's *own* box, so a 56px
+   circle could only blur a 56px patch and the radius stopped mattering past
+   a few pixels. GlassLayers draws its filter layer at `inset: -28px` — a box
+   much larger than the tile, then clipped back to the shape — so there is
+   real backdrop to sample and the displacement has something to bend. */
 .cc-tile {
-  background: rgba(118, 118, 128, 0.32);
-  backdrop-filter: blur(22px) saturate(180%);
-  -webkit-backdrop-filter: blur(22px) saturate(180%);
-  box-shadow:
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.22),
-    inset 0 0 0 0.5px rgba(255, 255, 255, 0.09),
-    0 6px 18px rgba(0, 0, 0, 0.26);
-  color: #f2f2f7;
+  position: relative;
+  background: transparent;
+  color: var(--headline);
   cursor: pointer;
-  transition: background 0.14s ease;
+  /* The dock tooltip's blur and rim — see .dock-tip / .dock-tip__glass — but
+     with a fill that carries. The tooltip's bare --lg-bg-color (0.04 white)
+     is right for a small label that appears for a second; on tiles this size
+     over a dark wallpaper it collapses to flat near-black and stops reading
+     as a material at all. The displacement stays on for the same reason: a
+     blur alone is frosted plastic, bending the backdrop is what reads as
+     glass. No drop shadow — the 1px rim defines the shape, and a shadow under
+     a surface this transparent reads as a dark halo rather than lift. */
+  --lg-blur: 20px;
+  --lg-bg-color: rgba(255, 255, 255, 0.10);
 }
-.cc-tile:hover { background: rgba(140, 140, 152, 0.42); }
-html:not(.dark) .cc-tile {
-  background: rgba(255, 255, 255, 0.62);
-  color: #1c1c1e;
-  box-shadow:
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.85),
-    inset 0 0 0 0.5px rgba(0, 0, 0, 0.05),
-    0 6px 18px rgba(0, 0, 0, 0.14);
+.cc-tile > *:not(.lg-glass) { position: relative; z-index: 1; }
+.cc-tile:hover { --lg-bg-color: rgba(255, 255, 255, 0.17); }
+
+html:not(.dark) .cc-tile { --lg-bg-color: rgba(255, 255, 255, 0.55); }
+html:not(.dark) .cc-tile:hover { --lg-bg-color: rgba(255, 255, 255, 0.72); }
+
+/* The tip's rim: a 1px stroke lit from the upper left, drawn as a gradient
+   ring via a mask because these are CSS boxes rather than DockTip's clipped
+   path. Stops match the dock-tip-rim <linearGradient>. */
+.cc-tile > .lg-glass .lg-glass__specular,
+.cc-edit > .lg-glass .lg-glass__specular {
+  box-shadow: none;
+  padding: 1px;
+  background: linear-gradient(
+    140deg,
+    var(--tip-rim-a) 0%,
+    var(--tip-rim-b) 34%,
+    var(--tip-rim-b) 72%,
+    var(--tip-rim-c) 100%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
 }
-html:not(.dark) .cc-tile:hover { background: rgba(255, 255, 255, 0.76); }
+
+/* An active toggle's fill has to be painted by the glass overlay, not by the
+   element's own `background`. .lg-glass is a positioned child, so it paints
+   *over* the element background — the `background: #fff` on an active toggle
+   was sitting underneath the material and being covered by it, leaving a
+   near-black circle with the on-state's dark glyph on top. That is the black
+   Dark Mode / Sound buttons.
+
+   Driving --lg-bg-color instead keeps the glass mounted and just makes its
+   overlay opaque, so the fill always wins and there is no state in which the
+   two can disagree. The colour values below are unchanged. */
+.cc-tile[data-on="true"] { --lg-bg-color: #fff; }
+.cc-focus[data-on="true"] { --lg-bg-color: rgba(94, 92, 230, 0.55); }
+html:not(.dark) .cc-square[data-on="true"],
+html:not(.dark) .cc-round[data-on="true"] { --lg-bg-color: #0a84ff; }
+html:not(.dark) .cc-focus[data-on="true"] { --lg-bg-color: rgba(94, 92, 230, 0.22); }
 
 .cc-capsule {
   display: flex;
@@ -3990,29 +4029,163 @@ html:not(.dark) .cc-round[data-on="true"]:hover { background: #0b76e0; }
 html:not(.dark) .cc-focus[data-on="true"] { background: rgba(94, 92, 230, 0.22); }
 html:not(.dark) .cc-trough__glyph { color: #8a8a8f; }
 
+/* Same glass as the tiles. */
 .cc-edit {
+  position: relative;
   display: block;
   margin: 8px auto 0;
   padding: 6px 16px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 500;
-  color: #f2f2f7;
-  background: rgba(118, 118, 128, 0.32);
-  backdrop-filter: blur(22px) saturate(180%);
-  -webkit-backdrop-filter: blur(22px) saturate(180%);
-  box-shadow:
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.22),
-    0 6px 18px rgba(0, 0, 0, 0.26);
+  color: var(--headline);
+  background: transparent;
   cursor: pointer;
-  transition: background 0.14s ease;
+  --lg-blur: 20px;
 }
-.cc-edit:hover { background: rgba(140, 140, 152, 0.42); }
-html:not(.dark) .cc-edit {
-  color: #1c1c1e;
-  background: rgba(255, 255, 255, 0.62);
-  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.85), 0 6px 18px rgba(0, 0, 0, 0.14);
+.cc-edit > *:not(.lg-glass) { position: relative; z-index: 1; }
+.cc-edit { --lg-bg-color: rgba(255, 255, 255, 0.10); }
+.cc-edit:hover { --lg-bg-color: rgba(255, 255, 255, 0.17); }
+html:not(.dark) .cc-edit { --lg-bg-color: rgba(255, 255, 255, 0.55); }
+html:not(.dark) .cc-edit:hover { --lg-bg-color: rgba(255, 255, 255, 0.72); }
+
+/* ── Welcome card ────────────────────────────────────────────────────────────
+   AppKit dialog proportions, same grammar as .mac-alert: narrow column, icon
+   above the text, bold title, dimmer body, default button last. The material
+   is glass rather than the alert's opaque panel — an NSAlert is opaque
+   because it interrupts a task, this one is a greeting over the desktop. */
+.welcome__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
+
+.welcome {
+  position: relative;
+  width: 320px;
+  padding: 26px 24px 16px;
+  border-radius: 16px;
+  overflow: hidden;
+  text-align: center;
+  font-family: 'SF Pro Text', system-ui, sans-serif;
+  /* Frosted hard: the card carries a paragraph over the desktop. */
+  --lg-blur: 30px;
+  --lg-bg-color: rgba(38, 38, 40, 0.72);
+  box-shadow:
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.16),
+    0 32px 80px rgba(0, 0, 0, 0.55);
+}
+.welcome > *:not(.lg-glass) { position: relative; z-index: 1; }
+
+html:not(.dark) .welcome {
+  --lg-bg-color: rgba(246, 246, 248, 0.78);
+  box-shadow:
+    inset 0 0 0 0.5px rgba(0, 0, 0, 0.10),
+    0 32px 80px rgba(0, 0, 0, 0.35);
+}
+
+/* The close button is the one child that stays out of the flow. */
+.welcome > .welcome__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.10);
+  box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.14);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.welcome > .welcome__close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.85);
+}
+html:not(.dark) .welcome > .welcome__close {
+  color: rgba(0, 0, 0, 0.45);
+  background: rgba(0, 0, 0, 0.07);
+  box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.08);
+}
+html:not(.dark) .welcome > .welcome__close:hover {
+  background: rgba(0, 0, 0, 0.13);
+  color: rgba(0, 0, 0, 0.75);
+}
+
+/* Icon above the text, the way an alert stacks it — not behind it. */
+.welcome__icon {
+  display: block;
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 12px;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.35));
+}
+
+.welcome__title {
+  font-family: 'SF Pro Display', system-ui, sans-serif;
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.2px;
+  color: #fff;
+}
+html:not(.dark) .welcome__title { color: #1c1c1e; }
+
+.welcome__body {
+  margin-top: 8px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.62);
+}
+html:not(.dark) .welcome__body { color: rgba(0, 0, 0, 0.6); }
+
+/* The default button of an AppKit dialog: accent fill, 6pt radius, a hairline
+   of white on the top edge and a shallow drop. Matches .mac-alert__btn. */
+.welcome__btn {
+  width: 100%;
+  margin-top: 18px;
+  padding: 7px 14px;
+  border: none;
+  border-radius: 6px;
+  font-family: 'SF Pro Text', system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+  background: var(--brand, #0064d2);
+  box-shadow:
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.22),
+    0 1px 2px rgba(0, 0, 0, 0.28);
+  cursor: default;
+  transition: filter 0.12s ease;
+}
+.welcome__btn:hover { filter: brightness(1.12); }
+.welcome__btn:active { filter: brightness(0.94); }
+.welcome__btn:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--brand, #0064d2) 45%, transparent);
+  outline-offset: 1px;
+}
+
+.welcome__hint {
+  margin-top: 10px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.3);
+}
+html:not(.dark) .welcome__hint { color: rgba(0, 0, 0, 0.32); }
+
+.reduce-transparency .welcome > .lg-glass { display: none; }
+.reduce-transparency .welcome { background: #2b2b2d; }
 
 /* ── Spotlight ────────────────────────────────────────────────────────────── */
 
@@ -4142,6 +4315,8 @@ html:not(.dark) .spotlight-results .lg-glass__overlay { background: rgba(250, 25
 
 /* Reduce transparency — the Accessibility switch actually does something */
 .reduce-transparency .lg-glass__filter { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+.reduce-transparency .cc-tile > .lg-glass,
+.reduce-transparency .cc-edit > .lg-glass { display: none; }
 .reduce-transparency .cc-tile,
 .reduce-transparency .cc-edit {
   backdrop-filter: none !important;
