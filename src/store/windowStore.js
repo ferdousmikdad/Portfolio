@@ -203,6 +203,16 @@ const defaultWindows = [
     zIndex: 3,
   },
   {
+    /* About This Mac. Fixed size, like the real panel — it does not resize. */
+    id: 'about-mac',
+    title: 'About This Mac',
+    isOpen: false,
+    isMinimized: false,
+    position: centeredInUsableArea(392, 436),
+    size: { width: 392, height: 436 },
+    zIndex: 3,
+  },
+  {
     id: 'spotify',
     title: 'Spotify',
     isOpen: false,

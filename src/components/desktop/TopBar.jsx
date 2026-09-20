@@ -3,6 +3,7 @@ import { AnimatePresence } from 'framer-motion'
 import useWindowStore from '@/store/windowStore'
 import useSettingsStore from '@/store/settingsStore'
 import ControlCenter from './ControlCenter'
+import AppleMenu from './AppleMenu'
 import Spotlight from './Spotlight'
 import Tip from '@/components/ui/Tip'
 import mikdadHeadUrl from '@/assets/icons/mikdad-head.svg?url'
@@ -82,7 +83,7 @@ export default function TopBar() {
   const wifi          = useSettingsStore(s => s.wifi)
   const showBattery   = useSettingsStore(s => s.menuBarShowBattery)
 
-  const [openPanel,    setOpenPanel]    = useState(null) // 'control' | null
+  const [openPanel,    setOpenPanel]    = useState(null) // 'apple' | 'control' | null
   const [spotOpen,     setSpotOpen]     = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
 
@@ -128,11 +129,20 @@ export default function TopBar() {
       <div ref={barRef} className="topbar" style={{ zIndex: 50 }}>
         {/* ── Left: logo + nav ─────────────────────────────────────────────── */}
         <div className="flex items-center gap-0.5">
-          <Tip label="Home">
-            <button className="topbar-logo" onClick={() => { navigate('home'); setOpenPanel(null) }}>
-              <img src={mikdadHeadUrl} alt="Mikdad" width={16} height={16} className="object-contain" />
-            </button>
-          </Tip>
+          {/* The Apple menu. Home moved inside it rather than being lost. */}
+          <div className="relative">
+            <Tip label="Apple menu" hidden={openPanel === 'apple'}>
+              <button
+                className={`topbar-logo ${openPanel === 'apple' ? 'active' : ''}`}
+                onClick={() => { setSpotOpen(false); setOpenPanel(p => p === 'apple' ? null : 'apple') }}
+              >
+                <img src={mikdadHeadUrl} alt="Mikdad" width={16} height={16} className="object-contain" />
+              </button>
+            </Tip>
+            <AnimatePresence>
+              {openPanel === 'apple' && <AppleMenu onClose={() => setOpenPanel(null)} />}
+            </AnimatePresence>
+          </div>
 
           <div className="topbar-sep" />
 

@@ -27,6 +27,7 @@ const WINDOW_ICONS = {
   finder:    finderUrl,
   settings:  settingsUrl,
   spotify:   spotifyUrl,
+  'about-mac': mikdadUrl,
 }
 
 export default function windowIcon(id) {

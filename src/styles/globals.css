@@ -4294,6 +4294,131 @@ html:not(.dark) .welcome__hint { color: rgba(0, 0, 0, 0.32); }
 .reduce-transparency .welcome > .lg-glass { display: none; }
 .reduce-transparency .welcome { background: #2b2b2d; }
 
+/* ── Apple menu ──────────────────────────────────────────────────────────────
+   Hangs off the logo. .topbar-panel already carried the glass wiring and had
+   no consumer; this is it. */
+.apple-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 208px;
+  padding: 5px;
+  z-index: 9000;
+  font-family: 'SF Pro Text', system-ui, sans-serif;
+}
+.apple-menu__item {
+  display: block;
+  width: 100%;
+  padding: 4px 10px;
+  border-radius: 5px;
+  text-align: left;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--headline);
+  background: transparent;
+  cursor: default;
+  white-space: nowrap;
+}
+/* AppKit fills the highlighted row with the accent, not a grey wash. */
+.apple-menu__item:hover {
+  background: var(--brand, #0064d2);
+  color: #fff;
+}
+.apple-menu__sep {
+  height: 1px;
+  margin: 5px 8px;
+  background: var(--mac-card-line);
+}
+
+/* ── About This Mac ──────────────────────────────────────────────────────────
+   AppKit's layout: portrait, model name, dim subtitle, a two-column spec list
+   with the labels right-aligned against their values, buttons at the bottom. */
+.atm {
+  height: 100%;
+  padding: 10px 30px 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  font-family: 'SF Pro Text', system-ui, sans-serif;
+  color: var(--headline);
+  overflow-y: auto;
+}
+.atm__art {
+  width: 108px;
+  height: 108px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
+  flex-shrink: 0;
+}
+.atm__model {
+  margin-top: 10px;
+  font-family: 'SF Pro Display', system-ui, sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  line-height: 1.15;
+}
+.atm__sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--mac-secondary);
+}
+
+.atm__specs {
+  width: 100%;
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  text-align: left;
+}
+.atm__row {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  column-gap: 12px;
+  align-items: baseline;
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+.atm__row dt {
+  text-align: right;
+  color: var(--mac-secondary);
+}
+.atm__row dd {
+  color: var(--headline);
+  font-weight: 500;
+}
+
+.atm__buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 20px;
+}
+/* The same push button the rest of the app uses — see .mac-alert__btn. */
+.atm__btn {
+  padding: 4px 14px;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--headline);
+  background: var(--mac-control-2);
+  box-shadow: inset 0 0 0 0.5px rgba(128, 128, 128, 0.2);
+  cursor: default;
+  white-space: nowrap;
+  transition: filter 0.12s ease;
+}
+.atm__btn:hover { filter: brightness(1.15); }
+.atm__btn[data-default="true"] {
+  color: #fff;
+  background: var(--brand, #0064d2);
+  box-shadow:
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.22),
+    0 1px 2px rgba(0, 0, 0, 0.28);
+}
+
 /* ── Spotlight ────────────────────────────────────────────────────────────── */
 
 .spotlight-layer {

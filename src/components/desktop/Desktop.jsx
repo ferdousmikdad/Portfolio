@@ -31,6 +31,7 @@ import ProjectPreviewWindow from '@/components/apps/ProjectPreviewWindow'
 import SettingsWindow from '@/components/apps/SettingsWindow'
 import MailWindow from '@/components/apps/MailWindow'
 import CalculatorWindow from '@/components/apps/CalculatorWindow'
+import AboutMacWindow from '@/components/apps/AboutMacWindow'
 import allProjects from '@/data/projects'
 import siriIconUrl from '@/assets/icons/siri.png?url'
 
@@ -344,6 +345,7 @@ export default function Desktop() {
           <SettingsWindow />
           <MailWindow />
           <CalculatorWindow />
+          <AboutMacWindow />
         </AnimatePresence>
       </div>
 
