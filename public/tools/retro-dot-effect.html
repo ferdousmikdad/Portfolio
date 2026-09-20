@@ -32,8 +32,17 @@
       --input-border: rgba(0,0,0,0.08);
       --canvas-bg:    rgba(0,0,0,0.04);
       --accent:       #cf0506;
+      /* The blue the sliders are filled with — the deep stop of their
+         117deg gradient, so a solid button sits in the same family. */
+      --brand-blue:   #3681ee;
+      --brand-blue-2: #2f74d8;
       --scrollbar:    rgba(0,0,0,0.10);
-      --slider-track: rgba(0,0,0,0.12);
+      --slider-track: rgba(120,120,128,0.16);
+      /* Inspector pane, mirroring the Settings window's grouped card. */
+      --pane-bg:      rgba(0,0,0,0.025);
+      --card-bg:      rgba(0,0,0,0.035);
+      --card-line:    rgba(0,0,0,0.08);
+      --thumb-wash:   rgba(255,255,255,0.10);
     }
     .dark {
       --bg:           #080808;
@@ -46,8 +55,18 @@
       --input-border: rgba(255,255,255,0.08);
       --canvas-bg:    rgba(255,255,255,0.03);
       --accent:       #cf0506;
+      /* The blue the sliders are filled with — the deep stop of their
+         117deg gradient, so a solid button sits in the same family. */
+      --brand-blue:   #3681ee;
+      --brand-blue-2: #2f74d8;
       --scrollbar:    rgba(255,255,255,0.10);
-      --slider-track: rgba(255,255,255,0.10);
+      --slider-track: rgba(120,120,128,0.32);
+      --pane-bg:      rgba(255,255,255,0.025);
+      --card-bg:      rgba(255,255,255,0.055);
+      --card-line:    rgba(255,255,255,0.075);
+      /* On a dark pane a 10% wash leaves the bead muddy; raised so the blue
+         track still bends through it while the handle stays light. */
+      --thumb-wash:   rgba(255,255,255,0.38);
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -74,7 +93,7 @@
       flex-shrink: 0;
     }
     .back-link { font-size:12px; font-weight:500; color:var(--body); text-decoration:none; transition:color .15s; }
-    .back-link:hover { color:var(--accent); }
+    .back-link:hover { color:var(--brand-blue); }
     .hdr-sep { width:1px; height:14px; background:var(--border); }
     .hdr-title { font-size:13px; font-weight:500; color:var(--headline); }
 
@@ -110,8 +129,8 @@
       transition: background-color 0.2s;
     }
     .drop-zone:hover, .drop-zone.drag-over {
-      background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='14' ry='14' stroke='rgba(207,5,6,0.5)' stroke-width='1.5' stroke-dasharray='6 6' stroke-linecap='square'/%3e%3c/svg%3e");
-      background-color: rgba(207,5,6,0.03);
+      background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='14' ry='14' stroke='rgba(54,129,238,0.55)' stroke-width='1.5' stroke-dasharray='6 6' stroke-linecap='square'/%3e%3c/svg%3e");
+      background-color: rgba(54,129,238,0.04);
     }
     .drop-icon { opacity: 0.35; }
     .drop-zone-label { font-size:12px; font-weight:500; color:var(--body); opacity:.55; }
@@ -127,47 +146,59 @@
     }
     #imageState.show { display: flex; }
 
-    /* ── Left controls column ── */
+    /* ── Left controls column ─────────────────────────────────────────────────
+       An inspector pane, on the same grammar as the app's Settings window: a
+       recessed sidebar separated by a hairline, the section title sitting in
+       the pane background rather than inside the card, and the controls in a
+       grouped card whose rows are divided by hairlines. */
     .ctrl-col {
-      width: 270px;
+      width: 272px;
       flex-shrink: 0;
       display: flex;
       flex-direction: column;
       overflow-y: auto;
       overflow-x: hidden;
-      padding: 12px;
+      padding: 14px 14px 18px;
       gap: 0;
+      background: var(--pane-bg);
+      border-right: 1px solid var(--card-line);
     }
 
     .ctrl-panel {
-      border: 1px solid var(--border);
-      border-radius: 12px;
+      border: none;
+      border-radius: 10px;
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      background: var(--card-bg);
+      box-shadow: inset 0 0 0 0.5px var(--card-line);
     }
 
+    /* AppKit puts a group's title outside the card, in the window background. */
     .ctrl-panel-header {
-      padding: 10px 12px;
-      border-bottom: 1px solid var(--border);
+      padding: 0 2px 7px;
+      border-bottom: none;
       display: flex; align-items: center; justify-content: space-between;
     }
     .ctrl-panel-title {
-      font-size: 11px; font-weight: 700;
-      color: var(--body); opacity: 0.5;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      color: var(--body);
+      opacity: 0.75;
     }
 
     .ctrl-panel-body {
-      padding: 16px 14px;
+      padding: 14px 13px;
       display: flex; flex-direction: column;
-      gap: 20px;
+      gap: 18px;
     }
 
-    /* divider inside panel */
+    /* A grouped-card hairline stops short of the label inset. */
     .ctrl-divider {
       height: 1px;
-      background: var(--border);
-      margin: 2px 0;
+      background: var(--card-line);
+      margin: 2px -13px 2px 0;
     }
 
     /* ── Control group ── */
@@ -176,14 +207,19 @@
     .ctrl-label-row {
       display: flex; align-items: center; justify-content: space-between;
     }
+    /* AppKit sets a row's label in the label colour and its value in the
+       secondary colour — never in the accent. The accent is reserved for
+       controls, so an accent-coloured readout beside every slider reads as
+       six things demanding attention at once. */
     .ctrl-label {
-      font-size: 10px; font-weight: 600;
-      color: var(--body); opacity: 0.6;
+      font-size: 11px; font-weight: 400;
+      color: var(--headline); opacity: 0.85;
     }
     .ctrl-value {
-      font-family: 'SF Mono','Fira Code',ui-monospace,monospace;
-      font-size: 10px; font-weight: 600;
-      color: var(--accent);
+      font-family: 'SF Pro Display', -apple-system, system-ui, sans-serif;
+      font-size: 11px; font-weight: 400;
+      color: var(--body); opacity: 0.7;
+      font-variant-numeric: tabular-nums;
     }
 
     /* side-by-side pair */
@@ -193,28 +229,103 @@
       gap: 10px;
     }
 
-    /* ── Sliders ── */
-    input[type="range"] {
-      -webkit-appearance: none;
-      width: 100%; height: 3px;
-      border-radius: 2px;
-      background: var(--slider-track);
-      outline: none; cursor: pointer;
+    /* ── Sliders ─────────────────────────────────────────────────────────────
+       The same handle as Settings > Displays > Brightness: a 6px capsule
+       track, a 117deg blue-gradient fill, and a white pill that becomes a
+       bead of glass while dragged — the backdrop bends through a lens, a
+       wash sits over it and the rim picks up the blue underneath.
+
+       The native input is kept and laid over the top at opacity 0, so every
+       existing binding (value, min/max, the `input` listener, the preset and
+       reset paths that assign .value directly) keeps working untouched. The
+       divs are painted from --pct. */
+    .gs {
+      position: relative;
+      display: block;
+      width: 100%;
+      height: 16px;
+      --pct: 0%;
     }
-    input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 12px; height: 12px;
-      border-radius: 50%;
-      background: var(--accent);
+    .gs input[type="range"] {
+      position: absolute;
+      inset: 0;
+      width: 100%; height: 100%;
+      margin: 0;
+      opacity: 0;
       cursor: pointer;
-      box-shadow: 0 0 0 2px var(--bg);
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
     }
-    input[type="range"]::-moz-range-thumb {
-      width: 12px; height: 12px;
-      border-radius: 50%;
-      background: var(--accent);
-      cursor: pointer; border: none;
+    .gs input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 26px; height: 16px;
     }
+    .gs__track {
+      position: absolute;
+      left: 0; right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      height: 4px;
+      border-radius: 999px;
+      background: var(--slider-track);
+      pointer-events: none;
+    }
+    .gs__progress {
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: var(--pct);
+      border-radius: 999px;
+      background: linear-gradient(117deg, #49a3fc 0%, #3681ee 100%);
+    }
+    .gs__thumb {
+      position: absolute;
+      top: 50%;
+      /* Clamped so the pill never hangs off either end of the track. */
+      left: clamp(13px, var(--pct), calc(100% - 13px));
+      transform: translate(-50%, -50%);
+      width: 26px; height: 16px;
+      border-radius: 999px;
+      overflow: hidden;
+      pointer-events: none;
+      background-color: #fff;
+      box-shadow: 0 1px 6px rgba(0,30,63,0.18), 0 0 2px rgba(0,9,20,0.14);
+      transition: transform .15s ease, background-color .15s ease, box-shadow .15s ease;
+    }
+    .gs__lens, .gs__wash, .gs__spec {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      opacity: 0;
+      transition: opacity .15s ease;
+    }
+    .gs__lens {
+      z-index: 0;
+      backdrop-filter: blur(0.6px);
+      -webkit-backdrop-filter: blur(0.6px);
+      filter: url(#mini-liquid-lens);
+    }
+    .gs__wash { z-index: 1; background-color: var(--thumb-wash); }
+    /* The reference's 22px inner glow is half its 42px pill; at that size on
+       a 22px handle it floods the centre and paints the lens back out to
+       solid white. Pulled in to hug the rim. */
+    .gs__spec {
+      z-index: 2;
+      box-shadow:
+        inset 1.5px 1.5px 0 rgba(69,168,243,0.42),
+        inset 1px 2px 0 rgba(28,63,90,0.10),
+        inset 0 0 5px rgba(255,255,255,0.5),
+        inset -1.5px -1.5px 0 rgba(69,168,243,0.3),
+        inset 0 0 0 0.5px rgba(255,255,255,0.55);
+    }
+    .gs[data-active="true"] .gs__thumb {
+      background-color: transparent;
+      box-shadow: 0 2px 8px rgba(54,129,238,0.45);
+      transform: translate(-50%, -50%) scaleY(0.98) scaleX(1.1);
+    }
+    .gs[data-active="true"] .gs__lens,
+    .gs[data-active="true"] .gs__wash,
+    .gs[data-active="true"] .gs__spec { opacity: 1; }
 
     /* ── Shape toggle ── */
     .shape-toggle {
@@ -234,9 +345,10 @@
       display: flex; align-items: center; justify-content: center; gap: 4px;
     }
     .shape-btn + .shape-btn { border-left: 1px solid var(--border); }
+    /* Selected segment: a solid fill, not a tint. */
     .shape-btn.active {
-      background: rgba(207,5,6,0.09);
-      color: var(--accent);
+      background: var(--brand-blue);
+      color: #fff;
     }
 
     /* ── Color picker rows ── */
@@ -312,9 +424,14 @@
     }
     .preset-btn:hover { background: var(--social-hover); color: var(--headline); }
     .preset-btn.active {
-      background: rgba(207,5,6,0.09);
-      border-color: rgba(207,5,6,0.3);
-      color: var(--accent);
+      background: var(--brand-blue);
+      border-color: var(--brand-blue);
+      color: #fff;
+    }
+    .preset-btn.active:hover {
+      background: var(--brand-blue-2);
+      border-color: var(--brand-blue-2);
+      color: #fff;
     }
 
     /* images row */
@@ -360,7 +477,7 @@
     #processingOverlay.show { display: flex; }
     .processing-label {
       font-size: 10px; font-weight: 700;
-      color: var(--accent);
+      color: var(--brand-blue);
     }
 
     /* action buttons row */
@@ -385,10 +502,10 @@
     .action-btn-ghost:hover { background: var(--social-hover); color: var(--headline); }
     .action-btn-solid {
       border: none;
-      background: var(--accent);
+      background: var(--brand-blue);
       color: #fff;
     }
-    .action-btn-solid:hover { opacity: 0.88; }
+    .action-btn-solid:hover { background: var(--brand-blue-2); }
 
     /* ══════════════════════════════════════
        CUSTOM COLOR PICKER POPUP
@@ -441,7 +558,7 @@
       border-radius: 8px; padding: 0 10px; height: 34px;
       transition: border-color .2s;
     }
-    .cpop-hex-box:focus-within { border-color: var(--accent); }
+    .cpop-hex-box:focus-within { border-color: var(--brand-blue); }
     .cpop-hex-pound { font-family:'SF Mono','Fira Code',ui-monospace,monospace; font-size:11px; font-weight:600; color:var(--body); opacity:.4; }
     .cpop-hex-input {
       font-family:'SF Mono','Fira Code',ui-monospace,monospace;
@@ -460,6 +577,22 @@
   </style>
 </head>
 <body>
+
+<!-- Slider-handle lens. A radial normal map — neutral (128,128) at the centre
+     so light passes straight through, ramping to (255,255) at the rim — run
+     through a negative feDisplacementMap, which inverts it into a convex
+     lens. Both `%` and `#` are percent-encoded in the data URI: a bare `%`
+     starts an escape and a bare `#` truncates the document at the fragment,
+     either of which leaves the gradient undefined and the filter a no-op. -->
+<svg width="0" height="0" aria-hidden="true" style="position:absolute">
+  <filter id="mini-liquid-lens" x="-50%" y="-50%" width="200%" height="200%"
+          color-interpolation-filters="sRGB">
+    <feImage result="normalMap" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><radialGradient id='invmap' cx='50%25' cy='50%25' r='75%25'><stop offset='0%25' stop-color='rgb(128,128,255)'/><stop offset='90%25' stop-color='rgb(255,255,255)'/></radialGradient><rect width='100%25' height='100%25' fill='url(%23invmap)'/></svg>" />
+    <feDisplacementMap in="SourceGraphic" in2="normalMap" scale="-46"
+                       xChannelSelector="R" yChannelSelector="G" />
+  </filter>
+</svg>
+
 
 <!-- Theme sync -->
 <script>
@@ -742,6 +875,9 @@ function updateLabels() {
   bgColorVal.textContent     = '#' + bgColorHex.toUpperCase();
   dotSwatchBtn.style.background = '#' + dotColorHex;
   bgSwatchBtn.style.background  = '#' + bgColorHex;
+  // Presets and Reset assign .value directly without firing `input`, and
+  // updateLabels is the one call every one of those paths already makes.
+  if (window.syncGlassSliders) window.syncGlassSliders();
 }
 
 // ── Image loading ─────────────────────────────────────────────────────────────
@@ -1105,6 +1241,43 @@ document.addEventListener('click', closeCpop);
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 updateLabels();
+</script>
+
+<script>
+/* Dress every range input in the Liquid Glass slider without touching the
+   control itself: the native input stays in the DOM, keeps its id, value,
+   min/max and listeners, and is laid transparently over the painted divs. */
+;(() => {
+  const sliders = [...document.querySelectorAll('.ctrl-panel input[type="range"]')].map(input => {
+    const wrap = document.createElement('span')
+    wrap.className = 'gs'
+    input.parentNode.insertBefore(wrap, input)
+    wrap.innerHTML =
+      '<span class="gs__track"><span class="gs__progress"></span></span>' +
+      '<span class="gs__thumb">' +
+        '<span class="gs__lens"></span>' +
+        '<span class="gs__wash"></span>' +
+        '<span class="gs__spec"></span>' +
+      '</span>'
+    wrap.appendChild(input)
+
+    const sync = () => {
+      const min = Number(input.min) || 0
+      const max = Number(input.max) || 100
+      const pct = max === min ? 0 : ((Number(input.value) - min) / (max - min)) * 100
+      wrap.style.setProperty('--pct', pct + '%')
+    }
+    input.addEventListener('input', sync)
+    input.addEventListener('pointerdown', () => { wrap.dataset.active = 'true' })
+    // On window, not the input: the pointer is usually outside the 22px row
+    // by the time it is released.
+    window.addEventListener('pointerup', () => { wrap.dataset.active = 'false' })
+    sync()
+    return sync
+  })
+
+  window.syncGlassSliders = () => sliders.forEach(fn => fn())
+})()
 </script>
 </body>
 </html>

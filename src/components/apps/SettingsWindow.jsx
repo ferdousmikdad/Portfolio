@@ -11,7 +11,7 @@ import useSettingsStore, {
 } from '@/store/settingsStore'
 import { PANE_ICONS, SIDEBAR_GROUPS, PANE_TITLES } from '@/data/settingsPanes'
 import {
-  Group, Row, StackRow, Switch, Popup, Slider, Checkbox,
+  Group, Row, StackRow, Switch, Popup, Slider, GlassSlider, Checkbox,
   PushButton, ThumbOption, Swatch,
 } from '@/components/ui/MacControls'
 import mikdadHeadUrl from '@/assets/icons/mikdad-head.svg?url'
@@ -326,8 +326,8 @@ function DisplaysPane() {
 
       <Group title="Brightness">
         <StackRow>
-          <Slider value={s.brightness} onChange={s.setBrightness}
-                  leading={<SunGlyph small />} trailing={<SunGlyph />} />
+          <GlassSlider value={s.brightness} onChange={s.setBrightness}
+                       leading={<SunGlyph small />} trailing={<SunGlyph />} />
         </StackRow>
         <Row label="Automatically adjust brightness">
           <Switch value onChange={() => {}} />

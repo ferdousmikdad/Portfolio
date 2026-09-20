@@ -6,7 +6,7 @@
 
    Everything here is presentation only — panes own their state.             */
 
-import { useRef, useCallback } from 'react'
+import { useRef, useState, useCallback } from 'react'
 
 /* Grouped card. macOS puts the section title outside the card, in the window
    background, and never inside it. */
@@ -126,6 +126,58 @@ export function Slider({ value, onChange, min = 0, max = 100, leading, trailing,
       <div className="mac-slider__track" ref={trackRef} onPointerDown={onPointerDown}>
         <div className="mac-slider__fill" style={{ width: `${pct}%` }} />
         <div className="mac-slider__knob" style={{ left: `${pct}%` }} />
+      </div>
+      {trailing && <span className="mac-slider__cap">{trailing}</span>}
+    </div>
+  )
+}
+
+/* ── Liquid Glass slider ────────────────────────────────────────────────────
+   A thin capsule track with a blue-gradient fill and a white pill handle that
+   turns into a bead of glass while it is dragged: the backdrop behind it
+   bends through a lens, a thin wash sits over it, and the rim picks up the
+   blue of the track underneath.
+
+   Only the Displays > Brightness row uses this. Every other slider in
+   Settings is the plain AppKit `Slider` above and is untouched.            */
+export function GlassSlider({ value, onChange, min = 0, max = 100, leading, trailing }) {
+  const trackRef = useRef(null)
+  const [dragging, setDragging] = useState(false)
+
+  const setFromEvent = useCallback((clientX) => {
+    const el = trackRef.current
+    if (!el) return
+    const { left, width } = el.getBoundingClientRect()
+    const t = Math.min(1, Math.max(0, (clientX - left) / width))
+    onChange(Math.round(min + t * (max - min)))
+  }, [min, max, onChange])
+
+  const onPointerDown = (e) => {
+    e.preventDefault()
+    setDragging(true)
+    setFromEvent(e.clientX)
+    const move = (ev) => setFromEvent(ev.clientX)
+    const up = () => {
+      setDragging(false)
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', up)
+    }
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', up)
+  }
+
+  const pct = ((value - min) / (max - min)) * 100
+
+  return (
+    <div className="mac-slider" data-dragging={dragging}>
+      {leading && <span className="mac-slider__cap">{leading}</span>}
+      <div className="glass-slider" ref={trackRef} onPointerDown={onPointerDown}>
+        <div className="glass-slider__progress" style={{ width: `${pct}%` }} />
+        <div className="glass-slider__thumb" data-active={dragging} style={{ left: `${pct}%` }}>
+          <span className="glass-slider__filter" />
+          <span className="glass-slider__overlay" />
+          <span className="glass-slider__specular" />
+        </div>
       </div>
       {trailing && <span className="mac-slider__cap">{trailing}</span>}
     </div>

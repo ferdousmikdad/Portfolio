@@ -53,9 +53,39 @@ export function GlassDefs() {
           yChannelSelector="G"
         />
       </filter>
+
+      {/* Slider handle. Turbulence is the wrong map for a bead of glass — it
+          makes the backdrop wander. This one grows smoothly outward from the
+          centre: neutral (128,128) in the middle so light passes straight
+          through, ramping to (255,255) by 90% at the rim, and a negative
+          scale inverts it into a convex lens. */}
+      <filter id="mini-liquid-lens" x="-50%" y="-50%" width="200%" height="200%"
+              colorInterpolationFilters="sRGB">
+        <feImage result="normalMap" href={LENS_MAP} xlinkHref={LENS_MAP} />
+        <feDisplacementMap
+          in="SourceGraphic"
+          in2="normalMap"
+          scale="-46"
+          xChannelSelector="R"
+          yChannelSelector="G"
+        />
+      </filter>
     </svg>
   )
 }
+
+/* The normal map, inline. Both `%` and `#` must be percent-encoded: in a data
+   URI a bare `%` starts an escape (`50%` becomes `%50` → "P") and a bare `#`
+   truncates the document at the fragment, so `url(#invmap)` never resolves.
+   Either one leaves the gradient undefined and the filter a silent no-op. */
+const LENS_MAP =
+  "data:image/svg+xml;utf8," +
+  "<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'>" +
+  "<radialGradient id='invmap' cx='50%25' cy='50%25' r='75%25'>" +
+  "<stop offset='0%25' stop-color='rgb(128,128,255)'/>" +
+  "<stop offset='90%25' stop-color='rgb(255,255,255)'/>" +
+  "</radialGradient>" +
+  "<rect width='100%25' height='100%25' fill='url(%23invmap)'/></svg>"
 
 /**
  * The glass layers themselves. Absolutely fills its positioned parent and
