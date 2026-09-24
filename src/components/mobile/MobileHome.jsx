@@ -54,7 +54,7 @@ function FloatingHead() {
             transform: 'rotate(30deg)',
           }}
         >
-          <span style={{ color: '#cf0506', fontWeight: 700, fontSize: 14, fontFamily: "'SF Pro Display', sans-serif" }}>
+          <span style={{ color: 'var(--brand)', fontWeight: 700, fontSize: 14, fontFamily: "'SF Pro Display', sans-serif" }}>
             Hey!
           </span>
         </motion.div>

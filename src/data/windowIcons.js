@@ -2,7 +2,9 @@ import TOOLS from '@/data/tools'
 
 import documentUrl  from '@/assets/icons/macDocument.png?url'
 import mikdadUrl    from '@/assets/icons/mikdad-head.svg?url'
-import folderUrl    from '@/assets/icons/Folder.png?url'
+import contactsUrl  from '@/assets/icons/Contacts.png?url'
+import photosUrl    from '@/assets/icons/Photos.png?url'
+import previewUrl   from '@/assets/icons/Preview.png?url'
 import appStoreUrl  from '@/assets/icons/App Store.png?url'
 import noteUrl      from '@/assets/icons/note.png?url'
 import homeUrl      from '@/assets/icons/Home.png?url'
@@ -19,10 +21,10 @@ const WINDOW_ICONS = {
   bio:       documentUrl,
   skills:    documentUrl,
   contact:   documentUrl,
-  profile:   mikdadUrl,
-  about:     mikdadUrl,
+  about:     contactsUrl,
   home:      homeUrl,
-  portfolio: folderUrl,
+  portfolio: photosUrl,
+  preview:   previewUrl,
   shop:      appStoreUrl,
   notes:     noteUrl,
   terminal:  terminalUrl,

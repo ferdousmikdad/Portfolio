@@ -3,6 +3,7 @@ import { create } from 'zustand'
 const gap      = 8
 const profileW = 308, aboutW = 480, winH = 482
 const totalW   = profileW + gap + aboutW
+const contactsW  = 740, contactsH  = 560
 const vw       = window.innerWidth
 const vh       = window.innerHeight
 const startX   = Math.max(20, (vw - totalW) / 2)
@@ -18,6 +19,7 @@ const smallW     = 420, smallH     = 360
 const shopW      = 1180, shopH     = 620
 const mailW      = 560, mailH      = 430
 const calcW      = 272, calcH      = 462
+const previewW   = 720, previewH   = 540
 const initW      = vw <= 1440 ? Math.round(portfolioW * 0.9) : portfolioW
 const initH      = vw <= 1440 ? Math.round(portfolioH * 0.9) : portfolioH
 
@@ -91,21 +93,13 @@ const defaultWindows = [
     zIndex: 3,
   },
   {
-    id: 'profile',
-    title: 'Profile',
-    isOpen: false,
-    isMinimized: false,
-    position: { x: startX, y: startY },
-    size: { width: profileW, height: winH },
-    zIndex: 1,
-  },
-  {
+    /* The About Me window is the Contacts app: list column + card pane. */
     id: 'about',
-    title: 'About Me',
+    title: 'Contacts',
     isOpen: false,
     isMinimized: false,
-    position: { x: startX + profileW + gap, y: startY },
-    size: { width: aboutW, height: winH },
+    position: centeredInUsableArea(contactsW, contactsH),
+    size: { width: contactsW, height: contactsH },
     zIndex: 2,
   },
   {
@@ -190,6 +184,17 @@ const defaultWindows = [
     isMinimized: false,
     position: centeredInUsableArea(portfolioW, portfolioH),
     size: { width: portfolioW, height: portfolioH },
+    zIndex: 3,
+  },
+  {
+    /* Preview — a portfolio piece opened from Photos. It sizes itself to
+       the picture once that has loaded; these are only where it starts. */
+    id: 'preview',
+    title: 'Preview',
+    isOpen: false,
+    isMinimized: false,
+    position: centeredInUsableArea(previewW, previewH),
+    size: { width: previewW, height: previewH },
     zIndex: 3,
   },
   {
@@ -287,23 +292,12 @@ const useWindowStore = create((set, get) => ({
   toggleShortcuts: () => set((s) => ({ shortcuts: !s.shortcuts })),
 
   /* ── Mikuda ─────────────────────────────────────────────────────────
-     The Siri stand-in, in two halves: the ask field that drops out of the
-     menu bar, and the chat window on the desktop layer. Neither can own the
-     state — the menu bar opens the field and the field opens the chat — so
-     it lives here.
-
-     `mikudaPrompt` is the question the field handed over; the chat sends it
-     on mount and clears it, so reopening the chat later starts clean. */
+     The Siri stand-in: a field that drops out of the menu bar and answers
+     in a box under itself, as Siri does. Open state lives here because the
+     menu bar, keyboard shortcuts and Escape all need to reach it. */
   mikudaAsk: false,
-  mikudaChat: false,
-  mikudaPrompt: null,
   toggleMikudaAsk: () => set((s) => ({ mikudaAsk: !s.mikudaAsk })),
   closeMikudaAsk:  () => set((s) => (s.mikudaAsk ? { mikudaAsk: false } : s)),
-  /* Asking closes the field and hands the question to the chat, the way
-     Siri drops its field once you commit to a question. */
-  askMikuda: (text) => set({ mikudaAsk: false, mikudaChat: true, mikudaPrompt: text }),
-  closeMikudaChat: () => set({ mikudaChat: false, mikudaPrompt: null }),
-  clearMikudaPrompt: () => set({ mikudaPrompt: null }),
 
   /* Mission Control. Lives here rather than in Desktop's local state so the
      menu bar and the dock can both raise it. */
@@ -326,7 +320,7 @@ const useWindowStore = create((set, get) => ({
 
      Both clear every overlay first. Coming back from a restart to a
      half-open Launchpad would give the game away immediately.           */
-  power: null,                       // null | 'sleeping' | 'restarting'
+  power: null,                       // null | 'sleeping' | 'restarting' | 'off'
   sleep: () => set({
     power: 'sleeping',
     launchpad: false, missionControl: false, screenSaver: false,
@@ -358,6 +352,25 @@ const useWindowStore = create((set, get) => ({
   /* Lock screen. Clears the overlays under it so unlocking returns to a
      plain desktop rather than whatever was mid-flight when it locked. */
   locked: false,
+  /* Shut Down closes everything and leaves the screen black. Pressing a key
+     or clicking is the power button: it boots the way Restart does. */
+  shutDown: () => set((state) => ({
+    power: 'off',
+    launchpad: false, missionControl: false, screenSaver: false,
+    spotlight: false, shortcuts: false, notificationCenter: false, locked: false,
+    windows: state.windows.map((w) => ({ ...w, isOpen: false, isMinimized: false })),
+  })),
+  powerOn: () => set({ power: 'restarting' }),
+
+  /* Log Out quits every app and returns to the login window, which here is
+     the lock screen with your name on it. */
+  logOut: () => set((state) => ({
+    locked: true,
+    launchpad: false, missionControl: false, screenSaver: false,
+    spotlight: false, shortcuts: false, notificationCenter: false,
+    windows: state.windows.map((w) => ({ ...w, isOpen: false, isMinimized: false })),
+  })),
+
   lock: () => set({ locked: true, launchpad: false, missionControl: false, screenSaver: false }),
   unlock: () => set({ locked: false }),
 
@@ -434,18 +447,35 @@ const useWindowStore = create((set, get) => ({
 
   setFinderView: (view) => set({ finderView: view }),
 
+  /* A project opens in the Preview window, the way double-clicking a
+     picture on a Mac does. Closing that window, by its red light or
+     anything else, clears the project and the #project/ link with it. */
   openProjectPreview: (project) => {
     if (project?.slug) {
       window.history.replaceState(null, '', `#project/${project.slug}`)
     }
-    set({ previewProject: project })
+    set((state) => ({
+      previewProject: project,
+      activeWindowId: 'preview',
+      windows: state.windows.map((w) => w.id !== 'preview' ? w : {
+        ...w,
+        isOpen: true,
+        isMinimized: false,
+        zIndex: ++topZ,
+        // A fresh open starts centred; the window then fits itself to the picture.
+        ...(w.isOpen ? {} : { size: { width: previewW, height: previewH }, position: centeredInUsableArea(previewW, previewH) }),
+      }),
+    }))
   },
   closeProjectPreview: () => {
     window.history.replaceState(
       null, '',
       window.location.pathname + window.location.search
     )
-    set({ previewProject: null })
+    set((state) => ({
+      previewProject: null,
+      windows: state.windows.map((w) => (w.id === 'preview' ? { ...w, isOpen: false } : w)),
+    }))
   },
 
   openWindow: (id) =>
@@ -514,12 +544,14 @@ const useWindowStore = create((set, get) => ({
       activeWindowId: id,
     })),
 
-  closeWindow: (id) =>
+  closeWindow: (id) => {
+    if (id === 'preview') { get().closeProjectPreview(); return }
     set((state) => ({
       windows: state.windows.map((w) =>
         w.id === id ? { ...w, isOpen: false } : w
       ),
-    })),
+    }))
+  },
 
   setRestoring: (id) => set({ restoringId: id }),
 

@@ -231,7 +231,7 @@ function SuggestionPill({ label, highlight, onClick }) {
   const [before, after] = label.split(highlight)
   return (
     <button className="mk-pill" onClick={onClick}>
-      {before}<span style={{ color: '#cf0506' }}>{highlight}</span>{after}
+      {before}<span style={{ color: 'var(--brand)' }}>{highlight}</span>{after}
     </button>
   )
 }
@@ -437,7 +437,7 @@ export default function MikudaChat({ isOpen, onClose, chatRef, initialPrompt = n
                 >
                   <img src={mikdadHeadUrl} alt="Mikuda" className="mk-avatar" />
                   <h2 className="mk-heading">
-                    Hey, I'm <span style={{ color: '#cf0506' }}>Mikuda</span>
+                    Hey, I'm <span style={{ color: 'var(--brand)' }}>Mikuda</span>
                   </h2>
                   <p className="mk-subtitle">Ask me anything about<br />Mikdad's work</p>
                   <div className="mk-pills">

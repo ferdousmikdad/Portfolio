@@ -38,7 +38,7 @@ function MoonIcon() {
 // 4-pointed sparkle / diamond star
 function SparkleIcon() {
   return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="#cf0506" style={{ flexShrink: 0 }}>
+    <svg width="12" height="12" viewBox="0 0 24 24" style={{ flexShrink: 0, fill: 'var(--brand)' }}>
       <path d="M12 2 L13.8 10.2 L22 12 L13.8 13.8 L12 22 L10.2 13.8 L2 12 L10.2 10.2 Z"/>
     </svg>
   )

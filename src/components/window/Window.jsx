@@ -109,6 +109,12 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
         zIndex:        win.zIndex,
         pointerEvents: 'auto',
         boxShadow:     win.isMaximized ? 'none' : undefined,
+        /* Square while it fills the screen, the usual 22px otherwise. Set
+           straight from the state rather than animated by framer-motion:
+           its animation to 0 on maximize ran, but the one back to 22 on
+           restore did not, leaving a restored window with square corners.
+           The CSS transition on .window-shell eases it either way. */
+        borderRadius:  win.isMaximized ? 0 : 22,
         /* Held invisible while the genie draws it back out of the dock —
            and, in Stage Manager, whenever this window is not the one on the
            stage. `visibility` rather than `opacity` on purpose: an element
@@ -127,7 +133,7 @@ export default function Window({ id, title, children, actionLabel, onAction, hid
       // snap to blurred the instant opacity landed on 1. Scale alone opens
       // the window just as well and never breaks the sampling.
       initial={restoring ? false : { scale: 0.92 }}
-      animate={{ scale: 1, borderRadius: win.isMaximized ? 0 : 22 }}
+      animate={{ scale: 1 }}
       exit={{ opacity: 0, scale: 0.88, transition: { duration: 0.15 } }}
       transition={{ type: 'spring', stiffness: 300, damping: 28 }}
       drag={!win.isMaximized}

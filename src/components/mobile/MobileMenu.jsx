@@ -132,7 +132,7 @@ export default function MobileMenu({ isOpen, onClose, activePage, onNav }) {
                         height={17}
                         style={{
                           flexShrink: 0,
-                          color: isActive ? '#cf0506' : 'rgba(255,255,255,0.45)',
+                          color: isActive ? 'var(--brand)' : 'rgba(255,255,255,0.45)',
                         }}
                       />
                       <span style={{

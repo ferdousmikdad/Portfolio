@@ -1,5 +1,4 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import Window from '@/components/window/Window'
 import WindowSidebar from '@/components/window/WindowSidebar'
 import useWindowStore from '@/store/windowStore'
@@ -7,11 +6,15 @@ import useSound from '@/hooks/useSound'
 import useTrashStore, { trashedFrom } from '@/store/trashStore'
 import useThemeStore from '@/store/themeStore'
 import useTrashDrag from '@/hooks/useTrashDrag'
+import useDesktopStore from '@/store/desktopStore'
+import useDesktopItems, { DESKTOP_PATH } from '@/hooks/useDesktopItems'
 import ContextMenu from '@/components/ui/ContextMenu'
+import SFSymbol from '@/components/ui/SFSymbol'
 import ChatPanel from '@/components/apps/ChatPanel'
 import PortfolioPanel from '@/components/apps/PortfolioPanel'
 import NotesPanel from '@/components/apps/NotesPanel'
 import ShopPanel from '@/components/apps/ShopPanel'
+import FinderBrowser, { IconTile } from '@/components/apps/FinderBrowser'
 import { SHOP_CATEGORIES } from '@/data/stickResources'
 import { CATEGORIES, TAGS } from '@/data/projects'
 import { CATEGORIES as NOTE_CATEGORIES } from '@/data/notes.js'
@@ -19,250 +22,145 @@ import GlassLayers from '@/components/ui/LiquidGlass'
 import MacAlert from '@/components/ui/MacAlert'
 import TOOLS from '@/data/tools'
 
-import spotifyIconUrl   from '@/assets/icons/spotify.svg?url'
-/* Sidebar rows carry the real artwork, not the flat nav glyphs: Finder shows
-   a place the way the place actually looks. Applications is the plain macOS
-   folder, Portfolio the image folder, and the rest are the same app icons the
-   dock uses, so one thing is never drawn two ways. */
-import homeIconUrl      from '@/assets/icons/Home.png?url'
-import portfolioIconUrl from '@/assets/icons/mac-folder-images.svg?url'
-import notesIconUrl     from '@/assets/icons/note.png?url'
-import shopIconUrl      from '@/assets/icons/App Store.png?url'
-import toolsIconUrl     from '@/assets/icons/Folder.png?url'
+import spotifyIconUrl    from '@/assets/icons/spotify.svg?url'
 import terminalAppIconUrl from '@/assets/icons/terminal.svg?url'
-import pacmanIconUrl    from '@/assets/icons/magic-icon.svg?url'
+import pacmanIconUrl     from '@/assets/icons/magic-icon.svg?url'
 import calculatorIconUrl from '@/assets/icons/Calculator@4x 1.png?url'
-import settingsIconUrl  from '@/assets/icons/mac-system-settings.svg?url'
+import settingsIconUrl   from '@/assets/icons/mac-system-settings.svg?url'
 import photoBoothIconUrl from '@/assets/icons/photobooth.png?url'
-import MacSearchIcon    from '@/assets/icons/macsearch.svg?react'
-import MacGridIcon      from '@/assets/icons/macgrid.svg?react'
-import macListPng       from '@/assets/icons/maclist.png'
-import AllIcon          from '@/assets/icons/work-all.svg?react'
-import RecentsIcon      from '@/assets/icons/work-recents.svg?react'
-import LogoIcon         from '@/assets/icons/work-logo.svg?react'
-import ArabicLogoIcon   from '@/assets/icons/work-arabic-logo.svg?react'
-import BrandIcon        from '@/assets/icons/work-brand-identity.svg?react'
-import LandingIcon      from '@/assets/icons/work-landing-pages.svg?react'
-import DashboardsIcon   from '@/assets/icons/work-dashboards.svg?react'
-import MobileIcon       from '@/assets/icons/work-mobile-ui.svg?react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
 import trashEmptyUrl     from '@/assets/icons/trash-empty.svg?url'
 import trashFullUrl      from '@/assets/icons/trash-full.svg?url'
 import trashEmptyDarkUrl from '@/assets/icons/trash-empty-dark.svg?url'
 import trashFullDarkUrl  from '@/assets/icons/trash-full-dark.svg?url'
 
+/* ── Finder ──────────────────────────────────────────────────────────────────
+   Drawn to Tahoe's Finder, measured off the real window at 2x:
+
+   Sidebar  Recents at the top, then Favorites, Locations and Tags. Rows are
+            a label-coloured outline SF Symbol and a 13pt name; the selected
+            row is a soft grey slab with its symbol and name in the accent.
+            No disclosure chevrons. Portfolio, Notes and Store still show
+            their sections under them while you are inside, indented.
+   Toolbar  four glass capsules — back/forward, the view switcher (icons ·
+            list · columns · gallery), Group ▾, then Share · Tags · ⋯ — and
+            a round search button that opens into a field.
+
+   Every file location (Applications, Desktop, Recents, a tag, the Trash, a
+   folder you made) is drawn by FinderBrowser, so the view switcher, Group
+   and search work the same in all of them. Home, Portfolio, Notes and Store
+   hold the real thing instead: the chat, the project wall, the notes and
+   the shelf.                                                              */
+
 const NATIVE_APPS = [
-  { id: 'terminal',   label: 'Terminal',        icon: terminalAppIconUrl },
-  { id: 'pacman',     label: 'Pac-Man',         icon: pacmanIconUrl },
-  { id: 'spotify',    label: 'Spotify',         icon: spotifyIconUrl },
-  { id: 'calculator', label: 'Calculator',      icon: calculatorIconUrl },
-  { id: 'settings',   label: 'System Settings', icon: settingsIconUrl },
-  { id: 'photo-booth', label: 'Photo Booth',    icon: photoBoothIconUrl },
+  { id: 'terminal',    label: 'Terminal',        icon: terminalAppIconUrl },
+  { id: 'pacman',      label: 'Pac-Man',         icon: pacmanIconUrl },
+  { id: 'spotify',     label: 'Spotify',         icon: spotifyIconUrl },
+  { id: 'calculator',  label: 'Calculator',      icon: calculatorIconUrl },
+  { id: 'settings',    label: 'System Settings', icon: settingsIconUrl },
+  { id: 'photo-booth', label: 'Photo Booth',     icon: photoBoothIconUrl },
 ]
-
-/* The favourites that hold something Finder can disclose beneath them. */
-const EXPANDABLE = new Set(['portfolio', 'notes', 'shop'])
-
-/* The Shop's sections come from the shelf's own list, so stocking a resource
-   in an existing section needs nothing here. */
 
 const FAVORITES = [
-  { id: 'home',      label: 'Home',      icon: homeIconUrl },
-  { id: 'portfolio', label: 'Portfolio', icon: portfolioIconUrl },
-  { id: 'notes',     label: 'Notes',     icon: notesIconUrl },
-  { id: 'shop',      label: 'Store',     icon: shopIconUrl },
+  { id: 'applications', label: 'Applications', symbol: 'appstore' },
+  { id: 'desktop',      label: 'Desktop',      symbol: 'menubar.dock.rectangle' },
+  { id: 'home',         label: 'Home',         symbol: 'house' },
+  { id: 'portfolio',    label: 'Portfolio',    symbol: 'photo.on.rectangle' },
+  { id: 'notes',        label: 'Notes',        symbol: 'note.text' },
+  { id: 'shop',         label: 'Store',        symbol: 'bag' },
 ]
 
-const CATEGORY_ICONS = {
-  'logo':           LogoIcon,
-  'arabic-logo':    ArabicLogoIcon,
-  'brand-identity': BrandIcon,
-  'landing-pages':  LandingIcon,
-  'dashboards':     DashboardsIcon,
-  'mobile-ui':      MobileIcon,
+const CATEGORY_SYMBOLS = {
+  'logo':           'seal',
+  'arabic-logo':    'character.book.closed',
+  'brand-identity': 'paintpalette',
+  'landing-pages':  'macwindow',
+  'dashboards':     'chart.bar.xaxis',
+  'mobile-ui':      'iphone',
 }
 
-/* `expandable` marks a row that has something inside it. Finder puts the
-   disclosure chevron at the trailing edge of the row and turns it down when
-   the folder is open; the whole row is the hit target, as it is here. */
-function SidebarItem({ icon, label, active, expandable, expanded, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`w-full flex items-center gap-2 px-3 py-[5px] rounded-md text-left transition-colors group
-        ${active ? 'bg-white/10' : 'hover:bg-white/5'}`}
-    >
-      <img
-        src={icon}
-        alt={label}
-        style={{ width: 15, height: 15, flexShrink: 0, objectFit: 'contain' }}
-      />
-      <span
-        className="text-[13px] flex-1 truncate transition-colors"
-        style={{
-          fontFamily: "'SF Pro Text'",
-          fontWeight: active ? 500 : 400,
-          color: 'rgba(255, 255, 255, 0.94)',
-        }}
-      >
-        {label}
-      </span>
-      {expandable && (
-        <ChevronRight
-          size={12}
-          strokeWidth={2.4}
-          className="finder-disclosure"
-          style={{
-            flexShrink: 0,
-            transform: `rotate(${expanded ? 90 : 0}deg)`,
-            opacity: expanded ? 0.72 : 0.38,
-          }}
-        />
-      )}
-    </button>
-  )
-}
+const VIEWS = [
+  { id: 'icons',   symbol: 'square.grid.2x2',                    label: 'as Icons' },
+  { id: 'list',    symbol: 'list.bullet',                        label: 'as List' },
+  { id: 'columns', symbol: 'rectangle.split.3x1',                label: 'as Columns' },
+  { id: 'gallery', symbol: 'rectangle.bottomthird.inset.filled', label: 'as Gallery' },
+]
 
-/* A row inside an expanded favourite — Finder indents the contents of a
-   folder under the folder itself, and the Portfolio's categories are exactly
-   that. Takes a glyph component or a tag dot, rather than the artwork URLs
-   the top-level rows carry. */
-function SidebarSubItem({ icon: Icon, dot, label, active, onClick }) {
+const GROUPS = [
+  ['none', 'None'],
+  ['name', 'Name'],
+  ['kind', 'Kind'],
+  ['tags', 'Tags'],
+]
+
+/* One sidebar row. `symbol` is an SF Symbol, `dot` a tag colour. */
+function Row({ symbol, dot, label, active, onClick, indent }) {
   return (
-    <button
-      onClick={onClick}
-      className={`w-full flex items-center gap-2 pl-7 pr-3 py-[4px] rounded-md text-left transition-colors group
-        ${active ? 'bg-white/10' : 'hover:bg-white/5'}`}
-    >
+    <button className="fd-row" data-on={active || undefined} data-indent={indent || undefined} onClick={onClick}>
       {dot
-        ? <span style={{ width: 9, height: 9, borderRadius: 9999, flexShrink: 0, background: dot }} />
-        : Icon && <Icon width={12} height={12} style={{ flexShrink: 0, color: active ? '#fff' : 'rgba(255,255,255,0.55)' }} />}
-      <span
-        className="text-[12px] flex-1 truncate"
-        style={{
-          fontFamily: "'SF Pro Text'",
-          fontWeight: active ? 500 : 400,
-          color: active ? 'rgba(255,255,255,0.94)' : 'rgba(255,255,255,0.66)',
-        }}
-      >
-        {label}
-      </span>
+        ? <span className="fd-row__dot" style={{ background: dot }} />
+        : <SFSymbol name={symbol} size={indent ? 13 : 15} className="fd-row__icon" />}
+      <span className="fd-row__label">{label}</span>
     </button>
   )
 }
 
-/* `thumb` draws the file as its own picture the way Finder previews an image,
-   clipped to a rounded rect with a hairline, instead of a generic icon.
-   `dragHandlers` is what makes a row draggable to the dock's Trash. */
-function GridItem({
-  icon, label, disabled, selected, thumb,
-  onSingleClick, onDoubleClick, onContextMenu, dragHandlers,
-}) {
-  return (
-    <button
-      onClick={onSingleClick}
-      onDoubleClick={onDoubleClick}
-      onContextMenu={onContextMenu}
-      {...dragHandlers}
-      className="flex flex-col items-center gap-2 p-3 rounded-xl transition-all duration-150"
-      style={{ background: 'transparent', border: '1px solid transparent', outline: 'none' }}
-    >
-      <div style={{
-        width: 64, height: 64,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        borderRadius: 12,
-        background: selected ? 'rgba(255,255,255,0.07)' : 'transparent',
-        transition: 'background 0.12s',
-      }}>
-        <img
-          src={icon}
-          alt={label}
-          draggable={false}
-          style={thumb
-            ? {
-                width: 56, height: 56, objectFit: 'cover',
-                borderRadius: 4,
-                boxShadow: '0 0 0 1px rgba(255,255,255,0.14), 0 1px 3px rgba(0,0,0,0.35)',
-              }
-            : {
-                width: 52, height: 52, objectFit: 'contain',
-                filter: disabled ? 'grayscale(0.6) opacity(0.4)' : 'none',
-              }}
-        />
-      </div>
-      <span
-        className="finder-grid-label text-[10px] text-center leading-tight px-1.5 py-0.5 rounded"
-        style={{
-          fontFamily:  "'SF Pro Text'",
-          background:  selected ? '#0064d2' : 'transparent',
-          /* Unselected takes its colour from the class, so a light window
-             still gets a readable label; selected is white on the blue. */
-          ...(selected ? { color: '#fff' } : null),
-          transition:  'background 0.12s, color 0.12s',
-        }}
-      >
-        {label}
-      </span>
-    </button>
-  )
-}
-
-/* An app being dragged out of the Applications grid. Split out so the drag
-   hook gets its own component instance per row — hooks cannot live inside the
-   map that renders them. */
-function AppGridItem({ app, system, selected, onSelect, onOpen, onTrash, onBlocked }) {
+/* An app tile in the icon view, draggable to the dock's Trash. Split out so
+   the drag hook has a component instance per tile. */
+function AppTile({ app, props, onTrash, onBlocked }) {
   const { handlers, guard } = useTrashDrag(
     () => ({
-      id:     `app-${app.id}`,
-      name:   app.label,
-      kind:   'application',
-      icon:   app.icon,
-      size:   '—',
+      id: `app-${app.id}`, name: app.label, kind: 'application', icon: app.icon, size: '—',
       origin: { source: 'finder', id: app.id },
     }),
-    {
-      /* macOS refuses to trash what the system needs and says so, rather than
-         quietly ignoring the drop. */
-      onDrop: (item) => (system ? onBlocked(app) : onTrash(item)),
-    },
+    // macOS refuses to trash what the system needs, and says so.
+    { onDrop: (item) => (app.system ? onBlocked(app) : onTrash(item)) },
   )
-
   return (
-    <GridItem
-      icon={app.icon}
-      label={app.label}
-      disabled={app.disabled}
-      selected={selected}
+    <IconTile
+      {...props}
       dragHandlers={handlers}
-      onSingleClick={guard(onSelect)}
-      onDoubleClick={guard(onOpen)}
+      onSelect={guard(props.onSelect)}
+      onOpen={guard(props.onOpen)}
     />
   )
 }
 
 export default function FinderWindow() {
-  const { navigate, openTool, openWindow } = useWindowStore()
+  const { navigate, openTool, openWindow, startAirDrop } = useWindowStore()
   const play = useSound()
-  /* The location Finder is showing lives in the store, not here: the dock's
-     basket points this window at the Trash, and that has to work whether the
-     window was already open or not. 'applications' | 'trash' | favourite id */
+  /* The location lives in the store, not here: the dock's basket and the
+     desktop's folders point this window somewhere from outside. */
   const contentView    = useWindowStore((st) => st.finderView)
   const setContentView = useWindowStore((st) => st.setFinderView)
-  const [selectedTool,  setSelectedTool]  = useState(null)
-  const [search,        setSearch]        = useState('')
-  /* Which slice of the Portfolio is showing: 'recent' | 'category' | 'tag',
-     chosen from the rows nested under the Portfolio favourite. */
-  const [pfType,        setPfType]        = useState(null)
-  const [pfItem,        setPfItem]        = useState(null)
-  const [pfView,        setPfView]        = useState('grid')
-  /* Which category of Notes is showing. */
-  const [noteCat,       setNoteCat]       = useState('all')
-  /* Which section of the Shop is showing — null for the whole shelf. */
-  const [shopCat,       setShopCat]       = useState(null)
-  /* Finder keeps a folder closed until you ask for it, so the favourites that
-     have something inside them start collapsed and their row toggles them
-     open and shut. Holds the ids currently disclosed. */
-  const [openFavs,      setOpenFavs]      = useState(() => new Set())
+
+  const [selected, setSelected] = useState(null)
+  const [search,   setSearch]   = useState('')
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [view,     setView]     = useState('icons')
+  const [group,    setGroup]    = useState('none')
+  const [menu,     setMenu]     = useState(null)   // { at, items }
+
+  const [pfType, setPfType] = useState(null)
+  const [pfItem, setPfItem] = useState(null)
+  const [pfView, setPfView] = useState('grid')
+  const [noteCat, setNoteCat] = useState('all')
+  const [shopCat, setShopCat] = useState(null)
+  /* Which of Portfolio / Notes / Store have their sections unfolded. The
+     first click on one goes there and unfolds it; clicking it again while
+     you are there folds it away, and again brings it back. */
+  const [unfolded, setUnfolded] = useState(() => new Set())
+  const EXPANDABLE = ['portfolio', 'notes', 'shop']
+  const clickFav = (id) => {
+    if (EXPANDABLE.includes(id)) {
+      setUnfolded((prev) => {
+        const next = new Set(prev)
+        if (contentView === id && next.has(id)) next.delete(id)
+        else next.add(id)
+        return next
+      })
+    }
+    if (contentView !== id) go(id)
+  }
 
   const isDark      = useThemeStore((st) => st.isDark)
   const trashItems  = useTrashStore((st) => st.items)
@@ -271,15 +169,19 @@ export default function FinderWindow() {
   const eraseItem   = useTrashStore((st) => st.eraseItem)
   const emptyTrash  = useTrashStore((st) => st.emptyTrash)
 
+  const desktopItems = useDesktopItems()
+  const recent       = useDesktopStore((st) => st.recent)
+  const toggleTag    = useDesktopStore((st) => st.toggleTag)
+  const newFolder    = useDesktopStore((st) => st.newFolder)
+  const showInfo     = useDesktopStore((st) => st.showInfo)
+
   const inTrash     = contentView === 'trash'
-  /* Home and Portfolio are the favourites that are places rather than
-     signposts: they hold the real thing — Mikuda's chat, the project wall —
-     instead of an Open button. */
+  const folderId    = contentView?.startsWith?.('folder:') ? contentView.slice(7) : null
+  const tagId       = contentView?.startsWith?.('tag:') ? contentView.slice(4) : null
   const isHome      = contentView === 'home'
   const isPortfolio = contentView === 'portfolio'
   const isNotes     = contentView === 'notes'
   const isShop      = contentView === 'shop'
-  /* Whichever of them is showing brings its own padding and scrolling. */
   const isEmbedded  = isHome || isPortfolio || isNotes || isShop
   const trashFull   = trashItems.length > 0
   const trashedApps = trashedFrom(trashItems, 'finder')
@@ -288,53 +190,106 @@ export default function FinderWindow() {
     ? (isDark ? trashFullDarkUrl  : trashFullUrl)
     : (isDark ? trashEmptyDarkUrl : trashEmptyUrl)
 
-  const [itemMenu,     setItemMenu]     = useState(null)   // { x, y, id }
   const [confirmEmpty, setConfirmEmpty] = useState(false)
   const [blockedApp,   setBlockedApp]   = useState(null)
 
-  // Selection belongs to a location — switching away from the Trash should
-  // not leave a trashed file highlighted behind the Applications grid.
-  useEffect(() => { setSelectedTool(null) }, [contentView])
+  // Selection belongs to a location.
+  useEffect(() => { setSelected(null) }, [contentView])
 
-  /* One Applications folder, the way the real one looks: the apps that come
-     with the machine and the ones that were installed sit in the same grid,
-     sorted by name, with no headings dividing them. */
-  const visibleApps = useMemo(() => {
-    const all = [
-      ...NATIVE_APPS.map((a) => ({ id: a.id, label: a.label, icon: a.icon, system: true })),
-      ...TOOLS.map((t) => ({ id: t.id, label: t.name, icon: t.icon, disabled: t.url === null })),
-    ]
-    // An app in the Trash is not installed, so it is not in the grid either.
-    const installed = all.filter((a) => !trashedApps.has(a.id))
-    const q = search.trim().toLowerCase()
-    const found = q ? installed.filter((a) => a.label.toLowerCase().includes(q)) : installed
-    return found.sort((a, b) => a.label.localeCompare(b.label))
-  }, [search, trashItems])
-
-  const doEmptyTrash = () => { play('emptyTrash'); emptyTrash(); setConfirmEmpty(false); setSelectedTool(null) }
-
-  const doPutBack = (id) => { play('open'); putBack(id); setSelectedTool(null) }
-
+  const launchTool = (id) => { play('open'); openTool(id) }
   const trashApp = useCallback((item) => { play('trash'); trashItem(item) }, [play, trashItem])
 
-  const currentPage = contentView !== 'applications' && !inTrash
-    ? FAVORITES.find((f) => f.id === contentView)
-    : null
+  /* ── The items of each file location, in FinderBrowser's shape ── */
 
-  /* The name of the location, shown twice the way Finder shows it: once in
-     the toolbar beside the arrows, once as the heading of the file area. */
-  const locationName = inTrash
-    ? 'Trash'
-    : contentView === 'applications'
-      ? 'Applications'
-      : currentPage?.label ?? ''
+  const apps = useMemo(() => [
+    ...NATIVE_APPS.map((a) => ({ ...a, system: true })),
+    ...TOOLS.map((t) => ({ id: t.id, label: t.name, icon: t.icon, disabled: t.url === null })),
+  ]
+    .filter((a) => !trashedApps.has(a.id))
+    .map((a) => ({
+      ...a,
+      kind: 'application',
+      size: '—',
+      onOpen: () => (a.system ? (play('open'), openWindow(a.id)) : launchTool(a.id)),
+      trash: a.system ? null : { id: `app-${a.id}`, name: a.label, kind: 'application', icon: a.icon, size: '—', origin: { source: 'finder', id: a.id } },
+      where: 'Macintosh HD ▸ Applications',
+    })), [trashItems])
 
-  /* ── Back / forward ─────────────────────────────────────────────────────
-     Real arrows over a real history, dimmed when there is nowhere to go —
-     which is how the pair looks most of the time in a fresh Trash window.
-     The location itself lives in the store, because the dock can change it
-     from outside; `jumping` marks the changes this pair caused, so stepping
-     back does not itself get recorded as a step. */
+  const fromDesktop = (f) => ({
+    id: f.id,
+    label: f.name,
+    icon: f.icon,
+    kind: f.kind,
+    size: f.size,
+    date: f.addedAt,
+    tags: f.tags,
+    desktopId: f.id,
+    where: DESKTOP_PATH,
+    onOpen: () => (f.kind === 'folder' ? setContentView(`folder:${f.id}`) : (play('open'), openWindow(f.windowId))),
+    trash: { id: f.id, name: f.name, kind: f.kind, icon: f.icon, size: f.size, origin: { source: 'desktop', id: f.id } },
+  })
+
+  const items = useMemo(() => {
+    let list = []
+    if (contentView === 'applications') list = apps
+    else if (contentView === 'desktop') list = desktopItems.map(fromDesktop)
+    else if (tagId) list = desktopItems.filter((f) => f.tags.includes(tagId)).map(fromDesktop)
+    else if (contentView === 'recents') {
+      list = recent.map((r) => {
+        const file = desktopItems.find((f) => f.windowId === r.id)
+        if (file) return fromDesktop(file)
+        const app = apps.find((a) => a.id === r.id)
+        return app ?? { id: r.id, label: r.name, icon: r.icon, kind: 'application', size: '—', onOpen: () => openWindow(r.id) }
+      })
+    } else if (inTrash) {
+      list = trashItems.map((t) => ({
+        id: t.id, label: t.name, icon: t.icon, kind: t.kind, size: t.size, date: t.deletedAt,
+        thumb: t.kind === 'image', inTrash: true, where: 'Trash',
+      }))
+    }
+    const q = search.trim().toLowerCase()
+    return q ? list.filter((i) => i.label.toLowerCase().includes(q)) : list
+  }, [contentView, apps, desktopItems, recent, trashItems, search, tagId, inTrash])
+
+  const isFiles = !isEmbedded
+  const current = items.find((i) => i.id === selected)
+  const canTag  = !!current?.desktopId
+
+  /* ── Actions on the selection ── */
+
+  const info = (it) => showInfo({
+    name: it.label, kind: it.kind, icon: it.icon, size: it.size, tags: it.tags,
+    where: it.where ?? DESKTOP_PATH, created: it.date, modified: it.date,
+  })
+
+  const itemMenu = (it) => it.inTrash
+    ? [
+        { label: 'Put Back', icon: 'arrow.uturn.backward',
+          disabled: !trashItems.find((t) => t.id === it.id)?.origin,
+          onClick: () => { play('open'); putBack(it.id); setSelected(null) } },
+        { sep: true },
+        { label: 'Delete Immediately…', icon: 'xmark.circle',
+          onClick: () => { play('emptyTrash'); eraseItem(it.id); setSelected(null) } },
+      ]
+    : [
+        { label: 'Open', icon: 'arrow.up.right.square', shortcut: '⌘O', disabled: it.disabled, onClick: () => it.onOpen?.() },
+        { sep: true },
+        { label: 'Move to Trash', icon: 'trash', shortcut: '⌘⌫',
+          disabled: !it.trash,
+          onClick: () => { play('trash'); trashItem(it.trash); setSelected(null) } },
+        { sep: true },
+        { label: 'Get Info', icon: 'info.circle', shortcut: '⌘I', onClick: () => info(it) },
+        { sep: true },
+        { label: 'Share…', icon: 'square.and.arrow.up', onClick: () => { play('open'); startAirDrop() } },
+        ...(it.desktopId ? [{ sep: true }, { tags: TAGS, selected: it.tags, onToggle: (t) => toggleTag(it.desktopId, t) }] : []),
+      ]
+
+  const openMenu = (e, items) => {
+    const r = e.currentTarget.getBoundingClientRect()
+    setMenu({ at: { x: Math.round(r.left), y: Math.round(r.bottom + 6) }, items })
+  }
+
+  /* ── Back / forward over a real history ── */
   const [past,   setPast]   = useState([])
   const [future, setFuture] = useState([])
   const jumping  = useRef(false)
@@ -342,10 +297,6 @@ export default function FinderWindow() {
 
   useEffect(() => {
     if (lastView.current === contentView) return
-    // Read into a local first: a state updater runs on the next render, by
-    // which time the ref below has already been reassigned — passing the ref
-    // straight in records the location just arrived at instead of the one
-    // being left, and Back then goes nowhere.
     const from = lastView.current
     lastView.current = contentView
     if (jumping.current) jumping.current = false
@@ -359,7 +310,6 @@ export default function FinderWindow() {
     setPast((p) => p.slice(0, -1))
     setContentView(past[past.length - 1])
   }
-
   const goForward = () => {
     if (!future.length) return
     jumping.current = true
@@ -368,533 +318,271 @@ export default function FinderWindow() {
     setContentView(future[0])
   }
 
-  /* ── Toolbar, left side ──────────────────────────────────────────────────
-     Arrows, then the window name right beside them — Finder does not centre
-     its title. Everything else lives on the right. */
+  const folderName = useDesktopStore((st) => folderId ? (st.names[folderId] ?? st.folders.find((x) => x.id === folderId)?.name) : null)
+  const locationName =
+    inTrash ? 'Trash'
+    : folderId ? (folderName ?? 'untitled folder')
+    : tagId ? TAGS.find((t) => t.id === tagId)?.label
+    : contentView === 'recents' ? 'Recents'
+    : FAVORITES.find((f) => f.id === contentView)?.label ?? ''
+
+  const go = (id) => { setContentView(id); setSearch(''); setSearchOpen(false) }
+
+  const stop = (e) => e.stopPropagation()
+
+  /* ── Toolbar ── */
+
   const navSlot = (
     <div className="finder-nav">
       <div className="finder-arrows finder-glass">
         <GlassLayers small />
-        <button
-          aria-label="Back"
-          disabled={!past.length}
-          onClick={goBack}
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          <ChevronLeft size={28} strokeWidth={1.7} />
+        <button aria-label="Back" disabled={!past.length} onClick={goBack} onPointerDown={stop}>
+          <SFSymbol name="chevron.left" size={15} />
         </button>
         <span className="finder-arrows__sep" />
-        <button
-          aria-label="Forward"
-          disabled={!future.length}
-          onClick={goForward}
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          <ChevronRight size={28} strokeWidth={1.7} />
+        <button aria-label="Forward" disabled={!future.length} onClick={goForward} onPointerDown={stop}>
+          <SFSymbol name="chevron.right" size={15} />
         </button>
       </div>
       <span className="finder-nav__title">{locationName}</span>
     </div>
   )
 
-  const launchTool = (toolId) => {
-    play('open')
-    openTool(toolId)
-  }
+  /* The Portfolio wall has its own grid and list; the other embedded
+     places have no view to switch, so the switcher dims there. */
+  const viewFor = (id) => (isPortfolio ? (id === 'list' ? 'list' : 'grid') : id)
+  const activeView = isPortfolio ? (pfView === 'list' ? 'list' : 'icons') : view
+  const viewEnabled = (id) => isFiles || (isPortfolio && (id === 'icons' || id === 'list'))
 
-  const launchPage = (pageId) => {
-    play('open')
-    navigate(pageId)
-  }
+  const toolbar = (
+    <div className="fd-tools" onPointerDown={stop}>
+      <div className="fd-cap finder-glass">
+        <GlassLayers small />
+        {VIEWS.map((v, i) => (
+          <span key={v.id} className="fd-cap__slot">
+            {i === 2 && <span className="fd-cap__sep" />}
+            <button
+              className="fd-btn"
+              data-on={activeView === v.id || undefined}
+              disabled={!viewEnabled(v.id)}
+              title={`View ${v.label}`}
+              onClick={() => (isPortfolio ? setPfView(viewFor(v.id)) : setView(v.id))}
+            >
+              <SFSymbol name={v.symbol} size={15} />
+            </button>
+          </span>
+        ))}
+      </div>
 
-  /* Arriving at a favourite opens it; clicking the row you are already on
-     shuts it again. */
-  const discloseFav = (id, alreadyThere) => setOpenFavs((prev) => {
-    const next = new Set(prev)
-    if (alreadyThere && next.has(id)) next.delete(id)
-    else next.add(id)
-    return next
-  })
+      <div className="fd-cap finder-glass">
+        <GlassLayers small />
+        <button
+          className="fd-btn fd-btn--wide"
+          disabled={!isFiles || view === 'columns' || view === 'gallery'}
+          title="Group"
+          onClick={(e) => openMenu(e, GROUPS.map(([id, label]) => ({
+            label, checked: group === id, onClick: () => setGroup(id),
+          })))}
+        >
+          <SFSymbol name="square.grid.3x1.below.line.grid.1x2" size={16} />
+          <SFSymbol name="chevron.down" size={8} />
+        </button>
+      </div>
 
-  /* Clicking the row you are already on clears the filter, which is how the
-     Portfolio window's own sidebar behaves. */
+      <div className="fd-cap finder-glass">
+        <GlassLayers small />
+        <button className="fd-btn" title="Share" disabled={!current || current.inTrash}
+          onClick={() => { play('open'); startAirDrop() }}>
+          <SFSymbol name="square.and.arrow.up" size={15} />
+        </button>
+        <button className="fd-btn" title="Tags" disabled={!canTag}
+          onClick={(e) => openMenu(e, [{ tags: TAGS, selected: current.tags, onToggle: (t) => toggleTag(current.desktopId, t) }])}>
+          <SFSymbol name="tag" size={15} />
+        </button>
+        <button className="fd-btn" title="More"
+          onClick={(e) => openMenu(e, [
+            { label: 'New Folder', icon: 'folder.badge.plus', shortcut: '⇧⌘N', disabled: contentView !== 'desktop',
+              onClick: () => { const id = newFolder(window.innerWidth - 192, 80); setSelected(id) } },
+            { sep: true },
+            { label: 'Open', icon: 'arrow.up.right.square', disabled: !current || current.inTrash, onClick: () => current.onOpen?.() },
+            { label: 'Get Info', icon: 'info.circle', shortcut: '⌘I', disabled: !current, onClick: () => info(current) },
+            { sep: true },
+            { label: 'Move to Trash', icon: 'trash', disabled: !current?.trash, onClick: () => { play('trash'); trashItem(current.trash); setSelected(null) } },
+          ])}>
+          <SFSymbol name="ellipsis" size={15} />
+        </button>
+      </div>
+
+      {/* Tahoe keeps search as a round button until you need it. */}
+      {searchOpen || search ? (
+        <div className="finder-search finder-glass fd-search">
+          <GlassLayers small />
+          <SFSymbol name="magnifyingglass" size={12} style={{ opacity: 0.6 }} />
+          <input
+            autoFocus
+            value={search}
+            placeholder="Search"
+            onChange={(e) => {
+              setSearch(e.target.value)
+              setSelected(null)
+              // From a place with nothing to search, search Applications.
+              if (isHome) setContentView('applications')
+            }}
+            onBlur={() => { if (!search) setSearchOpen(false) }}
+            onKeyDown={(e) => { if (e.key === 'Escape') { setSearch(''); setSearchOpen(false) } }}
+            onMouseDown={stop}
+            className="bg-transparent text-[12px] outline-none w-full"
+          />
+        </div>
+      ) : (
+        <div className="fd-cap fd-cap--round finder-glass">
+          <GlassLayers small />
+          <button className="fd-btn" title="Search" onClick={() => setSearchOpen(true)}>
+            <SFSymbol name="magnifyingglass" size={15} />
+          </button>
+        </div>
+      )}
+    </div>
+  )
+
+  /* ── Sidebar ── */
+
   const selectSlice = (type, id) => {
     if (type && pfType === type && pfItem === id) { setPfType(null); setPfItem(null) }
     else { setPfType(type); setPfItem(id) }
   }
 
-  const goToApplications = () => {
-    setContentView('applications')
-    setSelectedTool(null)
-    setSearch('')
-  }
+  const sidebarContent = ({ onClose, onMinimize, onMaximize }) => (
+    <WindowSidebar width={210} controls={{ onClose, onMinimize, onMaximize }}>
+      <div className="fd-side window-scroll">
+        <Row symbol="clock" label="Recents" active={contentView === 'recents'} onClick={() => go('recents')} />
 
-  // ── Toolbar ──────────────────────────────────────────────────────────────────
-  /* Toolbar, right side. Finder keeps only view and search controls here —
-     Empty belongs to the row below, and Put Back is a menu item, not a
-     button, so neither appears in the chrome. */
-  const toolbar = (
-    <div className="flex items-center gap-2" style={{ pointerEvents: 'auto' }}>
-      <div className="finder-search finder-glass">
-        <GlassLayers small />
-        <MacSearchIcon width={11} height={11} style={{ flexShrink: 0 }} />
-        <input
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value)
-            setSelectedTool(null)
-            /* Typing inside a location that has its own contents narrows
-               those; anywhere else it is a search of the Applications
-               folder. */
-            if (!isPortfolio && !isNotes && !isShop) setContentView('applications')
-          }}
-          placeholder={
-            isPortfolio ? 'Search projects…'
-              : isNotes  ? 'Search notes…'
-              : isShop   ? 'Search resources…'
-              : inTrash  ? 'Search'
-              : 'Search tools…'
-          }
-          className="bg-transparent text-[11px] outline-none w-full"
-          onMouseDown={(e) => e.stopPropagation()}
-        />
+        <p className="fd-section">Favorites</p>
+        {FAVORITES.map((fav) => (
+          <div key={fav.id}>
+            <Row symbol={fav.symbol} label={fav.label} active={contentView === fav.id} onClick={() => clickFav(fav.id)} />
+            <div className="fd-sub" data-open={(contentView === fav.id && unfolded.has(fav.id)) || undefined}>
+            <div>
+
+            {/* Inside Portfolio, Notes or Store, their sections show under
+                the row — the way a folder's contents indent beneath it. */}
+            {fav.id === 'portfolio' && (
+              <>
+                <Row indent symbol="square.grid.2x2" label="All" active={!pfType} onClick={() => selectSlice(null, null)} />
+                <Row indent symbol="clock" label="Recents" active={pfType === 'recent'} onClick={() => selectSlice('recent', 'recent')} />
+                {CATEGORIES.flatMap((c) => c.items).map((item) => (
+                  <Row indent key={item.id} symbol={CATEGORY_SYMBOLS[item.id] ?? 'photo'} label={item.label}
+                    active={pfType === 'category' && pfItem === item.id}
+                    onClick={() => selectSlice('category', item.id)} />
+                ))}
+              </>
+            )}
+            {fav.id === 'notes' && NOTE_CATEGORIES.map((cat) => (
+              <Row indent key={cat.id} symbol="folder" label={cat.label}
+                active={noteCat === cat.id} onClick={() => setNoteCat(cat.id)} />
+            ))}
+            {fav.id === 'shop' && (
+              <>
+                <Row indent symbol="square.grid.2x2" label="All resources" active={!shopCat} onClick={() => setShopCat(null)} />
+                {SHOP_CATEGORIES.map((cat) => (
+                  <Row indent key={cat} symbol="folder" label={cat}
+                    active={shopCat === cat} onClick={() => setShopCat(shopCat === cat ? null : cat)} />
+                ))}
+              </>
+            )}
+            </div>
+            </div>
+          </div>
+        ))}
+
+        <p className="fd-section">Locations</p>
+        <Row symbol="trash" label="Trash" active={inTrash} onClick={() => go('trash')} />
+
+        <p className="fd-section">Tags</p>
+        {TAGS.map((t) => (
+          <Row key={t.id} dot={t.color} label={t.label} active={tagId === t.id} onClick={() => go(`tag:${t.id}`)} />
+        ))}
       </div>
-    </div>
+    </WindowSidebar>
   )
 
-  // ── Sidebar ──────────────────────────────────────────────────────────────────
-  const sidebarContent = ({ onClose, onMinimize, onMaximize }) => (
-    <WindowSidebar width={200} controls={{ onClose, onMinimize, onMaximize }}>
-    <div className="flex flex-col overflow-y-auto window-scroll px-2 py-2 gap-0.5" style={{ flex: 1 }}>
-      {/* Favorites. Applications is the first row *inside* this section —
-          in Finder it is a favourite like any other, not a heading of its own.
-          It used to sit above the "Favorites" label with a rule under it,
-          which left the label orphaned from the row it names. */}
-      <p className="px-3 pb-1 text-[11px] font-semibold" style={{ color: 'rgba(255,255,255,0.56)' }}>Favorites</p>
-      <SidebarItem
-        icon={toolsIconUrl}
-        label="Applications"
-        active={contentView === 'applications'}
-        onClick={goToApplications}
-      />
-      {FAVORITES.map((fav) => (
-        <div key={fav.id}>
-          <SidebarItem
-            icon={fav.icon}
-            label={fav.label}
-            active={contentView === fav.id}
-            expandable={EXPANDABLE.has(fav.id)}
-            expanded={openFavs.has(fav.id)}
-            onClick={() => {
-              /* Coming from elsewhere, the first click both goes there and
-                 opens it; once you are inside, the row is a toggle. */
-              if (EXPANDABLE.has(fav.id)) discloseFav(fav.id, contentView === fav.id)
-              setContentView(fav.id)
-              setSelectedTool(null)
-              setSearch('')
-            }}
-          />
-          {/* Open the Portfolio and its categories unfold beneath it, the way
-              Finder discloses what is inside a folder. */}
-          <AnimatePresence initial={false}>
-          {fav.id === 'portfolio' && isPortfolio && openFavs.has('portfolio') && (
-            <motion.div
-              key="portfolio-tree"
-              className="flex flex-col gap-0.5 pt-0.5 pb-1"
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{    height: 0, opacity: 0 }}
-              transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
-              style={{ overflow: 'hidden' }}
-            >
-              <SidebarSubItem
-                icon={AllIcon}
-                label="All"
-                active={!pfType}
-                onClick={() => selectSlice(null, null)}
-              />
-              <SidebarSubItem
-                icon={RecentsIcon}
-                label="Recents"
-                active={pfType === 'recent'}
-                onClick={() => selectSlice('recent', 'recent')}
-              />
-              {CATEGORIES.map((cat) => (
-                <div key={cat.section} className="pt-1">
-                  <p className="pl-7 pb-0.5 text-[10px] font-semibold tracking-wide" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                    {cat.section}
-                  </p>
-                  {cat.items.map((item) => (
-                    <SidebarSubItem
-                      key={item.id}
-                      icon={CATEGORY_ICONS[item.id]}
-                      label={item.label}
-                      active={pfType === 'category' && pfItem === item.id}
-                      onClick={() => selectSlice('category', item.id)}
-                    />
-                  ))}
-                </div>
-              ))}
-              <div className="pt-1">
-                <p className="pl-7 pb-0.5 text-[10px] font-semibold tracking-wide" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                  Tags
-                </p>
-                {TAGS.map((tag) => (
-                  <SidebarSubItem
-                    key={tag.id}
-                    dot={tag.color}
-                    label={tag.label}
-                    active={pfType === 'tag' && pfItem === tag.id}
-                    onClick={() => selectSlice('tag', tag.id)}
-                  />
-                ))}
-              </div>
-            </motion.div>
-          )}
-
-          {/* The Shop's tags, gathered from the shelf itself */}
-          {fav.id === 'shop' && isShop && openFavs.has('shop') && (
-            <motion.div
-              key="shop-tree"
-              className="flex flex-col gap-0.5 pt-0.5 pb-1"
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{    height: 0, opacity: 0 }}
-              transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
-              style={{ overflow: 'hidden' }}
-            >
-              <SidebarSubItem
-                icon={AllIcon}
-                label="All resources"
-                active={!shopCat}
-                onClick={() => setShopCat(null)}
-              />
-              {SHOP_CATEGORIES.map((cat) => (
-                <SidebarSubItem
-                  key={cat}
-                  dot="rgba(255,255,255,0.32)"
-                  label={cat}
-                  active={shopCat === cat}
-                  onClick={() => setShopCat(shopCat === cat ? null : cat)}
-                />
-              ))}
-            </motion.div>
-          )}
-
-          {/* Notes keeps its categories in the same place, under its own row */}
-          {fav.id === 'notes' && isNotes && openFavs.has('notes') && (
-            <motion.div
-              key="notes-tree"
-              className="flex flex-col gap-0.5 pt-0.5 pb-1"
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{    height: 0, opacity: 0 }}
-              transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
-              style={{ overflow: 'hidden' }}
-            >
-              {NOTE_CATEGORIES.map((cat) => (
-                <SidebarSubItem
-                  key={cat.id}
-                  label={cat.label}
-                  active={noteCat === cat.id}
-                  onClick={() => setNoteCat(cat.id)}
-                />
-              ))}
-            </motion.div>
-          )}
-          </AnimatePresence>
-        </div>
-      ))}
-
-      {/* Locations — the Trash is a place in Finder, not an app of its own,
-          which is why the dock's basket opens this window. */}
-      <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '6px 8px' }} />
-      <p className="px-3 pb-1 text-[11px] font-semibold" style={{ color: 'rgba(255,255,255,0.56)' }}>Locations</p>
-      <SidebarItem
-        icon={trashIcon}
-        label="Trash"
-        active={inTrash}
-        onClick={() => { setContentView('trash'); setSelectedTool(null); setSearch('') }}
-      />
+  /* ── What each file location shows when it is empty ── */
+  const empty = (
+    <div className="fd-empty">
+      {inTrash ? (
+        <>
+          <img src={trashIcon} alt="" draggable={false} />
+          <p className="fd-empty__title">Trash is Empty</p>
+          <p className="fd-empty__sub">Drag a file from the desktop, or an app from Applications, onto the Trash in the dock.</p>
+        </>
+      ) : search ? (
+        <p className="fd-empty__title">No Results</p>
+      ) : tagId ? (
+        <p className="fd-empty__sub">Nothing is tagged {locationName}. Right-click a file on the desktop to tag it.</p>
+      ) : contentView === 'recents' ? (
+        <p className="fd-empty__sub">Apps and files you open show up here.</p>
+      ) : null}
     </div>
-    </WindowSidebar>
   )
 
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
-    <Window
-      id="finder"
-      navSlot={navSlot}
-      toolbar={toolbar}
-      sidebarContent={sidebarContent}
-      titleBarBorder={false}
-    >
+    <Window id="finder" navSlot={navSlot} toolbar={toolbar} sidebarContent={sidebarContent} titleBarBorder={false}>
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
 
-        {/* The row under the toolbar: the location on the left, and in the
-            Trash the one button it gets — Empty, dimmed when it is empty.
-            Applications names itself in the title bar only, the way the real
-            Applications folder does, so the row collapses to nothing there. */}
-        <div className="finder-subbar" data-bare={contentView === 'applications'}>
-          {contentView !== 'applications' && (
-            <span className="finder-subbar__name">{locationName}</span>
-          )}
-          {inTrash && (
-            <button
-              className="finder-empty-btn"
-              disabled={!trashFull}
-              onClick={() => setConfirmEmpty(true)}
-              onPointerDown={(e) => e.stopPropagation()}
-            >
+        {/* The Trash keeps a bar under the toolbar with its one button. */}
+        {inTrash && (
+          <div className="finder-subbar">
+            <span className="finder-subbar__name">Trash</span>
+            <button className="finder-empty-btn" disabled={!trashFull} onClick={() => setConfirmEmpty(true)} onPointerDown={stop}>
               Empty
             </button>
-          )}
-          {/* The wall's own view switch, in the row where the Trash keeps
-              Empty — Finder's per-location controls live here. */}
-          {isPortfolio && (
-            <div className="finder-viewswitch">
-              <button
-                aria-label="Grid view"
-                data-active={pfView === 'grid'}
-                onClick={() => setPfView('grid')}
-                onPointerDown={(e) => e.stopPropagation()}
-              >
-                <MacGridIcon width={12} height={12} />
-              </button>
-              <button
-                aria-label="List view"
-                data-active={pfView === 'list'}
-                onClick={() => setPfView('list')}
-                onPointerDown={(e) => e.stopPropagation()}
-              >
-                <img src={macListPng} alt="" width={12} height={12} draggable={false} />
-              </button>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
 
-      {/* The chat and the project wall bring their own padding and do their
-          own scrolling, so the file-area gutters step aside for them. */}
-      <div
-        className={isEmbedded ? '' : 'window-scroll px-4 pb-4 pt-1'}
-        style={{ flex: 1, minHeight: 0, overflowY: isEmbedded ? 'hidden' : 'auto' }}
-      >
-        <AnimatePresence mode="wait">
-
-          {contentView === 'applications' ? (
-            /* ── Applications grid — single click selects, double click opens ── */
-            <motion.div
-              key="applications"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{    opacity: 0 }}
-              transition={{ duration: 0.15 }}
-            >
-              {visibleApps.length > 0 ? (
-                <div className="grid gap-1 pt-2" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(104px, 1fr))' }}>
-                  {visibleApps.map((app) => (
-                    <AppGridItem
-                      key={app.id}
-                      app={app}
-                      system={app.system}
-                      selected={selectedTool === app.id}
-                      onSelect={() => setSelectedTool(app.id)}
-                      onOpen={() => {
-                        if (app.system) { play('open'); openWindow(app.id) }
-                        else if (!app.disabled) launchTool(app.id)
-                      }}
-                      onTrash={trashApp}
-                      onBlocked={setBlockedApp}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center gap-2" style={{ paddingTop: 80 }}>
-                  <MacSearchIcon width={28} height={28} style={{ opacity: 0.2 }} />
-                  <p className="text-[12px]" style={{ color: 'var(--body)', opacity: 0.5 }}>No tools found</p>
-                </div>
-              )}
-            </motion.div>
-
-          ) : isHome ? (
-            /* ── Home — Mikuda herself ────────────────────────────────────
-               The Home favourite is not a signpost to another window: it is
-               the chat, running here. Selecting it in the sidebar is the
-               whole interaction, so there is no Open button to press. */
-            <motion.div
-              key="home"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{    opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              style={{ height: '100%' }}
-            >
-              <ChatPanel />
-            </motion.div>
-
-          ) : isPortfolio ? (
-            /* ── Portfolio — the project wall ─────────────────────────────
-               Same grid the Portfolio window shows; its categories moved
-               into Finder's sidebar and its search into Finder's toolbar,
-               so the location is navigated with Finder's own chrome. */
-            <motion.div
-              key="portfolio"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{    opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              style={{ height: '100%', width: '100%' }}
-            >
-              <PortfolioPanel
-                type={pfType}
-                item={pfItem}
-                search={search}
-                viewMode={pfView}
-                columns="repeat(auto-fill, minmax(170px, 1fr))"
-              />
-            </motion.div>
-
-          ) : isNotes ? (
-            /* ── Notes — the entries, the reader and the canvas ───────────
-               Its categories moved into Finder's sidebar, so the location is
-               navigated with Finder's own chrome. */
-            <motion.div
-              key="notes"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{    opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              style={{ height: '100%', width: '100%' }}
-            >
-              <NotesPanel category={noteCat} onCategoryChange={setNoteCat} search={search} />
-            </motion.div>
-
-          ) : isShop ? (
-            /* ── Shop — the animation shelf ───────────────────────────────
-               Its tags moved into Finder's sidebar and its search into
-               Finder's toolbar, so the location is navigated with Finder's
-               own chrome. */
-            <motion.div
-              key="shop"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{    opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              style={{ height: '100%', width: '100%' }}
-            >
-              <ShopPanel category={shopCat} search={search} heading={false} />
-            </motion.div>
-
-          ) : inTrash ? (
-            /* ── Trash ────────────────────────────────────────────────────
-               The folder itself. Right-click gives the two things macOS
-               gives you here — Put Back and Delete Immediately — and the
-               footer restates what emptying means, the way the real window
-               does above its file list. */
-            <motion.div
-              key="trash"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{    opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              style={{ minHeight: 'calc(100% - 32px)' }}
-              onClick={() => setSelectedTool(null)}
-            >
-              {trashFull ? (
-                  <div className="grid gap-1 pt-1" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(104px, 1fr))' }}>
-                    {trashItems.map((item) => (
-                      <GridItem
-                        key={item.id}
-                        icon={item.icon}
-                        label={item.name}
-                        thumb={item.kind === 'image'}
-                        selected={selectedTool === item.id}
-                        onSingleClick={(e) => { e.stopPropagation(); setSelectedTool(item.id) }}
-                        onContextMenu={(e) => {
-                          e.preventDefault()
-                          setSelectedTool(item.id)
-                          setItemMenu({ x: e.clientX, y: e.clientY, id: item.id })
-                        }}
-                      />
-                    ))}
-                  </div>
-              ) : (
-                /* macOS states this in the middle of the window, in grey */
-                <div className="flex flex-col items-center justify-center gap-3" style={{ paddingTop: 96 }}>
-                  <img src={trashIcon} alt="" draggable={false} style={{ width: 52, height: 52, opacity: 0.45 }} />
-                  <p className="text-[13px] font-medium" style={{ color: 'var(--headline)', opacity: 0.7, fontFamily: "'SF Pro Text'" }}>
-                    Trash is Empty
-                  </p>
-                  <p className="text-[11px] text-center max-w-[260px]" style={{ color: 'var(--body)', opacity: 0.45 }}>
-                    Drag a file from the desktop, or an app from Applications, onto the
-                    Trash in the dock.
-                  </p>
-                </div>
-              )}
-            </motion.div>
-
-          ) : (
-            /* ── Page / Favorite detail ── */
-            <motion.div
-              key={contentView}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{    opacity: 0, y: -6 }}
-              transition={{ duration: 0.18 }}
-              className="flex flex-col items-center justify-center gap-5"
-              style={{ minHeight: 'calc(100% - 32px)' }}
-            >
-              <motion.img
-                src={currentPage?.icon}
-                alt={currentPage?.label}
-                initial={{ scale: 0.85 }}
-                animate={{ scale: 1 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 26 }}
-                style={{ width: 88, height: 88, objectFit: 'contain' }}
-              />
-              <div className="text-center">
-                <p className="text-[20px] font-semibold" style={{ color: 'var(--headline)', fontFamily: "'SF Pro Display'" }}>
-                  {currentPage?.label}
-                </p>
-                <p className="text-[12px] mt-1.5" style={{ color: 'var(--body)', opacity: 0.7 }}>
-                  Navigate to this page
-                </p>
+        <div
+          className={isEmbedded || view === 'columns' || view === 'gallery' ? '' : 'window-scroll px-4 pb-4 pt-1'}
+          style={{ flex: 1, minHeight: 0, overflowY: isEmbedded ? 'hidden' : 'auto' }}
+        >
+          {/* No transition between places: Finder swaps the contents in the
+              same frame. A fade out and back in read as the window jumping. */}
+          {isHome ? (
+              <div key="home" style={{ height: '100%' }}>
+                <ChatPanel />
               </div>
-              <button
-                onClick={() => launchPage(contentView)}
-                className="px-6 py-2 rounded-lg text-[12px] font-medium"
-                style={{ background: 'rgba(207,5,6,0.12)', border: '1px solid rgba(207,5,6,0.28)', color: '#cf0506', fontFamily: "'SF Pro Text'" }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(207,5,6,0.22)' }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(207,5,6,0.12)' }}
-              >
-                Open
-              </button>
-            </motion.div>
-          )}
-
-        </AnimatePresence>
+            ) : isPortfolio ? (
+              <div key="portfolio" style={{ height: '100%', width: '100%' }}>
+                <PortfolioPanel type={pfType} item={pfItem} search={search} viewMode={pfView}
+                  columns="repeat(auto-fill, minmax(170px, 1fr))" />
+              </div>
+            ) : isNotes ? (
+              <div key="notes" style={{ height: '100%', width: '100%' }}>
+                <NotesPanel category={noteCat} onCategoryChange={setNoteCat} search={search} />
+              </div>
+            ) : isShop ? (
+              <div key="shop" style={{ height: '100%', width: '100%' }}>
+                <ShopPanel category={shopCat} search={search} heading={false} />
+              </div>
+            ) : (
+              <div key={contentView} style={{ height: '100%' }}>
+                <FinderBrowser
+                  items={items}
+                  view={view}
+                  group={group}
+                  selectedId={selected}
+                  onSelect={setSelected}
+                  onContextMenu={(e, it) => setMenu({ at: { x: e.clientX, y: e.clientY }, items: itemMenu(it) })}
+                  renderIcon={contentView === 'applications'
+                    ? (it, props) => <AppTile app={it} props={props} onTrash={trashApp} onBlocked={setBlockedApp} />
+                    : undefined}
+                  empty={empty}
+                />
+              </div>
+            )}
+        </div>
       </div>
-      </div>
 
-      {/* Right-click a trashed file */}
-      <ContextMenu
-        at={itemMenu}
-        onClose={() => setItemMenu(null)}
-        items={[
-          {
-            label: 'Put Back',
-            /* Seeded demo files have no origin to go back to, which is exactly
-               what macOS does with a file whose original folder is gone. */
-            disabled: !trashItems.find((i) => i.id === itemMenu?.id)?.origin,
-            onClick: () => doPutBack(itemMenu.id),
-          },
-          { sep: true },
-          {
-            label: 'Delete Immediately',
-            onClick: () => { play('emptyTrash'); eraseItem(itemMenu.id); setSelectedTool(null) },
-          },
-        ]}
-      />
+      <ContextMenu at={menu?.at} items={menu?.items ?? []} onClose={() => setMenu(null)} />
 
       <MacAlert
         open={confirmEmpty}
@@ -902,11 +590,10 @@ export default function FinderWindow() {
         title="Are you sure you want to permanently erase the items in the Trash?"
         message="You can't undo this action."
         confirmLabel="Empty Trash"
-        onConfirm={doEmptyTrash}
+        onConfirm={() => { play('emptyTrash'); emptyTrash(); setConfirmEmpty(false); setSelected(null) }}
         onCancel={() => setConfirmEmpty(false)}
       />
 
-      {/* Dropping a required app on the Trash: macOS refuses out loud */}
       <MacAlert
         open={Boolean(blockedApp)}
         icon={blockedApp?.icon}

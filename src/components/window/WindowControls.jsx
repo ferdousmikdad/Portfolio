@@ -30,15 +30,19 @@ function Glyph({ kind }) {
   )
 }
 
-export default function WindowControls({ onClose, onMinimize, onMaximize, maximizeDisabled }) {
+export default function WindowControls({ onClose, onMinimize, onMaximize, maximizeDisabled, minimizeDisabled }) {
   return (
     <div className="traffic-lights group">
       <button onClick={onClose} className="traffic-light traffic-light-close" title="Close">
         <Glyph kind="close" />
       </button>
-      <button onClick={onMinimize} className="traffic-light traffic-light-minimize" title="Minimize">
-        <Glyph kind="minimize" />
-      </button>
+      {minimizeDisabled ? (
+        <span className="traffic-light traffic-light--disabled" aria-disabled="true" />
+      ) : (
+        <button onClick={onMinimize} className="traffic-light traffic-light-minimize" title="Minimize">
+          <Glyph kind="minimize" />
+        </button>
+      )}
       {/* A window that cannot be zoomed greys the button out and stops
           answering it — no arrows on hover, no tooltip, nothing to click. */}
       {maximizeDisabled ? (

@@ -36,7 +36,7 @@ function ProjectCard({ project, onClick }) {
     <div
       className="group rounded-xl overflow-hidden cursor-pointer transition-all duration-200"
       style={{ border: '1px solid transparent', background: 'var(--wall-bg)' }}
-      onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(207,5,6,0.25)' }}
+      onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--brand) 25%, transparent)' }}
       onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent' }}
       onClick={onClick}
     >

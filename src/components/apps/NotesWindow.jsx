@@ -63,7 +63,7 @@ export default function NotesWindow() {
                   row inverts to white along with its label. */}
               <span
                 className="flex-shrink-0 flex items-center justify-center"
-                style={{ width: 16, height: 16, color: on ? '#fff' : 'var(--brand, #cf0506)' }}
+                style={{ width: 16, height: 16, color: on ? '#fff' : 'var(--brand)' }}
               >
                 <Glyph />
               </span>

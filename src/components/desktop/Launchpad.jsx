@@ -10,7 +10,7 @@ import terminalUrl from '@/assets/icons/terminal.svg?url'
 import calcUrl     from '@/assets/icons/Calculator@4x 1.png'
 import appStoreUrl from '@/assets/icons/App Store.png'
 import spotifyUrl  from '@/assets/icons/spotify.svg?url'
-import folderUrl   from '@/assets/icons/Folder.png'
+import photosUrl   from '@/assets/icons/Photos.png'
 import homeUrl     from '@/assets/icons/Home.png'
 import photoBoothUrl from '@/assets/icons/photobooth.png?url'
 
@@ -37,7 +37,7 @@ export default function Launchpad({ open, onClose }) {
   const apps = useMemo(() => [
     { id: 'finder',     name: 'Finder',          icon: finderUrl,   run: () => openFinderAt('applications') },
     { id: 'home',       name: 'Home',            icon: homeUrl,     run: () => navigate('home') },
-    { id: 'portfolio',  name: 'Portfolio',       icon: folderUrl,   run: () => navigate('portfolio') },
+    { id: 'portfolio',  name: 'Portfolio',       icon: photosUrl,   run: () => navigate('portfolio') },
     { id: 'notes',      name: 'Notes',           icon: noteUrl,     run: () => openWindow('notes') },
     { id: 'terminal',   name: 'Terminal',        icon: terminalUrl, run: () => openWindow('terminal') },
     { id: 'calculator', name: 'Calculator',      icon: calcUrl,     run: () => openWindow('calculator') },

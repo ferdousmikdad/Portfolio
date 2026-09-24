@@ -150,7 +150,7 @@ export default function ToolsDock() {
                 width:         4,
                 height:        4,
                 borderRadius: '50%',
-                background:   '#cf0506',
+                background:   'var(--brand)',
                 pointerEvents:'none',
               }}
             />

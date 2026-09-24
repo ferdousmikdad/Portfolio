@@ -185,11 +185,11 @@ function AnimatedBackground({ isDark }) {
     <>
       <canvas
         ref={canvasRef}
-        className="absolute inset-0 w-full h-full"
+        data-desktop-surface className="absolute inset-0 w-full h-full"
         style={{ zIndex: 0 }}
       />
       <div
-        className="absolute inset-0 pointer-events-none select-none"
+        data-desktop-surface className="absolute inset-0 pointer-events-none select-none"
         style={{
           backgroundImage: "url('/noise.png')",
           backgroundRepeat: 'repeat',
@@ -205,7 +205,7 @@ function AnimatedBackground({ isDark }) {
 function WallpaperBackground({ image }) {
   return (
     <div
-      className="absolute inset-0 w-full h-full"
+      data-desktop-surface className="absolute inset-0 w-full h-full"
       style={{
         backgroundImage: `url('/${image}')`,
         backgroundSize: 'cover',
@@ -219,8 +219,8 @@ function WallpaperBackground({ image }) {
 
 function StaticBackground({ isDark }) {
   return (
-    <div className="absolute inset-0" style={{ background: isDark ? '#080808' : '#F2EDD9', zIndex: 0 }}>
-      <div className="absolute inset-0 pointer-events-none" style={{
+    <div data-desktop-surface className="absolute inset-0" style={{ background: isDark ? '#080808' : '#F2EDD9', zIndex: 0 }}>
+      <div data-desktop-surface className="absolute inset-0 pointer-events-none" style={{
         backgroundImage: "url('/noise.png')", backgroundRepeat: 'repeat',
         opacity: isDark ? 0.25 : 0.15,
         mixBlendMode: isDark ? 'overlay' : 'multiply',

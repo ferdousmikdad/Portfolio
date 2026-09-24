@@ -6,7 +6,6 @@ import TOOLS from '@/data/tools'
 
 // Icon glyphs per window id
 const WINDOW_META = {
-  profile:   { glyph: '👤', color: '#007AFF' },
   pacman:    { glyph: '🎮', color: '#34C759' },
   portfolio: { glyph: '◻',  color: '#AF52DE' },
   shop:      { glyph: '🛍', color: '#FF9500' },

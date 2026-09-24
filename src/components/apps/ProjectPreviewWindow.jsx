@@ -245,9 +245,9 @@ export default function ProjectPreviewWindow({ project, onClose, isMobile = fals
                   <a
                     href="mailto:ferdousmikdad@gmail.com"
                     className="flex items-center gap-2 px-4 h-9 rounded-lg text-[12px] font-semibold no-underline transition-colors"
-                    style={{ background: '#cf0506', color: '#fff' }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = '#a80404' }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = '#cf0506' }}
+                    style={{ background: 'var(--brand)', color: '#fff' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'color-mix(in srgb, var(--brand) 82%, black)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--brand)' }}
                   >
                     Hire me
                     <ArrowUpRight size={13} />

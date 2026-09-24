@@ -6,8 +6,7 @@ import Background from './Background'
 import ToolsPageDock from '@/components/dock/ToolsPageDock'
 import { GlassDefs } from '@/components/ui/LiquidGlass'
 import MenuWindow from '@/components/dock/MenuWindow'
-import ProfileCard from '@/components/apps/ProfileCard'
-import AboutMeWindow from '@/components/apps/AboutMeWindow'
+import ContactsWindow from '@/components/apps/ContactsWindow'
 import PacmanWindow from '@/components/apps/PacmanWindow'
 import DocWindow from '@/components/apps/BioWindow'
 import WorkWindow from '@/components/apps/WorkWindow'
@@ -23,10 +22,9 @@ import useDragStore from '@/store/dragStore'
 import DragGhost from '@/components/ui/DragGhost'
 import DESKTOP_FILES from '@/data/desktopFiles'
 import useSound from '@/hooks/useSound'
-import MikudaChat from '@/components/apps/MikudaChat'
 import HomeWindow from '@/components/apps/HomeWindow'
 import SpotifyWindow from '@/components/apps/SpotifyWindow'
-import ProjectPreviewWindow from '@/components/apps/ProjectPreviewWindow'
+import PreviewWindow from '@/components/apps/PreviewWindow'
 import SettingsWindow from '@/components/apps/SettingsWindow'
 import MailWindow from '@/components/apps/MailWindow'
 import CalculatorWindow from '@/components/apps/CalculatorWindow'
@@ -43,6 +41,12 @@ import LockScreen from '@/components/desktop/LockScreen'
 import StageManager from '@/components/desktop/StageManager'
 import NotificationCenter from '@/components/desktop/NotificationCenter'
 import AirDropSheet from '@/components/desktop/AirDropSheet'
+import GetInfo from '@/components/desktop/GetInfo'
+import ContextMenu from '@/components/ui/ContextMenu'
+import useDesktopStore from '@/store/desktopStore'
+import { TAGS } from '@/data/projects'
+import folderIconUrl from '@/assets/icons/Folder.png'
+import useDesktopItems, { SHIPPED_AT, DESKTOP_PATH } from '@/hooks/useDesktopItems'
 import useHotCorners from '@/hooks/useHotCorners'
 import allProjects from '@/data/projects'
 
@@ -53,8 +57,72 @@ const pointOf = (event, info) =>
     ? { x: event.clientX, y: event.clientY }
     : info.point
 
-function DesktopIcon({ file, initialX, onOpen, selected, onSelect, onTrash, onAirDrop }) {
-  const pos     = useRef({ x: initialX, y: file.y })
+
+/* Sort By, in the order Finder lists it. */
+const SORTS = [
+  ['none',      'None'],
+  ['name',      'Name'],
+  ['kind',      'Kind'],
+  ['dateAdded', 'Date Added'],
+  ['size',      'Size'],
+  ['tags',      'Tags'],
+]
+const bytes = (size) => {
+  const m = /([\d.]+)\s*(KB|MB|GB)/i.exec(size ?? '')
+  return m ? parseFloat(m[1]) * { KB: 1e3, MB: 1e6, GB: 1e9 }[m[2].toUpperCase()] : 0
+}
+const sorters = {
+  name:      (a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }),
+  kind:      (a, b) => (a.kind === 'folder' ? 0 : 1) - (b.kind === 'folder' ? 0 : 1) || a.name.localeCompare(b.name),
+  dateAdded: (a, b) => (b.addedAt ?? 0) - (a.addedAt ?? 0),
+  size:      (a, b) => bytes(b.size) - bytes(a.size),
+  tags:      (a, b) => {
+    const rank = (x) => x.tags.length ? TAGS.findIndex((t) => t.id === x.tags[0]) : 99
+    return rank(a) - rank(b) || a.name.localeCompare(b.name)
+  },
+}
+
+/* An icon's slot in the right-hand column Finder arranges the desktop
+   into: top to bottom, then the next column to the left. */
+const slot = (i) => {
+  const perCol = Math.max(1, Math.floor((window.innerHeight - 80 - 120) / 100))
+  return { x: window.innerWidth - 96 - Math.floor(i / perCol) * 96, y: 80 + (i % perCol) * 100 }
+}
+
+/* The label while renaming: Finder selects the name without its extension,
+   so typing replaces "about_me" and keeps ".txt". Return commits, Escape
+   leaves the old name. */
+function RenameField({ value, onDone }) {
+  const ref = useRef(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    el.focus()
+    const dot = value.lastIndexOf('.')
+    el.setSelectionRange(0, dot > 0 ? dot : value.length)
+  }, [value])
+  const commit = () => onDone(ref.current.value.trim() || null)
+  return (
+    <input
+      ref={ref}
+      className="desktop-icon-rename"
+      defaultValue={value}
+      spellCheck={false}
+      onKeyDown={(e) => {
+        e.stopPropagation()
+        if (e.key === 'Enter')  { e.preventDefault(); commit() }
+        if (e.key === 'Escape') { e.preventDefault(); onDone(null) }
+      }}
+      onBlur={commit}
+      onMouseDown={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
+      onDoubleClick={(e) => e.stopPropagation()}
+    />
+  )
+}
+
+function DesktopIcon({ file, initialX, initialY, onOpen, selected, onSelect, onTrash, onAirDrop, onMenu, renaming, onRenamed }) {
+  const pos     = useRef({ x: initialX, y: initialY })
   const [, rerender] = useState(0)
   const [lifted, setLifted] = useState(false)
   const didDrag = useRef(false)
@@ -81,7 +149,6 @@ function DesktopIcon({ file, initialX, onOpen, selected, onSelect, onTrash, onAi
       /* Lifted above the dock while in hand: a file being dragged to the
          Trash has to stay visible over the slab it is aimed at. */
       style={{ position: 'absolute', x: pos.current.x, y: pos.current.y, zIndex: lifted ? 9999 : 15 }}
-      drag
       dragMomentum={false}
       dragElastic={0}
       onDragStart={(event, info) => {
@@ -113,10 +180,28 @@ function DesktopIcon({ file, initialX, onOpen, selected, onSelect, onTrash, onAi
         e.stopPropagation()
         onOpen()
       }}
+      onContextMenu={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        onSelect()
+        onMenu(e)
+      }}
       title={file.name}
+      drag={!renaming}
     >
       <img src={file.icon} alt={file.name} draggable={false} />
-      <span className="desktop-icon-label">{file.name}</span>
+      {renaming ? (
+        <RenameField value={file.name} onDone={onRenamed} />
+      ) : (
+        <span className="desktop-icon-label">
+          {file.tags?.length > 0 && (
+            <span className="desktop-icon-tags">
+              {file.tags.map((t) => <i key={t} style={{ background: TAGS.find((x) => x.id === t)?.color }} />)}
+            </span>
+          )}
+          {file.name}
+        </span>
+      )}
     </motion.div>
   )
 }
@@ -128,20 +213,13 @@ export default function Desktop() {
 
   useHotCorners()
   const menuRef  = useRef(null)
-  const chatRef  = useRef(null)
-  /* Mikuda is raised from the menu bar now, so its open state lives in the
-     store rather than here. */
-  const mikudaOpen   = useWindowStore((s) => s.mikudaChat)
-  const mikudaPrompt = useWindowStore((s) => s.mikudaPrompt)
-  const closeMikuda  = useWindowStore((s) => s.closeMikudaChat)
-  const clearPrompt  = useWindowStore((s) => s.clearMikudaPrompt)
   const airDrop        = useWindowStore((s) => s.startAirDrop)
   const missionControl = useWindowStore((s) => s.missionControl)
   const launchpad      = useWindowStore((s) => s.launchpad)
   const toggleLaunchpad = useWindowStore((s) => s.toggleLaunchpad)
   const closeLaunchpad  = useWindowStore((s) => s.closeLaunchpad)
   const toggleShortcuts = useWindowStore((s) => s.toggleShortcuts)
-  const { openWindow, closeAllExcept, switchTool, activePage, navKey, navigate, previewProject, closeProjectPreview, openProjectPreview, openMailWindow } = useWindowStore()
+  const { openWindow, closeAllExcept, switchTool, activePage, navKey, navigate, openProjectPreview, openMailWindow } = useWindowStore()
   const isAnyMaximized    = useWindowStore((s) => s.windows.some((w) => w.isMaximized))
   const showDesktopIcons  = useSettingsStore((s) => s.showDesktopIcons)
   const trashItems        = useTrashStore((s) => s.items)
@@ -149,6 +227,100 @@ export default function Desktop() {
   const trashedOnDesktop  = trashedFrom(trashItems, 'desktop')
   const setActivePage = navigate
   const play = useSound()
+
+  /* ── The desktop's own items and its right-click menus ── */
+  const openSettingsAt           = useWindowStore((s) => s.openSettingsAt)
+  const openFinderAt             = useWindowStore((s) => s.openFinderAt)
+  const toggleNotificationCenter = useWindowStore((s) => s.toggleNotificationCenter)
+  const { sortBy, layout, newFolder, rename, toggleTag, setSortBy, cleanUp } = useDesktopStore()
+  const [menu,     setMenu]     = useState(null)   // { at, items }
+  const info    = useDesktopStore((s) => s.info)
+  const setInfo = useDesktopStore((s) => s.showInfo)
+  const [renaming, setRenaming] = useState(null)   // id of the icon being renamed
+
+  /* Shipped files and the visitor's folders, as one list, minus whatever
+     is in the Trash, with any rename and tags applied. */
+  const desktopItems = useDesktopItems()
+  if (sortBy !== 'none') desktopItems.sort(sorters[sortBy])
+  // Read by the key handlers below without resubscribing them every render.
+  const itemsRef = useRef(desktopItems)
+  itemsRef.current = desktopItems
+
+  /* With a sort chosen the whole desktop sits in Finder's column; with
+     none, the shipped files keep their places and a new folder stays where
+     it was made — until Clean Up lines everything up. */
+  const placeOf = (f, i) => {
+    if (sortBy !== 'none') return slot(i)
+    if (f.kind === 'folder' && f.x != null) return { x: f.x, y: f.y }
+    return { x: window.innerWidth - 96, y: f.y }
+  }
+  const cleanUpNow = () => {
+    const taken = new Set(DESKTOP_FILES.filter((f) => !trashedOnDesktop.has(f.id)).map((f) => f.y))
+    let i = 0
+    const nextFree = () => { while (taken.has(slot(i).y) && slot(i).x === window.innerWidth - 96) i++; return slot(i++) }
+    useDesktopStore.setState((st) => ({
+      folders: st.folders.map((x) => (trashedOnDesktop.has(x.id) ? x : { ...x, ...nextFree() })),
+    }))
+    cleanUp()
+  }
+
+  const trashPayload = (f) => ({
+    id: f.id, name: f.name, kind: f.kind, icon: f.icon, size: f.size,
+    origin: { source: 'desktop', id: f.id },
+  })
+  const openItem = (f) => (f.kind === 'folder' ? openFinderAt(`folder:${f.id}`) : openWindow(f.windowId))
+  const infoFor = (f) => ({
+    name: f.name, kind: f.kind, icon: f.icon, size: f.size, tags: f.tags,
+    where: DESKTOP_PATH, created: f.addedAt, modified: f.addedAt,
+  })
+
+  const fileMenu = (f) => [
+    { label: 'Open', icon: 'arrow.up.right.square', shortcut: '⌘O', onClick: () => openItem(f) },
+    ...(f.kind === 'folder' ? [] : [{
+      label: 'Open With',
+      submenu: [{ label: 'TextEdit (default)', checked: true, onClick: () => openItem(f) }],
+    }]),
+    { sep: true },
+    { label: 'Move to Trash', icon: 'trash', shortcut: '⌘⌫', onClick: () => { play('trash'); trashFile(trashPayload(f)) } },
+    { sep: true },
+    { label: 'Get Info',   icon: 'info.circle', shortcut: '⌘I', onClick: () => setInfo(infoFor(f)) },
+    { label: 'Rename',     icon: 'pencil', onClick: () => setRenaming(f.id) },
+    { label: 'Quick Look', icon: 'eye', shortcut: '⌘Y', disabled: f.kind === 'folder', onClick: () => setQuickLook(f) },
+    { sep: true },
+    { label: 'Share…', icon: 'square.and.arrow.up', onClick: () => { play('open'); airDrop() } },
+    { sep: true },
+    { tags: TAGS, selected: f.tags, onToggle: (t) => toggleTag(f.id, t) },
+  ]
+
+  const desktopMenu = (x, y) => [
+    { label: 'New Folder', icon: 'folder.badge.plus', shortcut: '⇧⌘N', onClick: () => {
+      const id = newFolder(Math.round(x - 44), Math.round(y - 36))
+      setSelectedIcon(id)
+      setRenaming(id)
+    } },
+    { sep: true },
+    { label: 'Get Info', icon: 'info.circle', shortcut: '⌘I', onClick: () => setInfo({
+      name: 'Desktop', kind: 'folder', icon: folderIconUrl,
+      size: `${desktopItems.length} item${desktopItems.length === 1 ? '' : 's'}`,
+      where: 'Macintosh HD ▸ Users ▸ ferdous', created: SHIPPED_AT, modified: Date.now(), tags: [],
+    }) },
+    { label: 'Change Wallpaper…', icon: 'photo', onClick: () => openSettingsAt('wallpaper') },
+    { label: 'Edit Widgets…',     icon: 'square.grid.2x2', onClick: () => toggleNotificationCenter() },
+    { sep: true },
+    { label: 'Sort By', icon: 'arrow.up.arrow.down', submenu: SORTS.map(([id, label]) => ({
+      label, checked: sortBy === id, onClick: () => setSortBy(id),
+    })) },
+    { label: 'Clean Up', icon: 'rectangle.3.group', disabled: sortBy !== 'none', onClick: cleanUpNow },
+  ]
+
+  /* Right-click on the desktop itself — the wallpaper, not a window, the
+     dock or an icon, which all have their own menus or none. */
+  const onDesktopContextMenu = (e) => {
+    if (!e.target.closest?.('[data-desktop-surface]')) return
+    e.preventDefault()
+    setSelectedIcon(null)
+    setMenu({ at: { x: e.clientX, y: e.clientY }, items: desktopMenu(e.clientX, e.clientY) })
+  }
 
   const TOPBAR_H  = 28
   const DOCK_SAFE = 88
@@ -254,22 +426,6 @@ export default function Desktop() {
     return () => document.removeEventListener('mousedown', handler)
   }, [menuOpen])
 
-  /* Close chat on outside click. The menu bar is spared: the Siri button
-     lives there, and closing on its mousedown would fight the toggle. */
-  useEffect(() => {
-    if (!mikudaOpen) return
-    const handler = (e) => {
-      if (
-        chatRef.current && !chatRef.current.contains(e.target) &&
-        !e.target.closest?.('.topbar')
-      ) {
-        closeMikuda()
-      }
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [mikudaOpen, closeMikuda])
-
   // Open the right window when a menu item is selected
   useEffect(() => {
     if (!activePage) return
@@ -357,7 +513,7 @@ export default function Desktop() {
       if (typing) return
       if (quickLook) return            // QuickLook owns the key while it is up
       if (!selectedIcon) return
-      const file = DESKTOP_FILES.find((f) => f.id === selectedIcon)
+      const file = itemsRef.current.find((f) => f.id === selectedIcon && f.kind !== 'folder')
       if (!file) return
       e.preventDefault()
       setQuickLook(file)
@@ -366,8 +522,22 @@ export default function Desktop() {
     return () => window.removeEventListener('keydown', onKey)
   }, [selectedIcon, quickLook])
 
+  /* Return on a selected icon renames it, as it does in Finder. */
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key !== 'Enter' || !selectedIcon || renaming || quickLook) return
+      const el = document.activeElement
+      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return
+      if (!itemsRef.current.some((f) => f.id === selectedIcon)) return
+      e.preventDefault()
+      setRenaming(selectedIcon)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [selectedIcon, renaming, quickLook])
+
   return (
-    <div className="relative w-full h-full overflow-hidden" style={{ background: 'var(--bg)' }} onClick={() => setSelectedIcon(null)}>
+    <div className="relative w-full h-full overflow-hidden" style={{ background: 'var(--bg)' }} onClick={() => setSelectedIcon(null)} onContextMenu={onDesktopContextMenu}>
 
       {/* Filters every Liquid Glass surface references */}
       <GlassDefs />
@@ -386,12 +556,18 @@ export default function Desktop() {
           the Trash window is what brings the icon back. */}
       {showDesktopIcons && (
         <>
-          {DESKTOP_FILES.filter((f) => !trashedOnDesktop.has(f.id)).map((file) => (
+          {desktopItems.map((file, i) => (
             <DesktopIcon
-              key={file.id}
+              /* The layout counter is in the key: Sort By and Clean Up seat
+                 every icon afresh rather than animating dragged ones home. */
+              key={`${file.id}:${layout}:${sortBy === 'none' ? '' : i}`}
               file={file}
-              initialX={window.innerWidth - 96}
-              onOpen={() => openWindow(file.windowId)}
+              initialX={placeOf(file, i).x}
+              initialY={placeOf(file, i).y}
+              onOpen={() => openItem(file)}
+              onMenu={(e) => setMenu({ at: { x: e.clientX, y: e.clientY }, items: fileMenu(file) })}
+              renaming={renaming === file.id}
+              onRenamed={(name) => { if (name && name !== file.name) rename(file.id, name); setRenaming(null) }}
               selected={selectedIcon === file.id}
               onSelect={() => setSelectedIcon(file.id)}
               onTrash={(item) => { play('trash'); trashFile(item) }}
@@ -416,8 +592,7 @@ export default function Desktop() {
         }}
       >
         <AnimatePresence>
-          <ProfileCard />
-          <AboutMeWindow />
+          <ContactsWindow />
           <PacmanWindow />
           <DocWindow id="bio" />
           <DocWindow id="skills" />
@@ -438,12 +613,20 @@ export default function Desktop() {
           <AboutMacWindow />
           <PhotoBoothWindow />
           <WhatsNewWindow />
+          {/* A project opened from Portfolio, Finder or Mikuda — a Preview window. */}
+          <PreviewWindow />
         </AnimatePresence>
       </div>
 
       <MissionControl />
 
       <QuickLook file={quickLook} onClose={() => setQuickLook(null)} />
+
+      {/* The desktop's right-click menus, and the Get Info window they open. */}
+      <ContextMenu at={menu?.at} items={menu?.items ?? []} onClose={() => setMenu(null)} />
+      <AnimatePresence>
+        {info && <GetInfo key={info.name} item={info} onClose={() => setInfo(null)} />}
+      </AnimatePresence>
 
       <Launchpad open={launchpad} onClose={closeLaunchpad} />
 
@@ -469,25 +652,6 @@ export default function Desktop() {
         onNavigate={setActivePage}
         menuRef={menuRef}
       />
-
-      {/* Global project preview — opened from WorkWindow or MikudaChat */}
-      <ProjectPreviewWindow project={previewProject} onClose={closeProjectPreview} />
-
-      {/* Mikuda AI — own layer so pointer events aren't blocked. The button
-          that used to float here moved to the menu bar, where macOS keeps
-          Siri; only the chat window is left. */}
-      <div style={{ position: 'absolute', inset: 0, zIndex: 60, pointerEvents: 'none' }}>
-        {/* Hidden on the home page, where the full chat is already on screen */}
-        {activePage !== 'home' && (
-          <MikudaChat
-            isOpen={mikudaOpen}
-            onClose={closeMikuda}
-            chatRef={chatRef}
-            initialPrompt={mikudaPrompt}
-            onPromptSent={clearPrompt}
-          />
-        )}
-      </div>
 
       {/* Translucent copy of a file being dragged out of a window */}
       <DragGhost />

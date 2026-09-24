@@ -44,6 +44,10 @@ html.reduce-motion *::after {
 /* ── Theme tokens ─────────────────────────────────────────────────────────── */
 
 :root {
+  /* The accent. Settings → Appearance overwrites this inline on <html>; the
+     value here is only what shows before that store has rehydrated — macOS
+     blue, the same default the store carries. */
+  --brand:          #0a84ff;
   /* Light mode */
   --bg:             #F2EDD9;
   /* Mikuda chat — light */
@@ -253,7 +257,7 @@ html.reduce-motion *::after {
     border-radius: 22px;
     border: 1px solid #404040;
     overflow: hidden;
-    transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.25s ease;
+    transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.25s ease, border-radius 0.2s ease;
     /* inactive — subtle ambient shadow */
     box-shadow:
       0 0 0 0.5px rgba(0, 0, 0, 0.12),
@@ -422,7 +426,7 @@ html.reduce-motion *::after {
 @layer utilities {
   .text-headline { color: var(--headline); }
   .text-body     { color: var(--body); }
-  .text-brand    { color: #cf0506; }
+  .text-brand    { color: var(--brand); }
   .bg-desktop    { background-color: var(--bg); }
 }
 
@@ -636,7 +640,7 @@ html.reduce-motion *::after {
   position: relative;
   transition: background 0.2s ease;
 }
-.topbar-toggle[data-on="true"]  { background: #cf0506; }
+.topbar-toggle[data-on="true"]  { background: var(--brand); }
 .topbar-toggle[data-on="false"] { background: var(--border); }
 .topbar-toggle::after {
   content: '';
@@ -892,7 +896,7 @@ html.reduce-motion *::after {
 
 /* User bubble */
 .mk-bubble-user {
-  background: #cf0506;
+  background: var(--brand);
   border-radius: 12px 12px 4px 12px;
   padding: 10px 13px;
   max-width: 200px;
@@ -996,9 +1000,9 @@ html.reduce-motion *::after {
   width: 22px;
   height: 22px;
   border-radius: 6px;
-  background: rgba(207,5,6,0.10);
-  border: 1px solid rgba(207,5,6,0.20);
-  color: #cf0506;
+  background: color-mix(in srgb, var(--brand) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--brand) 20%, transparent);
+  color: var(--brand);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1006,7 +1010,7 @@ html.reduce-motion *::after {
   flex-shrink: 0;
   transition: background 0.15s ease;
 }
-.mk-image-btn:hover { background: rgba(207,5,6,0.20); }
+.mk-image-btn:hover { background: color-mix(in srgb, var(--brand) 20%, transparent); }
 
 /* Action button */
 .mk-action-btn {
@@ -1015,13 +1019,13 @@ html.reduce-motion *::after {
   border-radius: 8px;
   font-size: 12px;
   font-weight: 600;
-  color: #cf0506;
-  background: rgba(207,5,6,0.10);
-  border: 1px solid rgba(207,5,6,0.20);
+  color: var(--brand);
+  background: color-mix(in srgb, var(--brand) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--brand) 20%, transparent);
   cursor: pointer;
   transition: background 0.15s ease;
 }
-.mk-action-btn:hover { background: rgba(207,5,6,0.18); }
+.mk-action-btn:hover { background: color-mix(in srgb, var(--brand) 18%, transparent); }
 
 /* Contact chips */
 .mk-contact-chips {
@@ -1045,18 +1049,18 @@ html.reduce-motion *::after {
 }
 .mk-contact-chip:hover {
   background: var(--mk-chip-bg-hover);
-  border-color: rgba(207,5,6,0.35);
+  border-color: color-mix(in srgb, var(--brand) 35%, transparent);
 }
 .mk-contact-chip-icon {
   width: 28px;
   height: 28px;
   border-radius: 7px;
-  background: rgba(207,5,6,0.12);
+  background: color-mix(in srgb, var(--brand) 12%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  color: #cf0506;
+  color: var(--brand);
   font-size: 13px;
 }
 .mk-contact-chip-label {
@@ -1106,7 +1110,7 @@ html.reduce-motion *::after {
   font-size: 13px;
   color: var(--mk-input-color);
   font-family: 'SF Pro Text', sans-serif;
-  caret-color: #cf0506;
+  caret-color: var(--brand);
 }
 .mk-input::placeholder { color: var(--mk-input-ph); }
 
@@ -1114,7 +1118,7 @@ html.reduce-motion *::after {
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  background: #cf0506;
+  background: var(--brand);
   color: #fff;
   display: flex;
   align-items: center;
@@ -1124,7 +1128,7 @@ html.reduce-motion *::after {
   border: none;
   transition: background 0.15s ease;
 }
-.mk-send-btn:hover:not(:disabled) { background: #a80404; }
+.mk-send-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--brand) 82%, black); }
 .mk-send-btn:disabled { opacity: 0.4; cursor: default; }
 
 /* ── Mikuda ─────────────────────────────────────────────────────────────────
@@ -1155,35 +1159,224 @@ html.reduce-motion *::after {
   z-index: 49;
 }
 
-/* The capsule. Half Spotlight's height — this holds one question, not a
-   search — with the radius at half the height so it reads as Tahoe, and a
-   shadow small enough that it hangs off the menu bar rather than floating
-   over the desktop the way Spotlight does. */
-.mikuda-ask {
+/* Field and answer, stacked and hung off the menu-bar button as one piece;
+   JS places the stack, the flex column keeps the answer 6pt under the field. */
+.mikuda-ask-stack {
   position: absolute;
   pointer-events: auto;
   display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+
+/* The capsule, at Tahoe Siri's measured 43pt with the radius at half the
+   height, and a shadow small enough that it hangs off the menu bar rather
+   than floating over the desktop the way Spotlight does. */
+.mikuda-ask {
+  position: relative;
+  z-index: 2;
+  display: flex;
   align-items: center;
-  gap: 9px;
-  height: 38px;
-  padding: 0 8px 0 9px;
-  border-radius: 19px;
+  gap: 10px;
+  height: 42px;
+  padding: 0 10px 0 11px;
+  border-radius: 21px;
   overflow: hidden;
   box-shadow:
     0 10px 26px rgba(0, 0, 0, 0.38),
     0 2px 6px rgba(0, 0, 0, 0.22),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+    inset 0 0 0 1px var(--siri-rim);
 }
-.mikuda-ask > *:not(.lg-glass) { position: relative; z-index: 1; }
-/* Denser than Spotlight's glass: Siri's field reads as a solid slab of dark
-   navy with the desktop barely coming through. */
-.mikuda-ask .lg-glass__overlay { background: rgba(33, 35, 48, 0.82); }
-.mikuda-ask .lg-glass__filter {
+.mikuda-ask, .mikuda-reply {
+  /* Sampled off the real field and answer box in dark mode. */
+  --siri-fill: rgba(34, 57, 76, 0.9);
+  --siri-rim:  rgba(88, 132, 168, 0.55);
+  --siri-text: #C2C6CB;
+}
+html:not(.dark) .mikuda-ask, html:not(.dark) .mikuda-reply {
+  --siri-fill: rgba(248, 248, 252, 0.86);
+  --siri-rim:  rgba(0, 0, 0, 0.10);
+  --siri-text: #3a3a3c;
+}
+.mikuda-ask > *:not(.lg-glass),
+.mikuda-reply > *:not(.lg-glass) { position: relative; z-index: 1; }
+/* Denser than Spotlight's glass: Siri reads as a solid slab of blue-slate
+   with the desktop barely coming through. */
+.mikuda-ask .lg-glass__overlay,
+.mikuda-reply .lg-glass__overlay { background: var(--siri-fill); }
+.mikuda-ask .lg-glass__filter,
+.mikuda-reply .lg-glass__filter {
   inset: -20px;
   backdrop-filter: blur(20px) saturate(170%);
   -webkit-backdrop-filter: blur(20px) saturate(170%);
 }
-html:not(.dark) .mikuda-ask .lg-glass__overlay { background: rgba(248, 248, 252, 0.84); }
+
+/* Thinking: the Apple Intelligence glow running round the rim. A conic
+   gradient turned by a registered angle, masked down to a 1.5px ring, with
+   a blurred copy underneath for the bloom. */
+@property --siri-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+.mikuda-ask__glow {
+  position: absolute !important;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(from var(--siri-angle), #3aa8ff, #9b6bff, #ff5fb0, #ff9a3c, #ffd84a, #3aa8ff);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 2 !important;
+}
+.mikuda-ask--thinking .mikuda-ask__glow {
+  opacity: 1;
+  animation: siri-spin 2.2s linear infinite;
+}
+@keyframes siri-spin { to { --siri-angle: 360deg; } }
+
+/* The answer's arrival: a white arc sweeping once round the rim (the same
+   masked-ring technique as the thinking glow, but a single bright arc
+   rather than the rainbow) with a soft white bloom inside the edge. It
+   plays once per answer and fades out. */
+.mikuda-reply__glow {
+  position: absolute !important;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 2 !important;
+  opacity: 0;
+  animation: siri-reply-glow 1.6s ease-out 1;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.35),
+    inset 0 0 22px rgba(255, 255, 255, 0.40);
+}
+/* The arc, and a blurred copy of it underneath for the glow. */
+.mikuda-reply__glow::before,
+.mikuda-reply__glow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2.5px;
+  background: conic-gradient(from var(--siri-angle),
+    rgba(255, 255, 255, 0) 0deg,
+    rgba(255, 255, 255, 1) 55deg,
+    rgba(255, 255, 255, 0) 120deg,
+    rgba(255, 255, 255, 0) 180deg,
+    rgba(255, 255, 255, 1) 235deg,
+    rgba(255, 255, 255, 0) 300deg);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  animation: siri-spin 1.6s ease-out 1;
+}
+.mikuda-reply__glow::after {
+  padding: 7px;
+  filter: blur(7px);
+  opacity: 0.9;
+}
+@keyframes siri-reply-glow {
+  0%   { opacity: 0; }
+  18%  { opacity: 1; }
+  65%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* The answer box. Width and radius come from the component, which starts it
+   as a drop and spreads it to the field's width. */
+.mikuda-reply {
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.36),
+    0 2px 6px rgba(0, 0, 0, 0.2),
+    inset 0 0 0 1px var(--siri-rim);
+}
+.mikuda-reply__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: min(60vh, 520px);
+  overflow-y: auto;
+  padding: 20px 22px;
+}
+.mikuda-reply__text {
+  font: 400 15px/21px 'SF Pro Text', 'SF Pro Display', sans-serif;
+  letter-spacing: -0.01em;
+  color: var(--siri-text);
+  white-space: pre-line;
+}
+
+.mikuda-reply__rows {
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+}
+html:not(.dark) .mikuda-reply__rows { background: rgba(0, 0, 0, 0.04); }
+.mikuda-reply__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  text-decoration: none;
+  cursor: default;
+}
+.mikuda-reply__row + .mikuda-reply__row { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07); }
+html:not(.dark) .mikuda-reply__row + .mikuda-reply__row { box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.06); }
+.mikuda-reply__row:hover { background: rgba(255, 255, 255, 0.06); }
+.mikuda-reply__row-text { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.mikuda-reply__row-title {
+  font: 600 13px/17px 'SF Pro Text', sans-serif;
+  color: var(--headline);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mikuda-reply__row-sub {
+  font: 12px/15px 'SF Pro Text', sans-serif;
+  color: var(--siri-text);
+  opacity: 0.75;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mikuda-reply__row-chev { color: var(--siri-text); opacity: 0.6; }
+
+.mikuda-reply__project {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  border: none;
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+  text-align: left;
+  cursor: default;
+}
+html:not(.dark) .mikuda-reply__project { background: rgba(0, 0, 0, 0.04); }
+.mikuda-reply__project img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; display: block; }
+.mikuda-reply__project-foot { display: flex; flex-direction: column; padding: 8px 12px 10px; }
+.mikuda-reply__project:hover img { filter: brightness(1.06); }
+
+.mikuda-reply__action {
+  align-self: flex-start;
+  height: 28px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 9999px;
+  background: var(--brand);
+  color: #fff;
+  font: 500 13px 'SF Pro Text', sans-serif;
+  cursor: default;
+}
+.mikuda-reply__action:active { filter: brightness(0.9); }
 
 .mikuda-ask__orb {
   width: 20px;
@@ -1231,272 +1424,365 @@ html:not(.dark) .mikuda-ask__input::placeholder { color: rgba(60, 60, 67, 0.45);
 html:not(.dark) .mikuda-ask__mic { color: rgba(60, 60, 67, 0.55); }
 html:not(.dark) .mikuda-ask__mic:hover { background: rgba(0, 0, 0, 0.07); }
 
-/* ── Home Chat Window ────────────────────────────────────────────────────────── */
+/* ── Home — Messages ─────────────────────────────────────────────────────────
+   Measured off Tahoe Messages at 2x: a 30pt round + and emoji button either
+   side of a 32pt capsule field with a hairline rim, conversation rows at a
+   10pt radius with a 40pt avatar, and the accent as the selection. Bubbles
+   are 18px-radius with the tail only on the last of a run, sent in the
+   accent, received in the system's grey (#3A3A3C dark, #E9E9EB light).     */
 
-/* Sidebar scroll container (inside the dark rounded panel) */
-.hw-sidebar-scroll {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0 12px 20px;
-  scrollbar-width: none;
+.msg-panel {
+  --msg-bg:        var(--window-bg);
+  --msg-in:        #E9E9EB;
+  --msg-in-text:   #000000;
+  --msg-secondary: #8A8A8E;
+  --msg-rim:       rgba(0, 0, 0, 0.12);
+  --msg-round:     rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--msg-bg);
+  font-family: 'SF Pro Text', system-ui, sans-serif;
 }
-.hw-sidebar-scroll::-webkit-scrollbar { display: none; }
-
-.hw-profile-photo {
-  width: 100%;
-  border-radius: 10px;
-  object-fit: cover;
-  aspect-ratio: 1 / 1;
-  margin-bottom: 12px;
-  user-select: none;
-  display: block;
+.dark .msg-panel {
+  --msg-in:        #3A3A3C;
+  --msg-in-text:   #FFFFFF;
+  --msg-secondary: #98989D;
+  --msg-rim:       rgba(255, 255, 255, 0.13);
+  --msg-round:     rgba(255, 255, 255, 0.06);
 }
 
-.hw-profile-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: #D0CDC4;
-  font-family: 'SF Pro Display', sans-serif;
-  margin-bottom: 2px;
+.msg-scroll { flex: 1; overflow-y: auto; overflow-x: hidden; }
+.msg-thread {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 22px 10px;
+  min-height: 100%;
+  justify-content: flex-end;
 }
 
-.hw-profile-role {
+.msg-stamp {
+  margin: 4px 0 12px;
+  text-align: center;
   font-size: 11px;
-  color: #5E5C53;
-  line-height: 1.5;
-  margin-bottom: 10px;
+  line-height: 14px;
+  color: var(--msg-secondary);
+}
+.msg-stamp b { font-weight: 600; }
+
+.msg-row { display: flex; margin-top: 2px; }
+.msg-row--first { margin-top: 10px; }
+.msg-row--out { justify-content: flex-end; }
+.msg-row--in  { justify-content: flex-start; }
+
+.msg-bubble {
+  position: relative;
+  max-width: min(72%, 420px);
+  padding: 7px 12px;
+  border-radius: 18px;
+  font-size: 13px;
+  line-height: 18px;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+.msg-bubble--out { background: var(--brand); color: #fff; }
+.msg-bubble--in  { background: var(--msg-in); color: var(--msg-in-text); }
+
+/* The tail, drawn the way Messages' own is: a curved sliver of bubble
+   colour, trimmed by a second curve in the conversation's background. */
+.msg-bubble--tail::before,
+.msg-bubble--tail::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  height: 18px;
+  pointer-events: none;
+}
+.msg-bubble--out.msg-bubble--tail::before {
+  right: -7px; width: 20px;
+  background: var(--brand);
+  border-bottom-left-radius: 16px 14px;
+}
+.msg-bubble--out.msg-bubble--tail::after {
+  right: -26px; width: 26px;
+  background: var(--msg-bg);
+  border-bottom-left-radius: 10px;
+}
+.msg-bubble--in.msg-bubble--tail::before,
+.msg-link.msg-bubble--tail::before {
+  left: -7px; width: 20px;
+  background: var(--msg-in);
+  border-bottom-right-radius: 16px 14px;
+}
+.msg-bubble--in.msg-bubble--tail::after,
+.msg-link.msg-bubble--tail::after {
+  left: -26px; width: 26px;
+  background: var(--msg-bg);
+  border-bottom-right-radius: 10px;
 }
 
-.hw-available-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 2px 8px;
-  border-radius: 100px;
-  background: rgba(34, 197, 94, 0.08);
-  border: 1px solid rgba(34, 197, 94, 0.2);
-  font-size: 10px;
-  font-weight: 500;
-  color: #22c55e;
-  margin-bottom: 0;
-  width: fit-content;
-}
-
-.hw-available-dot {
-  width: 4px;
-  height: 4px;
+/* Typing: the grey bubble with three dots breathing in turn. */
+.msg-typing { display: flex; gap: 4px; padding: 11px 13px; }
+.msg-typing > span {
+  width: 7px; height: 7px;
   border-radius: 50%;
-  background: #22c55e;
+  background: var(--msg-secondary);
+  animation: msg-typing 1.3s infinite ease-in-out;
+}
+.msg-typing > span:nth-child(2) { animation-delay: 0.18s; }
+.msg-typing > span:nth-child(3) { animation-delay: 0.36s; }
+@keyframes msg-typing {
+  0%, 60%, 100% { opacity: 0.35; transform: translateY(0); }
+  30%           { opacity: 1;    transform: translateY(-1.5px); }
+}
+
+/* Rich link: image on top, grey footer with title and site. */
+.msg-link {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 250px;
+  max-width: 72%;
+  padding: 0;
+  border: none;
+  border-radius: 18px;
+  background: var(--msg-in);
+  color: var(--msg-in-text);
+  text-align: left;
+  text-decoration: none;
+  cursor: default;
+  font: inherit;
+}
+.msg-link:hover { filter: brightness(1.06); }
+.dark .msg-link:hover { filter: brightness(1.12); }
+.msg-link__image {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 3;
+  border-radius: 18px 18px 0 0;
+  overflow: hidden;
+  background: var(--msg-round);
+}
+.msg-link__image img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: opacity 0.25s ease;
+}
+.msg-link__skeleton { position: absolute; inset: 0; background: var(--msg-round); }
+.msg-link__footer { display: flex; flex-direction: column; padding: 8px 13px 9px; min-width: 0; }
+.msg-link__title {
+  font-size: 13px; line-height: 17px; font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.msg-link__sub {
+  font-size: 12px; line-height: 15px;
+  color: var(--msg-secondary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.msg-receipt {
+  margin: 3px 4px 0 0;
+  align-self: flex-end;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--msg-secondary);
+}
+
+/* ── Compose bar ── */
+.msg-compose {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 10px;
   flex-shrink: 0;
 }
-
-.hw-sidebar-divider {
-  width: 100%;
-  height: 1px;
-  background: #2a2a2a;
-  margin: 12px 0;
-}
-
-.hw-sidebar-bio {
-  font-size: 11px;
-  line-height: 1.65;
-  color: #5E5C53;
-  margin-bottom: 14px;
-}
-
-.hw-social-links {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.hw-social-icon-btn {
+.msg-round {
+  display: grid;
+  place-items: center;
   width: 30px;
   height: 30px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: -0.3px;
-  text-decoration: none;
   flex-shrink: 0;
-  transition: opacity 0.14s ease, transform 0.14s ease;
-}
-.hw-social-icon-btn:hover { opacity: 0.75; transform: scale(1.08); }
-
-/* Right chat panel — relative container for absolute children */
-.hw-chat-panel {
-  height: 100%;
-  position: relative;
-  overflow: hidden;
-}
-
-/* Welcome layout — fills panel, centres content + input */
-.hw-welcome-layout {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding: 0 32px 0;
-  gap: 28px;
-}
-
-.hw-welcome-text {
-  text-align: center;
-}
-
-.hw-welcome-heading {
-  font-size: 34px;
-  font-weight: 700;
-  color: var(--headline);
-  font-family: 'SF Pro Display', sans-serif;
-  line-height: 1.12;
-  margin-bottom: 10px;
-}
-
-.hw-welcome-sub {
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--body);
-}
-
-/* Chat layout — fills panel, messages scroll above fixed input */
-.hw-chat-layout {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  padding: 0 32px 16px;
-  overflow: hidden;
-}
-
-/* Add bottom padding to input row only when inside chat layout */
-.hw-chat-layout .hw-input-row {
-  padding-top: 10px;
-}
-
-.hw-messages {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 20px 0 10px;
-}
-
-/* Wider AI bubble — no background */
-.hw-bubble-ai {
-  background: transparent;
-  border-radius: 4px 12px 12px 12px;
-  padding: 11px 0;
-  max-width: 480px;
-  align-self: flex-start;
-}
-
-.hw-bubble-text {
-  color: var(--mk-bubble-ai-text);
-  font-size: 13px;
-  line-height: 1.65;
-}
-
-/* User bubble — ChatGPT style: gray bg, theme-aware text */
-.hw-bubble-user {
-  background: var(--social-hover);
-  border-radius: 12px 12px 4px 12px;
-  padding: 11px 14px;
-  max-width: 440px;
-  color: var(--headline);
-  align-self: flex-end;
-}
-
-/* Wider image card */
-.hw-image-card {
-  width: 260px;
-  border-radius: 11px;
-  overflow: hidden;
-  background: var(--mk-card-bg);
-  border: 1px solid var(--mk-card-border);
-  cursor: pointer;
-  text-align: left;
-  transition: transform 0.2s ease;
-}
-.hw-image-card:hover { transform: translateY(-2px); }
-.hw-image-card:hover .mk-image { transform: scale(1.04); }
-
-/* Input area */
-.hw-input-row {
-  width: 100%;
-  flex-shrink: 0;
-  padding: 0;
-}
-
-/* Suggestion dropdown */
-.hw-suggest-dropdown {
-  position: absolute;
-  bottom: calc(100% + 6px);
-  left: 0;
-  right: 0;
-  background: var(--window-bg);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  overflow: hidden;
-  z-index: 10;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08);
-}
-
-.hw-suggest-item {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 14px;
-  font-size: 13px;
-  font-family: 'SF Pro Text', sans-serif;
-  color: var(--headline);
-  background: transparent;
   border: none;
-  text-align: left;
-  cursor: pointer;
-  transition: background 0.12s ease;
+  border-radius: 50%;
+  background: var(--msg-round);
+  box-shadow: inset 0 0 0 1px var(--msg-rim);
+  color: var(--headline);
+  cursor: default;
 }
-.hw-suggest-item:hover { background: var(--social-hover); }
-
-.hw-suggest-icon {
-  color: var(--body);
-  flex-shrink: 0;
-}
-
-.hw-input-bar {
+.msg-round:hover  { filter: brightness(1.25); }
+.msg-field {
+  flex: 1;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 9px 14px;
-  background: var(--mk-bubble-ai-bg);
-  border: 1px solid var(--border);
+  height: 32px;
+  padding: 0 5px 0 14px;
   border-radius: 9999px;
-  transition: border-color 0.2s ease;
+  box-shadow: inset 0 0 0 1px var(--msg-rim);
 }
-.hw-input-bar:focus-within {
-  border-color: rgba(150, 150, 150, 0.4);
-}
-
-.hw-input {
+.msg-input {
   flex: 1;
+  min-width: 0;
   background: transparent;
   border: none;
   outline: none;
-  font-size: 13px;
-  color: var(--mk-input-color);
-  font-family: 'SF Pro Text', sans-serif;
-  caret-color: #cf0506;
+  font: 13px 'SF Pro Text', system-ui, sans-serif;
+  color: var(--headline);
+  caret-color: var(--brand);
 }
-.hw-input::placeholder { color: var(--mk-input-ph); }
+.msg-input::placeholder { color: var(--msg-secondary); }
+.msg-field__wave { color: var(--msg-secondary); margin-right: 7px; }
+.msg-send {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 50%;
+  background: var(--brand);
+  color: #fff;
+  cursor: default;
+}
+.msg-send:disabled { opacity: 0.5; }
+
+/* The + menu: a standard macOS menu, rows highlighting in the accent. */
+.msg-menu {
+  position: absolute;
+  left: 12px;
+  bottom: calc(100% - 2px);
+  z-index: 5;
+  min-width: 240px;
+  padding: 5px;
+  border-radius: 12px;
+  /* Opaque on purpose: inside a window the backdrop is not sampled, so a
+     translucent menu would show the thread through it unblurred. */
+  background: color-mix(in srgb, var(--window-bg) 94%, white);
+  box-shadow: 0 0 0 0.5px var(--msg-rim), 0 10px 30px rgba(0, 0, 0, 0.28);
+  display: flex;
+  flex-direction: column;
+}
+.msg-menu__item {
+  height: 24px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  text-align: left;
+  font: 13px 'SF Pro Text', system-ui, sans-serif;
+  color: var(--headline);
+  cursor: default;
+}
+.msg-menu__item:hover { background: var(--brand); color: #fff; }
+
+/* ── Title bar contact ── */
+.msg-header {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+.msg-header__name {
+  font: 600 13px 'SF Pro Text', system-ui, sans-serif;
+  color: var(--headline);
+}
+
+/* ── Sidebar ── */
+.msg-avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  color: #fff;
+  background: linear-gradient(180deg, #A5A5AB, #7C7C82);
+}
+.msg-avatar img { width: 78%; height: 78%; object-fit: contain; margin-top: 12%; }
+
+.window-sidebar__panel > .msg-compose-btn {
+  align-self: flex-end;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 26px;
+  margin: -33px 10px 7px 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--headline);
+  opacity: 0.8;
+  cursor: default;
+}
+.window-sidebar__panel > .msg-compose-btn:hover { background: var(--social-hover); opacity: 1; }
+
+.msg-search {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  margin: 0 10px 8px;
+  padding: 0 11px;
+  border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--headline);
+}
+.dark .msg-search { background: rgba(255, 255, 255, 0.06); }
+.msg-search input {
+  flex: 1; min-width: 0;
+  background: transparent; border: none; outline: none;
+  font: 13px 'SF Pro Text', system-ui, sans-serif;
+  color: var(--headline);
+}
+.msg-search input::placeholder { color: var(--body); opacity: 0.8; }
+
+.msg-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 0 8px 8px;
+  overflow-y: auto;
+}
+.msg-convo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 64px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  text-align: left;
+  cursor: default;
+}
+.msg-convo--on { background: var(--brand); }
+.msg-convo__text { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
+.msg-convo__top  { display: flex; align-items: baseline; gap: 6px; }
+.msg-convo__name {
+  flex: 1; min-width: 0;
+  font: 600 13px/16px 'SF Pro Text', system-ui, sans-serif;
+  color: var(--headline);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.msg-convo__time {
+  font: 12px 'SF Pro Text', system-ui, sans-serif;
+  color: var(--body);
+}
+.msg-convo__preview {
+  font: 12px/15px 'SF Pro Text', system-ui, sans-serif;
+  color: var(--body);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.msg-convo--on .msg-convo__name { color: #fff; }
+.msg-convo--on .msg-convo__time,
+.msg-convo--on .msg-convo__preview { color: rgba(255, 255, 255, 0.8); }
 
 /* ── Genie Minimize Clone ─────────────────────────────────────────────────── */
 /* Freeze all child animations on the fixed-position snapshot */
@@ -1738,7 +2024,7 @@ html:not(.dark) .mikuda-ask__mic:hover { background: rgba(0, 0, 0, 0.07); }
 .you-tag {
   position: fixed;
   pointer-events: none;
-  background: #cf0506;
+  background: var(--brand);
   color: #fff;
   font-size: 10px;
   font-weight: 700;
@@ -2198,55 +2484,139 @@ html:not(.dark) .mikuda-ask__mic:hover { background: rgba(0, 0, 0, 0.07); }
 .mac-menu {
   position: fixed;
   z-index: 2147483500;
-  min-width: 190px;
-  padding: 4px;
-  border-radius: 8px;
-  background: rgba(38, 38, 40, 0.84);
-  backdrop-filter: blur(28px) saturate(1.3);
-  -webkit-backdrop-filter: blur(28px) saturate(1.3);
+  min-width: 220px;
+  padding: 5px;
+  border-radius: 12px;
+  background: rgba(38, 38, 42, 0.84);
+  backdrop-filter: blur(28px) saturate(1.4);
+  -webkit-backdrop-filter: blur(28px) saturate(1.4);
   box-shadow:
-    inset 0 0 0 0.5px rgba(255, 255, 255, 0.14),
-    0 8px 28px rgba(0, 0, 0, 0.42),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.16),
+    0 10px 32px rgba(0, 0, 0, 0.42),
     0 1px 3px rgba(0, 0, 0, 0.30);
   transform-origin: top left;
+  font-family: 'SF Pro Text', system-ui, sans-serif;
+  --mac-menu-text: rgba(255, 255, 255, 0.90);
+  --mac-menu-dim:  rgba(255, 255, 255, 0.30);
+  --mac-menu-key:  rgba(235, 238, 255, 0.40);
+  --mac-menu-sep:  rgba(255, 255, 255, 0.13);
+}
+html:not(.dark) .mac-menu {
+  background: rgba(246, 246, 248, 0.86);
+  box-shadow:
+    inset 0 0 0 0.5px rgba(0, 0, 0, 0.12),
+    0 10px 32px rgba(0, 0, 0, 0.20),
+    0 1px 3px rgba(0, 0, 0, 0.12);
+  --mac-menu-text: rgba(0, 0, 0, 0.86);
+  --mac-menu-dim:  rgba(0, 0, 0, 0.28);
+  --mac-menu-key:  rgba(0, 0, 0, 0.38);
+  --mac-menu-sep:  rgba(0, 0, 0, 0.10);
 }
 
+/* 24pt rows: a leading column for the symbol or checkmark, the label, then
+   the shortcut or submenu chevron pushed to the trailing edge. */
 .mac-menu__item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 18px;
+  gap: 8px;
   width: 100%;
-  padding: 3px 9px;
+  height: 24px;
+  padding: 0 10px;
   border: none;
-  border-radius: 4px;
+  border-radius: 7px;
   background: transparent;
-  font-family: 'SF Pro Text', system-ui, sans-serif;
   font-size: 13px;
-  line-height: 1.5;
   text-align: left;
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--mac-menu-text);
   cursor: default;
+  white-space: nowrap;
 }
-.mac-menu__item:hover:not([data-disabled]) {
-  background: var(--brand, #0064d2);
+.mac-menu__lead {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  flex-shrink: 0;
+  margin-left: 2px;
+}
+.mac-menu__label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.mac-menu__item:hover:not([data-disabled]),
+.mac-menu__item[data-open] {
+  background: var(--brand, #0a84ff);
   color: #fff;
 }
-.mac-menu__item[data-disabled] {
-  color: rgba(255, 255, 255, 0.32);
-  cursor: default;
-}
+.mac-menu__item[data-disabled] { color: var(--mac-menu-dim); }
 
 .mac-menu__key {
-  font-size: 12px;
-  opacity: 0.55;
+  display: flex;
+  gap: 2px;
+  margin-left: 20px;
+  font-size: 13px;
+  color: var(--mac-menu-key);
 }
+.mac-menu__item:hover:not([data-disabled]) .mac-menu__key { color: rgba(255, 255, 255, 0.75); }
+.mac-menu__chev { color: var(--mac-menu-key); margin-left: 16px; }
+.mac-menu__item:hover .mac-menu__chev,
+.mac-menu__item[data-open] .mac-menu__chev { color: #fff; }
 
 .mac-menu__sep {
   height: 1px;
-  margin: 4px 1px;
-  background: rgba(255, 255, 255, 0.12);
+  margin: 5px 10px;
+  background: var(--mac-menu-sep);
+  transform: scaleY(0.5);
 }
+
+/* Finder's tag row: 13pt dots on a 24pt pitch, each with a darker rim; a
+   tag the item already carries shows a check. */
+.mac-menu__tags {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  height: 28px;
+  padding: 0 12px 0 36px;
+}
+.mac-menu__tag {
+  display: grid;
+  place-items: center;
+  width: 13px;
+  height: 13px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--tag);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.28);
+  color: #fff;
+  cursor: default;
+  transition: transform 0.1s ease;
+}
+.mac-menu__tag:hover { transform: scale(1.25); }
+/* In a dark menu Finder draws the tag colours muted — sampled red #A15F5C,
+   blue #527BA7 — while next to a file name they stay at full strength. */
+.dark .mac-menu__tag { filter: saturate(0.5) brightness(0.78); }
+
+/* Section titles in a submenu — "Applications", "Documents" in Recent Items. */
+.mac-menu__header {
+  padding: 5px 12px 2px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--mac-menu-key);
+}
+/* An app icon in the leading column, at the symbol's size. */
+.mac-menu__img { width: 16px; height: 16px; object-fit: contain; }
+/* The grey count capsule — "1 update" beside System Settings. */
+.mac-menu__badge {
+  margin-left: 16px;
+  padding: 1px 7px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.16);
+  color: var(--mac-menu-text);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 15px;
+}
+html:not(.dark) .mac-menu__badge { background: rgba(0, 0, 0, 0.10); }
+.mac-menu__item:hover .mac-menu__badge { background: rgba(255, 255, 255, 0.25); color: #fff; }
+/* Menu-bar menus are a touch wider, as AppKit sizes them to their titles. */
+.mac-menu--bar { min-width: 240px; }
 
 /* ── Alert ─────────────────────────────────────────────────────────────────
    A narrow column with the icon above the text and the buttons bottom-right,
@@ -2743,7 +3113,7 @@ button:hover > .finder-disclosure { opacity: 0.7; }
   transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
 }
 .shop-card:hover {
-  border-color: rgba(207, 5, 6, 0.3);
+  border-color: color-mix(in srgb, var(--brand) 30%, transparent);
   transform: translateY(-2px);
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
 }
@@ -4059,7 +4429,7 @@ html:not(.dark) .cc-focus[data-on="true"] { --lg-bg-color: rgba(94, 92, 230, 0.2
   width: 40px; height: 40px;
   border-radius: 5px;
   margin-bottom: 6px;
-  background: linear-gradient(140deg, #cf0506, #5a1a1a 70%, #241014);
+  background: linear-gradient(140deg, var(--brand), #16305a 70%, #0e1422);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
   flex-shrink: 0;
 }
@@ -4350,61 +4720,6 @@ html:not(.dark) .welcome__hint { color: rgba(0, 0, 0, 0.32); }
 .mb__title[data-open="true"]:hover {
   background: var(--brand, #0064d2);
   color: #fff;
-}
-
-.mb-menu {
-  position: absolute;
-  top: calc(100% + 2px);
-  left: 0;
-  min-width: 216px;
-  padding: 5px;
-  border-radius: 8px;
-  overflow: hidden;
-  z-index: 9000;
-  box-shadow:
-    inset 0 0 0 0.5px rgba(255, 255, 255, 0.12),
-    0 12px 36px rgba(0, 0, 0, 0.4);
-  /* Menus carry text over the desktop, so they frost harder than the bar. */
-  --lg-blur: 26px;
-  --lg-bg-color: var(--panel-fill);
-}
-.mb-menu > *:not(.lg-glass) { position: relative; z-index: 1; }
-
-.mb-menu__item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  width: 100%;
-  padding: 4px 9px;
-  border-radius: 5px;
-  text-align: left;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--headline);
-  background: transparent;
-  cursor: default;
-  white-space: nowrap;
-}
-.mb-menu__item:hover:not(:disabled) {
-  background: var(--brand, #0064d2);
-  color: #fff;
-}
-/* AppKit dims an inapplicable item rather than hiding it, so the menu keeps
-   the same shape whatever the state. */
-.mb-menu__item:disabled { opacity: 0.32; cursor: default; }
-
-.mb-menu__key {
-  font-size: 12.5px;
-  color: var(--mac-secondary);
-  flex-shrink: 0;
-}
-.mb-menu__item:hover:not(:disabled) .mb-menu__key { color: rgba(255, 255, 255, 0.75); }
-
-.mb-menu__sep {
-  height: 1px;
-  margin: 5px 8px;
-  background: var(--mac-card-line);
 }
 
 /* ── AirDrop ─────────────────────────────────────────────────────────────────
@@ -5371,14 +5686,110 @@ html:not(.dark) .ql__close { color: rgba(0,0,0,0.5); background: rgba(0,0,0,0.08
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding-top: 16vh;
+  /* Measured: the capsule's top sits ~15% down the screen. */
+  padding-top: 15vh;
 }
+/* The capsule (~360pt) plus four 62pt buttons 11pt apart — the row is the
+   same width whether the buttons are out or folded into the field. */
 .spotlight-stack {
-  width: min(680px, 78vw);
+  --sp-btn: 62px;
+  width: min(652px, 92vw);
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
+.spotlight-bar { display: flex; align-items: center; }
+.spotlight-bar .spotlight-pill { flex: 1; min-width: 0; }
+
+.spotlight-mode {
+  position: relative;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  height: var(--sp-btn);
+  border: none;
+  border-radius: 50%;
+  overflow: hidden;
+  color: rgba(235, 235, 245, 0.72);
+  cursor: default;
+  box-shadow:
+    0 18px 50px rgba(0, 0, 0, 0.42),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+}
+.spotlight-mode > *:not(.lg-glass) { position: relative; z-index: 1; }
+.spotlight-mode .lg-glass__overlay { background: rgba(24, 24, 26, 0.5); }
+.spotlight-mode .lg-glass__filter { inset: -30px; backdrop-filter: blur(26px) saturate(180%); -webkit-backdrop-filter: blur(26px) saturate(180%); }
+.spotlight-mode:hover { color: #fff; }
+.spotlight-mode:hover .lg-glass__overlay { background: rgba(60, 60, 64, 0.55); }
+html:not(.dark) .spotlight-mode { color: rgba(60, 60, 67, 0.7); }
+html:not(.dark) .spotlight-mode .lg-glass__overlay { background: rgba(250, 250, 252, 0.6); }
+
+/* The mode, once chosen, sits at the start of the field as a chip. */
+.spotlight-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--headline);
+  font: 500 15px 'SF Pro Text', sans-serif;
+  white-space: nowrap;
+  cursor: default;
+}
+html:not(.dark) .spotlight-chip { background: rgba(0, 0, 0, 0.07); }
+
+.spotlight-empty {
+  padding: 22px 12px;
+  text-align: center;
+  font: 13px 'SF Pro Text', sans-serif;
+  color: var(--mac-secondary);
+}
+
+/* Applications mode: an icon grid, six across. */
+.spotlight-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+  padding: 6px;
+}
+.spotlight-app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 4px 8px;
+  border: none;
+  border-radius: 14px;
+  background: transparent;
+  cursor: default;
+}
+.spotlight-app img { width: 54px; height: 54px; object-fit: contain; }
+.spotlight-app span {
+  max-width: 100%;
+  font: 12px 'SF Pro Text', sans-serif;
+  color: var(--headline);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.spotlight-app.is-active { background: rgba(255, 255, 255, 0.12); }
+html:not(.dark) .spotlight-app.is-active { background: rgba(0, 0, 0, 0.07); }
+
+.spotlight-row__symbol {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin: 0 4px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.10);
+  color: var(--headline);
+  flex-shrink: 0;
+}
+.spotlight-row.is-active .spotlight-row__symbol { background: rgba(255, 255, 255, 0.22); color: #fff; }
 
 /* The capsule. Radius is half the height, which is what makes it read as
    Tahoe rather than as a rounded box. */
@@ -5447,6 +5858,9 @@ html:not(.dark) .spotlight-pill__input::placeholder { color: rgba(60, 60, 67, 0.
 }
 html:not(.dark) .spotlight-results .lg-glass__overlay { background: rgba(250, 250, 252, 0.62); }
 .spotlight-results ul { list-style: none; margin: 0; padding: 0; }
+/* macOS draws no scrollbar until you scroll; the panel scrolls by wheel. */
+.spotlight-results { scrollbar-width: none; }
+.spotlight-results::-webkit-scrollbar { display: none; }
 
 .spotlight-results__group {
   font-family: 'SF Pro Text', sans-serif;
@@ -5470,7 +5884,8 @@ html:not(.dark) .spotlight-results .lg-glass__overlay { background: rgba(250, 25
   font-family: 'SF Pro Text', sans-serif;
 }
 .spotlight-row.is-active { background: var(--brand); }
-.spotlight-row__icon { width: 26px; height: 26px; object-fit: contain; flex-shrink: 0; }
+/* Icons, symbols and thumbnails share one 34pt column, so titles line up. */
+.spotlight-row__icon { width: 34px; height: 26px; object-fit: contain; flex-shrink: 0; }
 .spotlight-row__thumb {
   width: 34px; height: 26px; border-radius: 4px; overflow: hidden; flex-shrink: 0;
   background: var(--mac-control);
@@ -5505,7 +5920,7 @@ html:not(.dark) .spotlight-results .lg-glass__overlay { background: rgba(250, 25
 /* A focused macOS sidebar paints its selected row in the accent colour; the
    grey wash used before is what an *unfocused* window shows. */
 .shop-side-row--on {
-  background: var(--brand, #cf0506);
+  background: var(--brand);
   color: #fff;
 }
 .shop-side-row--on svg { color: #fff; }
@@ -5535,7 +5950,7 @@ html:not(.dark) .spotlight-results .lg-glass__overlay { background: rgba(250, 25
 /* Selected — accent fill, both lines inverted, and the rule under it removed
    so the block of colour stays unbroken. */
 .notes-row--on,
-.notes-row--on:hover { background: var(--brand, #cf0506); }
+.notes-row--on:hover { background: var(--brand); }
 .notes-row--on .notes-row__title { color: #fff; }
 .notes-row--on .notes-row__sub   { color: rgba(255, 255, 255, 0.82); }
 .notes-row--on .notes-row__rule  { opacity: 0; }
@@ -5547,7 +5962,7 @@ html:not(.dark) .spotlight-results .lg-glass__overlay { background: rgba(250, 25
 
 /* ── Notes sidebar ────────────────────────────────────────────────────────── */
 
-.notes-side-row--on { background: var(--brand, #cf0506); color: #fff; }
+.notes-side-row--on { background: var(--brand); color: #fff; }
 .window-shell:not(.focused) .notes-side-row--on {
   background: rgba(255, 255, 255, 0.10);
   color: var(--headline);
@@ -5865,3 +6280,1040 @@ html:not(.dark) .ks__sheet {
   border-radius: 2px;
   background: #f2f2f7;
 }
+
+/* ── Contacts (the About Me window) ──────────────────────────────────────────
+   Values sampled off the real Tahoe Contacts window in dark mode: the card
+   sits in an inset pane of #151516, the field groups are #2C2C2E at a 12px
+   radius, the round action buttons #2F2F31 with a grey glyph. Light mode
+   follows the system's own pairings — white pane, #F2F2F7 groups.          */
+
+.ct-tb-btn {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 26px;
+  border: none;
+  background: transparent;
+  color: var(--headline);
+  cursor: default;
+}
+
+.ct-body {
+  display: flex;
+  height: 100%;
+  --ct-pane:      #FFFFFF;
+  --ct-group:     #F2F2F7;
+  --ct-action:    #E9E9EB;
+  --ct-glyph:     #8E8E93;
+  --ct-secondary: #8A8A8E;
+  --ct-sep:       rgba(0, 0, 0, 0.10);
+  --ct-label:     #1C1C1E;
+}
+.dark .ct-body {
+  --ct-pane:      #151516;
+  --ct-group:     #2C2C2E;
+  --ct-action:    #2F2F31;
+  --ct-glyph:     #98989D;
+  --ct-secondary: #98989D;
+  --ct-sep:       rgba(255, 255, 255, 0.10);
+  --ct-label:     #FFFFFF;
+}
+
+.ct-list {
+  width: 236px;
+  flex-shrink: 0;
+  padding: 2px 8px 8px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+}
+.ct-list__empty {
+  margin-top: 40px;
+  text-align: center;
+  font: 13px 'SF Pro Text', system-ui, sans-serif;
+  color: var(--ct-secondary);
+}
+
+/* A list row is 52pt with its avatar at 32pt; the selection is the accent
+   laid on as a rounded 10pt slab, name and subtitle turning white on it. */
+.ct-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 52px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  text-align: left;
+  cursor: default;
+}
+.ct-row--on { background: var(--brand); }
+.ct-row__text { display: flex; flex-direction: column; min-width: 0; }
+.ct-row__name {
+  font: 600 13px/16px 'SF Pro Text', system-ui, sans-serif;
+  color: var(--ct-label);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ct-row__sub {
+  font: 400 12px/15px 'SF Pro Text', system-ui, sans-serif;
+  color: var(--ct-secondary);
+}
+.ct-row--on .ct-row__name { color: #fff; }
+.ct-row--on .ct-row__sub  { color: rgba(255, 255, 255, 0.78); }
+
+.ct-detail {
+  flex: 1;
+  min-width: 0;
+  margin: 0 7px 7px 0;
+  border-radius: 16px;
+  background: var(--ct-pane);
+  overflow-y: auto;
+}
+/* With the list hidden the pane is inset on both sides. */
+.ct-body > .ct-detail:first-child { margin-left: 7px; }
+
+.ct-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 340px;
+  margin: 0 auto;
+  padding: 22px 20px 28px;
+}
+
+.ct-avatar {
+  display: block;
+  flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  background: linear-gradient(180deg, #A5A5AB, #7C7C82);
+}
+.ct-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ct-avatar--illustrated img { object-fit: contain; padding: 14%; }
+.ct-card > .ct-avatar { box-shadow: 0 0 22px rgba(0, 0, 0, 0.28); }
+.dark .ct-card > .ct-avatar { box-shadow: 0 0 26px rgba(255, 255, 255, 0.10); }
+
+.ct-name {
+  margin-top: 16px;
+  font: 700 27px/32px 'SF Pro Display', system-ui, sans-serif;
+  letter-spacing: -0.2px;
+  color: var(--ct-label);
+  text-align: center;
+}
+.ct-title {
+  margin-top: 2px;
+  font: 400 13px/17px 'SF Pro Text', system-ui, sans-serif;
+  color: var(--ct-secondary);
+  text-align: center;
+}
+
+.ct-actions {
+  display: flex;
+  gap: 8px;
+  margin: 16px 0 14px;
+}
+.ct-action {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: var(--ct-action);
+  box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.06);
+  color: var(--ct-glyph);
+  cursor: default;
+  transition: color 0.12s ease, filter 0.12s ease;
+}
+.ct-action:not(:disabled):hover  { color: var(--brand); }
+.ct-action:not(:disabled):active { filter: brightness(0.85); }
+.ct-action:disabled { opacity: 0.45; }
+
+.ct-group {
+  width: 100%;
+  margin-top: 10px;
+  border-radius: 12px;
+  background: var(--ct-group);
+  overflow: hidden;
+}
+.ct-field {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 8px 14px;
+  position: relative;
+}
+.ct-field + .ct-field::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 14px; right: 0;
+  height: 1px;
+  background: var(--ct-sep);
+  transform: scaleY(0.5);
+}
+.ct-field__label {
+  font: 400 12px/15px 'SF Pro Text', system-ui, sans-serif;
+  color: var(--ct-secondary);
+}
+.ct-field__value {
+  font: 400 13px/17px 'SF Pro Text', system-ui, sans-serif;
+  color: var(--ct-label);
+  overflow-wrap: anywhere;
+}
+.ct-field__value--link { color: var(--brand); text-decoration: none; cursor: default; }
+.ct-field__value--link:hover { text-decoration: underline; }
+
+.ct-notes { padding: 10px 14px 14px; min-height: 96px; }
+.ct-notes__text {
+  margin-top: 4px;
+  font: 400 13px/19px 'SF Pro Text', system-ui, sans-serif;
+  color: var(--ct-label);
+  white-space: pre-line;
+}
+
+/* ── Portfolio — Photos ──────────────────────────────────────────────────────
+   From the real Tahoe Photos window at 2x: sidebar rows 32pt tall with a
+   17pt outline symbol, section headers in a semibold secondary grey, the
+   selected row the accent as a solid slab with white icon and label (the
+   grey slab with an accent label is only the unfocused state). The grid is
+   square crops with hairline gaps and no rounding.                         */
+
+.ph-side {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2px 10px 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.ph-section {
+  padding: 14px 10px 4px;
+  font: 600 11px/14px 'SF Pro Text', system-ui, sans-serif;
+  color: var(--body);
+}
+
+.ph-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--headline);
+  text-align: left;
+  cursor: default;
+}
+.ph-row__icon { opacity: 0.9; }
+.ph-row__dot {
+  width: 10px; height: 10px;
+  margin: 0 4px 0 3px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.ph-row__label {
+  flex: 1; min-width: 0;
+  font: 400 13px 'SF Pro Text', system-ui, sans-serif;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ph-row--on { background: var(--brand); color: #fff; }
+.ph-row--on .ph-row__icon { opacity: 1; }
+
+/* Toolbar zoom: a glass capsule split in two. */
+.ph-seg {
+  display: flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 2px;
+}
+.ph-seg button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 22px;
+  border: none;
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--headline);
+  cursor: default;
+}
+.ph-seg button:not(:disabled):hover { background: var(--social-hover); }
+.ph-seg button:disabled { opacity: 0.35; }
+.ph-seg__sep { width: 1px; height: 14px; background: var(--border); flex-shrink: 0; }
+.dark .ph-seg__sep { background: rgba(255, 255, 255, 0.14); }
+
+/* Content */
+.ph-content { height: 100%; overflow-y: auto; }
+
+/* Library — Collections */
+.ph-collections { padding: 4px 0 24px; }
+.ph-sec + .ph-sec { margin-top: 30px; }
+.ph-sec__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px 0 24px;
+  margin-bottom: 10px;
+}
+.ph-sec__title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: 700 21px/26px 'SF Pro Display', system-ui, sans-serif;
+  letter-spacing: -0.2px;
+  color: var(--headline);
+  cursor: default;
+}
+.ph-sec__chev { color: var(--body); opacity: 0.8; }
+.ph-sec__title:hover .ph-sec__chev { color: var(--brand); opacity: 1; }
+.ph-sec__toggle {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--brand);
+  cursor: default;
+  transition: transform 0.2s ease;
+}
+.dark .ph-sec__toggle { background: #3D3D3D; }
+.ph-sec__toggle--closed { transform: rotate(-90deg); }
+
+/* One row per section, scrolling sideways past the pane edge the way the
+   real row runs its last card off the window. */
+.ph-sec__row {
+  display: flex;
+  gap: 17px;
+  padding: 0 24px 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.ph-sec__row::-webkit-scrollbar { display: none; }
+
+.ph-card {
+  position: relative;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  border-radius: 13px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #525258, #2F3033);
+  cursor: default;
+  transition: transform 0.15s ease;
+}
+.ph-card:active { transform: scale(0.98); }
+.ph-card img,
+.ph-card video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ph-card::after {
+  content: '';
+  position: absolute;
+  inset: 45% 0 0 0;
+  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.55));
+  pointer-events: none;
+}
+.ph-card__label {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 8px;
+  z-index: 1;
+  font: 600 13px/16px 'SF Pro Text', system-ui, sans-serif;
+  color: #fff;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+/* An empty album, drawn as Photos draws "No Memories Available". */
+.ph-sec__empty {
+  margin: 0 24px;
+  padding: 22px 20px;
+  border-radius: 13px;
+  background: rgba(0, 0, 0, 0.05);
+}
+.dark .ph-sec__empty { background: #2C2C2E; }
+.ph-sec__empty-title { font: 600 13px 'SF Pro Text', system-ui, sans-serif; color: var(--body); }
+.ph-sec__empty-sub   { margin-top: 6px; font: 12px 'SF Pro Text', system-ui, sans-serif; color: var(--body); opacity: 0.85; }
+
+.ph-grid {
+  display: grid;
+  gap: 2px;
+  padding: 0 2px;
+}
+.ph-tile {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  padding: 0;
+  border: none;
+  overflow: hidden;
+  background: var(--wall-bg, rgba(128, 128, 128, 0.12));
+  cursor: default;
+}
+.ph-tile img,
+.ph-tile video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+/* Selection: an accent ring drawn inside the tile, over the picture. */
+.ph-tile--on::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 0 3px var(--brand), inset 0 0 0 4px rgba(255, 255, 255, 0.6);
+  pointer-events: none;
+}
+.ph-tile__time {
+  position: absolute;
+  right: 6px;
+  bottom: 4px;
+  font: 600 11px 'SF Pro Text', system-ui, sans-serif;
+  color: #fff;
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+
+.ph-foot {
+  padding: 16px 0 20px;
+  text-align: center;
+  font: 600 12px 'SF Pro Text', system-ui, sans-serif;
+  color: var(--body);
+}
+
+.ph-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 90px;
+  gap: 4px;
+}
+.ph-empty__title { font: 700 17px 'SF Pro Display', system-ui, sans-serif; color: var(--headline); }
+.ph-empty__sub   { font: 13px 'SF Pro Text', system-ui, sans-serif; color: var(--body); }
+
+/* ── Preview ─────────────────────────────────────────────────────────────────
+   From Tahoe Preview at 2x: tools in glass capsules with a hairline rim,
+   hairline separators between the tools of a group, and the picture on the
+   window's own colour directly under the toolbar.                          */
+
+.pv-group {
+  display: flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 3px;
+}
+.pv-tool {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 26px;
+  border: none;
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--headline);
+  cursor: default;
+}
+.pv-tool--wide { display: flex; justify-content: center; width: 40px; }
+.pv-tool:not(:disabled):hover { background: var(--social-hover); }
+.pv-tool:disabled { opacity: 0.35; }
+.pv-tool--on { color: var(--brand); }
+.pv-sep { width: 1px; height: 16px; flex-shrink: 0; background: var(--border); }
+.dark .pv-sep { background: rgba(255, 255, 255, 0.14); }
+
+.pv-body { position: relative; height: 100%; }
+.pv-stage {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  background: var(--window-bg);
+}
+.pv-canvas {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pv-frame { position: relative; flex-shrink: 0; }
+
+/* Thumbnails: the page picture with its number under it, the current one
+   in a soft rounded highlight. */
+.pv-thumbs {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pv-thumb {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 8px 5px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  cursor: default;
+}
+.pv-thumb--on { background: rgba(0, 0, 0, 0.08); }
+.dark .pv-thumb--on { background: rgba(255, 255, 255, 0.12); }
+/* Each thumbnail keeps its picture's own shape; a very tall page is cut
+   off rather than shrunk to a sliver. */
+.pv-thumb__frame {
+  display: block;
+  width: 100%;
+  max-height: 170px;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.pv-thumb--on .pv-thumb__frame { box-shadow: 0 0 0 2px var(--brand); }
+.pv-thumb__num { font: 11px 'SF Pro Text', system-ui, sans-serif; color: var(--body); }
+.pv-thumb--on .pv-thumb__num { color: var(--headline); font-weight: 600; }
+
+/* Inspector (⌘I): a floating panel at the trailing edge. */
+.pv-inspector {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 250px;
+  padding: 14px 16px 16px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--window-bg) 94%, white);
+  box-shadow: 0 0 0 0.5px var(--border), 0 12px 32px rgba(0, 0, 0, 0.32);
+  font-family: 'SF Pro Text', system-ui, sans-serif;
+  z-index: 3;
+}
+.pv-inspector__name { font: 600 13px 'SF Pro Text', system-ui, sans-serif; color: var(--headline); }
+.pv-inspector__grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 10px;
+  margin-top: 10px;
+  font-size: 12px;
+}
+.pv-inspector__grid dt { color: var(--body); text-align: right; }
+.pv-inspector__grid dd { color: var(--headline); }
+.pv-inspector__about { margin-top: 10px; font-size: 12px; line-height: 17px; color: var(--body); }
+.pv-inspector__cta {
+  width: 100%;
+  height: 28px;
+  margin-top: 14px;
+  border: none;
+  border-radius: 9999px;
+  background: var(--brand);
+  color: #fff;
+  font: 500 13px 'SF Pro Text', system-ui, sans-serif;
+  cursor: default;
+}
+.pv-inspector__cta:active { filter: brightness(0.9); }
+
+/* The HUD macOS flashes for a finished action. */
+.pv-hud {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  padding: 12px 20px;
+  border-radius: 14px;
+  background: rgba(30, 30, 30, 0.82);
+  color: #fff;
+  font: 600 13px 'SF Pro Text', system-ui, sans-serif;
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* ── Desktop: rename field and tag dots ──────────────────────────────────── */
+
+/* Finder's rename box: the label becomes an editable field with a white
+   fill and an accent ring, the name selected up to its extension. */
+.desktop-icon-rename {
+  width: 84px;
+  margin: 0 -6px;
+  padding: 1px 4px;
+  border: none;
+  border-radius: 4px;
+  outline: 2px solid var(--brand);
+  background: #fff;
+  color: #000;
+  font: 11px 'SF Pro Text', sans-serif;
+  text-align: center;
+}
+
+/* Tag dots sit in front of the name, overlapping slightly, as Finder draws
+   several tags on one file. */
+.desktop-icon-tags {
+  display: inline-flex;
+  margin-right: 3px;
+  vertical-align: -1px;
+}
+.desktop-icon-tags i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+.desktop-icon-tags i + i { margin-left: -3px; }
+
+/* ── Get Info window ─────────────────────────────────────────────────────── */
+
+.gi-window {
+  position: fixed;
+  z-index: 2147483000;
+  width: 270px;
+  padding-bottom: 12px;
+  border-radius: 16px;
+  background: var(--window-bg);
+  box-shadow:
+    0 0 0 0.5px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.10),
+    0 18px 50px rgba(0, 0, 0, 0.45);
+  font-family: 'SF Pro Text', system-ui, sans-serif;
+  color: var(--headline);
+}
+html:not(.dark) .gi-window { box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.18), 0 18px 50px rgba(0, 0, 0, 0.22); }
+
+.gi-titlebar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 12px;
+  cursor: grab;
+}
+.gi-titlebar:active { cursor: grabbing; }
+.gi-title {
+  position: absolute;
+  left: 76px;
+  right: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gi-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 16px 12px;
+}
+.gi-head img { width: 48px; height: 48px; object-fit: contain; flex-shrink: 0; }
+.gi-head__text { min-width: 0; }
+.gi-head__name { font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+.gi-head__meta { font-size: 11px; color: var(--body); line-height: 15px; }
+
+.gi-section {
+  margin: 0 12px;
+  padding: 8px 4px;
+  border-top: 1px solid var(--border);
+}
+.gi-section__title { font-size: 12px; font-weight: 600; margin-bottom: 6px; }
+
+.gi-grid {
+  display: grid;
+  grid-template-columns: 76px 1fr;
+  gap: 3px 8px;
+  font-size: 11px;
+  line-height: 15px;
+}
+.gi-grid dt { text-align: right; color: var(--body); }
+.gi-grid dd { overflow-wrap: anywhere; }
+
+.gi-tags { display: flex; flex-wrap: wrap; gap: 6px; font-size: 11px; }
+.gi-tag { display: inline-flex; align-items: center; gap: 4px; }
+.gi-tag i { width: 9px; height: 9px; border-radius: 50%; }
+.gi-muted { color: var(--body); }
+
+.gi-field {
+  padding: 3px 7px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.18);
+  box-shadow: inset 0 0 0 1px var(--border);
+  font-size: 12px;
+}
+html:not(.dark) .gi-field { background: #fff; }
+
+/* ── Force Quit Applications ─────────────────────────────────────────────── */
+.fq-window {
+  position: fixed;
+  left: calc(50% - 170px);
+  top: 120px;
+  z-index: 2147483000;
+  width: 340px;
+  padding-bottom: 14px;
+  border-radius: 16px;
+  background: var(--window-bg);
+  box-shadow:
+    0 0 0 0.5px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.10),
+    0 18px 50px rgba(0, 0, 0, 0.45);
+  font-family: 'SF Pro Text', system-ui, sans-serif;
+  color: var(--headline);
+}
+.fq-titlebar { position: relative; display: flex; align-items: center; height: 36px; padding: 0 12px; cursor: grab; }
+.fq-titlebar:active { cursor: grabbing; }
+.fq-title { position: absolute; left: 0; right: 0; text-align: center; font-size: 13px; font-weight: 600; pointer-events: none; }
+.fq-text, .fq-note { margin: 0 16px; font-size: 12px; line-height: 16px; color: var(--body); }
+.fq-note { margin-top: 10px; font-size: 11px; }
+.fq-list {
+  display: flex;
+  flex-direction: column;
+  height: 188px;
+  margin: 10px 16px 0;
+  padding: 4px;
+  overflow-y: auto;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.22);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+html:not(.dark) .fq-list { background: #fff; }
+.fq-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 26px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--headline);
+  font-size: 13px;
+  text-align: left;
+  cursor: default;
+}
+.fq-row img { width: 18px; height: 18px; object-fit: contain; }
+.fq-row--on { background: var(--brand); color: #fff; }
+.fq-actions { display: flex; justify-content: flex-end; margin: 12px 16px 0; }
+.fq-btn {
+  height: 24px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 9999px;
+  background: var(--brand);
+  color: #fff;
+  font-size: 13px;
+  cursor: default;
+}
+.fq-btn:active { filter: brightness(0.9); }
+
+/* Shut Down: the one hint a visitor needs, since there is no power button. */
+.pwr__hint {
+  position: absolute;
+  bottom: 18%;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font: 13px 'SF Pro Text', system-ui, sans-serif;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+/* ── Finder (Tahoe) ──────────────────────────────────────────────────────────
+   Measured off the real window at 2x: sidebar rows ~32pt with a 15pt
+   outline symbol in the label colour; the selected row a soft grey slab
+   (#37373A over the glass) with symbol and name in the accent; toolbar
+   capsules 34pt tall with a hairline rim, the active view a grey pill.    */
+
+.fd-side {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2px 10px 12px;
+  display: flex;
+  flex-direction: column;
+}
+.fd-section {
+  padding: 14px 10px 4px;
+  font: 600 11px/14px 'SF Pro Text', system-ui, sans-serif;
+  color: var(--body);
+}
+.fd-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  height: 30px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--headline);
+  text-align: left;
+  cursor: default;
+}
+.fd-row[data-indent] { height: 26px; padding-left: 30px; }
+.fd-row__icon { opacity: 0.88; }
+.fd-row__label {
+  flex: 1;
+  min-width: 0;
+  font: 13px 'SF Pro Text', system-ui, sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fd-row[data-indent] .fd-row__label { font-size: 12px; }
+.fd-row__dot {
+  width: 11px;
+  height: 11px;
+  margin: 0 2px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.fd-row[data-on] { background: rgba(0, 0, 0, 0.07); color: var(--brand); }
+.dark .fd-row[data-on] { background: rgba(255, 255, 255, 0.10); }
+.fd-row[data-on] .fd-row__icon { opacity: 1; }
+/* A section inside Portfolio, Notes or Store marks itself by colour alone —
+   only the place itself gets the slab. */
+.fd-row[data-indent][data-on],
+.dark .fd-row[data-indent][data-on] { background: transparent; }
+
+/* Toolbar */
+.fd-tools { display: flex; align-items: center; gap: 8px; pointer-events: auto; }
+.fd-cap {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 3px;
+}
+.fd-cap--round { width: 32px; padding: 0; justify-content: center; }
+.fd-cap__slot { display: flex; align-items: center; }
+.fd-cap__sep { width: 1px; height: 16px; margin: 0 2px; background: rgba(128, 128, 128, 0.3); }
+.fd-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 34px;
+  height: 26px;
+  border: none;
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--headline);
+  cursor: default;
+}
+.fd-btn--wide { width: 46px; }
+.fd-btn:not(:disabled):hover { background: var(--social-hover); }
+.fd-btn[data-on] { background: rgba(0, 0, 0, 0.10); }
+.dark .fd-btn[data-on] { background: rgba(255, 255, 255, 0.14); }
+.fd-btn:disabled { opacity: 0.32; }
+.fd-search { height: 32px; min-width: 190px; }
+
+.fd-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding-top: 96px;
+  text-align: center;
+  font-family: 'SF Pro Text', system-ui, sans-serif;
+}
+.fd-empty img { width: 52px; height: 52px; opacity: 0.45; }
+.fd-empty__title { font-size: 13px; font-weight: 500; color: var(--headline); opacity: 0.75; }
+.fd-empty__sub { max-width: 280px; font-size: 12px; color: var(--body); opacity: 0.75; }
+
+/* ── FinderBrowser views ── */
+.fb-group {
+  margin: 10px 4px 4px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+  font: 600 12px 'SF Pro Text', system-ui, sans-serif;
+  color: var(--headline);
+}
+
+/* Icons */
+.fb-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 4px;
+  padding-top: 6px;
+}
+.fb-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 4px;
+  border: none;
+  background: transparent;
+  cursor: default;
+}
+.fb-tile__art {
+  display: grid;
+  place-items: center;
+  width: 68px;
+  height: 68px;
+  border-radius: 10px;
+}
+.fb-tile[data-selected] .fb-tile__art { background: rgba(128, 128, 128, 0.22); }
+.fb-tile__art img { width: 56px; height: 56px; object-fit: contain; }
+.fb-tile__art img[data-thumb] {
+  width: 58px; height: 58px; object-fit: cover; border-radius: 4px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.14), 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+.fb-tile[data-disabled] img { filter: grayscale(0.6) opacity(0.4); }
+.fb-tile__label {
+  max-width: 96px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font: 12px/15px 'SF Pro Text', system-ui, sans-serif;
+  color: var(--headline);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.fb-tile[data-selected] .fb-tile__label { background: var(--brand); color: #fff; }
+.fb-tags { display: inline-flex; margin-right: 3px; vertical-align: -1px; }
+.fb-tags i { width: 8px; height: 8px; border-radius: 50%; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3); }
+.fb-tags i + i { margin-left: -3px; }
+
+/* List */
+.fb-list { font: 12px 'SF Pro Text', system-ui, sans-serif; color: var(--headline); min-height: 100%; }
+.fb-list__head,
+.fb-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 2.2fr) 1.4fr 0.7fr 1.1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px;
+}
+.fb-list__head {
+  height: 26px;
+  border-bottom: 1px solid var(--border);
+  color: var(--body);
+  font-weight: 500;
+}
+.fb-row {
+  width: 100%;
+  height: 26px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--headline);
+  text-align: left;
+  cursor: default;
+}
+.fb-row > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fb-row > span:not(:first-child) { color: var(--body); }
+/* Finder's alternating stripes. */
+.fb-list > div > .fb-row:nth-of-type(even) { background: rgba(128, 128, 128, 0.07); }
+.fb-row__name { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.fb-row__name img { width: 16px; height: 16px; object-fit: contain; flex-shrink: 0; }
+.fb-row__name span { overflow: hidden; text-overflow: ellipsis; }
+.fb-list > div > .fb-row[data-selected],
+.fb-row[data-selected] { background: var(--brand); color: #fff; }
+.fb-row[data-selected] > span { color: #fff !important; }
+.fb-row[data-disabled] { opacity: 0.45; }
+
+/* Columns */
+.fb-columns { display: flex; height: 100%; }
+.fb-col {
+  width: 250px;
+  flex-shrink: 0;
+  padding: 6px;
+  overflow-y: auto;
+  border-right: 1px solid var(--border);
+}
+.fb-colrow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  height: 24px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--headline);
+  font: 13px 'SF Pro Text', system-ui, sans-serif;
+  text-align: left;
+  cursor: default;
+}
+.fb-colrow img { width: 16px; height: 16px; object-fit: contain; flex-shrink: 0; }
+.fb-colrow span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fb-colrow[data-selected] { background: var(--brand); color: #fff; }
+.fb-colrow[data-disabled] { opacity: 0.45; }
+.fb-preview {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28px 24px;
+  overflow-y: auto;
+  font-family: 'SF Pro Text', system-ui, sans-serif;
+}
+.fb-preview > img { width: 128px; height: 128px; object-fit: contain; }
+.fb-preview > img[data-thumb] { object-fit: cover; border-radius: 6px; }
+.fb-preview__name { margin-top: 12px; font-size: 15px; font-weight: 600; color: var(--headline); text-align: center; }
+.fb-preview__kind { font-size: 12px; color: var(--body); }
+.fb-preview__section {
+  align-self: stretch;
+  margin-top: 18px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--headline);
+}
+.fb-preview__grid {
+  align-self: stretch;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 5px 12px;
+  margin-top: 8px;
+  font-size: 12px;
+}
+.fb-preview__grid dt { color: var(--body); }
+.fb-preview__grid dd { color: var(--headline); text-align: right; }
+
+/* Gallery */
+.fb-gallery { display: flex; flex-direction: column; height: 100%; }
+.fb-gallery__stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.fb-gallery__stage > img { width: min(220px, 60%); aspect-ratio: 1; object-fit: contain; }
+.fb-gallery__stage > img[data-thumb] { object-fit: cover; border-radius: 8px; }
+.fb-gallery__strip {
+  display: flex;
+  gap: 6px;
+  padding: 10px 14px;
+  overflow-x: auto;
+  border-top: 1px solid var(--border);
+}
+.fb-gallery__thumb {
+  flex-shrink: 0;
+  width: 54px;
+  height: 54px;
+  padding: 4px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  cursor: default;
+}
+.fb-gallery__thumb img { width: 100%; height: 100%; object-fit: contain; }
+.fb-gallery__thumb img[data-thumb] { object-fit: cover; border-radius: 3px; }
+.fb-gallery__thumb[data-selected] { box-shadow: inset 0 0 0 2.5px var(--brand); }
+
+/* Portfolio / Notes / Store sections folding open and shut under their row. */
+.fd-sub {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.2s ease;
+}
+.fd-sub > div { overflow: hidden; min-height: 0; }
+.fd-sub[data-open] { grid-template-rows: 1fr; }

@@ -1,0 +1,253 @@
+# macOS UI Audit
+
+What still looks unlike real macOS Tahoe, found by opening every window and
+overlay of the site in a browser and comparing it with the real apps on the
+Mac it was built beside (macOS 26, dark mode, blue accent).
+
+Audited 2026-09-24. Tick an item off when it ships.
+
+**Progress:** 4 of 18 done (items 2, 3, 4 and 10, 2026-09-24).
+
+## Already close — leave as is
+
+Photos (Portfolio), Preview (project viewer), Contacts (About Me),
+Messages (Home), the Siri bar (Mikuda), System Settings, Control Center,
+the lock screen, About This Mac, Calculator, the menu bar itself (13px
+fonts, semibold app name, matching the real one), and right-click menus
+everywhere (item 2), the Apple menu and every menu-bar menu (item 3), and Finder (item 4).
+
+---
+
+## High priority — the most visible gaps
+
+- [ ] **1. Notification Center**
+  - Now: cards have no app icon and no time, each headed by an all-caps label
+    ("SOFTWARE UPDATE", "TERMINAL"); a "NOW 6:42" block that is not a macOS widget.
+  - Real: app icon on the left, bold title, message, "now" / "2m ago" top-right,
+    grouped stacks; widgets as large glass cards below.
+
+- [x] **2. Right-click on the desktop** — done 2026-09-24
+  - Was: right-clicking empty desktop or the desktop files showed nothing;
+    only Finder and the Dock had menus.
+  - Shipped, **empty desktop**:
+    - New Folder: created where you click, name ready to type; opens empty
+      in Finder under its own name.
+    - Get Info, for the Desktop itself.
+    - Change Wallpaper…, which opens Settings on Wallpaper.
+    - Edit Widgets…, which opens Notification Center.
+    - Sort By ▸ None / Name / Kind / Date Added / Size / Tags, with a ✓ on the
+      current choice.
+    - Clean Up.
+  - Shipped, **a file or folder**:
+    - Open, and Open With ▸ TextEdit (default).
+    - Move to Trash: Put Back restores it, and Empty Trash deletes a
+      visitor-made folder for good.
+    - Get Info, a Finder-style info window.
+    - Rename, inline, with the name selected up to its extension; Return on a
+      selected icon also starts a rename.
+    - Quick Look.
+    - Share…, which opens AirDrop.
+    - The colour-tag dot row; tags show as dots before the file name.
+  - Shipped, **the menu itself**, restyled to Tahoe (see *Measured values*
+    below):
+    - SF Symbol icons.
+    - Spaced-out shortcuts (⇧ ⌘ N).
+    - Submenus.
+    - Tag dots muted in dark mode.
+
+    Finder's and the Dock's existing menus picked up the same style.
+  - Saved per visitor in their browser (`src/store/desktopStore.js`):
+    folders, renames, tags, sort order.
+  - Left out on purpose, because here they would do nothing: Use Stacks,
+    Compress, Duplicate, Make Alias, Show View Options.
+  - Files:
+    - `src/components/ui/ContextMenu.jsx`
+    - `src/components/desktop/Desktop.jsx`
+    - `src/components/desktop/GetInfo.jsx`
+    - `src/store/desktopStore.js`
+    - Finder's empty-folder view in `FinderWindow.jsx`
+
+- [x] **3. Apple menu contents** — done 2026-09-24
+  - Was: "Software Update…" and "Start Screen Saver" (not in the real menu),
+    red "1" badges, no icons; missing Recent Items, Force Quit…, Shut Down…
+    and Log Out….
+  - Shipped, **the Apple menu**, row for row as Tahoe's, each with its icon:
+    - About This Mac.
+    - System Settings…, with a grey "1 update" capsule while the update is
+      pending; the row then opens Software Update.
+    - App Store…, which opens the Store.
+    - Recent Items ▸: Applications and Documents opened this session, with
+      their icons, and Clear Menu.
+    - Force Quit… ⌥⌘⎋, opening a real **Force Quit Applications** window:
+      running apps with icons, Finder always first; "Relaunch" for Finder,
+      "Force Quit" for the rest.
+    - Sleep; Restart…; Shut Down… (asks, then goes black until any key
+      boots it, with a faint "Press any key to turn on" hint after 3s).
+    - Lock Screen ⌃⌘Q; Log Out Ferdous Mikdad… ⇧⌘Q (asks, closes every
+      window, returns to the lock screen).
+  - Shipped, **Option held**, the real alternates: System Information…,
+    Force Quit <front app>, and Restart / Shut Down / Log Out without the
+    ellipsis and without asking. The menu keeps its width while they swap.
+  - Shipped, **every menu-bar menu** (app, File, Edit, View, Go, Window,
+    Help) now uses the same Tahoe panel as the right-click menus, with SF
+    Symbol icons on the rows. The old `.mb-menu` styles are gone.
+  - The App Store glyph is not a public SF Symbol, so it was lifted from
+    the real menu as a mask (`src/assets/icons/sf/appstore.png`).
+  - Files:
+    - `src/data/menuBar.js`
+    - `src/components/desktop/MenuBar.jsx`
+    - `src/components/desktop/ForceQuit.jsx`
+    - `src/components/desktop/PowerOverlay.jsx` (the powered-off state)
+    - `src/components/ui/ContextMenu.jsx` (exported `Panel`: badges,
+      headers, app icons)
+    - `src/store/windowStore.js` (`shutDown`, `powerOn`, `logOut`)
+
+- [x] **4. Finder** — done 2026-09-24
+  - Was: coloured app icons and ">" chevrons in the sidebar; toolbar with only
+    back/forward and a "Search tools…" field; the location name shown twice.
+  - Shipped, **sidebar**:
+    - Rows: Recents, Favorites (Applications, Desktop, Home, Portfolio, Notes,
+      Store), Locations (Trash) and Tags (the seven colours).
+    - Label-coloured outline SF Symbols; the selected row is a grey slab
+      with symbol and name in the accent.
+    - No chevrons. Portfolio, Notes and Store still list their sections,
+      indented, while you are inside them.
+  - Shipped, **toolbar**:
+    - Back/forward capsule.
+    - View switcher capsule (Icons · List · Columns · Gallery).
+    - Group ▾ (None / Name / Kind / Tags).
+    - Share · Tags · ⋯ capsule: AirDrop, tag dots for desktop items, and
+      New Folder / Open / Get Info / Move to Trash.
+    - A round search button that opens into a "Search" field.
+  - Shipped, **four real views** on every file location
+    (`FinderBrowser.jsx`):
+    - Icons, with group headers.
+    - List: Name / Date Modified / Size / Kind, striped rows.
+    - Columns: the list plus a preview column with Information.
+    - Gallery: a large preview and a thumbnail strip.
+  - Shipped, **new locations**: Desktop (the same items as the real
+    desktop), Recents (apps and files opened this session), and one view
+    per Tag. Right-click works in all of them, and in the Trash (Put Back,
+    Delete Immediately…).
+  - Shared state: `src/hooks/useDesktopItems.js` (one desktop list for the
+    desktop and Finder), plus Get Info and Recent Items in `desktopStore`.
+
+- [ ] **5. Store → App Store**
+  - Now: dark grid of cards with "Get code" pills.
+  - Real: sidebar (Discover, Arcade, Create, Work, Play, Develop, Categories,
+    Updates), large feature cards, grey capsule "Get" buttons.
+
+- [ ] **6. Music window naming**
+  - Now: the menu bar says **Music**, but the window is Spotify-branded
+    ("SIAME" logo, green icon).
+  - Fix: either make it Apple Music (Music icon, red accent, Home / New /
+    Radio / Library sidebar) or call it Spotify everywhere.
+
+- [ ] **7. Tool windows** (Color Contrast and the other 9 tools)
+  - Now: embedded web pages with their own styling: custom dark panels,
+    green monospace numbers, red preview.
+  - Fix: restyle with macOS controls: grouped rows, standard buttons,
+    colour wells.
+
+---
+
+## Medium priority
+
+- [ ] **8. Photo Booth**: needs the three layout buttons bottom-left, a large red
+  shutter button in the centre and an **Effects** button on the right, in
+  place of the "Normal / Retro Dot" toggle and pale "Take Photo" button.
+
+- [ ] **9. Notes toolbar**: only has search. Real Notes has list/gallery view,
+  delete, new note, Aa formatting, checklist, table, media, share, lock and
+  search. "Select a note to read" is not what Notes shows when nothing is open.
+
+- [x] **10. Spotlight** — done 2026-09-24
+  - Measured off the real Tahoe Spotlight: a 360pt × 62pt capsule with its
+    top 15% down the screen, and beside it four 62pt round glass buttons
+    11pt apart. The site now matches to the point.
+  - The buttons open the real modes:
+    - **Applications:** an icon grid of every app and tool.
+    - **Files:** desktop files and portfolio pieces.
+    - **Actions:** Dark Mode, Mission Control, Launchpad, Notification Center,
+      New Note, Email, Photo, AirDrop, Lock, Sleep.
+    - **Clipboard:** text copied on the site this session, plus Spotlight's
+      own copied answers.
+  - Each mode shows as a chip in the field with its own placeholder
+    ("Search Apps"…). Typing folds the buttons into the field.
+  - Escape steps back one thing at a time: the text, then the mode, then
+    Spotlight itself. Backspace in an empty field leaves the mode.
+  - No permanent scrollbar in the results panel.
+  - File: `src/components/desktop/Spotlight.jsx`.
+
+- [ ] **11. Launchpad → Apps**: Tahoe removed Launchpad. Its replacement is the
+  **Apps** view: a full-screen glass grid with a search field and category
+  filters.
+
+- [ ] **12. Mission Control**: missing the Spaces bar across the top
+  ("Desktop 1" plus a + button).
+
+- [ ] **13. Scrollbars**: the System Settings sidebar and the What's New window
+  show a permanent white scrollbar. macOS hides scrollbars until you scroll.
+
+- [ ] **14. Desktop `.txt` files**
+  - The desktop icons look like rich documents with a picture in them; real
+    plain-text files show a page with just text.
+  - Inside the TextEdit windows, the "────" lines under headings are typed
+    dashes and look fake.
+
+---
+
+## Low priority
+
+- [ ] **15. Terminal title**: should read `ferdous — -zsh — 80×24`, not
+  `ferdous@portfolio ~ — zsh`.
+- [ ] **16. Mail compose**: Send (paper-plane) button at the left of the toolbar
+  next to the traffic lights, plus Cc/Bcc fields and a format bar.
+- [ ] **17. Control Center**: Tahoe shows "Edit Controls" at the bottom rather
+  than a "System Settings…" pill.
+- [ ] **18. Keyboard Shortcuts sheet**: useful, but macOS has nothing like it.
+  If kept, style it as a Tips-style help window.
+
+---
+
+## Suggested order
+
+Next: **1** (Notification Center), then **5–7** (Store, Music, tool
+windows).
+
+## Measured values
+
+Reference numbers taken off the real Mac, for reuse.
+
+**Menus** (Finder's File menu, Tahoe, dark, at 2x):
+
+| Part | Value |
+|---|---|
+| Row height | 24pt |
+| Label | 13pt |
+| Corner radius | about 12pt |
+| Padding | about 5pt |
+| Icon | SF Symbol about 11–13pt, centred about 23pt from the left edge |
+| Label start | about 37pt from the left edge |
+| Shortcuts | right-aligned about 12pt in, secondary grey, glyphs spaced apart |
+| Separators | hairline, inset about 15pt each side, about 5pt above and below |
+| Tag dots | 13pt with a darker rim, on a 24pt pitch |
+| Tag dot colours (muted in dark) | red `#A15F5C`, orange `#A37D59`, yellow `#A6975A`, green `#669368`, blue `#527BA7`, purple `#945CA2`, grey `#7D7D80` |
+
+## How each fix is built
+
+Measure the real app on the Mac rather than working from memory:
+- `screencapture` for the layout.
+- Sampled pixel colours for fills, rims and text.
+- SF Symbols rendered from the system into `src/assets/icons/sf/`, used
+  through `SFSymbol`.
+- Standard app icons from each app's bundled `.icns`.
+
+Then screenshot the site in headless Chrome and compare the two before
+calling the fix done.
+
+Do not send clicks to the live screen to open a real menu. Window order on
+a working desktop is unpredictable, and a right-click can land in whatever
+app happens to be in front. Open real menus through accessibility instead
+(`System Events … click menu bar item`), which never touches another
+app's window.

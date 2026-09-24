@@ -97,7 +97,7 @@ export default function Dock({ activeId = null, onNavigate, menuOpen = false, on
                   width: 16,
                   height: 16,
                   fontSize: 9,
-                  background: '#cf0506',
+                  background: '#FF3B30',
                   boxShadow: '0 0 0 2px var(--bg)',
                 }}
               >

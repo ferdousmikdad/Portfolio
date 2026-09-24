@@ -34,6 +34,8 @@ export default function PowerOverlay() {
   const power   = useWindowStore((s) => s.power)
   const wake    = useWindowStore((s) => s.wake)
   const finish  = useWindowStore((s) => s.finishRestart)
+  const powerOn = useWindowStore((s) => s.powerOn)
+  const [hint, setHint] = useState(false)
   const play    = useSoundStore((s) => s.play)
 
   const [booting, setBooting] = useState(false)
@@ -63,6 +65,30 @@ export default function PowerOverlay() {
     }
   }, [power, wake])
 
+  /* ── Shut Down: black until the "power button" — any key or click once the
+     guard has passed. A dim hint fades in after a few seconds; a visitor
+     has no physical button to reach for. ───────────────────────────────── */
+  useEffect(() => {
+    if (power !== 'off') { setHint(false); return }
+    let armed = false
+    const arm  = setTimeout(() => { armed = true }, WAKE_GUARD)
+    const tip  = setTimeout(() => setHint(true), 3000)
+    const swallow = (e) => {
+      e.stopPropagation()
+      if (!armed) return
+      e.preventDefault()
+      setHint(false)
+      powerOn()
+    }
+    window.addEventListener('keydown',   swallow, true)
+    window.addEventListener('mousedown', swallow, true)
+    return () => {
+      clearTimeout(arm); clearTimeout(tip)
+      window.removeEventListener('keydown',   swallow, true)
+      window.removeEventListener('mousedown', swallow, true)
+    }
+  }, [power, powerOn])
+
   /* ── Restart: black, then the boot bar, then the desktop ──────────────── */
   useEffect(() => {
     if (power !== 'restarting') { setBooting(false); return }
@@ -91,10 +117,23 @@ export default function PowerOverlay() {
           /* Down slowly like a backlight, back up quickly — the asymmetry is
              what makes waking feel like waking rather than a cross-fade. */
           transition={{
-            duration: (power === 'sleeping' ? SLEEP_FADE : RESTART_FADE) / 1000,
+            duration: (power === 'restarting' ? RESTART_FADE : SLEEP_FADE) / 1000,
             ease: 'easeInOut',
           }}
         >
+          <AnimatePresence>
+            {power === 'off' && hint && (
+              <motion.p
+                className="pwr__hint"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1.2 }}
+              >
+                Press any key to turn on
+              </motion.p>
+            )}
+          </AnimatePresence>
           <AnimatePresence>
             {booting && (
               <motion.div

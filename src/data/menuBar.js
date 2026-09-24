@@ -20,8 +20,7 @@ const APP_NAMES = {
   bio: 'TextEdit',
   skills: 'TextEdit',
   contact: 'TextEdit',
-  profile: 'Contacts',
-  about: 'About Me',
+  about: 'Contacts',
   pacman: 'Pac-Man',
   portfolio: 'Portfolio',
   shop: 'Store',
@@ -35,6 +34,7 @@ const APP_NAMES = {
   spotify: 'Music',
   'photo-booth': 'Photo Booth',
   'about-mac': 'Finder',
+  preview: 'Preview',
   'whats-new': 'System Settings',
 }
 
@@ -56,30 +56,57 @@ export function buildMenus(ctx) {
     appName, hasWindow, isFullscreen, isDark,
     openWindow, navigate, closeActive, minimizeActive, zoomActive,
     closeAll, toggleFullscreen, toggleTheme, openSpotlight, missionControl, launchpad,
-    screenSaver, lock, openSettingsAt, updatePending, shortcuts, sleep, restart,
+    lock, openSettingsAt, updatePending, shortcuts, sleep, restart,
+    option, recent, clearRecent, forceQuit, forceQuitFront, shutDown, logOut, userName,
   } = ctx
+
+  /* Recent Items: the apps and documents opened this session, newest first,
+     under the grey section titles the real submenu uses. */
+  const recentApps = recent.filter((r) => !r.doc)
+  const recentDocs = recent.filter((r) => r.doc)
+  const recentItems = [
+    { header: 'Applications' },
+    ...recentApps.map((r) => ({ label: r.name, image: r.icon, onClick: () => openWindow(r.id) })),
+    { header: 'Documents' },
+    ...recentDocs.map((r) => ({ label: r.name, image: r.icon, onClick: () => openWindow(r.id) })),
+    { sep: true },
+    { label: 'Clear Menu', disabled: recent.length === 0, onClick: clearRecent },
+  ]
 
   return [
     {
       id: 'apple',
       apple: true,
+      /* Tahoe's Apple menu, row for row, with its icons. Holding Option
+         swaps rows for their alternates exactly as the real one does: the
+         ellipses go (no confirmation), About becomes System Information,
+         and Force Quit targets the front app. */
       items: [
-        { label: 'About This Mac', onClick: () => openWindow('about-mac') },
+        { label: option ? 'System Information…' : 'About This Mac', icon: 'laptopcomputer',
+          onClick: () => openWindow('about-mac') },
         { sep: true },
-        /* macOS badges this row while an update is waiting, and the count
-           is the number of pending updates — there is exactly one. */
-        { label: 'System Settings…', key: '⌘,', onClick: () => openWindow('settings'),
-          badge: updatePending ? '1' : undefined },
-        { label: 'Software Update…', onClick: () => openSettingsAt('softwareupdate'),
-          badge: updatePending ? '1' : undefined },
-        { label: 'Store…', onClick: () => openWindow('shop') },
+        /* A waiting macOS update shows as a grey capsule on this row, and
+           the row then goes straight to Software Update. */
+        { label: 'System Settings…', icon: 'gearshape',
+          badge: updatePending ? '1 update' : undefined,
+          onClick: () => (updatePending ? openSettingsAt('softwareupdate') : openWindow('settings')) },
+        { label: 'App Store…', icon: 'appstore', onClick: () => openWindow('shop') },
         { sep: true },
-        { label: 'Start Screen Saver', onClick: screenSaver },
-        { label: 'Sleep', onClick: sleep },
-        /* The ellipsis is a promise that it will ask first, so it does. */
-        { label: 'Restart…', onClick: restart },
+        { label: 'Recent Items', icon: 'clock', submenu: recentItems },
         { sep: true },
-        { label: 'Lock Screen', key: '⌃⌘Q', onClick: lock },
+        option
+          ? { label: `Force Quit ${appName}`, icon: 'xmark.circle', key: '⌥⇧⌘⎋', onClick: forceQuitFront }
+          : { label: 'Force Quit…', icon: 'xmark.circle', key: '⌥⌘⎋', onClick: forceQuit },
+        { sep: true },
+        { label: 'Sleep', icon: 'sleep', onClick: sleep },
+        /* The ellipsis is a promise that it will ask first, so it does —
+           and with Option held it drops the ellipsis and does not ask. */
+        { label: option ? 'Restart'   : 'Restart…',   icon: 'restart', onClick: () => restart(!option) },
+        { label: option ? 'Shut Down' : 'Shut Down…', icon: 'power',   onClick: () => shutDown(!option) },
+        { sep: true },
+        { label: 'Lock Screen', icon: 'lock', key: '⌃⌘Q', onClick: lock },
+        { label: `Log Out ${userName}${option ? '' : '…'}`, icon: 'person.crop.circle', key: '⇧⌘Q',
+          onClick: () => logOut(!option) },
       ],
     },
 
@@ -89,13 +116,13 @@ export function buildMenus(ctx) {
       label: appName,
       bold: true,
       items: [
-        { label: `About ${appName}`, onClick: () => openWindow('about-mac') },
+        { label: `About ${appName}`, icon: 'info.circle', onClick: () => openWindow('about-mac') },
         { sep: true },
-        { label: 'Settings…', key: '⌘,', onClick: () => openWindow('settings') },
+        { label: 'Settings…', icon: 'gearshape', key: '⌘,', onClick: () => openWindow('settings') },
         { sep: true },
         { label: `Hide ${appName}`, key: '⌘H', disabled: !hasWindow, onClick: minimizeActive },
         { sep: true },
-        { label: `Quit ${appName}`, key: '⌘Q', disabled: !hasWindow, onClick: closeActive },
+        { label: `Quit ${appName}`, icon: 'xmark', key: '⌘Q', disabled: !hasWindow, onClick: closeActive },
       ],
     },
 
@@ -103,10 +130,10 @@ export function buildMenus(ctx) {
       id: 'file',
       label: 'File',
       items: [
-        { label: 'New Finder Window', key: '⌘N', onClick: () => openWindow('finder') },
-        { label: 'Open Terminal', onClick: () => openWindow('terminal') },
+        { label: 'New Finder Window', icon: 'macwindow.badge.plus', key: '⌘N', onClick: () => openWindow('finder') },
+        { label: 'Open Terminal', icon: 'terminal', onClick: () => openWindow('terminal') },
         { sep: true },
-        { label: 'Close Window', key: '⌘W', disabled: !hasWindow, onClick: closeActive },
+        { label: 'Close Window', icon: 'xmark', key: '⌘W', disabled: !hasWindow, onClick: closeActive },
         { label: 'Close All', disabled: !hasWindow, onClick: closeAll },
       ],
     },
@@ -115,14 +142,14 @@ export function buildMenus(ctx) {
       id: 'edit',
       label: 'Edit',
       items: [
-        { label: 'Undo', key: '⌘Z', onClick: () => document.execCommand('undo') },
-        { label: 'Redo', key: '⇧⌘Z', onClick: () => document.execCommand('redo') },
+        { label: 'Undo', icon: 'arrow.uturn.backward', key: '⌘Z', onClick: () => document.execCommand('undo') },
+        { label: 'Redo', icon: 'arrow.uturn.forward', key: '⇧⌘Z', onClick: () => document.execCommand('redo') },
         { sep: true },
-        { label: 'Cut', key: '⌘X', onClick: () => document.execCommand('cut') },
-        { label: 'Copy', key: '⌘C', onClick: () => document.execCommand('copy') },
-        { label: 'Paste', key: '⌘V', onClick: () => document.execCommand('paste') },
+        { label: 'Cut', icon: 'scissors', key: '⌘X', onClick: () => document.execCommand('cut') },
+        { label: 'Copy', icon: 'doc.on.doc', key: '⌘C', onClick: () => document.execCommand('copy') },
+        { label: 'Paste', icon: 'doc.on.clipboard', key: '⌘V', onClick: () => document.execCommand('paste') },
         { sep: true },
-        { label: 'Select All', key: '⌘A', onClick: () => document.execCommand('selectAll') },
+        { label: 'Select All', icon: 'checkmark.circle', key: '⌘A', onClick: () => document.execCommand('selectAll') },
       ],
     },
 
@@ -132,16 +159,18 @@ export function buildMenus(ctx) {
       items: [
         {
           label: isFullscreen ? 'Exit Full Screen' : 'Enter Full Screen',
+          icon: 'arrow.up.left.and.arrow.down.right',
           key: '⌃⌘F',
           onClick: toggleFullscreen,
         },
         { sep: true },
         {
           label: isDark ? 'Use Light Appearance' : 'Use Dark Appearance',
+          icon: isDark ? 'sun.max' : 'moon',
           onClick: toggleTheme,
         },
         { sep: true },
-        { label: 'Show Spotlight', key: '⌘Space', onClick: openSpotlight },
+        { label: 'Show Spotlight', icon: 'magnifyingglass', key: '⌘Space', onClick: openSpotlight },
       ],
     },
 
@@ -151,13 +180,13 @@ export function buildMenus(ctx) {
       id: 'go',
       label: 'Go',
       items: [
-        { label: 'Home', onClick: () => navigate('home') },
-        { label: 'Portfolio', onClick: () => navigate('portfolio') },
-        { label: 'About Me', onClick: () => navigate('about') },
-        { label: 'Notes', onClick: () => navigate('notes') },
+        { label: 'Home', icon: 'house', onClick: () => navigate('home') },
+        { label: 'Portfolio', icon: 'photo.on.rectangle', onClick: () => navigate('portfolio') },
+        { label: 'About Me', icon: 'person.crop.square', onClick: () => navigate('about') },
+        { label: 'Notes', icon: 'note.text', onClick: () => navigate('notes') },
         { sep: true },
-        { label: 'Store', onClick: () => openWindow('shop') },
-        { label: 'Utilities', onClick: () => openWindow('finder') },
+        { label: 'Store', icon: 'bag', onClick: () => openWindow('shop') },
+        { label: 'Utilities', icon: 'wrench.and.screwdriver', onClick: () => openWindow('finder') },
       ],
     },
 
@@ -165,12 +194,12 @@ export function buildMenus(ctx) {
       id: 'window',
       label: 'Window',
       items: [
-        { label: 'Minimize', key: '⌘M', disabled: !hasWindow, onClick: minimizeActive },
-        { label: 'Zoom', disabled: !hasWindow, onClick: zoomActive },
+        { label: 'Minimize', icon: 'minus', key: '⌘M', disabled: !hasWindow, onClick: minimizeActive },
+        { label: 'Zoom', icon: 'arrow.up.left.and.arrow.down.right', disabled: !hasWindow, onClick: zoomActive },
         { sep: true },
         /* The reliable way in: macOS usually claims F3 before the page. */
-        { label: 'Mission Control', key: 'F3', onClick: missionControl },
-        { label: 'Launchpad', key: 'F4', onClick: launchpad },
+        { label: 'Mission Control', icon: 'rectangle.3.group', key: 'F3', onClick: missionControl },
+        { label: 'Launchpad', icon: 'square.grid.3x3', key: 'F4', onClick: launchpad },
         { sep: true },
         { label: 'Bring All to Front', disabled: true },
       ],
@@ -180,12 +209,12 @@ export function buildMenus(ctx) {
       id: 'help',
       label: 'Help',
       items: [
-        { label: 'Portfolio Help', onClick: openSpotlight },
+        { label: 'Portfolio Help', icon: 'questionmark.circle', onClick: openSpotlight },
         /* The one ⌘ hint in the whole bar that is not decorative — the
            browser lets ⌘/ through. */
-        { label: 'Keyboard Shortcuts', key: '⌘/', onClick: shortcuts },
+        { label: 'Keyboard Shortcuts', icon: 'keyboard', key: '⌘/', onClick: shortcuts },
         { sep: true },
-        { label: 'About This Mac', onClick: () => openWindow('about-mac') },
+        { label: 'About This Mac', icon: 'laptopcomputer', onClick: () => openWindow('about-mac') },
       ],
     },
   ]

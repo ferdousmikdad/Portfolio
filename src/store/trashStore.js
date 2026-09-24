@@ -6,6 +6,11 @@ import iphoneShotUrl   from '@/assets/images/iPhoneAR.jpg'
 import macDocumentUrl  from '@/assets/icons/macDocument.png'
 import pdfIconUrl      from '@/assets/icons/pdf.svg?url'
 import folderIconUrl   from '@/assets/icons/Folder.png?url'
+import useDesktopStore from '@/store/desktopStore'
+
+/* Anything erased that was a folder made on the desktop goes for good. */
+const forgetFolders = (items) =>
+  useDesktopStore.getState().forget(items.filter((i) => i.kind === 'folder' && i.origin?.source === 'desktop').map((i) => i.origin.id))
 
 /* ── What the Trash starts out holding ─────────────────────────────────────
    A Mac that has been used for five minutes has an empty Trash and nothing to
@@ -90,9 +95,12 @@ const useTrashStore = create(
 
       /* Delete Immediately — same removal, different words, and no way back. */
       eraseItem: (id) =>
-        set((state) => ({ items: state.items.filter((i) => i.id !== id) })),
+        set((state) => {
+          forgetFolders(state.items.filter((i) => i.id === id))
+          return { items: state.items.filter((i) => i.id !== id) }
+        }),
 
-      emptyTrash: () => set({ items: [] }),
+      emptyTrash: () => set((state) => { forgetFolders(state.items); return { items: [] } }),
 
       /* Restore the demo contents — Settings offers this so a visitor who
          erased everything can get the folder back without clearing storage. */

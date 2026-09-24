@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { Panel } from '@/components/ui/ContextMenu'
+import ForceQuit from '@/components/desktop/ForceQuit'
+import windowIcon from '@/data/windowIcons'
+import DESKTOP_FILES from '@/data/desktopFiles'
+import useDesktopStore from '@/store/desktopStore'
 import { motion, AnimatePresence } from 'framer-motion'
-import GlassLayers from '@/components/ui/LiquidGlass'
 import useWindowStore from '@/store/windowStore'
 import useThemeStore from '@/store/themeStore'
 import useUpdateStore from '@/store/updateStore'
@@ -18,42 +23,34 @@ import mikdadHeadUrl from '@/assets/icons/mikdad-head.svg?url'
    once any menu is open, *hovering* a sibling switches to it without a
    click; and the open title stays highlighted while its menu is down.    */
 
-function MenuDropdown({ menu, onClose }) {
-  return (
-    <motion.div
-      className="mb-menu"
-      initial={{ opacity: 0, y: -5, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -3, scale: 0.99 }}
-      transition={{ duration: 0.11 }}
-      role="menu"
-    >
-      <GlassLayers small />
-      {menu.items.map((item, i) =>
-        item.sep ? (
-          <div className="mb-menu__sep" key={`sep-${i}`} />
-        ) : (
-          <button
-            key={item.label}
-            type="button"
-            role="menuitem"
-            className="mb-menu__item"
-            disabled={item.disabled}
-            onClick={() => { item.onClick?.(); onClose() }}
-          >
-            <span className="mb-menu__label">{item.label}</span>
-            {item.badge && <span className="mac-badge">{item.badge}</span>}
-            {item.key && <span className="mb-menu__key">{item.key}</span>}
-          </button>
-        ),
-      )}
-    </motion.div>
+/* A title's menu: the same Tahoe panel the right-click menus use, hung
+   from the title's bottom-left corner. Portalled to <body> — inside the
+   bar its glass would sample the bar, not the desktop behind it. */
+function MenuDropdown({ menu, anchor, onClose }) {
+  const r = anchor?.getBoundingClientRect()
+  if (!r) return null
+  return createPortal(
+    <Panel
+      className="mac-menu--bar"
+      items={menu.items}
+      at={{ x: Math.round(r.left), y: Math.round(r.bottom + 3) }}
+      onClose={onClose}
+    />,
+    document.body,
   )
 }
 
 export default function MenuBar({ onOpenSpotlight, onMenuOpen }) {
   const [open, setOpen] = useState(null)      // menu id, or null
-  const [confirmRestart, setConfirmRestart] = useState(false)
+  const [confirm, setConfirm] = useState(null)   // 'restart' | 'shutdown' | 'logout'
+  const [forceQuitOpen, setForceQuitOpen] = useState(false)
+  /* Option held: the Apple menu shows its alternates while it is. */
+  const [option, setOption] = useState(false)
+  /* Recent Items: what was opened this session, newest first. */
+  const recent      = useDesktopStore((s) => s.recent)
+  const pushRecent  = useDesktopStore((s) => s.pushRecent)
+  const clearRecent = useDesktopStore((s) => s.clearRecent)
+  const titleRefs = useRef({})
   const [isFullscreen, setIsFullscreen] = useState(false)
   const rootRef = useRef(null)
   /* Which menu the *pointer* opened. Without this, moving onto a sibling
@@ -65,8 +62,8 @@ export default function MenuBar({ onOpenSpotlight, onMenuOpen }) {
   const {
     activeWindowId, windows, openWindow, navigate,
     closeWindow, minimizeWindow, toggleMaximize, closeAllExcept,
-    toggleMissionControl, toggleLaunchpad, startScreenSaver, lock, openSettingsAt,
-    openShortcuts, sleep, restart,
+    toggleMissionControl, toggleLaunchpad, lock, openSettingsAt,
+    openShortcuts, sleep, restart, shutDown, logOut,
   } = useWindowStore()
   const { isDark, toggleTheme } = useThemeStore()
   const updatePending = useUpdateStore((s) => s.stage !== 'installed')
@@ -76,6 +73,25 @@ export default function MenuBar({ onOpenSpotlight, onMenuOpen }) {
     (w) => w.id === activeWindowId && w.isOpen && !w.isMinimized,
   )
   const appName = appNameFor(front?.id)
+
+  /* Every window that comes to the front is remembered once, apps apart
+     from documents (the desktop's .txt files open as TextEdit windows). */
+  useEffect(() => {
+    if (!front) return
+    const file = DESKTOP_FILES.find((d) => d.windowId === front.id)
+    const entry = file
+      ? { id: front.id, name: file.name, icon: file.icon, doc: true }
+      : { id: front.id, name: appNameFor(front.id), icon: windowIcon(front.id), doc: false }
+    pushRecent(entry)
+  }, [front?.id])
+
+  useEffect(() => {
+    if (!open) { setOption(false); return }
+    const onKey = (e) => setOption(e.altKey)
+    window.addEventListener('keydown', onKey)
+    window.addEventListener('keyup', onKey)
+    return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('keyup', onKey) }
+  }, [open])
 
   useEffect(() => {
     const handler = () => setIsFullscreen(!!document.fullscreenElement)
@@ -87,7 +103,9 @@ export default function MenuBar({ onOpenSpotlight, onMenuOpen }) {
   useEffect(() => {
     if (!open) return
     const onDown = (e) => {
-      if (rootRef.current && !rootRef.current.contains(e.target)) {
+      // The menus are portalled out of the bar, so a press inside one is
+      // not outside the menu bar.
+      if (rootRef.current && !rootRef.current.contains(e.target) && !e.target.closest?.('.mac-menu')) {
         hoverOpened.current = null
         setOpen(null)
       }
@@ -132,13 +150,20 @@ export default function MenuBar({ onOpenSpotlight, onMenuOpen }) {
     openSpotlight: () => onOpenSpotlight?.(),
     missionControl: toggleMissionControl,
     launchpad: toggleLaunchpad,
-    screenSaver: startScreenSaver,
     lock,
     openSettingsAt,
     updatePending,
     shortcuts: openShortcuts,
     sleep,
-    restart: () => setConfirmRestart(true),
+    restart:  (ask) => (ask ? setConfirm('restart')  : restart()),
+    shutDown: (ask) => (ask ? setConfirm('shutdown') : shutDown()),
+    logOut:   (ask) => (ask ? setConfirm('logout')   : logOut()),
+    option,
+    recent,
+    clearRecent,
+    forceQuit: () => setForceQuitOpen(true),
+    forceQuitFront: () => front && closeWindow(front.id),
+    userName: 'Ferdous Mikdad',
   })
 
   return (
@@ -146,6 +171,7 @@ export default function MenuBar({ onOpenSpotlight, onMenuOpen }) {
       {menus.map((menu) => (
         <div className="mb__slot" key={menu.id}>
           <button
+            ref={(el) => { titleRefs.current[menu.id] = el }}
             type="button"
             className={`mb__title${menu.apple ? ' mb__title--apple' : ''}${menu.bold ? ' mb__title--app' : ''}`}
             data-open={open === menu.id}
@@ -171,23 +197,41 @@ export default function MenuBar({ onOpenSpotlight, onMenuOpen }) {
 
           <AnimatePresence>
             {open === menu.id && (
-              <MenuDropdown menu={menu} onClose={() => setOpen(null)} />
+              <MenuDropdown key={menu.id} menu={menu} anchor={titleRefs.current[menu.id]} onClose={() => setOpen(null)} />
             )}
           </AnimatePresence>
         </div>
       ))}
 
-      {/* What "Restart…" promises. Wording lifted from the real panel, which
-          asks the question and then answers what it is about to do. */}
+      {/* What the ellipses promise. Wording lifted from the real panels,
+          which ask the question and then say what will happen by itself. */}
       <MacAlert
-        open={confirmRestart}
+        open={!!confirm}
         icon={mikdadHeadUrl}
-        title="Are you sure you want to restart your computer now?"
-        message="Open windows will be closed. Nothing is saved anywhere, so nothing is lost."
-        confirmLabel="Restart"
-        onConfirm={() => { setConfirmRestart(false); restart() }}
-        onCancel={() => setConfirmRestart(false)}
+        title={{
+          restart:  'Are you sure you want to restart your computer now?',
+          shutdown: 'Are you sure you want to shut down your computer now?',
+          logout:   'Are you sure you want to quit all applications and log out now?',
+        }[confirm] ?? ''}
+        message={{
+          restart:  'Open windows will be closed. Nothing is saved anywhere, so nothing is lost.',
+          shutdown: 'Open windows will be closed. Press any key to turn it back on.',
+          logout:   'Every window will be closed and you will be returned to the login screen.',
+        }[confirm] ?? ''}
+        confirmLabel={{ restart: 'Restart', shutdown: 'Shut Down', logout: 'Log Out' }[confirm] ?? 'OK'}
+        onConfirm={() => {
+          const which = confirm
+          setConfirm(null)
+          if (which === 'restart')  restart()
+          if (which === 'shutdown') shutDown()
+          if (which === 'logout')   logOut()
+        }}
+        onCancel={() => setConfirm(null)}
       />
+
+      <AnimatePresence>
+        {forceQuitOpen && <ForceQuit onClose={() => setForceQuitOpen(false)} />}
+      </AnimatePresence>
     </div>
   )
 }

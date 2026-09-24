@@ -1,20 +1,21 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { Fragment, useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, ArrowUp, Search } from 'lucide-react'
 import useWindowStore from '@/store/windowStore'
-import {
-  CONTACT, SOCIAL_LINKS, WORKER_URL, FALLBACK,
-  getResponse, useTyping, byCategory, RANDOM_CATEGORIES,
-} from '@/data/mikudaAI'
+import SFSymbol from '@/components/ui/SFSymbol'
+import useMikuda from '@/hooks/useMikuda'
+import { CONTACT, SOCIAL_LINKS } from '@/data/mikudaAI'
 
-/* Mikuda's chat, lifted out of the Home window so Finder can show the very
-   same panel under its Home favourite — one conversation UI, two places to
-   meet it. Each mount keeps its own thread, the way two Finder windows on
-   the same folder each keep their own selection. */
+/* Mikuda's chat, drawn as a Messages conversation. The Home window hosts one
+   of these per conversation in its sidebar; Finder shows a single one under
+   its Home favourite. Each mount keeps its own thread, the way two Finder
+   windows on the same folder each keep their own selection.
 
-// ── Pre-set suggestions (shown on input focus) ────────────────────────────────
+   Messages does not stream text in, so neither does this: the typing bubble
+   holds until the whole reply is ready, then the reply lands at once. */
 
-const INPUT_SUGGESTIONS = [
+export const GREETING = "Hey, I'm Mikuda 👋 Ask me anything about Mikdad's work, skills or projects — or click + for ideas."
+
+const SUGGESTIONS = [
   'Who is Mikdad?',
   'What are his skills?',
   'Is he available for freelance?',
@@ -23,435 +24,263 @@ const INPUT_SUGGESTIONS = [
   'How can I contact him?',
 ]
 
-// ── Bubble components ─────────────────────────────────────────────────────────
+const clock = (d) => d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+const label  = (slug) => slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+const hostOf = (href) => href.replace(/^(https?:\/\/(www\.)?|mailto:|tel:)/, '').replace(/\/$/, '')
 
-function AiBubble({ text, action, actionLabel, onAction, isLatest }) {
-  const { displayed, done } = useTyping(text, isLatest)
-  const lines = (displayed || '').split('\n')
+// ── Bubbles ───────────────────────────────────────────────────────────────────
 
+/* One bubble. `tail` is set on the last bubble of a run from one sender —
+   the only one Messages draws the tail on. */
+function Bubble({ out, tail, children, className = '' }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 32 }}
-      className="flex flex-col gap-2"
+    <div className={`msg-bubble ${out ? 'msg-bubble--out' : 'msg-bubble--in'}${tail ? ' msg-bubble--tail' : ''} ${className}`}>
+      {children}
+    </div>
+  )
+}
+
+/* A link with a preview: the grey footer carrying a title and the site it
+   points at, with an image above it when there is one. Messages draws every
+   shared URL this way, so the portfolio pieces, social profiles and in-site
+   shortcuts all come through as the same kind of card. */
+function LinkBubble({ href, onClick, image, title, sub, tail }) {
+  const [loaded, setLoaded] = useState(false)
+  const Tag = href ? 'a' : 'button'
+  return (
+    <Tag
+      className={`msg-link${tail ? ' msg-bubble--tail' : ''}`}
+      {...(href ? { href, target: '_blank', rel: 'noreferrer' } : { onClick })}
     >
-      <div className="hw-bubble-ai">
-        <p className="hw-bubble-text">
-          {lines.map((line, i) => (
-            <span key={i}>{line}{i < lines.length - 1 && <br />}</span>
-          ))}
-          {isLatest && !done && <span className="mk-cursor" />}
-        </p>
-      </div>
-      {done && action && (
-        <motion.button
-          initial={{ opacity: 0, y: 4 }}
-          animate={{ opacity: 1, y: 0 }}
-          onClick={() => onAction(action)}
-          className="mk-action-btn"
-        >
-          {actionLabel}
-        </motion.button>
+      {image && (
+        <span className="msg-link__image">
+          {!loaded && <span className="msg-link__skeleton" />}
+          <img src={image} alt="" onLoad={() => setLoaded(true)} style={{ opacity: loaded ? 1 : 0 }} draggable={false} />
+        </span>
       )}
-    </motion.div>
+      <span className="msg-link__footer">
+        <span className="msg-link__title">{title}</span>
+        {sub && <span className="msg-link__sub">{sub}</span>}
+      </span>
+    </Tag>
   )
 }
 
-function ImageBubble({ text, project, onOpenProject, isLatest }) {
-  const { displayed, done } = useTyping(text, isLatest)
-  const [imgLoaded, setImgLoaded] = useState(false)
+/* Everything one message contributes, flattened to a list of bubbles so
+   runs and tails can be worked out across message boundaries. */
+function bubblesFor(msg, { onAction, onOpenProject }) {
+  if (msg.role === 'user') return [{ out: true, node: <p>{msg.text}</p> }]
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-      className="flex flex-col gap-2"
-    >
-      {text && (
-        <div className="hw-bubble-ai">
-          <p className="hw-bubble-text">
-            {displayed}
-            {isLatest && !done && <span className="mk-cursor" />}
-          </p>
-        </div>
-      )}
-      {done && project && (
-        <motion.button
-          initial={{ opacity: 0, scale: 0.96, y: 6 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ type: 'spring', stiffness: 360, damping: 28, delay: 0.08 }}
-          className="hw-image-card"
-          onClick={() => onOpenProject(project)}
-          title={`Open ${project.title}`}
-        >
-          <div className="mk-image-wrap">
-            {!imgLoaded && <div className="mk-image-skeleton" />}
-            <img
-              src={project.thumbnail}
-              alt={project.title}
-              className="mk-image"
-              style={{ opacity: imgLoaded ? 1 : 0 }}
-              onLoad={() => setImgLoaded(true)}
-            />
-          </div>
-          <div className="mk-image-footer">
-            <span className="mk-image-title">{project.title}</span>
-            <span style={{ fontSize: 10, color: 'var(--body)', fontWeight: 500 }}>{project.category}</span>
-          </div>
-        </motion.button>
-      )}
-    </motion.div>
-  )
+  const list = []
+  if (msg.text) list.push({ node: <p>{msg.text}</p> })
+
+  if (msg.type === 'image' && msg.project) {
+    list.push({
+      link: true,
+      node: (tail) => (
+        <LinkBubble tail={tail} image={msg.project.thumbnail} title={msg.project.title}
+          sub={label(msg.project.category)} onClick={() => onOpenProject(msg.project)} />
+      ),
+    })
+  }
+  if (msg.type === 'social') {
+    const links = msg.socialFilter ? SOCIAL_LINKS.filter((s) => msg.socialFilter.includes(s.label)) : SOCIAL_LINKS
+    links.forEach((s) => list.push({
+      link: true,
+      node: (tail) => <LinkBubble tail={tail} href={s.href} title={`${s.label} · ${s.handle}`} sub={hostOf(s.href)} />,
+    }))
+  }
+  if (msg.type === 'contact') {
+    if (msg.contactInfo?.email) list.push({
+      link: true,
+      node: (tail) => <LinkBubble tail={tail} href={`mailto:${CONTACT.email}`} title="Email" sub={CONTACT.email} />,
+    })
+    if (msg.contactInfo?.phone) list.push({
+      link: true,
+      node: (tail) => <LinkBubble tail={tail} href={`tel:${CONTACT.phone.replace(/\s/g, '')}`} title="Phone" sub={CONTACT.phone} />,
+    })
+  }
+  if (msg.action) {
+    list.push({
+      link: true,
+      node: (tail) => <LinkBubble tail={tail} title={msg.actionLabel} sub="Click to open" onClick={() => onAction(msg.action)} />,
+    })
+  }
+  return list
 }
 
-function UserBubble({ text }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 32 }}
-      className="flex justify-end"
-    >
-      <div className="hw-bubble-user">
-        <p className="hw-bubble-text">{text}</p>
-      </div>
-    </motion.div>
-  )
-}
+// ── Panel ─────────────────────────────────────────────────────────────────────
 
-function ThinkingBubble() {
-  return (
-    <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-      <div className="hw-bubble-ai">
-        <div className="mk-dots"><span /><span /><span /></div>
-      </div>
-    </motion.div>
-  )
-}
-
-function ContactBubble({ text, contactInfo, isLatest }) {
-  const { displayed, done } = useTyping(text || '', isLatest && !!text)
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 32 }}
-      className="flex flex-col gap-2"
-    >
-      {text && (
-        <div className="hw-bubble-ai">
-          <p className="hw-bubble-text">
-            {displayed}
-            {isLatest && !done && <span className="mk-cursor" />}
-          </p>
-        </div>
-      )}
-      {(!text || done) && (
-        <motion.div className="mk-contact-chips" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: text ? 0.1 : 0 }}>
-          {contactInfo.email && (
-            <a href={`mailto:${CONTACT.email}`} className="mk-contact-chip" target="_blank" rel="noreferrer">
-              <div className="mk-contact-chip-icon">✉</div>
-              <div className="flex flex-col">
-                <span className="mk-contact-chip-label">Email</span>
-                <span className="mk-contact-chip-value">{CONTACT.email}</span>
-              </div>
-            </a>
-          )}
-          {contactInfo.phone && (
-            <a href={`tel:${CONTACT.phone.replace(/\s/g, '')}`} className="mk-contact-chip" target="_blank" rel="noreferrer">
-              <div className="mk-contact-chip-icon">📞</div>
-              <div className="flex flex-col">
-                <span className="mk-contact-chip-label">Phone</span>
-                <span className="mk-contact-chip-value">{CONTACT.phone}</span>
-              </div>
-            </a>
-          )}
-        </motion.div>
-      )}
-    </motion.div>
-  )
-}
-
-function SocialBubble({ text, filter, isLatest }) {
-  const { displayed, done } = useTyping(text, isLatest)
-  const links = filter ? SOCIAL_LINKS.filter((s) => filter.includes(s.label)) : SOCIAL_LINKS
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 32 }}
-      className="flex flex-col gap-2"
-    >
-      <div className="hw-bubble-ai">
-        <p className="hw-bubble-text">
-          {displayed}
-          {isLatest && !done && <span className="mk-cursor" />}
-        </p>
-      </div>
-      {done && (
-        <motion.div className="mk-contact-chips" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
-          {links.map((s, i) => (
-            <motion.a
-              key={s.href} href={s.href} target="_blank" rel="noreferrer"
-              className="mk-contact-chip"
-              initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.06 + i * 0.04 }}
-            >
-              <div className="mk-contact-chip-icon" style={{ background: `${s.color}22`, color: s.color, fontSize: 11, fontWeight: 700, letterSpacing: '-0.3px' }}>
-                {s.icon}
-              </div>
-              <div className="flex flex-col">
-                <span className="mk-contact-chip-label">{s.label}</span>
-                <span className="mk-contact-chip-value">{s.handle}</span>
-              </div>
-            </motion.a>
-          ))}
-        </motion.div>
-      )}
-    </motion.div>
-  )
-}
-
-// ── Chat panel (right side) ───────────────────────────────────────────────────
-
-export default function ChatPanel() {
+export default function ChatPanel({ active = true, starter, greeting = true, onActivity }) {
   const navigate           = useWindowStore((s) => s.navigate)
   const openProjectPreview = useWindowStore((s) => s.openProjectPreview)
 
-  const [messages,  setMessages]  = useState([])
-  const [input,     setInput]     = useState('')
-  const [thinking,  setThinking]  = useState(false)
-  const [latestId,  setLatestId]  = useState(null)
-  const [focused,   setFocused]   = useState(false)
+  const [messages, setMessages] = useState([])
+  const [input,    setInput]    = useState('')
+  const [thinking, setThinking] = useState(false)
+  const [menu,     setMenu]     = useState(false)
+  const [opened]                = useState(() => new Date())
+  const { ask }                 = useMikuda()
 
   const scrollRef     = useRef(null)
   const inputRef      = useRef(null)
   const nextId        = useRef(0)
-  const categoryIndex = useRef({})
-  const lastCategory  = useRef(null)
-
-  const inChat = messages.length > 0
+  const starterSent   = useRef(false)
 
   useEffect(() => {
-    setTimeout(() => inputRef.current?.focus(), 200)
-  }, [])
+    if (!active) return
+    const t = setTimeout(() => inputRef.current?.focus(), 200)
+    return () => clearTimeout(t)
+  }, [active])
 
   useEffect(() => {
     const el = scrollRef.current
     if (!el) return
     const mo = new MutationObserver(() => { el.scrollTop = el.scrollHeight })
-    mo.observe(el, { childList: true, subtree: true, characterData: true })
+    mo.observe(el, { childList: true, subtree: true })
     return () => mo.disconnect()
   }, [])
+
+  /* Report the newest line to whoever lists this conversation. */
+  useEffect(() => {
+    const last = messages[messages.length - 1]
+    if (!last || !onActivity) return
+    const preview = last.text || (last.project ? last.project.title : last.actionLabel) || ''
+    onActivity({ preview, at: last.at })
+  }, [messages, onActivity])
+
+  const push = (msg) => setMessages((prev) => [...prev, { id: nextId.current++, at: new Date(), ...msg }])
 
   const sendMessage = useCallback(async (text) => {
     const trimmed = typeof text === 'string' ? text.trim() : input.trim()
     if (!trimmed || thinking) return
 
-    const uid = nextId.current++
-    setMessages((prev) => [...prev, { id: uid, role: 'user', text: trimmed }])
+    setMenu(false)
+    push({ role: 'user', text: trimmed })
     setInput('')
     setThinking(true)
+    const reply = await ask(trimmed)
+    setThinking(false)
+    push({ role: 'ai', ...reply })
+  }, [input, thinking, ask])
 
-    const entry = getResponse(trimmed)
+  /* A conversation opened from the sidebar asks its question the first time
+     it is shown, so the thread arrives already answered. */
+  useEffect(() => {
+    if (!active || !starter || starterSent.current) return
+    starterSent.current = true
+    sendMessage(starter)
+  }, [active, starter, sendMessage])
 
-    if (entry.isAiFallback) {
-      try {
-        const res  = await fetch(`${WORKER_URL}/mikuda`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: trimmed }),
-        })
-        const data = await res.json()
-        const aiId = nextId.current++
-        setThinking(false)
-        setMessages((prev) => [...prev, { id: aiId, role: 'ai', type: 'text', text: data.reply || FALLBACK }])
-        setLatestId(aiId)
-      } catch {
-        const aiId = nextId.current++
-        setThinking(false)
-        setMessages((prev) => [...prev, { id: aiId, role: 'ai', type: 'text', text: FALLBACK }])
-        setLatestId(aiId)
-      }
-      return
-    }
-
-    setTimeout(() => {
-      const aiId = nextId.current++
-
-      let resolvedCategory = entry.mediaCategory
-      if (entry.isNext) resolvedCategory = lastCategory.current
-
-      let project = null
-      if (resolvedCategory) {
-        const pool = byCategory(resolvedCategory)
-        if (pool.length > 0) {
-          const isRandom = RANDOM_CATEGORIES.has(resolvedCategory)
-          const idx = isRandom
-            ? Math.floor(Math.random() * pool.length)
-            : (categoryIndex.current[resolvedCategory] ?? 0) % pool.length
-          project = pool[idx]
-          if (!isRandom) categoryIndex.current[resolvedCategory] = idx + 1
-          lastCategory.current = resolvedCategory
-        }
-      }
-
-      setThinking(false)
-
-      if (project) {
-        setMessages((prev) => [...prev, { id: aiId, role: 'ai', type: 'image', text: entry.answer || "Here's another one:", project }])
-      } else if (entry.socialLinks) {
-        setMessages((prev) => [...prev, { id: aiId, role: 'ai', type: 'social', text: entry.answer, socialFilter: entry.socialFilter ?? null }])
-      } else if (entry.contactInfo) {
-        setMessages((prev) => [...prev, { id: aiId, role: 'ai', type: 'contact', text: entry.answer || '', contactInfo: entry.contactInfo }])
-      } else {
-        setMessages((prev) => [...prev, { id: aiId, role: 'ai', type: 'text', text: entry.answer || FALLBACK, action: entry.action, actionLabel: entry.actionLabel }])
-      }
-
-      setLatestId(aiId)
-    }, 600 + Math.random() * 350)
-  }, [input, thinking])
-
-  const reset = () => {
-    setMessages([]); setInput(''); setThinking(false); setLatestId(null)
-    nextId.current = 0; categoryIndex.current = {}; lastCategory.current = null
-  }
-
-  const handleAction = (page) => navigate(page)
   const onKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() }
+    if (e.key === 'Escape') setMenu(false)
   }
 
-  // Refocus input after transition between welcome ↔ chat
-  useEffect(() => {
-    const t = setTimeout(() => inputRef.current?.focus(), 240)
-    return () => clearTimeout(t)
-  }, [inChat])
+  // Flatten to bubbles, then mark the last of every run for its tail.
+  const bubbles = []
+  if (greeting) bubbles.push({ key: 'greeting', node: <p>{GREETING}</p> })
+  messages.forEach((m) => {
+    bubblesFor(m, { onAction: navigate, onOpenProject: openProjectPreview })
+      .forEach((b, i) => bubbles.push({ ...b, key: `${m.id}-${i}` }))
+  })
+  if (thinking) bubbles.push({ key: 'typing', typing: true })
+  bubbles.forEach((b, i) => {
+    const next = bubbles[i + 1]
+    b.tail  = !next || !!next.out !== !!b.out
+    b.first = i === 0 || !!bubbles[i - 1].out !== !!b.out
+  })
+  // The receipt sits under the newest bubble you sent, however much has been said since.
+  const lastOutKey = [...bubbles].reverse().find((b) => b.out)?.key
+  
+  return (
+    <div className="msg-panel">
+      <div ref={scrollRef} className="msg-scroll window-scroll">
+        <div className="msg-thread">
+          <p className="msg-stamp"><b>iMessage</b><br />Today {clock(messages[0]?.at ?? opened)}</p>
 
-  const showSuggestions = focused && !input.trim() && !inChat
-
-  const inputBar = (
-    <div className="hw-input-row" style={{ position: 'relative' }}>
-      {/* Suggestion dropdown */}
-      <AnimatePresence>
-        {showSuggestions && (
-          <motion.div
-            className="hw-suggest-dropdown"
-            initial={{ opacity: 0, y: 6, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 4, scale: 0.98 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 32 }}
-          >
-            {INPUT_SUGGESTIONS.map((s) => (
-              <button
-                key={s}
-                className="hw-suggest-item"
-                onMouseDown={() => { setFocused(false); sendMessage(s) }}
-              >
-                <Search size={12} className="hw-suggest-icon" />
-                {s}
-              </button>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <div className="hw-input-bar">
-        <button className="mk-plus-btn" onClick={inChat ? reset : undefined} title={inChat ? 'New conversation' : ''}>
-          <Plus size={14} />
-        </button>
-        <input
-          ref={inputRef}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={onKeyDown}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          placeholder="Ask me anything about Mikdad…"
-          className="hw-input"
-          onMouseDown={(e) => e.stopPropagation()}
-        />
-        <AnimatePresence>
-          {input.trim() && (
-            <motion.button
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0, opacity: 0 }}
-              className="mk-send-btn"
-              onClick={() => sendMessage()}
-              disabled={thinking}
+          {bubbles.map((b) => (
+            <Fragment key={b.key}>
+            <motion.div
+              className={`msg-row ${b.out ? 'msg-row--out' : 'msg-row--in'}${b.first ? ' msg-row--first' : ''}`}
+              initial={{ opacity: 0, y: 8, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ type: 'spring', stiffness: 520, damping: 34 }}
+              style={{ transformOrigin: b.out ? 'bottom right' : 'bottom left' }}
             >
-              <ArrowUp size={13} />
-            </motion.button>
+              {b.typing ? (
+                <Bubble tail className="msg-typing"><span /><span /><span /></Bubble>
+              ) : b.link ? (
+                b.node(b.tail)
+              ) : (
+                <Bubble out={b.out} tail={b.tail}>{b.node}</Bubble>
+              )}
+            </motion.div>
+            {b.key === lastOutKey && (
+              <p className="msg-receipt">{thinking ? 'Delivered' : 'Read'}</p>
+            )}
+            </Fragment>
+          ))}
+        </div>
+      </div>
+
+      <div className="msg-compose">
+        <AnimatePresence>
+          {menu && (
+            <motion.div
+              className="msg-menu"
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 2, transition: { duration: 0.1 } }}
+              transition={{ duration: 0.14 }}
+            >
+              {SUGGESTIONS.map((s) => (
+                <button key={s} className="msg-menu__item" onMouseDown={(e) => { e.preventDefault(); sendMessage(s) }}>
+                  {s}
+                </button>
+              ))}
+            </motion.div>
           )}
         </AnimatePresence>
+
+        <button
+          className="msg-round"
+          title="Suggested questions"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => { setMenu((v) => !v); inputRef.current?.focus() }}
+        >
+          <SFSymbol name="plus" size={13} />
+        </button>
+
+        <div className="msg-field">
+          <input
+            ref={inputRef}
+            value={input}
+            onChange={(e) => { setInput(e.target.value); setMenu(false) }}
+            onKeyDown={onKeyDown}
+            onBlur={() => setMenu(false)}
+            placeholder="iMessage"
+            className="msg-input"
+            onMouseDown={(e) => e.stopPropagation()}
+          />
+          {input.trim() ? (
+            <button className="msg-send" onClick={() => sendMessage()} disabled={thinking} title="Send">
+              <SFSymbol name="arrow.up" size={11} />
+            </button>
+          ) : (
+            <SFSymbol name="waveform" size={15} className="msg-field__wave" />
+          )}
+        </div>
+
+        <button
+          className="msg-round"
+          title="Emoji"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => { setInput((v) => `${v}👋`); inputRef.current?.focus() }}
+        >
+          <SFSymbol name="face.smiling" size={16} />
+        </button>
       </div>
-    </div>
-  )
-
-  return (
-    <div className="hw-chat-panel">
-      <AnimatePresence mode="wait">
-
-        {/* ── Welcome: input perfectly centred ── */}
-        {!inChat && (
-          <motion.div
-            key="welcome"
-            className="hw-welcome-layout"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.18 }}
-          >
-            <div className="hw-welcome-text">
-              <h1 className="hw-welcome-heading">
-                Hey, I'm <span style={{ color: '#cf0506' }}>Mikuda</span>
-              </h1>
-              <p className="hw-welcome-sub">
-                Ask me anything about Mikdad's work, skills, or projects.
-              </p>
-            </div>
-            <motion.div
-              style={{ width: '100%' }}
-              animate={{ paddingLeft: input ? 0 : 40, paddingRight: input ? 0 : 40 }}
-              transition={{ type: 'spring', stiffness: 320, damping: 32 }}
-            >
-              {inputBar}
-            </motion.div>
-          </motion.div>
-        )}
-
-        {/* ── Chat: messages above, input at bottom ── */}
-        {inChat && (
-          <motion.div
-            key="chat"
-            className="hw-chat-layout"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.18 }}
-          >
-            <div ref={scrollRef} className="hw-messages window-scroll">
-              {messages.map((msg) => {
-                if (msg.role === 'user') return <UserBubble key={msg.id} text={msg.text} />
-                if (msg.type === 'image') return <ImageBubble key={msg.id} text={msg.text} project={msg.project} onOpenProject={openProjectPreview} isLatest={msg.id === latestId} />
-                if (msg.type === 'social') return <SocialBubble key={msg.id} text={msg.text} filter={msg.socialFilter} isLatest={msg.id === latestId} />
-                if (msg.type === 'contact') return <ContactBubble key={msg.id} text={msg.text} contactInfo={msg.contactInfo} isLatest={msg.id === latestId} />
-                return <AiBubble key={msg.id} text={msg.text} action={msg.action} actionLabel={msg.actionLabel} onAction={handleAction} isLatest={msg.id === latestId} />
-              })}
-              <AnimatePresence>
-                {thinking && <ThinkingBubble key="thinking" />}
-              </AnimatePresence>
-            </div>
-            {inputBar}
-          </motion.div>
-        )}
-
-      </AnimatePresence>
     </div>
   )
 }
