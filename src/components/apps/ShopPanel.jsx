@@ -36,7 +36,7 @@ const highlight = (code) =>
 
 // ── Copy button ───────────────────────────────────────────────────────────────
 
-function CopyButton({ text, label = 'Copy code' }) {
+export function CopyButton({ text, label = 'Copy code' }) {
   const [copied, setCopied] = useState(false)
 
   const copy = async () => {
@@ -106,10 +106,36 @@ function ResourceCard({ res, onOpen }) {
 
 // ── Detail: preview beside its source ─────────────────────────────────────────
 
-function ResourceDetail({ res, onBack, stacked }) {
+/* The live preview beside the file that produces it — shared by this
+   panel's detail view and the App Store's product page. */
+export function ResourcePanes({ res, stacked }) {
   const file = useMemo(() => toHtmlFile(res), [res])
   const code = useMemo(() => highlight(file), [file])
+  return (
+    <div className="shop-detail__cols" data-stacked={stacked}>
+      <div className="shop-pane">
+        <div className="shop-pane__head">
+          <span>Preview</span>
+          <span className="shop-pane__tags">{res.tags.join(' · ')}</span>
+        </div>
+        <div className="shop-pane__body shop-pane__body--preview">
+          <div className="sm-frame sm-frame--live" dangerouslySetInnerHTML={{ __html: res.html }} />
+        </div>
+      </div>
+      <div className="shop-pane shop-pane--code">
+        <div className="shop-pane__head">
+          <span className="font-mono">{res.id}.html</span>
+          <CopyButton text={file} />
+        </div>
+        <div className="shop-pane__body shop-pane__body--code window-scroll">
+          <pre className="shop-code"><code dangerouslySetInnerHTML={{ __html: code }} /></pre>
+        </div>
+      </div>
+    </div>
+  )
+}
 
+function ResourceDetail({ res, onBack, stacked }) {
   return (
     <motion.div
       className="shop-detail"
@@ -128,29 +154,7 @@ function ResourceDetail({ res, onBack, stacked }) {
         </div>
       </div>
 
-      <div className="shop-detail__cols" data-stacked={stacked}>
-        {/* Left — the animation, running */}
-        <div className="shop-pane">
-          <div className="shop-pane__head">
-            <span>Preview</span>
-            <span className="shop-pane__tags">{res.tags.join(' · ')}</span>
-          </div>
-          <div className="shop-pane__body shop-pane__body--preview">
-            <div className="sm-frame sm-frame--live" dangerouslySetInnerHTML={{ __html: res.html }} />
-          </div>
-        </div>
-
-        {/* Right — the file that produces it */}
-        <div className="shop-pane shop-pane--code">
-          <div className="shop-pane__head">
-            <span className="font-mono">{res.id}.html</span>
-            <CopyButton text={file} />
-          </div>
-          <div className="shop-pane__body shop-pane__body--code window-scroll">
-            <pre className="shop-code"><code dangerouslySetInnerHTML={{ __html: code }} /></pre>
-          </div>
-        </div>
-      </div>
+      <ResourcePanes res={res} stacked={stacked} />
     </motion.div>
   )
 }

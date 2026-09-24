@@ -41,7 +41,7 @@ export default function Launchpad({ open, onClose }) {
     { id: 'notes',      name: 'Notes',           icon: noteUrl,     run: () => openWindow('notes') },
     { id: 'terminal',   name: 'Terminal',        icon: terminalUrl, run: () => openWindow('terminal') },
     { id: 'calculator', name: 'Calculator',      icon: calcUrl,     run: () => openWindow('calculator') },
-    { id: 'shop',       name: 'Store',           icon: appStoreUrl, run: () => openWindow('shop') },
+    { id: 'shop',       name: 'App Store',           icon: appStoreUrl, run: () => openWindow('shop') },
     { id: 'spotify',    name: 'Spotify',         icon: spotifyUrl,  run: () => openWindow('spotify') },
     { id: 'photo-booth', name: 'Photo Booth',    icon: photoBoothUrl, run: () => openWindow('photo-booth') },
     { id: 'settings',   name: 'System Settings', icon: PANE_ICONS.general, run: () => openWindow('settings') },

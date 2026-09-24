@@ -7317,3 +7317,157 @@ html:not(.dark) .fq-list { background: #fff; }
 }
 .fd-sub > div { overflow: hidden; min-height: 0; }
 .fd-sub[data-open] { grid-template-rows: 1fr; }
+
+/* ── App Store (Tahoe) ───────────────────────────────────────────────────────
+   Measured off the real window: sidebar search field at the top, 34pt nav
+   rows with 17pt outline symbols, the selected row a grey slab in the
+   accent, the account pinned bottom-left; content 24pt gutters, a 20pt
+   rounded hero, capsule chips, two-column ranked rows with a grey capsule
+   "Get" in blue text.                                                      */
+
+.as-side { flex: 1; display: flex; flex-direction: column; min-height: 0; padding: 2px 10px 10px; }
+.as-search {
+  display: flex; align-items: center; gap: 7px;
+  height: 30px; margin: 0 2px 12px; padding: 0 11px;
+  border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--headline);
+}
+.dark .as-search { background: rgba(255, 255, 255, 0.07); }
+.as-search input {
+  flex: 1; min-width: 0; background: transparent; border: none; outline: none;
+  font: 13px 'SF Pro Text', system-ui, sans-serif; color: var(--headline);
+}
+.as-search input::placeholder { color: var(--body); }
+.as-nav { display: flex; flex-direction: column; gap: 2px; flex: 1; overflow-y: auto; }
+.as-nav__row {
+  display: flex; align-items: center; gap: 10px;
+  height: 34px; padding: 0 12px;
+  border: none; border-radius: 10px; background: transparent;
+  color: var(--headline); font: 14px 'SF Pro Text', system-ui, sans-serif;
+  text-align: left; cursor: default;
+}
+.as-nav__row[data-on] { background: rgba(0, 0, 0, 0.07); color: var(--brand); }
+.dark .as-nav__row[data-on] { background: rgba(255, 255, 255, 0.10); }
+.as-account { display: flex; align-items: center; gap: 10px; padding: 10px 6px 2px; }
+.as-account__avatar {
+  display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%;
+  background: linear-gradient(180deg, #8e8e93, #636366); color: #fff;
+  font: 600 13px 'SF Pro Text', sans-serif; flex-shrink: 0;
+}
+.as-account__text { display: flex; flex-direction: column; min-width: 0; }
+.as-account__name { font: 600 13px 'SF Pro Text', sans-serif; color: var(--headline); }
+.as-account__sub { font: 12px 'SF Pro Text', sans-serif; color: var(--body); }
+
+.as-body { height: 100%; overflow-y: auto; padding: 4px 24px 28px; font-family: 'SF Pro Text', system-ui, sans-serif; }
+
+.as-hero {
+  display: flex; align-items: center; gap: 28px;
+  min-height: 300px; padding: 28px 36px;
+  border-radius: 20px;
+  background: radial-gradient(120% 140% at 20% 20%, #1f3a6b 0%, #0d1526 55%, #06080f 100%);
+  cursor: default; overflow: hidden;
+}
+.as-hero__stage { flex: 0 0 min(42%, 340px); }
+.as-hero__stage .sm-frame { display: block; width: 100%; }
+.as-hero__text { flex: 1; min-width: 0; color: #fff; }
+.as-hero__eyebrow { font: 600 13px 'SF Pro Text', sans-serif; color: rgba(255, 255, 255, 0.7); }
+.as-hero__title { margin-top: 6px; font: 700 30px/1.15 'SF Pro Display', sans-serif; letter-spacing: -0.02em; }
+.as-hero__cta {
+  margin-top: 18px; height: 36px; padding: 0 22px;
+  border: none; border-radius: 9999px; background: var(--brand); color: #fff;
+  font: 600 15px 'SF Pro Text', sans-serif; cursor: default;
+}
+.as-hero__fine { margin-top: 10px; font-size: 12px; color: rgba(255, 255, 255, 0.6); }
+
+.as-chips { display: flex; gap: 10px; margin: 20px 0 6px; overflow-x: auto; scrollbar-width: none; }
+.as-chips::-webkit-scrollbar { display: none; }
+.as-chip {
+  display: flex; align-items: center; gap: 7px; flex-shrink: 0;
+  height: 38px; padding: 0 16px;
+  border: none; border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.06); color: var(--headline);
+  font: 600 13px 'SF Pro Text', sans-serif; cursor: default;
+}
+.dark .as-chip { background: rgba(255, 255, 255, 0.08); }
+.as-chip:hover { filter: brightness(1.2); }
+
+.as-section, .as-title {
+  margin: 22px 2px 10px; padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font: 600 22px 'SF Pro Display', sans-serif; letter-spacing: -0.01em; color: var(--headline);
+}
+.as-title { border-top: none; padding-top: 0; margin-top: 6px; font-size: 26px; font-weight: 700; }
+.as-empty { padding: 60px 0; text-align: center; color: var(--body); font-size: 13px; }
+
+.as-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); column-gap: 28px; }
+.as-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 4px;
+  border-bottom: 1px solid var(--border);
+  cursor: default;
+}
+.as-row__rank { width: 18px; flex-shrink: 0; text-align: center; font: 600 17px 'SF Pro Display', sans-serif; color: var(--headline); }
+.as-row__text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.as-row__eyebrow { font: 600 11px 'SF Pro Text', sans-serif; color: var(--body); }
+.as-row__name { font: 500 15px 'SF Pro Text', sans-serif; color: var(--headline); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.as-row__tag { font: 13px 'SF Pro Text', sans-serif; color: var(--body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* An app icon made of the animation, paused until its row is hovered. */
+.as-icon {
+  position: relative; flex-shrink: 0; overflow: hidden;
+  background: #0a0a0a;
+  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.14);
+}
+.as-icon__inner { position: absolute; left: 0; top: 50%; width: 160px; transform-origin: left center; }
+.as-icon .sm-frame { display: block; width: 160px; }
+.as-icon .sm-frame, .as-icon .sm-frame * { animation-play-state: paused; }
+.as-row:hover .as-icon .sm-frame, .as-row:hover .as-icon .sm-frame *,
+.as-product .as-icon .sm-frame, .as-product .as-icon .sm-frame * { animation-play-state: running; }
+
+.as-get {
+  display: grid; place-items: center; flex-shrink: 0;
+  min-width: 70px; height: 28px; padding: 0 14px;
+  border: none; border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.07); color: var(--brand);
+  font: 700 14px 'SF Pro Text', sans-serif; cursor: default;
+}
+.dark .as-get { background: rgba(255, 255, 255, 0.12); }
+.as-get:hover { filter: brightness(1.15); }
+.as-get--big { min-width: 86px; height: 30px; margin-top: 12px; background: var(--brand) !important; color: #fff; }
+.as-ring {
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid rgba(128, 128, 128, 0.35); border-top-color: var(--brand);
+  animation: as-spin 0.8s linear infinite;
+}
+.as-get--big .as-ring { border-color: rgba(255, 255, 255, 0.4); border-top-color: #fff; }
+@keyframes as-spin { to { transform: rotate(360deg); } }
+
+.as-product { padding-top: 4px; }
+.as-back {
+  display: inline-flex; align-items: center; gap: 4px;
+  height: 28px; padding: 0 12px 0 8px; margin-bottom: 16px;
+  border: none; border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.06); color: var(--headline);
+  font: 13px 'SF Pro Text', sans-serif; cursor: default;
+}
+.dark .as-back { background: rgba(255, 255, 255, 0.08); }
+.as-product__head { display: flex; align-items: center; gap: 22px; }
+.as-product__meta { min-width: 0; }
+.as-product__name { font: 700 26px 'SF Pro Display', sans-serif; letter-spacing: -0.01em; color: var(--headline); }
+.as-product__sub { margin-top: 2px; font-size: 14px; color: var(--body); max-width: 520px; }
+.as-info {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  margin: 22px 0 18px; padding: 12px 0;
+  border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  text-align: center;
+}
+.as-info > div { display: flex; flex-direction: column; gap: 3px; }
+.as-info > div + div { border-left: 1px solid var(--border); }
+.as-info span { font: 600 10px 'SF Pro Text', sans-serif; letter-spacing: 0.04em; text-transform: uppercase; color: var(--body); }
+.as-info b { font: 600 14px 'SF Pro Text', sans-serif; color: var(--headline); }
+/* On the product page the panes sit in a scrolling page, so they need a
+   height of their own — otherwise the code stretches them and the preview
+   centres out of sight. */
+.as-product__panes .shop-detail__cols { height: 440px; }
+.as-product__panes .shop-detail__cols[data-stacked='true'] { height: auto; grid-auto-rows: 320px 380px; }

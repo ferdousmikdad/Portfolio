@@ -87,7 +87,7 @@ const PAGE_NAV = [
   { id: 'home',      label: 'Home',      icon: homeIconUrl },
   { id: 'portfolio', label: 'Portfolio', icon: portfolioIconUrl },
   { id: 'notes',     label: 'Notes',     icon: notesIconUrl },
-  { id: 'shop',      label: 'Store',     icon: shopIconUrl },
+  { id: 'shop',      label: 'App Store', icon: shopIconUrl },
 ]
 
 // Tools always visible in the dock

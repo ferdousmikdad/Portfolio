@@ -6,7 +6,7 @@ Mac it was built beside (macOS 26, dark mode, blue accent).
 
 Audited 2026-09-24. Tick an item off when it ships.
 
-**Progress:** 4 of 18 done (items 2, 3, 4 and 10, 2026-09-24).
+**Progress:** 5 of 18 done (items 2, 3, 4, 5 and 10, 2026-09-25).
 
 ## Already close — leave as is
 
@@ -132,10 +132,26 @@ everywhere (item 2), the Apple menu and every menu-bar menu (item 3), and Finder
   - Shared state: `src/hooks/useDesktopItems.js` (one desktop list for the
     desktop and Finder), plus Get Info and Recent Items in `desktopStore`.
 
-- [ ] **5. Store → App Store**
-  - Now: dark grid of cards with "Get code" pills.
-  - Real: sidebar (Discover, Arcade, Create, Work, Play, Develop, Categories,
-    Updates), large feature cards, grey capsule "Get" buttons.
+- [x] **5. Store → App Store** — done 2026-09-25
+  - Built against the real Tahoe App Store on the Mac (Arcade/Discover page).
+  - **Sidebar:** search field at the top; Discover plus the shelf's five
+    sections, each with an outline symbol, where the real one lists Create /
+    Work / Play / Develop; the account pinned bottom-left (initials disc,
+    name, "n of 10 got").
+  - **Discover:** a hero card with the featured animation running and a
+    blue button; a row of category chips; a two-column **Top Free** ranked
+    list (icon, rank, grey eyebrow, name, tagline, grey capsule **Get**).
+  - **Get** behaves like the real one: a progress ring, then the HTML file
+    is copied and the button turns into **Open**, which goes to the product
+    page.
+  - **Product page:** back button, big icon, name, subtitle, blue Get; an
+    info strip (Category / Format / Price / Developer); then the live
+    preview beside the source with Copy code.
+  - Icons are the animations themselves, playing on hover.
+  - The app is named **App Store** in the menu bar, Dock, Launchpad,
+    Spotlight and menus.
+  - Files: `ShopWindow.jsx` (rewritten); `ShopPanel.jsx` now exports
+    `ResourcePanes`. Finder's Store view is unchanged.
 
 - [ ] **6. Music window naming**
   - Now: the menu bar says **Music**, but the window is Spotify-branded
@@ -212,8 +228,7 @@ everywhere (item 2), the Apple menu and every menu-bar menu (item 3), and Finder
 
 ## Suggested order
 
-Next: **1** (Notification Center), then **5–7** (Store, Music, tool
-windows).
+Next: **1** (Notification Center), then **6–7** (Music, tool windows).
 
 ## Measured values
 
