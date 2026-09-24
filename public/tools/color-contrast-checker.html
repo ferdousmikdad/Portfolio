@@ -52,7 +52,7 @@
       --input-bg:     rgba(0, 0, 0, 0.04);
       --input-border: rgba(0, 0, 0, 0.08);
       --divider:      rgba(0, 0, 0, 0.08);
-      --accent:       #cf0506;
+      --accent:       var(--accent);
       --scrollbar:    rgba(0, 0, 0, 0.10);
     }
     .dark {
@@ -65,7 +65,7 @@
       --input-bg:     rgba(255, 255, 255, 0.04);
       --input-border: rgba(255, 255, 255, 0.08);
       --divider:      rgba(255, 255, 255, 0.08);
-      --accent:       #cf0506;
+      --accent:       var(--accent);
       --scrollbar:    rgba(255, 255, 255, 0.10);
     }
 
@@ -360,9 +360,9 @@
       line-height: 1;
       transition: color 0.25s;
     }
-    .ratio-good { color: #22c55e; }
-    .ratio-ok   { color: #f59e0b; }
-    .ratio-bad  { color: var(--accent); }
+    .ratio-good { color: #30d158; }
+    .ratio-ok   { color: #ff9f0a; }
+    .ratio-bad  { color: #ff453a; }
 
     .ratio-label {
       font-size: 10px; font-weight: 600;
@@ -380,7 +380,7 @@
       transition: all 0.25s;
     }
     .main-badge.pass { background: rgba(34,197,94,0.10); border-color: rgba(34,197,94,0.25); color: #22c55e; }
-    .main-badge.fail { background: rgba(207,5,6,0.08);  border-color: rgba(207,5,6,0.20);  color: var(--accent); }
+    .main-badge.fail { background: color-mix(in srgb, #ff453a 8%, transparent);  border-color: color-mix(in srgb, #ff453a 20%, transparent);  color: #ff453a; }
 
     /* WCAG pills row */
     .wcag-row {
@@ -400,10 +400,10 @@
       transition: all 0.25s;
     }
     .wcag-pill.pass { border-color: rgba(34,197,94,0.25); background: rgba(34,197,94,0.07); }
-    .wcag-pill.fail { border-color: rgba(207,5,6,0.15);  background: rgba(207,5,6,0.05); }
+    .wcag-pill.fail { border-color: color-mix(in srgb, #ff453a 15%, transparent);  background: color-mix(in srgb, #ff453a 5%, transparent); }
     .wcag-pill-label { color: var(--body); opacity: 0.65; }
     .wcag-pill.pass .wcag-pill-icon { color: #22c55e; }
-    .wcag-pill.fail .wcag-pill-icon { color: var(--accent); }
+    .wcag-pill.fail .wcag-pill-icon { color: #ff453a; }
 
     /* ── Right panel ── */
     .right-panel {
@@ -473,6 +473,8 @@
       .right-panel { min-height: 260px; }
     }
   </style>
+  <link rel="stylesheet" href="macos.css" />
+  <script src="macos.js"></script>
 </head>
 <body>
 
@@ -519,7 +521,7 @@
       <div class="field-row">
         <div class="hex-box">
           <span class="hex-pound">#</span>
-          <input type="text" id="bgHexInput" class="hex-input" maxlength="6" value="A60000" spellcheck="false" autocomplete="off" />
+          <input type="text" id="bgHexInput" class="hex-input" maxlength="6" value="0064D2" spellcheck="false" autocomplete="off" />
         </div>
         <div class="picker-btn" id="bgPickerWrap" title="Click to pick color">
           <div class="picker-swatch" id="bgPickerSwatch"></div>
@@ -603,7 +605,7 @@
 })();
 
 // ── State ────────────────────────────────────────────────────────────────────
-let bgHex   = 'a60000';
+let bgHex   = '0064d2';
 let textHex = 'ffffff';
 
 // ── DOM ──────────────────────────────────────────────────────────────────────

@@ -31,7 +31,7 @@
       --input-bg:     rgba(0,0,0,0.04);
       --input-border: rgba(0,0,0,0.08);
       --canvas-bg:    rgba(0,0,0,0.04);
-      --accent:       #cf0506;
+      --accent:       var(--accent);
       /* The blue the sliders are filled with — the deep stop of their
          117deg gradient, so a solid button sits in the same family. */
       --brand-blue:   #3681ee;
@@ -54,7 +54,7 @@
       --input-bg:     rgba(255,255,255,0.04);
       --input-border: rgba(255,255,255,0.08);
       --canvas-bg:    rgba(255,255,255,0.03);
-      --accent:       #cf0506;
+      --accent:       var(--accent);
       /* The blue the sliders are filled with — the deep stop of their
          117deg gradient, so a solid button sits in the same family. */
       --brand-blue:   #3681ee;
@@ -575,6 +575,8 @@
     ::-webkit-scrollbar-track { background:transparent; }
     ::-webkit-scrollbar-thumb { background:var(--scrollbar); border-radius:4px; }
   </style>
+  <link rel="stylesheet" href="macos.css" />
+  <script src="macos.js"></script>
 </head>
 <body>
 

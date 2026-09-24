@@ -1,0 +1,165 @@
+/* ── macOS look for the embedded tools ─────────────────────────────────────
+   Loaded after each tool's own styles, so these win. The tools already
+   share one set of variables; this points them at the system:
+
+   • background = the site window's colour (was a near-black page),
+   • accent     = the site accent, macOS blue by default (was red #cf0506),
+   • controls   = Tahoe fills: grey capsule buttons, rounded text fields
+     with a focus ring in the accent, sliders with an accent-filled track
+     and a white knob, checkboxes and radios in the accent,
+   • type       = SF Pro Text throughout; code and hex values in SF Mono.
+
+   The two tools with their own dark theme (Print Setup, Typing Practice)
+   have their variables mapped the same way further down.                  */
+
+html:root {
+  --mac-accent: #0a84ff;
+  --mac-window: #F7F5F0;
+  --accent:       var(--mac-accent);
+  --bg:           var(--mac-window);
+  --border:       rgba(0, 0, 0, 0.10);
+  --divider:      rgba(0, 0, 0, 0.10);
+  --headline:     #1d1d1f;
+  --body:         #6e6e73;
+  --social-bg:    rgba(0, 0, 0, 0.05);
+  --social-hover: rgba(0, 0, 0, 0.09);
+  --input-bg:     #ffffff;
+  --input-border: rgba(0, 0, 0, 0.12);
+  --canvas-bg:    rgba(0, 0, 0, 0.035);
+  --card-bg:      rgba(0, 0, 0, 0.035);
+  --code-bg:      rgba(0, 0, 0, 0.04);
+  --slider-track: rgba(0, 0, 0, 0.12);
+  --scrollbar:    rgba(0, 0, 0, 0.18);
+  --brand-blue:   var(--mac-accent);
+  --brand-blue-2: var(--mac-accent);
+  --mac-control:  rgba(0, 0, 0, 0.06);
+  --mac-control-hover: rgba(0, 0, 0, 0.10);
+
+  /* Print Setup's own theme, mapped for light mode too */
+  --surface: rgba(0, 0, 0, 0.035);
+  --border2: rgba(0, 0, 0, 0.14);
+  --text:    #1d1d1f;
+  --muted:   #6e6e73;
+  --red:     var(--mac-accent);
+  --red2:    var(--mac-accent);
+}
+html.dark:root {
+  --mac-window: #1E1F20;
+  --bg:           var(--mac-window);
+  --border:       rgba(255, 255, 255, 0.10);
+  --divider:      rgba(255, 255, 255, 0.10);
+  --headline:     #f5f5f7;
+  --body:         #98989d;
+  --social-bg:    rgba(255, 255, 255, 0.08);
+  --social-hover: rgba(255, 255, 255, 0.13);
+  --input-bg:     rgba(255, 255, 255, 0.06);
+  --input-border: rgba(255, 255, 255, 0.12);
+  --canvas-bg:    rgba(255, 255, 255, 0.035);
+  --card-bg:      rgba(255, 255, 255, 0.04);
+  --code-bg:      rgba(255, 255, 255, 0.05);
+  --slider-track: rgba(255, 255, 255, 0.16);
+  --scrollbar:    rgba(255, 255, 255, 0.22);
+  --mac-control:  rgba(255, 255, 255, 0.10);
+  --mac-control-hover: rgba(255, 255, 255, 0.15);
+
+  /* Print Setup's own theme */
+  --surface: rgba(255, 255, 255, 0.04);
+  --border2: rgba(255, 255, 255, 0.14);
+  --text:    #f5f5f7;
+  --muted:   #98989d;
+  --red:     var(--mac-accent);
+  --red2:    var(--mac-accent);
+}
+
+html, body { background: var(--bg) !important; }
+body, button, input, select, textarea {
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+code, pre, kbd, .mono, [class*="hex"] { font-family: 'SF Mono', ui-monospace, Menlo, monospace; }
+
+/* ── Text fields ── */
+input[type="text"], input[type="number"], input[type="url"], input[type="email"],
+input[type="search"], input:not([type]), textarea, select {
+  border-radius: 7px !important;
+  outline: none;
+  transition: box-shadow 0.12s ease;
+}
+input[type="text"]:focus, input[type="number"]:focus, input[type="url"]:focus,
+input[type="email"]:focus, input[type="search"]:focus, input:not([type]):focus,
+textarea:focus, select:focus {
+  box-shadow: 0 0 0 3.5px color-mix(in srgb, var(--mac-accent) 45%, transparent) !important;
+  border-color: var(--mac-accent) !important;
+}
+
+/* ── Checkboxes, radios: the accent ── */
+input[type="checkbox"], input[type="radio"] { accent-color: var(--mac-accent); }
+
+/* ── Sliders: a 4pt track filled with the accent up to a white knob ── */
+input[type="range"] {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  height: 20px !important;
+  background: transparent !important;
+  border: none !important;
+  cursor: default;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px !important;
+  border-radius: 2px !important;
+  border: none !important;
+  background: linear-gradient(to right, var(--mac-accent) var(--fill, 50%), var(--slider-track) var(--fill, 50%)) !important;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none !important;
+  width: 20px !important;
+  height: 20px !important;
+  margin-top: -8px !important;
+  border: none !important;
+  border-radius: 50% !important;
+  background: #fff !important;
+  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.18), 0 1px 4px rgba(0, 0, 0, 0.30) !important;
+}
+input[type="range"]::-moz-range-track { height: 4px; border-radius: 2px; background: var(--slider-track); }
+input[type="range"]::-moz-range-progress { height: 4px; border-radius: 2px; background: var(--mac-accent); }
+input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; border: none; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3); }
+
+/* ── Buttons: Tahoe capsules. Grey by default; the accent where a tool
+   marks one as primary or active. ── */
+.btn, .action-btn, .act-btn, .preset-btn, .fmt-btn, .picker-btn, .filter-option,
+.charset-pill, .modal-tab, .dropdown-btn, .filter-pill, .mode-tab, .restart-btn,
+.custom-start-btn, .results-try-btn, button.secondary {
+  border-radius: 9999px !important;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+.btn.primary, .btn-primary, .action-btn.primary, .act-btn.primary,
+.preset-btn.active, .fmt-btn.active, .filter-option.active, .charset-pill.active,
+.modal-tab.active, .filter-pill.active {
+  background: var(--mac-accent) !important;
+  border-color: var(--mac-accent) !important;
+  color: #fff !important;
+}
+
+/* ── Drop zones: a quiet dashed well, the accent only while dragging ── */
+.drop-zone {
+  border: 1.5px dashed color-mix(in srgb, var(--body) 45%, transparent) !important;
+  background: var(--canvas-bg) !important;
+  border-radius: 14px !important;
+}
+.drop-zone:hover, .drop-zone.drag-over, .drop-zone.dragover, .drop-zone.over, .drop-zone.active {
+  border-color: var(--mac-accent) !important;
+  background: color-mix(in srgb, var(--mac-accent) 8%, transparent) !important;
+}
+
+/* ── Scrollbars: thin overlay-style, as macOS draws them ── */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar);
+  border-radius: 10px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+/* Color Contrast's ratio reads as a figure, not code. */
+.ratio-number { font-family: 'SF Pro Display', -apple-system, sans-serif !important; font-weight: 700 !important; letter-spacing: -0.02em; }

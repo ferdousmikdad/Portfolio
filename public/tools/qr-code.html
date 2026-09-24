@@ -32,7 +32,7 @@
       --input-bg:     rgba(0,0,0,0.04);
       --input-border: rgba(0,0,0,0.08);
       --canvas-bg:    rgba(0,0,0,0.04);
-      --accent:       #cf0506;
+      --accent:       var(--accent);
       --scrollbar:    rgba(0,0,0,0.10);
     }
     .dark {
@@ -45,7 +45,7 @@
       --input-bg:     rgba(255,255,255,0.04);
       --input-border: rgba(255,255,255,0.08);
       --canvas-bg:    rgba(255,255,255,0.03);
-      --accent:       #cf0506;
+      --accent:       var(--accent);
       --scrollbar:    rgba(255,255,255,0.10);
     }
 
@@ -159,7 +159,7 @@
       outline: none;
       transition: border-color .15s;
     }
-    .ctrl-input:focus { border-color: rgba(207,5,6,0.35); }
+    .ctrl-input:focus { border-color: color-mix(in srgb, var(--accent) 35%, transparent); }
     .ctrl-input::placeholder {
       color: var(--body);
       opacity: 0.38;
@@ -197,8 +197,8 @@
       transition: border-color .15s;
       text-align: left;
     }
-    .dropdown-btn:hover { border-color: rgba(207,5,6,0.3); }
-    .dropdown-btn.open { border-color: rgba(207,5,6,0.35); }
+    .dropdown-btn:hover { border-color: color-mix(in srgb, var(--accent) 30%, transparent); }
+    .dropdown-btn.open { border-color: color-mix(in srgb, var(--accent) 35%, transparent); }
 
     .dropdown-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .dropdown-chevron { flex-shrink: 0; color: var(--body); opacity: 0.5; transition: transform .2s; }
@@ -235,7 +235,7 @@
       white-space: nowrap;
     }
     .dropdown-item:hover { background: var(--social-hover); color: var(--headline); }
-    .dropdown-item.active { color: var(--accent); background: rgba(207,5,6,0.07); }
+    .dropdown-item.active { color: var(--accent); background: color-mix(in srgb, var(--accent) 7%, transparent); }
 
     /* ══════════════════════════════════════
        COLOR PICKER SECTION
@@ -437,6 +437,8 @@
     ::-webkit-scrollbar-track { background:transparent; }
     ::-webkit-scrollbar-thumb { background:var(--scrollbar); border-radius:4px; }
   </style>
+  <link rel="stylesheet" href="macos.css" />
+  <script src="macos.js"></script>
 </head>
 <body>
 
@@ -582,7 +584,7 @@
             <div class="color-ctrl-item">
               <span class="ctrl-label">Corner box</span>
               <button class="color-swatch-btn" id="cornerColorSwatch" title="Pick corner color"></button>
-              <span class="color-hex-val" id="cornerColorVal">#CF0506</span>
+              <span class="color-hex-val" id="cornerColorVal">var(--accent)</span>
             </div>
           </div>
         </div>
@@ -668,7 +670,7 @@ let timer          = null;
 
 // Custom color state
 let customDotHex    = '1c1c1e';
-let customCornerHex = 'cf0506';
+let customCornerHex = '0a84ff';
 
 const $ = id => document.getElementById(id);
 const canvas    = $('qrCanvas');

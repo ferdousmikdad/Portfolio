@@ -6,7 +6,7 @@ Mac it was built beside (macOS 26, dark mode, blue accent).
 
 Audited 2026-09-24. Tick an item off when it ships.
 
-**Progress:** 6 of 18 done (items 2, 3, 4, 5, 6 and 10, 2026-09-25).
+**Progress:** 8 of 18 done (items 2–7, 9 and 10, 2026-09-25).
 
 ## Already close — leave as is
 
@@ -164,11 +164,27 @@ everywhere (item 2), the Apple menu and every menu-bar menu (item 3), and Finder
     icon in the Dock, Launchpad, Spotlight, Finder and Mission Control; the
     app is named Music everywhere. File: `src/components/apps/MusicWindow.jsx`.
 
-- [ ] **7. Tool windows** (Color Contrast and the other 9 tools)
-  - Now: embedded web pages with their own styling: custom dark panels,
-    green monospace numbers, red preview.
-  - Fix: restyle with macOS controls: grouped rows, standard buttons,
-    colour wells.
+- [x] **7. Tool windows** — done 2026-09-25
+  - All ten tools load one shared layer, `public/tools/macos.css` +
+    `macos.js`, after their own styles:
+    - **Colours:** the background is the site window's colour (was
+      near-black `#080808` / beige); the accent follows the site's blue
+      and Settings → Accent, live (was red `#cf0506`); dark/light still
+      follows the site.
+    - **Controls:** capsule buttons (accent when primary or active);
+      rounded text fields with an accent focus ring; accent checkboxes;
+      sliders with a 4pt accent-filled track and a white knob; quiet dashed
+      drop zones that turn accent on hover or drag; thin macOS scrollbars;
+      SF Pro Text throughout, SF Mono for code and hex.
+  - Per-tool fixes:
+    - Every hardcoded red in the styles is now the accent. Script colour
+      values are left alone, and QR Code keeps its "red" theme.
+    - Color Contrast: the demo background is blue `#0064D2` (was red); the
+      ratio is SF Pro Display bold in system green / orange / red; failed
+      checks use system red.
+    - Typing Practice and Print Setup had fixed dark themes; mapped to the
+      shared variables, so they work in light mode too. Wrong letters stay
+      system red.
 
 ---
 
@@ -178,9 +194,27 @@ everywhere (item 2), the Apple menu and every menu-bar menu (item 3), and Finder
   shutter button in the centre and an **Effects** button on the right, in
   place of the "Normal / Retro Dot" toggle and pale "Take Photo" button.
 
-- [ ] **9. Notes toolbar**: only has search. Real Notes has list/gallery view,
-  delete, new note, Aa formatting, checklist, table, media, share, lock and
-  search. "Select a note to read" is not what Notes shows when nothing is open.
+- [x] **9. Notes toolbar** — done 2026-09-25
+  - Built against the real Tahoe Notes window.
+  - **Title:** folder name over its note count ("All / 9 notes") beside the
+    traffic lights.
+  - **Toolbar capsules:**
+    - ⋯: View as List / Gallery, Copy Note, Delete Note.
+    - Compose.
+    - Aa (Title, Heading, Body, bulleted and numbered lists) · Checklist ·
+      Table.
+    - Share (copies the note).
+    - A round search button that opens into a field.
+  - **Compose writes real notes**, saved in the visitor's browser
+    (`src/store/notesStore.js`). The editor is rich text: the first line is
+    the title, the checklist has tickable circles, and tables are real
+    (caret starts in the first cell). Mikdad's posts stay read-only, and the
+    formatting buttons dim on them, as Notes dims them in a locked note.
+  - **A note is always open** (the first in the list), with its date
+    centred in grey above it; "Select a note to read" and the Back button
+    are gone. List rows show date + preview; Gallery shows page thumbnails.
+  - Files: `NotesWindow.jsx`, `NotesPanel.jsx`, `notesStore.js`. Finder's
+    Notes view shares the panel and picks up the same list and reader.
 
 - [x] **10. Spotlight** — done 2026-09-24
   - Measured off the real Tahoe Spotlight: a 360pt × 62pt capsule with its
@@ -233,7 +267,7 @@ everywhere (item 2), the Apple menu and every menu-bar menu (item 3), and Finder
 
 ## Suggested order
 
-Next: **1** (Notification Center), then **7** (tool windows).
+Next: **1** (Notification Center), then the medium-priority list (8–14).
 
 ## Measured values
 

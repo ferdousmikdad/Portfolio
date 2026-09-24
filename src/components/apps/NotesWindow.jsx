@@ -3,8 +3,10 @@ import Window from '@/components/window/Window'
 import WindowSidebar from '@/components/window/WindowSidebar'
 import NotesPanel from '@/components/apps/NotesPanel'
 import GlassLayers from '@/components/ui/LiquidGlass'
-import MacSearchIcon from '@/assets/icons/macsearch.svg?react'
-import { CATEGORIES } from '@/data/notes.js'
+import SFSymbol from '@/components/ui/SFSymbol'
+import ContextMenu from '@/components/ui/ContextMenu'
+import useNotesStore, { asNote } from '@/store/notesStore'
+import { CATEGORIES, NOTES } from '@/data/notes.js'
 import useWindowStore from '@/store/windowStore'
 
 /* Notes sidebar glyphs. Every row in a macOS sidebar carries one — a folder
@@ -75,29 +77,132 @@ export default function NotesWindow() {
     </WindowSidebar>
   )
 
-  /* Notes keeps a search field at the trailing edge of its toolbar, the same
-     control Finder and the Shop carry. The window had no toolbar at all
-     before — just the word "Notes" floating over the list column. */
+  /* ── Toolbar, as Tahoe Notes lays it out ──
+     Leading: the folder name over its note count. Trailing, in glass
+     capsules: ⋯ (view and note actions), compose, Aa · checklist · table,
+     share, and a round search button that opens into a field. Formatting
+     works in the visitor's own notes; Mikdad's posts are read-only, so it
+     dims there, as Notes dims it in a locked note. */
+  const [view, setView]       = useState('list')
+  const [selected, setSelected] = useState(null)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [menu, setMenu]       = useState(null)
+  const [shared, setShared]   = useState(false)
+  const mine   = useNotesStore((st) => st.mine)
+  const addNote = useNotesStore((st) => st.add)
+  const removeNote = useNotesStore((st) => st.remove)
+
+  const count = activeCategory === 'drawing' ? 0
+    : activeCategory === 'all' ? NOTES.length + mine.length
+    : activeCategory === 'notes' ? NOTES.filter((n) => n.category === 'notes').length + mine.length
+    : NOTES.filter((n) => n.category === activeCategory).length
+  const current = mine.find((n) => n.id === selected)
+    ? asNote(mine.find((n) => n.id === selected))
+    : NOTES.find((n) => n.id === selected)
+  const editable = !!current?.mine && activeCategory !== 'drawing'
+  const noteList = activeCategory !== 'drawing'
+
+  const format = (cmd) => window.dispatchEvent(new CustomEvent('notes:format', { detail: cmd }))
+  const openMenu = (e, items) => {
+    const r = e.currentTarget.getBoundingClientRect()
+    setMenu({ at: { x: Math.round(r.left), y: Math.round(r.bottom + 6) }, items })
+  }
+  const compose = () => {
+    const id = addNote()
+    if (activeCategory !== 'all' && activeCategory !== 'notes') setActiveCategory('notes')
+    setSearch(''); setView('list'); setSelected(id)
+  }
+  const share = () => {
+    if (!current) return
+    navigator.clipboard?.writeText(current.mine ? current.text : `${current.title}\n\n${current.content}`).catch(() => {})
+    setShared(true); setTimeout(() => setShared(false), 1400)
+  }
+  const stop = (e) => e.stopPropagation()
+
+  const navSlot = (
+    <div className="notes-heading">
+      <span className="notes-heading__name">{CATEGORIES.find((c) => c.id === activeCategory)?.label ?? 'Notes'}</span>
+      {noteList && <span className="notes-heading__count">{count} {count === 1 ? 'note' : 'notes'}</span>}
+    </div>
+  )
+
   const toolbar = (
-    <div className="flex items-center gap-2" style={{ pointerEvents: 'auto' }}>
-      <div className="finder-search finder-glass">
+    <div className="fd-tools" onPointerDown={stop} onMouseDown={(e) => { if (e.target.closest('button')) e.preventDefault() }}>
+      <div className="fd-cap fd-cap--round finder-glass">
         <GlassLayers small />
-        <MacSearchIcon width={11} height={11} style={{ flexShrink: 0 }} />
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search notes…"
-          className="bg-transparent text-[11px] outline-none w-full"
-          onMouseDown={(e) => e.stopPropagation()}
-        />
+        <button className="fd-btn" title="More" onClick={(e) => openMenu(e, [
+          { label: 'View as List',    checked: view === 'list',    disabled: !noteList, onClick: () => setView('list') },
+          { label: 'View as Gallery', checked: view === 'gallery', disabled: !noteList, onClick: () => setView('gallery') },
+          { sep: true },
+          { label: 'Copy Note', icon: 'doc.on.doc', disabled: !current, onClick: share },
+          { label: 'Delete Note', icon: 'trash', disabled: !editable, onClick: () => { removeNote(selected); setSelected(null) } },
+        ])}>
+          <SFSymbol name="ellipsis" size={15} />
+        </button>
       </div>
+
+      <div className="fd-cap fd-cap--round finder-glass">
+        <GlassLayers small />
+        <button className="fd-btn" title="New Note" onClick={compose}>
+          <SFSymbol name="square.and.pencil" size={16} />
+        </button>
+      </div>
+
+      <div className="fd-cap finder-glass">
+        <GlassLayers small />
+        <button className="fd-btn notes-aa" title="Format" disabled={!editable} onClick={(e) => openMenu(e, [
+          { label: 'Title',   onClick: () => format('title') },
+          { label: 'Heading', onClick: () => format('heading') },
+          { label: 'Body',    onClick: () => format('body') },
+          { sep: true },
+          { label: 'Bulleted List', onClick: () => format('bullet') },
+          { label: 'Numbered List', onClick: () => format('number') },
+        ])}>Aa</button>
+        <button className="fd-btn" title="Checklist" disabled={!editable} onClick={() => format('checklist')}>
+          <SFSymbol name="checklist" size={16} />
+        </button>
+        <button className="fd-btn" title="Table" disabled={!editable} onClick={() => format('table')}>
+          <SFSymbol name="tablecells" size={16} />
+        </button>
+      </div>
+
+      <div className="fd-cap fd-cap--round finder-glass">
+        <GlassLayers small />
+        <button className="fd-btn" title={shared ? 'Copied' : 'Share — copy note'} disabled={!current || !noteList} onClick={share}>
+          <SFSymbol name={shared ? 'checkmark' : 'square.and.arrow.up'} size={15} />
+        </button>
+      </div>
+
+      {searchOpen || search ? (
+        <div className="finder-search finder-glass fd-search">
+          <GlassLayers small />
+          <SFSymbol name="magnifyingglass" size={12} style={{ opacity: 0.6 }} />
+          <input
+            autoFocus
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onBlur={() => { if (!search) setSearchOpen(false) }}
+            onKeyDown={(e) => { if (e.key === 'Escape') { setSearch(''); setSearchOpen(false) } }}
+            placeholder="Search"
+            className="bg-transparent text-[12px] outline-none w-full"
+            onMouseDown={stop}
+          />
+        </div>
+      ) : (
+        <div className="fd-cap fd-cap--round finder-glass">
+          <GlassLayers small />
+          <button className="fd-btn" title="Search" onClick={() => setSearchOpen(true)}>
+            <SFSymbol name="magnifyingglass" size={15} />
+          </button>
+        </div>
+      )}
     </div>
   )
 
   return (
     <Window
       id="notes"
-      title={CATEGORIES.find((c) => c.id === activeCategory)?.label ?? 'Notes'}
+      navSlot={navSlot}
       sidebarContent={sidebarContent}
       toolbar={toolbar}
     >
@@ -109,7 +214,12 @@ export default function NotesWindow() {
         search={search}
         honorRequests
         wide={isMaximized}
+        selectedId={selected}
+        onSelect={setSelected}
+        view={view}
+        onViewChange={setView}
       />
+      <ContextMenu at={menu?.at} items={menu?.items ?? []} onClose={() => setMenu(null)} />
     </Window>
   )
 }

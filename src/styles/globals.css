@@ -7514,3 +7514,85 @@ html:not(.dark) .fq-list { background: #fff; }
   font: 600 13px 'SF Pro Text', sans-serif;
 }
 .mu-open:hover { filter: brightness(1.08); }
+
+/* ── Notes (Tahoe) ───────────────────────────────────────────────────────────
+   Measured off the real window: the folder name in semibold over its note
+   count in grey beside the traffic lights; toolbar capsules; list rows with
+   the date in the preview line; the open note\'s date centred in grey. */
+.notes-heading { display: flex; flex-direction: column; line-height: 1.15; margin-left: 4px; }
+.notes-heading__name { font: 600 13px 'SF Pro Text', sans-serif; color: var(--headline); }
+.notes-heading__count { font: 12px 'SF Pro Text', sans-serif; color: var(--body); }
+.notes-aa { font: 500 16px 'SF Pro Text', sans-serif; width: 38px; }
+
+.notes-list { width: 250px; background: transparent; border-right: 1px solid var(--border); padding: 0 8px 8px; }
+.notes-list__heading { padding: 10px 10px 6px; font: 700 15px 'SF Pro Display', sans-serif; color: var(--headline); }
+.notes-list .notes-row { border-radius: 10px; }
+.notes-row__date { font-weight: 600; margin-right: 4px; }
+.notes-empty { padding: 24px 12px; text-align: center; font: 13px 'SF Pro Text', sans-serif; color: var(--body); }
+
+.notes-date { padding: 12px 0 6px; text-align: center; font: 12px 'SF Pro Text', sans-serif; color: var(--body); flex-shrink: 0; }
+.notes-editor {
+  flex: 1; min-height: 0; width: 100%; resize: none;
+  padding: 6px 28px 24px;
+  border: none; outline: none; background: transparent;
+  font: 14px/1.55 'SF Pro Text', sans-serif; color: var(--headline);
+  caret-color: var(--brand);
+}
+.notes-editor::first-line { font: 700 22px/1.4 'SF Pro Display', sans-serif; }
+
+/* Gallery: a page thumbnail per note, name and date under it. */
+.notes-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 22px 16px; padding: 18px 22px; }
+.notes-card { display: flex; flex-direction: column; align-items: center; gap: 4px; border: none; background: transparent; cursor: default; text-align: center; }
+.notes-card__page {
+  display: flex; flex-direction: column; gap: 5px;
+  width: 100%; aspect-ratio: 4 / 3; padding: 10px 11px; overflow: hidden;
+  border-radius: 10px; text-align: left;
+  background: rgba(0, 0, 0, 0.04); box-shadow: inset 0 0 0 1px var(--border);
+}
+.dark .notes-card__page { background: rgba(255, 255, 255, 0.05); }
+.notes-card--on .notes-card__page { box-shadow: 0 0 0 3px var(--brand); }
+.notes-card__page-title { font: 700 11px 'SF Pro Text', sans-serif; color: var(--headline); }
+.notes-card__page-body { font: 9.5px/1.35 'SF Pro Text', sans-serif; color: var(--body); }
+.notes-card__title { margin-top: 4px; max-width: 100%; font: 600 12px 'SF Pro Text', sans-serif; color: var(--headline); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.notes-card__date { font: 11px 'SF Pro Text', sans-serif; color: var(--body); }
+
+/* The rich-text editor for the visitor's own notes. */
+.notes-editor { overflow-y: auto; white-space: normal; }
+.notes-editor:empty::before,
+.notes-editor > div:only-child:has(> br:only-child)::before { content: attr(data-placeholder); color: var(--body); pointer-events: none; }
+.notes-editor > :first-child, .notes-editor h1 { font: 700 22px/1.35 'SF Pro Display', sans-serif; margin: 0 0 6px; }
+.notes-editor h2 { font: 700 17px/1.35 'SF Pro Display', sans-serif; margin: 10px 0 4px; }
+.notes-editor p, .notes-editor div { margin: 0; }
+.notes-editor ul:not(.notes-check) { list-style: disc; padding-left: 22px; }
+.notes-editor ol { list-style: decimal; padding-left: 22px; }
+.notes-check { list-style: none; padding: 0; margin: 2px 0; }
+.notes-check > li { position: relative; padding-left: 26px; min-height: 22px; }
+.notes-check > li::before {
+  content: ''; position: absolute; left: 1px; top: 3px;
+  width: 16px; height: 16px; border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px var(--body); cursor: default;
+}
+.notes-check > li.done { color: var(--body); }
+.notes-check > li.done::before {
+  box-shadow: none; background: #ff9f0a;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4.5 8.3 7 10.7l4.5-5' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+.notes-table { border-collapse: collapse; margin: 8px 0; min-width: 60%; }
+.notes-table td { border: 1px solid var(--border); padding: 6px 10px; min-width: 90px; vertical-align: top; }
+
+/* ── Selectable text ─────────────────────────────────────────────────────────
+   The desktop turns selection off on <body> so dragging windows and clicking
+   icons never highlights anything. Text you read is the exception, as on a
+   Mac: a note, a message, an answer, a contact's details can all be selected
+   and copied. Chrome — toolbars, sidebars, buttons — stays unselectable.   */
+.notes-reader, .notes-editor, .notes-date,
+.msg-bubble, .msg-stamp,
+.mikuda-reply__text,
+.ct-name, .ct-title, .ct-field__value, .ct-notes__text,
+.pv-inspector__about {
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
+}
+/* macOS highlights a selection in a tint of the accent. */
+::selection { background: color-mix(in srgb, var(--brand) 38%, transparent); }

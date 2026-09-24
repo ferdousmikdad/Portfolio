@@ -31,7 +31,7 @@
       --input-bg:     rgba(0,0,0,0.04);
       --input-border: rgba(0,0,0,0.08);
       --canvas-bg:    rgba(0,0,0,0.04);
-      --accent:       #cf0506;
+      --accent:       var(--accent);
       --scrollbar:    rgba(0,0,0,0.10);
       --slider-track: rgba(0,0,0,0.12);
     }
@@ -45,7 +45,7 @@
       --input-bg:     rgba(255,255,255,0.04);
       --input-border: rgba(255,255,255,0.08);
       --canvas-bg:    rgba(255,255,255,0.03);
-      --accent:       #cf0506;
+      --accent:       var(--accent);
       --scrollbar:    rgba(255,255,255,0.10);
       --slider-track: rgba(255,255,255,0.10);
     }
@@ -139,7 +139,7 @@
       display: flex; align-items: center; justify-content: center;
     }
     .fill-btn:hover { background: var(--social-hover); color: var(--headline); }
-    .fill-btn.active { background: rgba(207,5,6,0.09); border-color: rgba(207,5,6,0.3); color: var(--accent); }
+    .fill-btn.active { background: color-mix(in srgb, var(--accent) 9%, transparent); border-color: color-mix(in srgb, var(--accent) 30%, transparent); color: var(--accent); }
 
     .scale-toggle {
       display: flex;
@@ -154,7 +154,7 @@
       transition: background .15s, color .15s;
     }
     .scale-btn + .scale-btn { border-left: 1px solid var(--border); }
-    .scale-btn.active { background: rgba(207,5,6,0.09); color: var(--accent); }
+    .scale-btn.active { background: color-mix(in srgb, var(--accent) 9%, transparent); color: var(--accent); }
 
     .bar-btn {
       height: 26px; padding: 0 11px;
@@ -227,8 +227,8 @@
       transition: background-color 0.2s;
     }
     .drop-zone:hover, .drop-zone.drag-over {
-      background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='14' ry='14' stroke='rgba(207,5,6,0.5)' stroke-width='1.5' stroke-dasharray='6 6' stroke-linecap='square'/%3e%3c/svg%3e");
-      background-color: rgba(207,5,6,0.03);
+      background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='14' ry='14' stroke='color-mix(in srgb, var(--accent) 50%, transparent)' stroke-width='1.5' stroke-dasharray='6 6' stroke-linecap='square'/%3e%3c/svg%3e");
+      background-color: color-mix(in srgb, var(--accent) 3%, transparent);
     }
     .drop-icon { opacity: 0.35; color: var(--body); }
     .drop-zone-label { font-size:12px; font-weight:500; color:var(--body); opacity:.55; }
@@ -301,7 +301,7 @@
       white-space: nowrap; text-align: left;
     }
     .charset-pill:hover { background: var(--social-hover); color: var(--headline); }
-    .charset-pill.active { background: rgba(207,5,6,0.09); border-color: rgba(207,5,6,0.3); color: var(--accent); }
+    .charset-pill.active { background: color-mix(in srgb, var(--accent) 9%, transparent); border-color: color-mix(in srgb, var(--accent) 30%, transparent); color: var(--accent); }
 
     /* Preview header (right col title row) */
     .preview-header {
@@ -365,7 +365,7 @@
       opacity: 0.5;
       transition: transform .2s, background .2s, opacity .2s;
     }
-    .toggle-switch input:checked ~ .toggle-track { background: rgba(207,5,6,0.15); border-color: rgba(207,5,6,0.4); }
+    .toggle-switch input:checked ~ .toggle-track { background: color-mix(in srgb, var(--accent) 15%, transparent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
     .toggle-switch input:checked ~ .toggle-thumb { transform: translateX(14px); background: var(--accent); opacity: 1; }
 
     /* Sliders */
@@ -567,6 +567,8 @@
     ::-webkit-scrollbar-track { background:transparent; }
     ::-webkit-scrollbar-thumb { background:var(--scrollbar); border-radius:4px; }
   </style>
+  <link rel="stylesheet" href="macos.css" />
+  <script src="macos.js"></script>
 </head>
 <body>
 

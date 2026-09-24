@@ -76,7 +76,7 @@
     }
     .drop-zone:hover, .drop-zone.drag-over {
       border-color: var(--red);
-      background: rgba(224,53,53,.04);
+      background: color-mix(in srgb, var(--accent) 4%, transparent);
     }
     .drop-zone svg   { margin: 0 auto 5px; display: block; color: var(--muted); }
     .drop-zone p     { font-size: 11px; color: var(--muted); line-height: 1.5; }
@@ -85,7 +85,7 @@
     .file-card {
       display: none;
       margin: 0 14px 0;
-      background: #16161a;
+      background: var(--surface);
       border: 1px solid var(--border2);
       border-radius: 8px;
       padding: 9px 10px;
@@ -176,7 +176,7 @@
 
     .s-input {
       width: 100%;
-      background: #16161a;
+      background: var(--surface);
       border: 1px solid var(--border2);
       border-radius: 7px;
       padding: 8px 10px;
@@ -269,7 +269,7 @@
     /* ── Right Panel ── */
     .panel-right {
       display: flex; flex-direction: column;
-      overflow: hidden; background: #0c0c0e;
+      overflow: hidden; background: var(--canvas-bg);
     }
     .preview-bar {
       display: flex; align-items: center; justify-content: space-between;
@@ -322,6 +322,8 @@
     .toast.ok   { border-color: rgba(34,197,94,.4); color: #4ade80; }
     .toast.err  { border-color: rgba(239,68,68,.4); color: #f87171; }
   </style>
+  <link rel="stylesheet" href="macos.css" />
+  <script src="macos.js"></script>
 </head>
 <body>
 

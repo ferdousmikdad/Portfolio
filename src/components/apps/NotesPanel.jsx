@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, Download, Trash2 } from 'lucide-react'
+import { Download, Trash2 } from 'lucide-react'
 import { CATEGORIES, NOTES } from '@/data/notes.js'
 import useWindowStore from '@/store/windowStore'
+import useNotesStore, { asNote } from '@/store/notesStore'
 
 /* The Notes app's body — the entry list, the reader and the canvas — lifted
    out of the Notes window so Finder can show the same thing under its Notes
@@ -191,7 +191,7 @@ function renderInline(text) {
   )
 }
 
-function ArticleView({ note, onBack }) {
+function ArticleView({ note }) {
   const lines = note.content.split('\n')
 
   // Group lines into blocks: table | divider | text
@@ -221,13 +221,9 @@ function ArticleView({ note, onBack }) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center gap-2 px-4 py-3 flex-shrink-0" style={{ borderBottom: '1px solid var(--border)' }}>
-        <button onClick={onBack} className="flex items-center gap-1 text-body hover:text-headline transition-colors text-xs">
-          <ChevronLeft size={14} /> Back
-        </button>
-        <span className="text-body text-xs" style={{ marginLeft: 'auto' }}>{note.date}</span>
-      </div>
-      <div className="flex-1 overflow-y-auto window-scroll px-6 py-5">
+      {/* Notes puts the date centred in grey above the note, nothing else. */}
+      <p className="notes-date">{note.date}</p>
+      <div className="notes-reader flex-1 overflow-y-auto window-scroll px-6 py-5">
         <h1 className="text-headline font-medium text-lg leading-tight mb-4" style={{ fontFamily: "'SF Pro Display'" }}>
           {note.title}
         </h1>
@@ -290,9 +286,129 @@ function NoteRow({ note, active, onClick }) {
         {note.title}
       </p>
       <p className="notes-row__sub text-[11px] mt-0.5 truncate">
-        {note.date} — {note.preview}
+        <b className="notes-row__date">{note.date}</b> {note.preview}
       </p>
       <span className="notes-row__rule" />
+    </button>
+  )
+}
+
+// ── Editor for the visitor's own notes ───────────────────────────────────
+/* Rich text, like a real note: the first line is the title. The toolbar's
+   Aa, checklist and table buttons send a command through a 'notes:format'
+   event and it is applied where the caret was — a real heading, a real
+   checklist with tickable circles, a real table you can type into. */
+const TABLE = '<table class="notes-table" data-new><tbody>' +
+  '<tr><td><br></td><td><br></td></tr><tr><td><br></td><td><br></td></tr></tbody></table><p><br></p>'
+
+function NoteEditor({ note }) {
+  const update = useNotesStore((st) => st.update)
+  const ref = useRef(null)
+  const range = useRef(null)
+
+  // Filled once per note; after that the DOM is the source of truth.
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    // Every line is its own block, the first one included, so the first
+    // line can be styled as the title.
+    document.execCommand('defaultParagraphSeparator', false, 'div')
+    el.innerHTML = note.content || '<div><br></div>'
+    const t = setTimeout(() => { el.focus(); placeAtEnd(el) }, 60)
+    return () => clearTimeout(t)
+  }, [note.id])
+
+  // Remember the caret, since pressing a toolbar button moves focus away.
+  useEffect(() => {
+    const onSel = () => {
+      const sel = window.getSelection()
+      if (sel?.rangeCount && ref.current?.contains(sel.anchorNode)) range.current = sel.getRangeAt(0).cloneRange()
+    }
+    document.addEventListener('selectionchange', onSel)
+    return () => document.removeEventListener('selectionchange', onSel)
+  }, [])
+
+  const save = () => update(note.id, ref.current.innerHTML)
+
+  useEffect(() => {
+    const onFormat = (e) => {
+      const el = ref.current
+      if (!el) return
+      const sel = window.getSelection()
+      /* Toolbar buttons do not take focus, so the live caret is usually
+         still in the note — use it. Fall back to the remembered one. */
+      const live = sel.rangeCount && el.contains(sel.anchorNode)
+      if (!live) {
+        el.focus()
+        if (range.current && el.contains(range.current.startContainer)) { sel.removeAllRanges(); sel.addRange(range.current) }
+        else placeAtEnd(el)
+      }
+      const cmd = e.detail
+      if (cmd === 'title')    document.execCommand('formatBlock', false, 'h1')
+      if (cmd === 'heading')  document.execCommand('formatBlock', false, 'h2')
+      if (cmd === 'body')     document.execCommand('formatBlock', false, 'p')
+      if (cmd === 'bullet')   document.execCommand('insertUnorderedList')
+      if (cmd === 'number')   document.execCommand('insertOrderedList')
+      if (cmd === 'checklist') document.execCommand('insertHTML', false, '<ul class="notes-check"><li><br></li></ul>')
+      if (cmd === 'table') {
+        document.execCommand('insertHTML', false, TABLE)
+        // The caret goes into the first cell, as in Notes.
+        const t = el.querySelector('table[data-new]')
+        if (t) {
+          t.removeAttribute('data-new')
+          const r = document.createRange()
+          r.selectNodeContents(t.querySelector('td'))
+          r.collapse(true)
+          sel.removeAllRanges(); sel.addRange(r)
+        }
+      }
+      save()
+    }
+    window.addEventListener('notes:format', onFormat)
+    return () => window.removeEventListener('notes:format', onFormat)
+  }, [note.id])
+
+  return (
+    <div className="flex flex-col h-full">
+      <p className="notes-date">{note.date}</p>
+      <div
+        ref={ref}
+        className="notes-editor window-scroll"
+        contentEditable
+        suppressContentEditableWarning
+        data-placeholder="New Note"
+        onInput={save}
+        onMouseDown={(e) => {
+          e.stopPropagation()
+          // A checklist circle ticks its item.
+          const li = e.target.closest?.('.notes-check > li')
+          if (li && e.nativeEvent.offsetX < 22) { e.preventDefault(); li.classList.toggle('done'); save() }
+        }}
+        spellCheck
+      />
+    </div>
+  )
+}
+
+function placeAtEnd(el) {
+  const r = document.createRange()
+  r.selectNodeContents(el)
+  r.collapse(false)
+  const sel = window.getSelection()
+  sel.removeAllRanges()
+  sel.addRange(r)
+}
+
+// ── Gallery card ──────────────────────────────────────────────────────────────
+function NoteCard({ note, active, onClick }) {
+  return (
+    <button className={`notes-card${active ? ' notes-card--on' : ''}`} onClick={onClick}>
+      <span className="notes-card__page">
+        <span className="notes-card__page-title">{note.title}</span>
+        <span className="notes-card__page-body">{note.preview}</span>
+      </span>
+      <span className="notes-card__title">{note.title}</span>
+      <span className="notes-card__date">{note.date}</span>
     </button>
   )
 }
@@ -300,17 +416,23 @@ function NoteRow({ note, active, onClick }) {
 // ── Panel ─────────────────────────────────────────────────────────────────────
 
 /* `honorRequests` belongs to exactly one mount — the Notes window — because a
-   request from the Terminal names a note to open and is consumed once; two
-   panels racing for it would leave one of them holding nothing. `wide` centres
-   the columns inside a maximized window. */
+   request from the Terminal names a note to open and is consumed once.
+   `wide` centres the columns inside a maximized window.
+
+   Selection can be driven from outside (`selectedId` / `onSelect`), which is
+   how the Notes window's toolbar knows what Share or Delete act on; Finder
+   leaves it to the panel. `view` is 'list' or 'gallery'. */
 export default function NotesPanel({
   category = 'all', onCategoryChange, search = '', honorRequests = false, wide = false,
+  selectedId, onSelect, view = 'list', onViewChange,
 }) {
   const noteRequest      = useWindowStore((s) => s.noteRequest)
   const clearNoteRequest = useWindowStore((s) => s.clearNoteRequest)
+  const mine             = useNotesStore((s) => s.mine)
 
-  const [activeNote, setActiveNote] = useState(null)
-  const [reading,    setReading]    = useState(false)
+  const [ownId, setOwnId] = useState(null)
+  const activeId  = selectedId !== undefined ? selectedId : ownId
+  const setActive = onSelect ?? setOwnId
 
   // Auto-navigate when the Terminal (or anything) asks for a specific note
   useEffect(() => {
@@ -318,123 +440,77 @@ export default function NotesPanel({
     const note = NOTES.find((n) => n.id === noteRequest.noteId)
     if (note) {
       onCategoryChange?.(noteRequest.category)
-      setActiveNote(note)
-      setReading(true)
+      setActive(note.id)
+      onViewChange?.('list')
     }
     clearNoteRequest()
   }, [noteRequest, honorRequests])
 
-  // A note belongs to the category it was opened from: leaving clears it.
-  const lastCategory = useRef(category)
-  useEffect(() => {
-    if (lastCategory.current === category) return
-    lastCategory.current = category
-    setActiveNote(null)
-    setReading(false)
-  }, [category])
+  const myNotes = mine.map(asNote)
+  const base = category === 'all'
+    ? [...myNotes, ...NOTES]
+    : category === 'notes'
+      ? [...myNotes, ...NOTES.filter((n) => n.category === 'notes')]
+      : category === 'drawing' ? [] : NOTES.filter((n) => n.category === category)
 
-  const base = category === 'all' || category === 'drawing'
-    ? NOTES
-    : NOTES.filter((n) => n.category === category)
-
-  /* Search narrows the list the caller is already showing, rather than
-     reaching across categories — the same way it behaves in a Finder folder. */
+  /* Search narrows the list the caller is already showing. */
   const q = search.trim().toLowerCase()
   const filtered = q
     ? base.filter((n) => `${n.title} ${n.preview}`.toLowerCase().includes(q))
     : base
 
+  /* Notes always has a note open — the first in the list until you pick
+     another. There is no "select a note" page. */
+  const activeNote = filtered.find((n) => n.id === activeId) ?? filtered[0] ?? null
+  useEffect(() => {
+    if (category !== 'drawing' && activeNote && activeNote.id !== activeId) setActive(activeNote.id)
+  }, [activeNote?.id, category])
+
+  const label = CATEGORIES.find((c) => c.id === category)?.label
+
+  if (category === 'drawing') return <div className="h-full w-full"><DrawingCanvas /></div>
+
+  if (view === 'gallery') {
+    return (
+      <div className="h-full w-full overflow-y-auto window-scroll">
+        <div className={`notes-gallery ${wide ? 'max-w-[1140px] mx-auto' : ''}`}>
+          {filtered.map((note) => (
+            <NoteCard
+              key={note.id}
+              note={note}
+              active={activeNote?.id === note.id}
+              onClick={() => { setActive(note.id); onViewChange?.('list') }}
+            />
+          ))}
+          {filtered.length === 0 && <p className="notes-empty">{q ? 'No Results' : 'No Notes'}</p>}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="flex h-full w-full overflow-hidden">
     <div className={`flex h-full w-full ${wide ? 'max-w-[1140px] mx-auto' : ''}`}>
 
-      {/* ── List / Drawing ── */}
-      <div
-        className="flex flex-col flex-shrink-0 overflow-y-auto window-scroll"
-        style={{ width: 220, background: 'var(--sidebar-bg)', borderRight: '1px solid var(--border)' }}
-      >
-        {category === 'drawing' ? (
-          <div className="flex items-center justify-center h-full text-body text-xs">
-            Open the canvas →
-          </div>
-        ) : (
-          <>
-            <div className="px-4 pt-4 pb-2 flex-shrink-0">
-              <p
-                className="text-[13px] font-semibold"
-                style={{ color: 'var(--headline)', fontFamily: "'SF Pro Display'" }}
-              >
-                {CATEGORIES.find((c) => c.id === category)?.label}
-              </p>
-              <p className="text-[11px] mt-0.5" style={{ color: 'var(--body)' }}>
-                {filtered.length} {filtered.length === 1 ? 'entry' : 'entries'}
-              </p>
-            </div>
-            {q && filtered.length === 0 && (
-              <p className="px-4 py-3 text-[11px]" style={{ color: 'var(--body)', opacity: 0.6 }}>
-                No notes found
-              </p>
-            )}
-            {filtered.map((note) => (
-              <NoteRow
-                key={note.id}
-                note={note}
-                active={activeNote?.id === note.id}
-                onClick={() => { setActiveNote(note); setReading(true) }}
-              />
-            ))}
-          </>
-        )}
+      {/* ── List ── */}
+      <div className="notes-list flex flex-col flex-shrink-0 overflow-y-auto window-scroll">
+        <p className="notes-list__heading">{q ? 'Results' : label}</p>
+        {filtered.length === 0 && <p className="notes-empty">{q ? 'No Results' : 'No Notes'}</p>}
+        {filtered.map((note) => (
+          <NoteRow
+            key={note.id}
+            note={note}
+            active={activeNote?.id === note.id}
+            onClick={() => setActive(note.id)}
+          />
+        ))}
       </div>
 
-      {/* ── Content panel ── */}
+      {/* ── The open note ── */}
       <div className="flex-1 min-w-0 h-full">
-        <AnimatePresence mode="wait">
-          {category === 'drawing' ? (
-            <motion.div
-              key="drawing"
-              className="h-full"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-            >
-              <DrawingCanvas />
-            </motion.div>
-          ) : reading && activeNote ? (
-            <motion.div
-              key={activeNote.id}
-              className="h-full"
-              initial={{ opacity: 0, x: 12 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -8 }}
-              transition={{ duration: 0.18 }}
-            >
-              <ArticleView note={activeNote} onBack={() => setReading(false)} />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="empty"
-              className="flex flex-col items-center justify-center h-full gap-2"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-            >
-              {/* A raster emoji sat here, which no Mac app would use for an
-                  empty state. This is the Notes glyph drawn as a symbol, in
-                  the same muted weight AppKit gives a placeholder. */}
-              <svg width="34" height="34" viewBox="0 0 16 16" fill="none"
-                   style={{ color: 'var(--body)', opacity: 0.28 }}>
-                <rect x="2.6" y="1.9" width="10.8" height="12.2" rx="2.2"
-                      stroke="currentColor" strokeWidth="1.1" />
-                <path d="M5.3 5.6h5.4M5.3 8h5.4M5.3 10.4h3.2"
-                      stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
-              </svg>
-              <p className="text-body text-xs">Select a note to read</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {activeNote && (activeNote.mine
+          ? <NoteEditor key={activeNote.id} note={activeNote} />
+          : <ArticleView key={activeNote.id} note={activeNote} />)}
       </div>
 
     </div>
