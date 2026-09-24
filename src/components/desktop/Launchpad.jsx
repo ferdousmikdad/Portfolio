@@ -9,7 +9,7 @@ import noteUrl     from '@/assets/icons/note.png'
 import terminalUrl from '@/assets/icons/terminal.svg?url'
 import calcUrl     from '@/assets/icons/Calculator@4x 1.png'
 import appStoreUrl from '@/assets/icons/App Store.png'
-import spotifyUrl  from '@/assets/icons/spotify.svg?url'
+import spotifyUrl  from '@/assets/icons/Music.png?url'
 import photosUrl   from '@/assets/icons/Photos.png'
 import homeUrl     from '@/assets/icons/Home.png'
 import photoBoothUrl from '@/assets/icons/photobooth.png?url'
@@ -42,7 +42,7 @@ export default function Launchpad({ open, onClose }) {
     { id: 'terminal',   name: 'Terminal',        icon: terminalUrl, run: () => openWindow('terminal') },
     { id: 'calculator', name: 'Calculator',      icon: calcUrl,     run: () => openWindow('calculator') },
     { id: 'shop',       name: 'App Store',           icon: appStoreUrl, run: () => openWindow('shop') },
-    { id: 'spotify',    name: 'Spotify',         icon: spotifyUrl,  run: () => openWindow('spotify') },
+    { id: 'spotify',    name: 'Music',           icon: spotifyUrl,  run: () => openWindow('spotify') },
     { id: 'photo-booth', name: 'Photo Booth',    icon: photoBoothUrl, run: () => openWindow('photo-booth') },
     { id: 'settings',   name: 'System Settings', icon: PANE_ICONS.general, run: () => openWindow('settings') },
     ...TOOLS.map((t) => ({

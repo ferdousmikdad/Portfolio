@@ -238,7 +238,7 @@ const defaultWindows = [
   },
   {
     id: 'spotify',
-    title: 'Spotify',
+    title: 'Music',
     isOpen: false,
     isMinimized: false,
     position: centeredInUsableArea(880, 560),

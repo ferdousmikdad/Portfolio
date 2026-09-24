@@ -22,7 +22,7 @@ import GlassLayers from '@/components/ui/LiquidGlass'
 import MacAlert from '@/components/ui/MacAlert'
 import TOOLS from '@/data/tools'
 
-import spotifyIconUrl    from '@/assets/icons/spotify.svg?url'
+import spotifyIconUrl    from '@/assets/icons/Music.png?url'
 import terminalAppIconUrl from '@/assets/icons/terminal.svg?url'
 import pacmanIconUrl     from '@/assets/icons/magic-icon.svg?url'
 import calculatorIconUrl from '@/assets/icons/Calculator@4x 1.png?url'
@@ -54,7 +54,7 @@ import trashFullDarkUrl  from '@/assets/icons/trash-full-dark.svg?url'
 const NATIVE_APPS = [
   { id: 'terminal',    label: 'Terminal',        icon: terminalAppIconUrl },
   { id: 'pacman',      label: 'Pac-Man',         icon: pacmanIconUrl },
-  { id: 'spotify',     label: 'Spotify',         icon: spotifyIconUrl },
+  { id: 'spotify',     label: 'Music',           icon: spotifyIconUrl },
   { id: 'calculator',  label: 'Calculator',      icon: calculatorIconUrl },
   { id: 'settings',    label: 'System Settings', icon: settingsIconUrl },
   { id: 'photo-booth', label: 'Photo Booth',     icon: photoBoothIconUrl },

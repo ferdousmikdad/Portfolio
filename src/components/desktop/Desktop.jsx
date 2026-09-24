@@ -23,7 +23,7 @@ import DragGhost from '@/components/ui/DragGhost'
 import DESKTOP_FILES from '@/data/desktopFiles'
 import useSound from '@/hooks/useSound'
 import HomeWindow from '@/components/apps/HomeWindow'
-import SpotifyWindow from '@/components/apps/SpotifyWindow'
+import MusicWindow from '@/components/apps/MusicWindow'
 import PreviewWindow from '@/components/apps/PreviewWindow'
 import SettingsWindow from '@/components/apps/SettingsWindow'
 import MailWindow from '@/components/apps/MailWindow'
@@ -604,7 +604,7 @@ export default function Desktop() {
             <ToolWindow key={toolId} toolId={toolId} />
           ))}
           <HomeWindow />
-          <SpotifyWindow />
+          <MusicWindow />
           <FinderWindow />
           <TerminalWindow />
           <SettingsWindow />

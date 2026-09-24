@@ -681,7 +681,7 @@ function NotificationsPane() {
         </Row>
       </Group>
       <Group title="Application Notifications">
-        {['Mail', 'Notes', 'Spotify', 'Mikuda'].map(app => (
+        {['Mail', 'Notes', 'Music', 'Mikuda'].map(app => (
           <Row key={app} label={app} secondary="Banners, Sounds, Badges">
             <ChevronRight size={13} className="mac-row__chevron" />
           </Row>

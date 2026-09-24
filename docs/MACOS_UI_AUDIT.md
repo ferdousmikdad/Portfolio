@@ -6,7 +6,7 @@ Mac it was built beside (macOS 26, dark mode, blue accent).
 
 Audited 2026-09-24. Tick an item off when it ships.
 
-**Progress:** 5 of 18 done (items 2, 3, 4, 5 and 10, 2026-09-25).
+**Progress:** 6 of 18 done (items 2, 3, 4, 5, 6 and 10, 2026-09-25).
 
 ## Already close — leave as is
 
@@ -153,11 +153,16 @@ everywhere (item 2), the Apple menu and every menu-bar menu (item 3), and Finder
   - Files: `ShopWindow.jsx` (rewritten); `ShopPanel.jsx` now exports
     `ResourcePanes`. Finder's Store view is unchanged.
 
-- [ ] **6. Music window naming**
-  - Now: the menu bar says **Music**, but the window is Spotify-branded
-    ("SIAME" logo, green icon).
-  - Fix: either make it Apple Music (Music icon, red accent, Home / New /
-    Radio / Library sidebar) or call it Spotify everywhere.
+- [x] **6. Music → Apple Music** — done 2026-09-25
+  - Built against the real Tahoe Music app: glass sidebar (Home, Playlists
+    section, account pinned bottom-left), large bold "Home" title, red-pink
+    promo card, playlist page with gradient artwork, name, owner in red and
+    a red "Open in Spotify" capsule.
+  - The music is Mikdad's Spotify playlist embed (Para-30); the artist
+    embed and the "SIAME" wordmark are gone.
+  - The real Music app icon (from Music.app's .icns) replaces the Spotify
+    icon in the Dock, Launchpad, Spotlight, Finder and Mission Control; the
+    app is named Music everywhere. File: `src/components/apps/MusicWindow.jsx`.
 
 - [ ] **7. Tool windows** (Color Contrast and the other 9 tools)
   - Now: embedded web pages with their own styling: custom dark panels,
@@ -228,7 +233,7 @@ everywhere (item 2), the Apple menu and every menu-bar menu (item 3), and Finder
 
 ## Suggested order
 
-Next: **1** (Notification Center), then **6–7** (Music, tool windows).
+Next: **1** (Notification Center), then **7** (tool windows).
 
 ## Measured values
 

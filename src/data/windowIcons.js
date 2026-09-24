@@ -11,7 +11,7 @@ import homeUrl      from '@/assets/icons/Home.png?url'
 import terminalUrl  from '@/assets/icons/terminal.svg?url'
 import finderUrl    from '@/assets/icons/finder.svg?url'
 import settingsUrl  from '@/assets/icons/mac-system-settings.svg?url'
-import spotifyUrl   from '@/assets/icons/spotify.svg?url'
+import spotifyUrl   from '@/assets/icons/Music.png?url'
 import photoBoothUrl from '@/assets/icons/photobooth.png?url'
 import PANE_ICONS_SOFTWARE from '@/assets/icons/settings/softwareupdate.png?url'
 
