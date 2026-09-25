@@ -82,6 +82,7 @@ const useSettingsStore = create(
 
       // ── Desktop & Dock ────────────────────────────────────────────────────
       showDesktopIcons: true,
+      showDesktopWidgets: true,
       dockMagnification: true,
       dockSize:         52,
       autoHideDock:     false,

@@ -46,6 +46,10 @@ const useDesktopStore = create(
       setSortBy: (sortBy) => set((s) => ({ sortBy, layout: s.layout + 1 })),
       cleanUp:   ()       => set((s) => ({ layout: s.layout + 1 })),
 
+      /* Where each desktop widget was dragged to, by widget id. */
+      widgetPos: {},
+      placeWidget: (id, pos) => set((s) => ({ widgetPos: { ...s.widgetPos, [id]: pos } })),
+
       /* ── Session only (not saved) ──
          Get Info is one window whoever asks for it — the desktop or Finder.
          Recent Items is what was opened this session, newest first; the
@@ -60,7 +64,7 @@ const useDesktopStore = create(
     }),
     {
       name: 'portfolio-desktop',
-      partialize: ({ folders, names, tags, sortBy, layout }) => ({ folders, names, tags, sortBy, layout }),
+      partialize: ({ folders, names, tags, sortBy, layout, widgetPos }) => ({ folders, names, tags, sortBy, layout, widgetPos }),
     },
   ),
 )

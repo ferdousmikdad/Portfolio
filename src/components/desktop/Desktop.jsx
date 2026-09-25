@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import TopBar from './TopBar'
 import WelcomeModal from './WelcomeModal'
@@ -25,6 +25,8 @@ import useSound from '@/hooks/useSound'
 import HomeWindow from '@/components/apps/HomeWindow'
 import MusicWindow from '@/components/apps/MusicWindow'
 import PreviewWindow from '@/components/apps/PreviewWindow'
+/* Chess carries three.js and a 3D set, so it is only fetched once opened. */
+const ChessWindow = lazy(() => import('@/components/apps/ChessWindow'))
 import SettingsWindow from '@/components/apps/SettingsWindow'
 import MailWindow from '@/components/apps/MailWindow'
 import CalculatorWindow from '@/components/apps/CalculatorWindow'
@@ -43,6 +45,7 @@ import NotificationCenter from '@/components/desktop/NotificationCenter'
 import AirDropSheet from '@/components/desktop/AirDropSheet'
 import GetInfo from '@/components/desktop/GetInfo'
 import TimeMachine from '@/components/desktop/TimeMachine'
+import DesktopWidgets from '@/components/desktop/DesktopWidgets'
 import ContextMenu from '@/components/ui/ContextMenu'
 import useDesktopStore from '@/store/desktopStore'
 import { TAGS } from '@/data/projects'
@@ -223,6 +226,8 @@ export default function Desktop() {
   const { openWindow, closeAllExcept, switchTool, activePage, navKey, navigate, openProjectPreview, openMailWindow } = useWindowStore()
   const isAnyMaximized    = useWindowStore((s) => s.windows.some((w) => w.isMaximized))
   const showDesktopIcons  = useSettingsStore((s) => s.showDesktopIcons)
+  const chessOpen = useWindowStore((s) => s.windows.some((w) => w.id === 'chess' && (w.isOpen || w.isMinimized)))
+  const showDesktopWidgets = useSettingsStore((s) => s.showDesktopWidgets ?? true)
   const trashItems        = useTrashStore((s) => s.items)
   const trashFile         = useTrashStore((s) => s.trashItem)
   const trashedOnDesktop  = trashedFrom(trashItems, 'desktop')
@@ -324,12 +329,6 @@ export default function Desktop() {
   }
 
   const TOPBAR_H  = 28
-  const DOCK_SAFE = 88
-
-  const usableCenter = (w, h, liveVW, liveVH) => ({
-    x: Math.max(0, Math.round((liveVW - w) / 2)),
-    y: Math.max(TOPBAR_H, Math.round(TOPBAR_H + (liveVH - TOPBAR_H - DOCK_SAFE - h) / 2)),
-  })
 
   // Center the initial windows on first mount (full viewport, no usable-area offset)
   const centerInitialWindows = () => {
@@ -359,53 +358,46 @@ export default function Desktop() {
     }
   }
 
-  // Re-center after fit/restore — uses usable area between topbar and dock
-  const recenterAfterFullscreen = () => {
-    const { windows, updateSizePosition } = useWindowStore.getState()
-    const liveVW = window.innerWidth
-    const liveVH = window.innerHeight
-    const portfolio = windows.find((w) => w.id === 'portfolio')
-    if (portfolio && portfolio.isOpen) {
-      updateSizePosition('portfolio', portfolio.size, usableCenter(portfolio.size.width, portfolio.size.height, liveVW, liveVH))
-    }
-    const activeTool = windows.find((w) => TOOL_IDS.includes(w.id) && w.isOpen && !w.isMinimized)
-    if (activeTool) {
-      updateSizePosition(activeTool.id, activeTool.size, usableCenter(activeTool.size.width, activeTool.size.height, liveVW, liveVH))
-    }
-    for (const id of ['notes', 'shop']) {
-      const win = windows.find((w) => w.id === id && w.isOpen)
-      if (win) {
-        updateSizePosition(id, win.size, usableCenter(win.size.width, win.size.height, liveVW, liveVH))
-      }
-    }
-  }
-
   // On mount: center initial windows
   useEffect(() => {
     centerInitialWindows()
   }, [])
 
-  // Re-center after fullscreen toggle (viewport dimensions change)
-  useEffect(() => {
-    const handler = () => {
-      setTimeout(() => {
-        const shells = document.querySelectorAll('.window-shell')
-        shells.forEach(el => { el.style.transition = 'transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)' })
-
-        const { activePage } = useWindowStore.getState()
-        if (activePage === null) {
-          centerInitialWindows()
-        } else {
-          recenterAfterFullscreen()
-        }
-
-        setTimeout(() => {
-          shells.forEach(el => { el.style.transition = '' })
-        }, 400)
-      }, 150)
+  /* When the screen changes size — Fit to Screen, leaving it, or the browser
+     window being resized — windows stay exactly where you put them, as they
+     do on a Mac when a display changes. The only corrections are the ones
+     macOS makes: a window that would now hang off the screen is pulled back
+     in (and shrunk if it no longer fits), and a zoomed window is re-fitted
+     to fill the new screen. Nothing is re-centred. */
+  const keepWindowsOnScreen = () => {
+    const { windows, updateSizePosition } = useWindowStore.getState()
+    const vw = window.innerWidth, vh = window.innerHeight
+    for (const w of windows) {
+      if (!w.isOpen || w.isMinimized) continue
+      if (w.isMaximized) {
+        updateSizePosition(w.id, { width: vw, height: vh }, { x: 0, y: 0 })
+        continue
+      }
+      const width  = Math.min(w.size.width,  vw - 16)
+      const height = Math.min(w.size.height, vh - TOPBAR_H - 16)
+      const x = Math.min(Math.max(w.position.x, 0), vw - width)
+      const y = Math.min(Math.max(w.position.y, TOPBAR_H), vh - height)
+      if (x !== w.position.x || y !== w.position.y || width !== w.size.width || height !== w.size.height) {
+        updateSizePosition(w.id, { width, height }, { x, y })
+      }
     }
+  }
+
+  useEffect(() => {
+    let t
+    const handler = () => { clearTimeout(t); t = setTimeout(keepWindowsOnScreen, 150) }
     document.addEventListener('fullscreenchange', handler)
-    return () => document.removeEventListener('fullscreenchange', handler)
+    window.addEventListener('resize', handler)
+    return () => {
+      clearTimeout(t)
+      document.removeEventListener('fullscreenchange', handler)
+      window.removeEventListener('resize', handler)
+    }
   }, [])
 
   // On mount: open a project directly if the URL hash is #project/<slug>
@@ -431,23 +423,10 @@ export default function Desktop() {
   useEffect(() => {
     if (!activePage) return
     play('open')
-    if (activePage === 'home') {
-      closeAllExcept(['home', 'finder', 'terminal'])
-      openWindow('home')
-    } else if (activePage === 'tools') {
-      closeAllExcept([...TOOL_IDS, 'finder', 'terminal'])
-      switchTool('color-contrast')
-      const { windows, updateSizePosition } = useWindowStore.getState()
-      const tool = windows.find((w) => w.id === 'color-contrast')
-      if (tool) {
-        const x = Math.max(0, Math.round((window.innerWidth  - tool.size.width)  / 2))
-        const y = Math.max(0, Math.round((window.innerHeight - tool.size.height) / 2))
-        updateSizePosition('color-contrast', tool.size, { x, y })
-      }
-    } else {
-      closeAllExcept([activePage, 'finder', 'terminal'])
-      openWindow(activePage)
-    }
+    /* Going somewhere opens that app on top of whatever is already open —
+       a Mac never closes your other windows because you launched one. */
+    if (activePage === 'tools') switchTool('color-contrast')
+    else openWindow(activePage)
   }, [activePage, navKey, openWindow, closeAllExcept, switchTool, play])
 
   // Keyboard shortcuts: Shift + H / A / P / S / N
@@ -555,6 +534,9 @@ export default function Desktop() {
       {/* Desktop icons — toggleable via Settings. A file in the Trash is not
           on the desktop, so the list filters itself against it; Put Back in
           the Trash window is what brings the icon back. */}
+      {/* Widgets sit on the wallpaper, under the icons and the windows. */}
+      {showDesktopWidgets && <DesktopWidgets />}
+
       {showDesktopIcons && (
         <>
           {desktopItems.map((file, i) => (
@@ -616,6 +598,7 @@ export default function Desktop() {
           <WhatsNewWindow />
           {/* A project opened from Portfolio, Finder or Mikuda — a Preview window. */}
           <PreviewWindow />
+          {chessOpen && <Suspense key="chess" fallback={null}><ChessWindow /></Suspense>}
         </AnimatePresence>
       </div>
 

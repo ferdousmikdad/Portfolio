@@ -5,6 +5,7 @@ import ForceQuit from '@/components/desktop/ForceQuit'
 import windowIcon from '@/data/windowIcons'
 import DESKTOP_FILES from '@/data/desktopFiles'
 import useDesktopStore from '@/store/desktopStore'
+import useChessStore from '@/store/chessStore'
 import { motion, AnimatePresence } from 'framer-motion'
 import useWindowStore from '@/store/windowStore'
 import useThemeStore from '@/store/themeStore'
@@ -50,6 +51,7 @@ export default function MenuBar({ onOpenSpotlight, onMenuOpen }) {
   const recent      = useDesktopStore((s) => s.recent)
   const pushRecent  = useDesktopStore((s) => s.pushRecent)
   const clearRecent = useDesktopStore((s) => s.clearRecent)
+  const chess       = useChessStore()
   const titleRefs = useRef({})
   const [isFullscreen, setIsFullscreen] = useState(false)
   const rootRef = useRef(null)
@@ -164,6 +166,15 @@ export default function MenuBar({ onOpenSpotlight, onMenuOpen }) {
     forceQuit: () => setForceQuitOpen(true),
     forceQuitFront: () => front && closeWindow(front.id),
     userName: 'Ferdous Mikdad',
+    chess: appName === 'Chess' ? {
+      newGame: chess.newGame,
+      takeBack: chess.takeBack,
+      showHint: chess.showHint,
+      level: chess.level,
+      setLevel: chess.setLevel,
+      canTakeBack: !chess.thinking && chess.game.history().length > 0,
+      canHint: !chess.thinking && chess.game.turn() === 'w' && !chess.game.isGameOver(),
+    } : null,
   })
 
   return (

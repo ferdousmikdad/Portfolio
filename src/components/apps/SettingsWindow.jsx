@@ -308,6 +308,9 @@ function DesktopDockPane() {
         <Row label="Show items" secondary="On Desktop">
           <Switch value={s.showDesktopIcons} onChange={(v) => s.update({ showDesktopIcons: v })} />
         </Row>
+        <Row label="Show widgets" secondary="On Desktop">
+          <Switch value={s.showDesktopWidgets ?? true} onChange={(v) => s.update({ showDesktopWidgets: v })} />
+        </Row>
         <Row label="Stage Manager" secondary="Organise windows into a single group">
           <Switch value={s.stageManager} onChange={(v) => s.update({ stageManager: v })} />
         </Row>

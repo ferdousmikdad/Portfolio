@@ -11,7 +11,7 @@ import BACKUPS from '@/data/timeMachine'
    timeline travel through them; Cancel leaves; Open shows the backup at full
    size in Preview.
 
-   What makes this one different from a Mac\x27s: the backups are of the
+   What makes this one different from a Mac's: the backups are of the
    portfolio itself. Each is a real screenshot of the site as it was at that
    commit — so travelling back is walking through how it was designed.     */
 
@@ -28,11 +28,12 @@ export default function TimeMachine() {
   const close = useWindowStore((s) => s.closeTimeMachine)
   const openProjectPreview = useWindowStore((s) => s.openProjectPreview)
   const [index, setIndex] = useState(0)          // 0 = newest
-  const wheelLock = useRef(0)
+  const wheel = useRef({ sum: 0, stepped: false, quiet: null })
 
   useEffect(() => { if (open) setIndex(0) }, [open])
 
-  const older = () => setIndex((i) => Math.min(BACKUPS.length - 1, i + 1))
+  const last  = BACKUPS.length - 1
+  const older = () => setIndex((i) => Math.min(last, i + 1))
   const newer = () => setIndex((i) => Math.max(0, i - 1))
   const current = BACKUPS[index]
 
@@ -53,20 +54,32 @@ export default function TimeMachine() {
     if (!open) return
     const onKey = (e) => {
       if (e.key === 'Escape') { e.preventDefault(); close() }
-      if (e.key === 'ArrowUp')   { e.preventDefault(); older() }
-      if (e.key === 'ArrowDown') { e.preventDefault(); newer() }
+      // Up / Left go back in time, Down / Right come forward.
+      if (e.key === 'ArrowUp' || e.key === 'ArrowLeft')    { e.preventDefault(); older() }
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { e.preventDefault(); newer() }
+      if (e.key === 'Home') { e.preventDefault(); setIndex(0) }
+      if (e.key === 'End')  { e.preventDefault(); setIndex(last) }
       if (e.key === 'Enter')     { e.preventDefault(); openCurrent() }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   })
 
-  // Scrolling travels one backup per notch — away from you is back in time.
+  /* Scrolling travels one backup per gesture. A trackpad sends dozens of
+     small deltas per swipe (and keeps sending momentum after the finger
+     lifts), a mouse wheel a few big ones. Add them up and step once the total
+     passes a threshold — then ignore everything until the scrolling has
+     been quiet for a moment, which is when the gesture has really ended.
+     One swipe is always exactly one backup. */
   const onWheel = (e) => {
-    const now = Date.now()
-    if (now - wheelLock.current < 280 || Math.abs(e.deltaY) < 8) return
-    wheelLock.current = now
-    if (e.deltaY < 0) older(); else newer()
+    const w = wheel.current
+    clearTimeout(w.quiet)
+    w.quiet = setTimeout(() => { w.sum = 0; w.stepped = false }, 180)
+    if (w.stepped) return
+    w.sum += e.deltaY
+    if (Math.abs(w.sum) < 40) return
+    if (w.sum < 0) older(); else newer()
+    w.stepped = true
   }
 
   return (
@@ -83,8 +96,19 @@ export default function TimeMachine() {
           {/* Which backup is in front, as Time Machine names it along the top. */}
           <div className="tm__top">
             <p className="tm__date">{index === 0 ? 'Today (Now)' : fmt(current.date)}</p>
-            <p className="tm__title">{current.title}</p>
+            <p className="tm__title">{current.title} · {index + 1} of {BACKUPS.length}</p>
           </div>
+
+          {/* The two big buttons either side of the stack — the obvious way
+              through, for anyone who does not reach for the keyboard. */}
+          <button className="tm__side tm__side--older" onClick={older} disabled={index === last} aria-label="Older backup">
+            <span className="tm__side-disc"><SFSymbol name="chevron.left" size={20} /></span>
+            <span>Older</span>
+          </button>
+          <button className="tm__side tm__side--newer" onClick={newer} disabled={index === 0} aria-label="Newer backup">
+            <span className="tm__side-disc"><SFSymbol name="chevron.right" size={20} /></span>
+            <span>Newer</span>
+          </button>
 
           <div className="tm__stage">
             {BACKUPS.map((b, i) => {
@@ -115,7 +139,7 @@ export default function TimeMachine() {
 
           <p className="tm__note">{current.note}</p>
 
-          {/* The timeline down the right edge: every backup\x27s date, the one in
+          {/* The timeline down the right edge: every backup's date, the one in
               front highlighted, the arrows above and below. */}
           <div className="tm__rail">
             <button className="tm__arrow" onClick={older} disabled={index === BACKUPS.length - 1} title="Older (↑)">
@@ -125,7 +149,10 @@ export default function TimeMachine() {
               {BACKUPS.map((b, i) => (
                 <li key={b.id}>
                   <button className="tm__tick" data-on={i === index || undefined} onClick={() => setIndex(i)}>
-                    {i === 0 ? 'Today' : fmtShort(b.date)}
+                    <span className="tm__tick-text">
+                      <span className="tm__tick-date">{i === 0 ? 'Today' : fmtShort(b.date)}</span>
+                      <span className="tm__tick-title">{b.title}</span>
+                    </span>
                   </button>
                 </li>
               ))}
@@ -139,6 +166,7 @@ export default function TimeMachine() {
             <button className="tm__btn" onClick={close}>Cancel</button>
             <button className="tm__btn tm__btn--primary" onClick={openCurrent}>Open</button>
           </div>
+          <p className="tm__hint">← → or ↑ ↓ to travel · Return to open · Esc to leave</p>
         </motion.div>
       )}
     </AnimatePresence>

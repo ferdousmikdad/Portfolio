@@ -198,6 +198,15 @@ const defaultWindows = [
     zIndex: 3,
   },
   {
+    id: 'chess',
+    title: 'Chess',
+    isOpen: false,
+    isMinimized: false,
+    position: centeredInUsableArea(900, 640),
+    size: { width: 900, height: 640 },
+    zIndex: 3,
+  },
+  {
     id: 'calculator',
     title: 'Calculator',
     isOpen: false,
@@ -483,10 +492,14 @@ const useWindowStore = create((set, get) => ({
     }))
   },
 
+  /* Opening an app never closes another one, as on a Mac. An app that is
+     already on screen just comes to the front where it is — its size and
+     place are left alone; only a fresh open gets a default frame. */
   openWindow: (id) =>
     set((state) => ({
       windows: state.windows.map((w) => {
         if (w.id !== id) return w
+        if (w.isOpen && !w.isMinimized) return { ...w, zIndex: ++topZ }
         if (id === 'portfolio' || id === 'home') {
           return {
             ...w,
@@ -593,12 +606,13 @@ const useWindowStore = create((set, get) => ({
       activeWindowId: toolId,
     })),
 
-  // Open one tool, close all other non-minimized tool windows
+  // Open one tool and bring it forward; other tools stay open.
   switchTool: (toolId) =>
     set((state) => ({
       windows: state.windows.map((w) => {
         if (!TOOL_IDS.includes(w.id)) return w
         if (w.id === toolId) {
+          if (w.isOpen && !w.isMinimized) return { ...w, zIndex: ++topZ }
           return {
             ...w,
             isOpen: true,
@@ -608,8 +622,7 @@ const useWindowStore = create((set, get) => ({
             position: centeredInUsableArea(portfolioW, portfolioH),
           }
         }
-        if (w.isMinimized) return w
-        return { ...w, isOpen: false }
+        return w
       }),
       activeWindowId: toolId,
     })),

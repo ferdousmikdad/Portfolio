@@ -5,6 +5,7 @@ import mikdadUrl    from '@/assets/icons/mikdad-head.svg?url'
 import contactsUrl  from '@/assets/icons/Contacts.png?url'
 import photosUrl    from '@/assets/icons/Photos.png?url'
 import previewUrl   from '@/assets/icons/Preview.png?url'
+import chessUrl     from '@/assets/icons/Chess.png?url'
 import appStoreUrl  from '@/assets/icons/App Store.png?url'
 import noteUrl      from '@/assets/icons/note.png?url'
 import homeUrl      from '@/assets/icons/Home.png?url'
@@ -25,6 +26,7 @@ const WINDOW_ICONS = {
   home:      homeUrl,
   portfolio: photosUrl,
   preview:   previewUrl,
+  chess:     chessUrl,
   shop:      appStoreUrl,
   notes:     noteUrl,
   terminal:  terminalUrl,

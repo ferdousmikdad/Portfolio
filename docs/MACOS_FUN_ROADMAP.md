@@ -24,9 +24,9 @@ Same symbols as `PROGRESS.md`, so the two files read the same way.
 
 | Field | Value |
 |---|---|
-| **Progress** | Tiers 1–4 **complete** (F1–F24). **Tier 5 added 2026-09-25: 9 new items (F25–F33), 1 shipped (F25)** |
+| **Progress** | Tiers 1–4 **complete** (F1–F24). **Tier 5 added 2026-09-25: 9 new items (F25–F33), 3 shipped (F25, F30, F33)** |
 | **Currently working on** | — nothing in flight — |
-| **Last completed** | ✅ F25 — Time Machine |
+| **Last completed** | ✅ F33 — Chess |
 | **Next up** | 📋 **F26 Messages that reach Mikdad**, then **F27 banners** (see Tier 5) |
 
 ### Done so far
@@ -163,10 +163,10 @@ half-built — not more breadth for its own sake.
 | F27 | **Slide-in notification banners, real triggers only** | 📋 | S | Closes the F17 open decision. Banners from the top-right that go into Notification Centre, fired only by real events: *"Password Peek copied"* after Get in the App Store, *"Photo saved"* in Photo Booth, *"Mikuda answered"* if the Siri bar was closed mid-question. No invented alerts. |
 | F28 | **Mikuda can listen and speak** | 📋 | M | The mic in the Siri bar is decorative today. Browser speech recognition to ask out loud, speech synthesis to read the answer. Must degrade quietly where the browser lacks it (Firefox) and ask for the mic only on press. |
 | F29 | **Dynamic wallpaper by local time** | 📋 | S | Tahoe wallpapers shift from day to night. Follow the *visitor's* clock — someone at 2 am sees the night variant. Needs a day and a night version of the wallpaper. |
-| F30 | **Widgets on the desktop** | 📋 | M | Tahoe lets widgets sit on the desktop itself. A **Now working on** card, the **Music** widget playing Mikdad's playlist, and his clock beside the visitor's (*"It's 1:40 AM for Mikdad"*). Should follow Settings → Desktop & Dock and be movable. |
+| F30 | **Widgets on the desktop** | ✅ | M | Done, then rebuilt 25 Sep to match the widgets on Mikdad's own Tahoe desktop. `DesktopWidgets.jsx`: **Calendar** (red month, weekend columns dimmed per the visitor's region, today in a red disc), **Weather** (live Dhaka conditions from Open-Meteo, no key, nothing about the visitor sent: temperature, condition symbol, H/L), and a medium **Photos** widget featuring a portfolio piece that changes every 30s and opens it. Measured: 163pt squares 19pt apart at 16/46pt, glass slightly darker than the wallpaper, hairline rim, no shadow. Behind a window they go monochrome (hover restores colour). Draggable, position saved per visitor; **Settings › Desktop & Dock › Show widgets** turns them off. |
 | F31 | **⌘P → print sheet → résumé PDF** | 📋 | S | The real macOS print sheet, and **Save as PDF** hands over Mikdad's actual CV. Useful to recruiters, a smile for everyone else. Needs the CV file. |
 | F32 | **Activity Monitor** | 📋 | M | A real list of what is running — open windows, the Mikuda worker, animations — with live CPU-style graphs from actual frame timing. Nerdy, and it signals understanding of the thing built. Must use real numbers, not decorative ones. |
-| F33 | **Chess** | 📋 | M | Ships on every Mac; a quick game against Mikuda suits a portfolio people linger in. Could use an open-source engine rather than writing one. |
+| F33 | **Chess** | ✅ | M | Done. `ChessWindow.jsx` + `store/chessStore.js` + `utils/chessEngine.worker.js`. Apple's **own 3D wooden set**: the board and six piece meshes converted from Chess.app's USD models, with its wood textures and per-piece normal maps (`public/chess/`, ~2.4 MB, loaded only when Chess opens; Chess.app's licence kept as `APPLE-COPYING.txt`). three.js renders it from the real app's camera angle with soft shadows. Click a piece to pick it up (legal squares light up), click a square to move; pieces lift and glide; last move, check and hints are marked. Rules by chess.js; the computer is an alpha-beta search with quiescence in a Web Worker, so the page never freezes. Title reads like the real one (*Game 1 \| You – Computer (White to Move)*, *Checkmate — White Wins*). Menu bar gets the real **Game** (New Game, Computer Level Easy/Normal/Hard) and **Moves** (Take Back Move, Show Hint) menus. In Launchpad, Spotlight and Finder › Applications with the real Chess icon. three.js is lazy-loaded, so the main bundle does not grow. |
 
 **Considered and skipped**
 
@@ -248,5 +248,9 @@ Prefer finishing a few of these properly over starting many.
 | 2026-09-21 | ✅ F23 Keyboard shortcuts overlay shipped — ⌘/ sheet, Help menu entry, and an honest footer about the chords the browser claims |
 | 2026-09-21 | ✅ F24 Sleep / Wake / Restart shipped — the last two disabled Apple-menu rows now work; **roadmap complete** |
 | 2026-09-24 | ✅ F22 Force Quit built after all, as part of the macOS UI audit (Apple menu, item 3) — `ForceQuit.jsx` |
+| 2026-09-25 | ✅ F33 Chess shipped — Apple's 3D wooden set via three.js, worker engine, Game/Moves menus |
+| 2026-09-25 | F30 rebuilt to match the real desktop: Calendar, live Weather, Photos (replacing World Clock / Now working on / Music) |
+| 2026-09-25 | ✅ F30 Desktop widgets shipped — World Clock (visitor + Mikdad), Now working on, Music; draggable, saved, dim behind windows, Settings switch |
+| 2026-09-25 | F25 easier to travel: big Older / Newer buttons beside the stack, "3 of 7" counter, timeline rows show date + era name, ← → Home End keys and an on-screen key hint, one trackpad swipe = exactly one backup |
 | 2026-09-25 | ✅ F25 Time Machine shipped — seven real snapshots of the site's history, full-screen stack + timeline; the Settings Time Machine row now works |
 | 2026-09-25 | 📋 Tier 5 added: F25–F33 (Time Machine, real Messages, banners, voice, dynamic wallpaper, desktop widgets, résumé print, Activity Monitor, Chess); ⌘Tab and achievements considered and skipped |

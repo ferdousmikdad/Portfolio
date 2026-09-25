@@ -35,6 +35,7 @@ const APP_NAMES = {
   'photo-booth': 'Photo Booth',
   'about-mac': 'Finder',
   preview: 'Preview',
+  chess: 'Chess',
   'whats-new': 'System Settings',
 }
 
@@ -73,7 +74,7 @@ export function buildMenus(ctx) {
     { label: 'Clear Menu', disabled: recent.length === 0, onClick: clearRecent },
   ]
 
-  return [
+  const menus = [
     {
       id: 'apple',
       apple: true,
@@ -218,4 +219,36 @@ export function buildMenus(ctx) {
       ],
     },
   ]
+
+  /* Chess brings its own menus, the way the real app does: Game in place of
+     File, and Moves between View and Window. */
+  if (appName === 'Chess' && ctx.chess) {
+    const c = ctx.chess
+    const game = {
+      id: 'game',
+      label: 'Game',
+      items: [
+        { label: 'New Game', icon: 'square.and.pencil', key: '⌘N', onClick: c.newGame },
+        { sep: true },
+        { label: 'Computer Level', submenu: [
+          { label: 'Easy',   checked: c.level === 2, onClick: () => c.setLevel(2) },
+          { label: 'Normal', checked: c.level === 3, onClick: () => c.setLevel(3) },
+          { label: 'Hard',   checked: c.level === 4, onClick: () => c.setLevel(4) },
+        ] },
+      ],
+    }
+    const moves = {
+      id: 'moves',
+      label: 'Moves',
+      items: [
+        { label: 'Take Back Move', icon: 'arrow.uturn.backward', key: '⌘Z', disabled: !c.canTakeBack, onClick: c.takeBack },
+        { sep: true },
+        { label: 'Show Hint', icon: 'questionmark.circle', key: '⌘?', disabled: !c.canHint, onClick: c.showHint },
+      ],
+    }
+    const out = menus.map((m) => (m.id === 'file' ? game : m))
+    out.splice(out.findIndex((m) => m.id === 'view') + 1, 0, moves)
+    return out.filter((m) => m.id !== 'go')
+  }
+  return menus
 }

@@ -221,7 +221,6 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
   }
 
   const openApp = (id) => {
-    if (!activePage) closeAllExcept(['finder', 'terminal', 'settings'])
     launch(id, () => openWindow(id), isLive(id))
   }
 

@@ -7733,13 +7733,27 @@ html:not(.dark) .fq-list { background: #fff; }
 .tm__arrow:disabled { opacity: 0.3; }
 .tm__arrow:not(:disabled):hover { background: rgba(255, 255, 255, 0.2); }
 .tm__timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+/* Timeline rows: the date, and under it what that backup is — so you can
+   pick an era by name, not only by date. The whole row is the target. */
+.tm__timeline { gap: 2px !important; }
 .tm__tick {
-  display: flex; align-items: center; gap: 8px;
-  border: none; background: transparent;
+  display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+  width: 210px; padding: 5px 8px;
+  border: none; border-radius: 9px; background: transparent;
   font: 500 12px 'SF Pro Text', sans-serif;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 255, 255, 0.5);
+  text-align: right;
   cursor: default;
 }
+.tm__tick:hover { background: rgba(255, 255, 255, 0.07); }
+.tm__tick[data-on] { background: rgba(255, 255, 255, 0.10); }
+.tm__tick-text { display: flex; flex-direction: column; min-width: 0; }
+.tm__tick-date { font-weight: 600; }
+.tm__tick-title {
+  font-size: 11px; font-weight: 400; color: rgba(255, 255, 255, 0.4);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.tm__tick[data-on] .tm__tick-title { color: rgba(255, 255, 255, 0.75); }
 .tm__tick::after {
   content: ''; width: 14px; height: 2px; border-radius: 1px;
   background: rgba(255, 255, 255, 0.35);
@@ -7763,3 +7777,106 @@ html:not(.dark) .fq-list { background: #fff; }
 .tm__btn:hover { background: rgba(255, 255, 255, 0.22); }
 .tm__btn--primary { background: var(--brand); }
 .tm__btn--primary:hover { background: color-mix(in srgb, var(--brand) 85%, white); }
+
+/* Big Older / Newer buttons either side of the stack. */
+.tm__side {
+  position: absolute;
+  top: 52%;
+  transform: translateY(-50%);
+  z-index: 3;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  border: none; background: transparent; color: #fff; cursor: default;
+  font: 500 12px 'SF Pro Text', sans-serif;
+}
+.tm__side-disc {
+  display: grid; place-items: center;
+  width: 52px; height: 52px; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.tm__side:not(:disabled):hover .tm__side-disc { background: rgba(255, 255, 255, 0.22); transform: scale(1.06); }
+.tm__side span:last-child { color: rgba(255, 255, 255, 0.6); }
+.tm__side:disabled { opacity: 0.22; }
+.tm__side--older { left: max(28px, calc(50% - min(28vw, 450px, calc((100vh - 330px) * 0.8)) - 110px)); }
+.tm__side--newer { right: max(260px, calc(50% - min(28vw, 450px, calc((100vh - 330px) * 0.8)) - 110px)); }
+
+.tm__hint {
+  position: absolute; left: 0; right: 0; bottom: 12px;
+  text-align: center; font-size: 11px; color: rgba(255, 255, 255, 0.38);
+}
+
+/* ── Desktop widgets (Tahoe) ─────────────────────────────────────────────────
+   Measured off the real desktop: 163pt squares with a ~22pt radius, glass a
+   little darker than the wallpaper (sampled 27,45,72 over 38,60,95), a
+   hairline light rim and no shadow. Behind a window they go monochrome at
+   full strength — red to grey — rather than fading; hover restores colour. */
+.dw-layer { position: absolute; inset: 0; z-index: 12; pointer-events: none; }
+.dw {
+  position: absolute;
+  pointer-events: auto;
+  box-sizing: border-box;
+  padding: 14px 15px;
+  border-radius: 22px;
+  overflow: hidden;
+  cursor: default;
+  color: #fff;
+  font-family: 'SF Pro Text', system-ui, sans-serif;
+  background: rgba(8, 14, 28, 0.26);
+  -webkit-backdrop-filter: blur(30px) saturate(150%);
+  backdrop-filter: blur(30px) saturate(150%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+  transition: filter 0.35s ease;
+}
+.dw--flush { padding: 0; }
+html:not(.dark) .dw { background: rgba(255, 255, 255, 0.28); color: #1d1d1f; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45); }
+.dw[data-dim] { filter: grayscale(1); }
+.dw[data-dim]:hover { filter: none; }
+
+/* Calendar: month in red caps, weekday letters and dates in a 7-column
+   grid, weekend columns dimmer, today in a red disc. */
+.dw-cal__month { font: 700 11.5px 'SF Pro Text', sans-serif; letter-spacing: 0.02em; color: #ff453a; margin-bottom: 5px; }
+.dw-cal__grid { display: grid; grid-template-columns: repeat(7, 1fr); row-gap: 1px; text-align: center; }
+.dw-cal__dow { font: 700 9.5px 'SF Pro Text', sans-serif; opacity: 0.75; margin-bottom: 2px; }
+.dw-cal__day { font: 700 10.5px/17px 'SF Pro Text', sans-serif; justify-self: center; width: 17px; border-radius: 50%; }
+.dw-cal__dow[data-weekend], .dw-cal__day[data-weekend] { opacity: 0.55; }
+.dw-cal__day[data-today] { background: #ff453a; color: #fff; opacity: 1; }
+
+/* Weather: place with the location arrow, the big temperature, then the
+   condition symbol, its name and the day's high and low. */
+.dw-wx { display: flex; flex-direction: column; height: 100%; }
+.dw-wx__place { display: flex; align-items: center; gap: 4px; font: 600 15px 'SF Pro Text', sans-serif; }
+.dw-wx__temp { font: 300 44px/1 'SF Pro Display', sans-serif; letter-spacing: -0.02em; margin-top: 2px; }
+.dw-wx__foot { margin-top: auto; }
+.dw-wx__cond { margin-top: 3px; font: 600 12px 'SF Pro Text', sans-serif; }
+.dw-wx__hilo { font: 600 12px 'SF Pro Text', sans-serif; opacity: 0.85; }
+
+/* Photos: the picture full bleed, a small caption over a soft gradient. */
+.dw-photos { position: relative; width: 100%; height: 100%; }
+.dw-photos img { width: 100%; height: 100%; object-fit: cover; display: block; animation: dw-fade 0.8s ease; }
+@keyframes dw-fade { from { opacity: 0; } to { opacity: 1; } }
+.dw-photos__caption {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  display: flex; flex-direction: column; padding: 22px 14px 11px;
+  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.55));
+  font-size: 11px; color: rgba(255, 255, 255, 0.85);
+}
+.dw-photos__caption b { font: 700 13px 'SF Pro Text', sans-serif; color: #fff; }
+.dw-photos__empty { display: grid; place-items: center; height: 100%; padding: 0 30px; text-align: center; font-size: 12px; opacity: 0.6; }
+
+/* ── Chess ───────────────────────────────────────────────────────────────────
+   The real app's backdrop: a charcoal studio fading darker toward the edges,
+   the wooden board lit from above-left. */
+.chess-stage {
+  position: relative;
+  height: 100%;
+  background: radial-gradient(95% 85% at 50% 38%, #5b5b5d 0%, #3a3a3c 50%, #1e1e20 100%);
+  cursor: default;
+}
+.chess-canvas { position: absolute; inset: 0; }
+.chess-canvas canvas { display: block; }
+.chess-loading {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font: 13px 'SF Pro Text', sans-serif; color: rgba(255, 255, 255, 0.6);
+}
