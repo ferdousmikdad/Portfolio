@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware'
 
 import mikdadPhotoUrl  from '@/assets/images/mikdad.jpg'
 import iphoneShotUrl   from '@/assets/images/iPhoneAR.jpg'
-import macDocumentUrl  from '@/assets/icons/macDocument.png'
+import macDocumentUrl  from '@/assets/icons/txtDocument.png'
 import pdfIconUrl      from '@/assets/icons/pdf.svg?url'
 import folderIconUrl   from '@/assets/icons/Folder.png?url'
 import useDesktopStore from '@/store/desktopStore'
@@ -108,7 +108,17 @@ const useTrashStore = create(
 
       isTrashed: (id) => get().items.some((i) => i.id === id),
     }),
-    { name: 'portfolio-trash' }
+    {
+      name: 'portfolio-trash',
+      /* Icons are stored as URLs, and an icon that has since been replaced
+         would point at nothing. Text documents always take today's icon. */
+      merge: (saved, current) => ({
+        ...current,
+        ...saved,
+        items: (saved?.items ?? current.items).map((i) =>
+          i.kind === 'document' ? { ...i, icon: macDocumentUrl } : i),
+      }),
+    }
   )
 )
 

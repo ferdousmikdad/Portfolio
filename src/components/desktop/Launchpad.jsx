@@ -13,6 +13,7 @@ import spotifyUrl  from '@/assets/icons/Music.png?url'
 import photosUrl   from '@/assets/icons/Photos.png'
 import homeUrl     from '@/assets/icons/Home.png'
 import photoBoothUrl from '@/assets/icons/photobooth.png?url'
+import timeMachineUrl from '@/assets/icons/TimeMachine.png?url'
 
 /* ── Launchpad ─────────────────────────────────────────────────────────────
    Every app at once over a blurred desktop, paginated, and typing filters it.
@@ -44,6 +45,7 @@ export default function Launchpad({ open, onClose }) {
     { id: 'shop',       name: 'App Store',           icon: appStoreUrl, run: () => openWindow('shop') },
     { id: 'spotify',    name: 'Music',           icon: spotifyUrl,  run: () => openWindow('spotify') },
     { id: 'photo-booth', name: 'Photo Booth',    icon: photoBoothUrl, run: () => openWindow('photo-booth') },
+    { id: 'time-machine', name: 'Time Machine',  icon: timeMachineUrl, run: () => useWindowStore.getState().openTimeMachine() },
     { id: 'settings',   name: 'System Settings', icon: PANE_ICONS.general, run: () => openWindow('settings') },
     ...TOOLS.map((t) => ({
       id: t.id, name: t.name, icon: t.icon,

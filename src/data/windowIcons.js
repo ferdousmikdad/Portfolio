@@ -1,6 +1,6 @@
 import TOOLS from '@/data/tools'
 
-import documentUrl  from '@/assets/icons/macDocument.png?url'
+import documentUrl  from '@/assets/icons/txtDocument.png?url'
 import mikdadUrl    from '@/assets/icons/mikdad-head.svg?url'
 import contactsUrl  from '@/assets/icons/Contacts.png?url'
 import photosUrl    from '@/assets/icons/Photos.png?url'

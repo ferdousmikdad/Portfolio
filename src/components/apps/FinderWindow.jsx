@@ -28,6 +28,7 @@ import pacmanIconUrl     from '@/assets/icons/magic-icon.svg?url'
 import calculatorIconUrl from '@/assets/icons/Calculator@4x 1.png?url'
 import settingsIconUrl   from '@/assets/icons/mac-system-settings.svg?url'
 import photoBoothIconUrl from '@/assets/icons/photobooth.png?url'
+import timeMachineIconUrl from '@/assets/icons/TimeMachine.png?url'
 import trashEmptyUrl     from '@/assets/icons/trash-empty.svg?url'
 import trashFullUrl      from '@/assets/icons/trash-full.svg?url'
 import trashEmptyDarkUrl from '@/assets/icons/trash-empty-dark.svg?url'
@@ -58,6 +59,7 @@ const NATIVE_APPS = [
   { id: 'calculator',  label: 'Calculator',      icon: calculatorIconUrl },
   { id: 'settings',    label: 'System Settings', icon: settingsIconUrl },
   { id: 'photo-booth', label: 'Photo Booth',     icon: photoBoothIconUrl },
+  { id: 'time-machine', label: 'Time Machine',   icon: timeMachineIconUrl },
 ]
 
 const FAVORITES = [
@@ -210,7 +212,9 @@ export default function FinderWindow() {
       ...a,
       kind: 'application',
       size: '—',
-      onOpen: () => (a.system ? (play('open'), openWindow(a.id)) : launchTool(a.id)),
+      onOpen: () => (a.id === 'time-machine'
+        ? useWindowStore.getState().openTimeMachine()
+        : a.system ? (play('open'), openWindow(a.id)) : launchTool(a.id)),
       trash: a.system ? null : { id: `app-${a.id}`, name: a.label, kind: 'application', icon: a.icon, size: '—', origin: { source: 'finder', id: a.id } },
       where: 'Macintosh HD ▸ Applications',
     })), [trashItems])

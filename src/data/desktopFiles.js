@@ -1,4 +1,4 @@
-import macDocumentUrl from '@/assets/icons/macDocument.png'
+import macDocumentUrl from '@/assets/icons/txtDocument.png'
 
 /* The files sitting on the desktop. Each one can be dragged to the Trash and
    put back, so the list lives here rather than inline in Desktop — the Trash

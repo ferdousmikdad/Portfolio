@@ -33,6 +33,7 @@ import calcUrl     from '@/assets/icons/Calculator@4x 1.png'
 import appStoreUrl from '@/assets/icons/App Store.png'
 import spotifyUrl  from '@/assets/icons/Music.png?url'
 import photoBoothUrl from '@/assets/icons/photobooth.png?url'
+import timeMachineUrl from '@/assets/icons/TimeMachine.png?url'
 import contactsUrl from '@/assets/icons/Contacts.png?url'
 
 /* ── Clipboard history, for the whole session ── */
@@ -91,6 +92,7 @@ export default function Spotlight({ onClose }) {
     { id: 'shop',        name: 'App Store',           icon: appStoreUrl,   run: () => openWindow('shop') },
     { id: 'spotify',     name: 'Music',           icon: spotifyUrl,    run: () => openWindow('spotify') },
     { id: 'photo-booth', name: 'Photo Booth',     icon: photoBoothUrl, run: () => openWindow('photo-booth') },
+    { id: 'time-machine', name: 'Time Machine',    icon: timeMachineUrl, run: () => useWindowStore.getState().openTimeMachine() },
     { id: 'settings',    name: 'System Settings', icon: PANE_ICONS.general, run: () => openWindow('settings') },
     ...TOOLS.map((t) => ({ id: t.id, name: t.name, icon: t.icon, run: () => { navigate('tools'); openTool(t.id) } })),
   ], [openWindow, openTool, navigate, openFinderAt])

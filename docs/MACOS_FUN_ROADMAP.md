@@ -24,10 +24,10 @@ Same symbols as `PROGRESS.md`, so the two files read the same way.
 
 | Field | Value |
 |---|---|
-| **Progress** | **All 23 shipped ✅** (F1–F21, F23, F24 · F22 dropped) — **the roadmap is finished** |
+| **Progress** | Tiers 1–4 **complete** (F1–F24). **Tier 5 added 2026-09-25: 9 new items (F25–F33), 1 shipped (F25)** |
 | **Currently working on** | — nothing in flight — |
-| **Last completed** | ✅ F24 — Sleep / Wake |
-| **Next up** | — nothing left on this list. See **Open decisions** for the deferred bits. |
+| **Last completed** | ✅ F25 — Time Machine |
+| **Next up** | 📋 **F26 Messages that reach Mikdad**, then **F27 banners** (see Tier 5) |
 
 ### Done so far
 
@@ -144,9 +144,39 @@ Visual spectacle. Worth it once Tier 1 is in.
 | F19 | **Photo Booth** | ✅ | M | Done. `PhotoBoothWindow.jsx` + `utils/photoFilters.js`. Two effects — Normal and **Retro Dot, the real halftone** from the standalone tool — same Rec. 709 luminance, same radius-from-darkness mapping, same 45° rotated grid — so the two genuinely agree. (Trimmed from six on 21 Sep; the other four were filler.) Shutter with flash, capture strip, click a shot to download. Camera is released the moment the window closes, and nothing leaves the browser. Filters live in their own module and are covered by **22 unit tests**. ⚠️ Live camera path unverifiable here — see Open decisions. |
 | F20 | **AirDrop → contact** | ✅ | S | Done. `AirDropSheet.jsx`. The target only appears **while a drag is in flight**, highlights on hover, then runs Sending… → Sent → contact card. Honest about itself: the sheet says nothing left your machine and the file stays on the desktop. Respects the Control Centre switch — set to “No One” it shows as off. `dragStore` generalised from a hard-coded Trash check to attribute-based drop targets, so future targets need no store changes. |
 | F21 | **Software Update** | ✅ | M | Done. `updateStore.js` + `softwareUpdate.js` + `WhatsNewWindow.jsx`. The pane that used to read "up to date" now has a real update behind it: **Upgrade Now → download → install → What's New**, with the red **1** badge macOS puts on the Apple menu, the Settings sidebar and the General list, and a Notification Centre card advertising it. The stage machine lives in the store so the bar does not freeze when you leave the pane; installed state persists so a returning visitor is not nagged. Version is unified in `systemProfile` — `neofetch` and `uname -a` print **26.1** after the install and 26.0.1 before it. Also real: `softwareupdate -l / -i / --uninstall` in the Terminal. ⚠️ Payoff changed from "reveals a new project" — see Open decisions. |
-| F22 | ~~Force Quit (⌘⌥Esc)~~ | ❌ | S | **Dropped at your request, 21 Sep.** Nothing is built and the Apple-menu row stays as it is. Say the word if you want it back. |
+| F22 | Force Quit (⌘⌥Esc) | ✅ | S | Dropped on 21 Sep, then **built on 24 Sep** as part of the macOS UI audit (item 3, the Apple menu), which rebuilt the menu row for row including **Force Quit…**. `ForceQuit.jsx`: the real "Force Quit Applications" window — running apps with icons, Finder first, **Relaunch** for Finder, **Force Quit** for the rest (closes that app's windows). Holding Option shows *Force Quit <front app>*. See `docs/MACOS_UI_AUDIT.md`. |
 | F23 | **Keyboard shortcuts overlay (⌘/)** | ✅ | S | Done. `ShortcutsOverlay.jsx` + `data/shortcuts.js`. ⌘/ (and ⌘?, and ⌃/ for PC keyboards) puts up a two-column glass sheet of **24 shortcuts in 7 groups**, also reachable from **Help ▸ Keyboard Shortcuts**. Every entry was checked against the actual handlers rather than copied off the menus, and the footer names ⌘W / ⌘M / ⌘Q / ⌘, / ⌘H as **claimed by the browser** instead of quietly listing keys that do nothing. A flag, not a window — it would otherwise show up in Mission Control and the dock. Verified: all seven listed global chords fire, both themes, and it fits without scrolling down to 820px. |
 | F24 | **Sleep / Wake** | ✅ | M | Done. `PowerOverlay.jsx` + `power` state in `windowStore`. The two Apple-menu rows that had been drawn **disabled since the menu bar was built** now work. **Sleep** ramps the display down over 1.2s, holds a **900 ms guard** so the click that chose it does not immediately wake it, then any key or click wakes to the **lock screen** — where a Mac with default settings puts you. Windows survive. **Restart…** keeps its ellipsis honest: a `MacAlert` asks first, then black → boot bar → **startup chime** → desktop with every window closed, which is the part that sells it. Both swallow input in the **capture phase**, so F4 cannot open Launchpad behind a black screen. Also added **Put Display to Sleep** as a hot-corner action, which is a real macOS one. |
+
+---
+
+## Tier 5 — Fun that also works for the portfolio  📋 added 2026-09-25
+
+Chosen against the caution below: each one is either about Mikdad's work,
+brings a visitor closer to contacting him, or finishes something already
+half-built — not more breadth for its own sake.
+
+| ID | Task | Status | Effort | Notes |
+|---|---|---|---|---|
+| F25 | **Time Machine — the site's own history** | ✅ | L | Done. `TimeMachine.jsx` + `data/timeMachine.js`. **Seven real backups**: each era's commit was checked out, run, and screenshotted as a visitor landed on it (Oct 6 '25 first site → Apr 6 tools → Apr 12 React desktop → Apr 15 menu bar + Mikuda → May 20 Finder/Terminal/Settings → Sep 21 dock + menus → today), ~300 KB of WebP in `public/timemachine/`. Full screen over the blurred desktop: stack receding upward, date on top, timeline down the right, Cancel / Open. ↑↓, scroll and the timeline travel; Enter / Open shows the backup full size in Preview; notes from the commit messages. Entry points: Launchpad, Spotlight, Finder › Applications (real Time Machine icon) and **System Settings › General › Time Machine**, which was a dead stub. |
+| F26 | **Messages that actually reach Mikdad** | 📋 | M | ⭐ Home already is Messages. Add a real conversation *with Mikdad*: the visitor writes, it arrives as an email through the existing Cloudflare worker, the bubble shows **Delivered**, and his real reply appears when they come back. The contact form, without feeling like one — the item most likely to bring work. Needs a worker endpoint + a reply store; spam protection required. |
+| F27 | **Slide-in notification banners, real triggers only** | 📋 | S | Closes the F17 open decision. Banners from the top-right that go into Notification Centre, fired only by real events: *"Password Peek copied"* after Get in the App Store, *"Photo saved"* in Photo Booth, *"Mikuda answered"* if the Siri bar was closed mid-question. No invented alerts. |
+| F28 | **Mikuda can listen and speak** | 📋 | M | The mic in the Siri bar is decorative today. Browser speech recognition to ask out loud, speech synthesis to read the answer. Must degrade quietly where the browser lacks it (Firefox) and ask for the mic only on press. |
+| F29 | **Dynamic wallpaper by local time** | 📋 | S | Tahoe wallpapers shift from day to night. Follow the *visitor's* clock — someone at 2 am sees the night variant. Needs a day and a night version of the wallpaper. |
+| F30 | **Widgets on the desktop** | 📋 | M | Tahoe lets widgets sit on the desktop itself. A **Now working on** card, the **Music** widget playing Mikdad's playlist, and his clock beside the visitor's (*"It's 1:40 AM for Mikdad"*). Should follow Settings → Desktop & Dock and be movable. |
+| F31 | **⌘P → print sheet → résumé PDF** | 📋 | S | The real macOS print sheet, and **Save as PDF** hands over Mikdad's actual CV. Useful to recruiters, a smile for everyone else. Needs the CV file. |
+| F32 | **Activity Monitor** | 📋 | M | A real list of what is running — open windows, the Mikuda worker, animations — with live CPU-style graphs from actual frame timing. Nerdy, and it signals understanding of the thing built. Must use real numbers, not decorative ones. |
+| F33 | **Chess** | 📋 | M | Ships on every Mac; a quick game against Mikuda suits a portfolio people linger in. Could use an open-source engine rather than writing one. |
+
+**Considered and skipped**
+
+| Idea | Why not |
+|---|---|
+| ⌘Tab app switcher | The browser never receives ⌘Tab — macOS claims it first — so it could only ever run on a substitute key and would feel broken. |
+| Achievements ("12 of 20 secrets found") | Fun for a day, but it points at the tricks rather than the work. |
+
+**Suggested order:** F25 → F26 → F27, then the rest as time allows. F27 is
+the quickest win; F25 is the one visitors will remember.
 
 ---
 
@@ -217,3 +247,6 @@ Prefer finishing a few of these properly over starting many.
 | 2026-09-21 | ❌ F22 Force Quit dropped at your request — not built |
 | 2026-09-21 | ✅ F23 Keyboard shortcuts overlay shipped — ⌘/ sheet, Help menu entry, and an honest footer about the chords the browser claims |
 | 2026-09-21 | ✅ F24 Sleep / Wake / Restart shipped — the last two disabled Apple-menu rows now work; **roadmap complete** |
+| 2026-09-24 | ✅ F22 Force Quit built after all, as part of the macOS UI audit (Apple menu, item 3) — `ForceQuit.jsx` |
+| 2026-09-25 | ✅ F25 Time Machine shipped — seven real snapshots of the site's history, full-screen stack + timeline; the Settings Time Machine row now works |
+| 2026-09-25 | 📋 Tier 5 added: F25–F33 (Time Machine, real Messages, banners, voice, dynamic wallpaper, desktop widgets, résumé print, Activity Monitor, Chess); ⌘Tab and achievements considered and skipped |

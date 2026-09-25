@@ -42,6 +42,7 @@ import StageManager from '@/components/desktop/StageManager'
 import NotificationCenter from '@/components/desktop/NotificationCenter'
 import AirDropSheet from '@/components/desktop/AirDropSheet'
 import GetInfo from '@/components/desktop/GetInfo'
+import TimeMachine from '@/components/desktop/TimeMachine'
 import ContextMenu from '@/components/ui/ContextMenu'
 import useDesktopStore from '@/store/desktopStore'
 import { TAGS } from '@/data/projects'
@@ -629,6 +630,7 @@ export default function Desktop() {
       </AnimatePresence>
 
       <Launchpad open={launchpad} onClose={closeLaunchpad} />
+      <TimeMachine />
 
       <ShortcutsOverlay />
 

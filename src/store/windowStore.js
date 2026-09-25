@@ -311,6 +311,11 @@ const useWindowStore = create((set, get) => ({
   toggleLaunchpad: () => set((s) => ({ launchpad: !s.launchpad, missionControl: false })),
   closeLaunchpad: () => set({ launchpad: false }),
 
+  /* Time Machine — the portfolio's own history, full screen. */
+  timeMachine: false,
+  openTimeMachine:  () => set({ timeMachine: true, launchpad: false, missionControl: false, spotlight: false, notificationCenter: false }),
+  closeTimeMachine: () => set({ timeMachine: false }),
+
   /* ── Power ──────────────────────────────────────────────────────────
      Sleep and Restart, the two Apple-menu rows that were drawn disabled.
 

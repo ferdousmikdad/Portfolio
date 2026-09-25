@@ -1094,7 +1094,7 @@ function GeneralPane({ onNavigate }) {
     { id: 'datetime',       label: 'Date & Time',        icon: 'datetime',      stub: true },
     { id: 'language',       label: 'Language & Region',  icon: 'language',      stub: true },
     { id: 'loginitems',     label: 'Login Items',        icon: 'loginitems',    stub: true },
-    { id: 'timemachine',    label: 'Time Machine',       icon: 'timemachine',   stub: true },
+    { id: 'timemachine',    label: 'Time Machine',       icon: 'timemachine',   enter: true },
     { id: 'transferreset',  label: 'Transfer or Reset',  icon: 'transferreset', stub: true },
   ]
   return (
@@ -1102,7 +1102,7 @@ function GeneralPane({ onNavigate }) {
       {rows.map(r => (
         <Row key={r.id} label={r.label}
              icon={<img src={PANE_ICONS[r.icon]} alt="" className="mac-row__glyph" />}
-             onClick={r.stub ? undefined : () => onNavigate(r.id)}>
+             onClick={r.enter ? () => useWindowStore.getState().openTimeMachine() : r.stub ? undefined : () => onNavigate(r.id)}>
           {r.id === 'softwareupdate' && updatePending && <span className="mac-badge">1</span>}
           <ChevronRight size={13} className="mac-row__chevron" />
         </Row>

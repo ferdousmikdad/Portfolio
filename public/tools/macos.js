@@ -43,6 +43,16 @@
   }, true)
   document.addEventListener('DOMContentLoaded', fillAll)
   window.addEventListener('load', fillAll)
+  // Overlay scrollbars: shown only while an area is scrolling.
+  var timers = new WeakMap()
+  document.addEventListener('scroll', function (e) {
+    var el = e.target === document ? document.documentElement : e.target
+    if (!el || !el.classList) return
+    el.classList.add('is-scrolling')
+    clearTimeout(timers.get(el))
+    timers.set(el, setTimeout(function () { el.classList.remove('is-scrolling') }, 900))
+  }, { capture: true, passive: true })
+
   // Tools also set slider values from code (presets, resets).
   setInterval(fillAll, 500)
 })()

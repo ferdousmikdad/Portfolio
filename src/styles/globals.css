@@ -218,26 +218,7 @@ html.reduce-motion *::after {
     font-weight: 500;
   }
 
-  .window-scroll {
-    overflow-y: auto;
-    scrollbar-width: none;
-    scrollbar-color: transparent transparent;
-    transition: scrollbar-color 0.2s ease;
-  }
-  .window-scroll:hover {
-    scrollbar-width: thin;
-    scrollbar-color: var(--scrollbar) transparent;
-  }
-  .window-scroll::-webkit-scrollbar { width: 4px; }
-  .window-scroll::-webkit-scrollbar-track { background: transparent; }
-  .window-scroll::-webkit-scrollbar-thumb {
-    background: transparent;
-    border-radius: 2px;
-    transition: background 0.2s ease;
-  }
-  .window-scroll:hover::-webkit-scrollbar-thumb {
-    background: var(--scrollbar);
-  }
+  .window-scroll { overflow-y: auto; }
 }
 
 /* ── Components ───────────────────────────────────────────────────────────── */
@@ -764,9 +745,9 @@ html.reduce-motion *::after {
   background: var(--preview-bg);
 }
 .doc-plain-text {
-  font-family: 'SF Pro Text', -apple-system, sans-serif;
-  font-size: 13px;
-  line-height: 1.7;
+  font-family: Menlo, 'SF Mono', ui-monospace, monospace;
+  font-size: 12px;
+  line-height: 1.5;
   color: var(--headline);
   white-space: pre-wrap;
   word-break: break-word;
@@ -7596,3 +7577,189 @@ html:not(.dark) .fq-list { background: #fff; }
 }
 /* macOS highlights a selection in a tint of the accent. */
 ::selection { background: color-mix(in srgb, var(--brand) 38%, transparent); }
+
+/* ── Scrollbars — macOS overlay style ───────────────────────────────────────
+   Every scroll area on the site, not just the ones marked window-scroll:
+   a thin thumb, no track, invisible at rest and shown only while that area
+   is scrolling (utils/overlayScrollbars.js adds .is-scrolling). The thumb is
+   the grey macOS uses, darker in light mode, lighter in dark.              */
+:root { --mac-scroll-thumb: rgba(0, 0, 0, 0.38); }
+.dark { --mac-scroll-thumb: rgba(255, 255, 255, 0.38); }
+* {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+.is-scrolling {
+  scrollbar-color: var(--mac-scroll-thumb) transparent;
+}
+
+/* ── Notification Centre (Tahoe) ─────────────────────────────────────────────
+   A notification is a glass card with the app's icon on the left (34pt),
+   the title in semibold with the time at the trailing edge in grey, and the
+   message below. Widgets sit under them as squares, two to a row; Calendar
+   has its month in red and today in a red disc; Clock is an analog face.   */
+.nc-note { border-radius: 18px; }
+.nc-note .nc-note__hit {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 12px 12px !important;
+  width: 100%;
+  text-align: left;
+}
+.nc-note__icon { width: 34px; height: 34px; object-fit: contain; flex-shrink: 0; margin-top: 1px; }
+.nc-note__text { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+.nc-note__top { display: flex; align-items: baseline; gap: 8px; }
+.nc-note__top .nc-note__title { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nc-note__time { flex-shrink: 0; font-size: 11px; color: var(--mac-secondary); }
+.nc-note .nc-note__body { font-size: 12px; line-height: 1.35; }
+
+.nc-none {
+  padding: 4px 6px;
+  font: 600 13px 'SF Pro Text', sans-serif;
+  color: var(--headline);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+.nc-widgets { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.nc-widget--small { aspect-ratio: 1; border-radius: 22px; padding: 12px 11px 10px !important; }
+.nc-widget--small .nc-widget__title {
+  font: 700 10px 'SF Pro Text', sans-serif; letter-spacing: 0.02em;
+  color: #ff453a; margin: 0 0 4px;
+}
+.nc-widget--small .nc-cal { gap: 1px 0; }
+.nc-widget--small .nc-cal__dow { font-size: 7.5px; font-weight: 700; color: var(--mac-secondary); }
+.nc-widget--small .nc-cal__day { font-size: 8.5px; font-weight: 600; line-height: 14px; }
+.nc-widget--small .nc-cal__day[data-today] { background: #ff453a; color: #fff; border-radius: 50%; }
+
+.nc-clockw { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.nc-clockw__face { width: 86%; }
+.nc-clockw__dial { fill: rgba(255, 255, 255, 0.92); }
+.nc-clockw__num { font: 600 11px 'SF Pro Display', sans-serif; fill: #1d1d1f; }
+.nc-clockw__hour, .nc-clockw__min { stroke: #1d1d1f; stroke-linecap: round; }
+.nc-clockw__hour { stroke-width: 4; }
+.nc-clockw__min  { stroke-width: 2.6; }
+.nc-clockw__sec  { stroke: #ff9f0a; stroke-width: 1.2; stroke-linecap: round; }
+.nc-clockw__pin  { fill: #ff9f0a; }
+.nc-clockw__city { margin-top: 4px; font: 600 10px 'SF Pro Text', sans-serif; color: var(--headline); }
+
+.nc-edit {
+  align-self: center;
+  height: 28px; padding: 0 14px; margin-top: 2px;
+  border: none; border-radius: 9999px;
+  background: rgba(120, 120, 128, 0.36);
+  -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+  color: #fff; font: 500 12px 'SF Pro Text', sans-serif; cursor: default;
+}
+.nc-edit:hover { background: rgba(120, 120, 128, 0.5); }
+
+/* ── Time Machine ────────────────────────────────────────────────────────────
+   Full screen over a darkened, blurred desktop. The backups stand in a stack
+   that recedes upward — each one smaller, dimmer and higher than the one in
+   front — with the date along the top, the timeline down the right edge and
+   Cancel / Open in capsules at the bottom.                                  */
+.tm {
+  position: fixed;
+  inset: 0;
+  z-index: 9600;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 90% at 50% 20%, rgba(40, 60, 110, 0.45), transparent 60%),
+    rgba(4, 6, 12, 0.82);
+  -webkit-backdrop-filter: blur(22px) saturate(120%);
+  backdrop-filter: blur(22px) saturate(120%);
+  font-family: 'SF Pro Text', system-ui, sans-serif;
+  color: #fff;
+  user-select: none;
+}
+.tm__top { position: absolute; top: 34px; left: 0; right: 0; z-index: 2; text-align: center; }
+.tm__date { font: 700 22px 'SF Pro Display', sans-serif; letter-spacing: -0.01em; }
+.tm__title { margin-top: 2px; font-size: 13px; color: rgba(255, 255, 255, 0.65); }
+
+.tm__stage {
+  position: absolute;
+  left: 50%;
+  bottom: 150px;
+  width: min(56vw, 900px, calc((100vh - 330px) * 1.6));
+  aspect-ratio: 1512 / 945;
+  transform: translateX(-50%);
+}
+.tm__card {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  border: none;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+  transform-origin: 50% 0%;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.14),
+    0 24px 60px rgba(0, 0, 0, 0.6);
+  cursor: default;
+}
+.tm__card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.tm__note {
+  position: absolute;
+  left: 50%;
+  bottom: 96px;
+  width: min(62vw, 760px);
+  transform: translateX(-50%);
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.tm__rail {
+  position: absolute;
+  right: 26px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+.tm__arrow {
+  display: grid; place-items: center;
+  width: 30px; height: 30px; align-self: center;
+  border: none; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff; cursor: default;
+}
+.tm__arrow:disabled { opacity: 0.3; }
+.tm__arrow:not(:disabled):hover { background: rgba(255, 255, 255, 0.2); }
+.tm__timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.tm__tick {
+  display: flex; align-items: center; gap: 8px;
+  border: none; background: transparent;
+  font: 500 12px 'SF Pro Text', sans-serif;
+  color: rgba(255, 255, 255, 0.45);
+  cursor: default;
+}
+.tm__tick::after {
+  content: ''; width: 14px; height: 2px; border-radius: 1px;
+  background: rgba(255, 255, 255, 0.35);
+}
+.tm__tick:hover { color: rgba(255, 255, 255, 0.85); }
+.tm__tick[data-on] { color: #fff; font-weight: 700; }
+.tm__tick[data-on]::after { width: 22px; background: var(--brand); }
+
+.tm__bar {
+  position: absolute;
+  left: 0; right: 0; bottom: 34px;
+  display: flex; justify-content: center; gap: 14px;
+}
+.tm__btn {
+  min-width: 110px; height: 34px; padding: 0 20px;
+  border: none; border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.14);
+  -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+  color: #fff; font: 500 14px 'SF Pro Text', sans-serif; cursor: default;
+}
+.tm__btn:hover { background: rgba(255, 255, 255, 0.22); }
+.tm__btn--primary { background: var(--brand); }
+.tm__btn--primary:hover { background: color-mix(in srgb, var(--brand) 85%, white); }

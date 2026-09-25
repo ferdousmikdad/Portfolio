@@ -6,7 +6,7 @@ Mac it was built beside (macOS 26, dark mode, blue accent).
 
 Audited 2026-09-24. Tick an item off when it ships.
 
-**Progress:** 8 of 18 done (items 2–7, 9 and 10, 2026-09-25).
+**Progress:** 11 of 18 done (items 1–7, 9, 10, 13 and 14, 2026-09-25).
 
 ## Already close — leave as is
 
@@ -20,11 +20,21 @@ everywhere (item 2), the Apple menu and every menu-bar menu (item 3), and Finder
 
 ## High priority — the most visible gaps
 
-- [ ] **1. Notification Center**
-  - Now: cards have no app icon and no time, each headed by an all-caps label
-    ("SOFTWARE UPDATE", "TERMINAL"); a "NOW 6:42" block that is not a macOS widget.
-  - Real: app icon on the left, bold title, message, "now" / "2m ago" top-right,
-    grouped stacks; widgets as large glass cards below.
+- [x] **1. Notification Center** — done 2026-09-25
+  - **Cards:** each notification is its own glass card: the app's real icon
+    on the left (Software Update, Contacts, Terminal, App Store), the title
+    in semibold with the time top-right ("now", "3m ago", counted from when
+    the site loaded), and the message below. The all-caps app labels are
+    gone.
+  - **Dismissing:** × on hover dismisses a card. When none are left the
+    panel says "No recent notifications", as the real one does.
+  - **Widgets:** the "NOW 6:42" block is replaced by Tahoe small widgets side
+    by side: Calendar (month in red, today in a red disc) and an analog
+    Clock with a live second hand, named after the visitor's own time-zone
+    city.
+  - **Edit Widgets** pill at the bottom opens System Settings → Desktop &
+    Dock.
+  - File: `NotificationCenter.jsx`.
 
 - [x] **2. Right-click on the desktop** — done 2026-09-24
   - Was: right-clicking empty desktop or the desktop files showed nothing;
@@ -241,14 +251,30 @@ everywhere (item 2), the Apple menu and every menu-bar menu (item 3), and Finder
 - [ ] **12. Mission Control**: missing the Spaces bar across the top
   ("Desktop 1" plus a + button).
 
-- [ ] **13. Scrollbars**: the System Settings sidebar and the What's New window
-  show a permanent white scrollbar. macOS hides scrollbars until you scroll.
+- [x] **13. Scrollbars** — done 2026-09-25
+  - macOS overlay behaviour everywhere, including the tool pages: no bar at
+    rest; a thin grey thumb (38% white in dark mode, 38% black in light, no
+    track) appears the moment an area scrolls and disappears about a second
+    after it stops.
+  - How it works:
+    - One global rule (`* { scrollbar-width: thin; scrollbar-color:
+      transparent … }`) covers every scroll area, marked or not.
+    - `src/utils/overlayScrollbars.js` (one capture-phase scroll listener)
+      adds `.is-scrolling` to whatever is scrolling.
+    - The tool pages get the same from `public/tools/macos.js`.
+  - Verified: the System Settings sidebar and the What's New list are clean
+    at rest, show a thumb while scrolling, and clear again after.
 
-- [ ] **14. Desktop `.txt` files**
-  - The desktop icons look like rich documents with a picture in them; real
-    plain-text files show a page with just text.
-  - Inside the TextEdit windows, the "────" lines under headings are typed
-    dashes and look fake.
+- [x] **14. Desktop `.txt` files** — done 2026-09-25
+  - **Icon:** the real macOS plain-text document icon (a page of monospace
+    text marked "TXT"), rendered from the system with
+    `NSWorkspace.icon(for: .plainText)`, now `src/assets/icons/txtDocument.png`.
+    It's used on the desktop, in Finder, in the Trash and in the Dock's
+    minimised tiles. Saved Trash contents pick up the new icon on load.
+  - **TextEdit windows:** the typed "────" rules are gone (a .txt file
+    cannot draw a line); headings are set off by a blank line. Text is in
+    Menlo, TextEdit's default plain-text font, and the file name is centred
+    in the title bar. File: `BioWindow.jsx`.
 
 ---
 
@@ -267,7 +293,7 @@ everywhere (item 2), the Apple menu and every menu-bar menu (item 3), and Finder
 
 ## Suggested order
 
-Next: **1** (Notification Center), then the medium-priority list (8–14).
+Next: the rest of the medium list (8, 11, 12), then the low list (15–18).
 
 ## Measured values
 
