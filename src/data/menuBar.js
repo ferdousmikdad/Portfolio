@@ -37,6 +37,7 @@ const APP_NAMES = {
   preview: 'Preview',
   chess: 'Chess',
   'whats-new': 'System Settings',
+  clipio: 'Clipio',
 }
 
 export function appNameFor(windowId) {

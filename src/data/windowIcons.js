@@ -14,6 +14,7 @@ import finderUrl    from '@/assets/icons/finder.svg?url'
 import settingsUrl  from '@/assets/icons/mac-system-settings.svg?url'
 import spotifyUrl   from '@/assets/icons/Music.png?url'
 import photoBoothUrl from '@/assets/icons/photobooth.png?url'
+import clipioUrl    from '@/assets/icons/clipio/app-icon.png?url'
 import PANE_ICONS_SOFTWARE from '@/assets/icons/settings/softwareupdate.png?url'
 
 /* Icon shown on a window's dock tile while it is minimised. Tools carry their
@@ -36,6 +37,7 @@ const WINDOW_ICONS = {
   'about-mac': mikdadUrl,
   'whats-new': PANE_ICONS_SOFTWARE,
   'photo-booth': photoBoothUrl,
+  clipio:      clipioUrl,
 }
 
 export default function windowIcon(id) {

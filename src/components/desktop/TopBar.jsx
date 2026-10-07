@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { AnimatePresence } from 'framer-motion'
 import useSettingsStore from '@/store/settingsStore'
 import useWindowStore from '@/store/windowStore'
@@ -7,6 +8,8 @@ import MenuBar from './MenuBar'
 import Spotlight from './Spotlight'
 import MikudaAsk from './MikudaAsk'
 import Tip from '@/components/ui/Tip'
+import { Panel } from '@/components/ui/ContextMenu'
+import { CLIPIO_TRAY, clipioMenu } from '@/data/clipio'
 import macSettingUrl from '@/assets/icons/macsetting.svg?url'
 import macSearchUrl  from '@/assets/icons/macsearch.svg?url'
 import macFitUrl     from '@/assets/icons/macfit.svg?url'
@@ -70,6 +73,25 @@ function BatteryStatus({ level = 87 }) {
   )
 }
 
+// ── Clipio's menu ─────────────────────────────────────────────────────────────
+// Hung from the glyph's bottom-left corner, as a status-item menu is, and
+// portalled so its glass samples the desktop rather than the bar. A component
+// of its own, not a bare portal: AnimatePresence only tracks elements.
+
+function ClipioMenu({ anchor, onOpen, onClose }) {
+  const r = anchor?.getBoundingClientRect()
+  if (!r) return null
+  return createPortal(
+    <Panel
+      className="mac-menu--bar"
+      items={clipioMenu(onOpen)}
+      at={{ x: Math.round(r.left), y: Math.round(r.bottom + 3) }}
+      onClose={onClose}
+    />,
+    document.body,
+  )
+}
+
 // ── Main TopBar ───────────────────────────────────────────────────────────────
 
 export default function TopBar() {
@@ -77,8 +99,9 @@ export default function TopBar() {
   const showBattery   = useSettingsStore(s => s.menuBarShowBattery)
 
   const toggleNotificationCenter = useWindowStore((s) => s.toggleNotificationCenter)
+  const openWindow               = useWindowStore((s) => s.openWindow)
 
-  const [openPanel,    setOpenPanel]    = useState(null) // 'apple' | 'control' | null
+  const [openPanel,    setOpenPanel]    = useState(null) // 'clipio' | 'control' | null
   /* Spotlight's open state lives in the store, not here: the What's New
      window raises it from the other side of the app. */
   const spotOpen        = useWindowStore((s) => s.spotlight)
@@ -99,6 +122,7 @@ export default function TopBar() {
 
   const barRef  = useRef(null)
   const siriRef = useRef(null)
+  const clipioRef = useRef(null)
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) document.documentElement.requestFullscreen?.()
@@ -111,11 +135,12 @@ export default function TopBar() {
     return () => document.removeEventListener('fullscreenchange', handler)
   }, [])
 
-  // Close the Control Centre on an outside click
+  // Close the Control Centre or Clipio's menu on an outside click. Clipio's
+  // menu is portalled out of the bar, so a press inside it is not outside.
   useEffect(() => {
     if (!openPanel) return
     const handler = (e) => {
-      if (barRef.current && !barRef.current.contains(e.target)) setOpenPanel(null)
+      if (barRef.current && !barRef.current.contains(e.target) && !e.target.closest?.('.mac-menu')) setOpenPanel(null)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
@@ -150,6 +175,18 @@ export default function TopBar() {
 
         {/* ── Right: menu-bar extras ───────────────────────────────────────── */}
         <div className="topbar-extras">
+
+          {/* Clipio — Ferdous's screen recorder, as its menu-bar extra sits on
+              his Mac. Third-party extras come before the system ones. */}
+          <Tip label="Clipio" hidden={openPanel === 'clipio'}>
+            <button
+              ref={clipioRef}
+              className={`topbar-icon-btn ${openPanel === 'clipio' ? 'active' : ''}`}
+              onClick={() => { closeSpotlight(); closeMikudaAsk(); setOpenPanel(p => p === 'clipio' ? null : 'clipio') }}
+            >
+              <span className="topbar-clipio" style={{ '--tpl': `url("${CLIPIO_TRAY}")` }} />
+            </button>
+          </Tip>
 
           {showBattery && (
             <Tip label="Battery — 87%">
@@ -226,6 +263,17 @@ export default function TopBar() {
           </button>
         </div>
       </div>
+
+      <AnimatePresence>
+        {openPanel === 'clipio' && (
+          <ClipioMenu
+            key="clipio"
+            anchor={clipioRef.current}
+            onOpen={() => openWindow('clipio')}
+            onClose={() => setOpenPanel(null)}
+          />
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {spotOpen && <Spotlight onClose={closeSpotlight} />}

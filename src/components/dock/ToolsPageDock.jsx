@@ -25,6 +25,7 @@ import useTrashStore, { trashedFrom } from '@/store/trashStore'
 import useDragStore from '@/store/dragStore'
 import ContextMenu from '@/components/ui/ContextMenu'
 import MacAlert from '@/components/ui/MacAlert'
+import { CLIPIO_ICON } from '@/data/clipio'
 
 
 /* ── Plateless icon art ────────────────────────────────────────────────────
@@ -251,6 +252,12 @@ export default function ToolsPageDock({ menuOpen, onMenuToggle, onNavigate }) {
       {
         id: 'settings', label: 'System Settings', icon: settingsIconUrl, winId: 'settings',
         onClick: () => openApp('settings'), active: isLive('settings'),
+      },
+      /* Clipio, Ferdous's own Mac app, kept in the Dock beside the system
+         apps and ahead of the web tools. Its art has no glass plate either. */
+      {
+        id: 'clipio', label: 'Clipio', icon: CLIPIO_ICON, winId: 'clipio',
+        onClick: () => openApp('clipio'), active: isLive('clipio'),
       },
       ...dockTools.map((tool) => ({
         id: tool.id, label: tool.name, icon: tool.icon, file: FILE_ALIAS[tool.id] ?? tool.id, winId: tool.id,

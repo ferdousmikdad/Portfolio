@@ -31,6 +31,7 @@ import SettingsWindow from '@/components/apps/SettingsWindow'
 import MailWindow from '@/components/apps/MailWindow'
 import CalculatorWindow from '@/components/apps/CalculatorWindow'
 import AboutMacWindow from '@/components/apps/AboutMacWindow'
+import ClipioWindow from '@/components/apps/ClipioWindow'
 import PhotoBoothWindow from '@/components/apps/PhotoBoothWindow'
 import WhatsNewWindow from '@/components/apps/WhatsNewWindow'
 import ShortcutsOverlay from '@/components/desktop/ShortcutsOverlay'
@@ -594,6 +595,7 @@ export default function Desktop() {
           <MailWindow />
           <CalculatorWindow />
           <AboutMacWindow />
+          <ClipioWindow />
           <PhotoBoothWindow />
           <WhatsNewWindow />
           {/* A project opened from Portfolio, Finder or Mikuda — a Preview window. */}

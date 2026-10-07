@@ -2583,6 +2583,12 @@ html:not(.dark) .mac-menu {
 }
 /* An app icon in the leading column, at the symbol's size. */
 .mac-menu__img { width: 16px; height: 16px; object-fit: contain; }
+.mac-menu__tpl {
+  display: block;
+  background: currentColor;
+  -webkit-mask: var(--tpl) center / contain no-repeat;
+          mask: var(--tpl) center / contain no-repeat;
+}
 /* The grey count capsule — "1 update" beside System Settings. */
 .mac-menu__badge {
   margin-left: 16px;
@@ -5647,6 +5653,73 @@ html:not(.dark) .ql__close { color: rgba(0,0,0,0.5); background: rgba(0,0,0,0.08
   box-shadow:
     inset 0 0 0 0.5px rgba(255, 255, 255, 0.22),
     0 1px 2px rgba(0, 0, 0, 0.28);
+}
+.atm__btn:disabled { opacity: 0.5; filter: none; }
+
+/* ── Clipio ──────────────────────────────────────────────────────────────────
+   The About This Mac panel (.atm) with the app's tools between the subtitle
+   and the specs. Glyphs are Clipio's template images, filled with the text
+   colour so they follow light and dark like the labels beside them. */
+.clipio .clipio__icon { width: 84px; height: 84px; }
+.clipio__features {
+  width: 100%;
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--mac-secondary);
+}
+.clipio__features strong { color: var(--headline); font-weight: 600; }
+.clipio__tools {
+  width: 100%;
+  margin-top: 14px;
+  padding: 8px 10px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 14px;
+  border-radius: 8px;
+  background: var(--mac-control-2);
+  box-shadow: inset 0 0 0 0.5px rgba(128, 128, 128, 0.2);
+  text-align: left;
+}
+.clipio__tools ul { display: flex; flex-direction: column; gap: 3px; }
+.clipio__tool {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--headline);
+}
+.clipio__glyph {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  background: currentColor;
+  -webkit-mask: var(--tpl) center / contain no-repeat;
+          mask: var(--tpl) center / contain no-repeat;
+}
+.clipio__tool-label { flex: 1; white-space: nowrap; }
+.clipio__key {
+  font-family: inherit;
+  font-size: 10.5px;
+  color: var(--mac-secondary);
+  letter-spacing: 1px;
+}
+.clipio .atm__specs { margin-top: 14px; }
+
+/* The menu-bar extra: the tray template, tinted as macOS tints a template
+   image — the bar's white, held there like the other extras' artwork, since
+   an active button's text colour goes dark in light mode. */
+.topbar-clipio {
+  width: 16px;
+  height: 14px;
+  background: #F4F4F4;
+  -webkit-mask: var(--tpl) center / contain no-repeat;
+          mask: var(--tpl) center / contain no-repeat;
 }
 
 /* ── Spotlight ────────────────────────────────────────────────────────────── */

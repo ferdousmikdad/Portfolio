@@ -226,6 +226,17 @@ const defaultWindows = [
     zIndex: 3,
   },
   {
+    /* Clipio, opened from its menu-bar extra. Fixed size, like About This
+       Mac, whose layout it borrows. */
+    id: 'clipio',
+    title: 'Clipio',
+    isOpen: false,
+    isMinimized: false,
+    position: centeredInUsableArea(420, 640),
+    size: { width: 420, height: 640 },
+    zIndex: 3,
+  },
+  {
     /* What's New. Sized like the real release-notes sheet: narrow, tall,
        and not worth resizing. */
     id: 'whats-new',

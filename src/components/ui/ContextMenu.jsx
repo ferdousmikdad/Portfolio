@@ -88,7 +88,7 @@ export function Panel({ items, at, onClose, level = 0, className = '' }) {
   useEffect(() => () => clearTimeout(hoverTimer.current), [])
 
   // A leading column is drawn when anything in this panel needs it.
-  const hasLead = items.some((it) => it.icon || it.image || it.checked !== undefined)
+  const hasLead = items.some((it) => it.icon || it.image || it.template || it.checked !== undefined)
 
   const enterRow = (index, e, item) => {
     clearTimeout(hoverTimer.current)
@@ -168,6 +168,11 @@ export function Panel({ items, at, onClose, level = 0, className = '' }) {
                 <span className="mac-menu__lead">
                   {item.checked
                     ? <SFSymbol name="checkmark" size={11} />
+                    : item.template
+                      // A template image, as AppKit draws one: the glyph's
+                      // shape filled with the row's text colour, so it turns
+                      // white on the highlighted row like the label does.
+                      ? <span className="mac-menu__img mac-menu__tpl" style={{ '--tpl': `url("${item.template}")` }} />
                     : item.image
                       ? <img src={item.image} alt="" draggable={false} className="mac-menu__img" />
                       : item.icon && <SFSymbol name={item.icon} size={13} />}

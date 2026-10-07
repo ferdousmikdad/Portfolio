@@ -30,6 +30,7 @@ import settingsIconUrl   from '@/assets/icons/mac-system-settings.svg?url'
 import photoBoothIconUrl from '@/assets/icons/photobooth.png?url'
 import timeMachineIconUrl from '@/assets/icons/TimeMachine.png?url'
 import chessIconUrl from '@/assets/icons/Chess.png?url'
+import { CLIPIO_ICON as clipioIconUrl } from '@/data/clipio'
 import trashEmptyUrl     from '@/assets/icons/trash-empty.svg?url'
 import trashFullUrl      from '@/assets/icons/trash-full.svg?url'
 import trashEmptyDarkUrl from '@/assets/icons/trash-empty-dark.svg?url'
@@ -62,6 +63,7 @@ const NATIVE_APPS = [
   { id: 'photo-booth', label: 'Photo Booth',     icon: photoBoothIconUrl },
   { id: 'time-machine', label: 'Time Machine',   icon: timeMachineIconUrl },
   { id: 'chess',        label: 'Chess',          icon: chessIconUrl },
+  { id: 'clipio',       label: 'Clipio',         icon: clipioIconUrl },
 ]
 
 const FAVORITES = [
