@@ -11,7 +11,11 @@
    The box fades in under the field and resizes for each new answer. While
    Mikuda is thinking the field's rim runs with the Apple Intelligence glow;
    when an answer lands, a white glow sweeps once round the answer box's rim
-   and fades.                                                              */
+   and fades.
+
+   Like Siri, an answer doesn't stay up for good: once it has had time to be
+   read, field and answer leave together. The pointer resting on them, or a
+   follow-up being typed, holds them; the × closes them at once.          */
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
@@ -25,6 +29,9 @@ import siriIconUrl from '@/assets/icons/siri.png?url'
 const WIDTH = 344
 const GAP   = 6      // the breath Tahoe leaves between the bar and the panel
 const EDGE  = 8      // never let it touch the screen edge
+
+/* How long an answer stays up: a base, plus reading time for its text. */
+const READ_MS = (reply) => Math.min(20000, Math.max(8000, 5000 + (reply?.text?.length ?? 0) * 50))
 
 const hostOf = (href) => href.replace(/^(https?:\/\/(www\.)?|mailto:|tel:)/, '').replace(/\/$/, '')
 const label  = (slug) => slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
@@ -106,6 +113,7 @@ export default function MikudaAsk({ anchorRef }) {
   /* Until it is measured the field would flash at the top-left, so it starts
      hidden and the layout effect places it before the first paint. */
   const [at, setAt] = useState(null)
+  const [hovered,  setHovered]  = useState(false)
   const inputRef = useRef(null)
   const asked    = useRef(0)
 
@@ -132,6 +140,14 @@ export default function MikudaAsk({ anchorRef }) {
     const t = setTimeout(() => inputRef.current?.focus(), 30)
     return () => clearTimeout(t)
   }, [])
+
+  /* The auto-dismiss. Re-armed whenever the pointer leaves or the field is
+     cleared, so it always counts from the last thing the visitor did. */
+  useEffect(() => {
+    if (!reply || thinking || hovered || text) return
+    const t = setTimeout(closeMikudaAsk, READ_MS(reply))
+    return () => clearTimeout(t)
+  }, [reply, thinking, hovered, text, closeMikudaAsk])
 
   const submit = async () => {
     const q = text.trim()
@@ -161,6 +177,8 @@ export default function MikudaAsk({ anchorRef }) {
       <div
         className="mikuda-ask-stack"
         onMouseDown={(e) => e.stopPropagation()}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
         style={{ width: WIDTH, ...(at ?? { visibility: 'hidden' }) }}
       >
         <motion.div
@@ -194,6 +212,7 @@ export default function MikudaAsk({ anchorRef }) {
             style={{ borderRadius: 22 }}
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
+            exit={{    opacity: 0, y: -6, scale: 0.97 }}
             transition={{
               default: { duration: 0.2, ease: 'easeOut' },
               layout: { type: 'spring', stiffness: 380, damping: 30 },
@@ -202,6 +221,9 @@ export default function MikudaAsk({ anchorRef }) {
             <GlassLayers small />
             {/* Keyed to the answer, so each new one replays the sweep. */}
             <span key={`glow-${reply.id}`} className="mikuda-reply__glow" aria-hidden />
+            <button className="mikuda-reply__close" onClick={closeMikudaAsk} aria-label="Close" title="Close">
+              <SFSymbol name="xmark" size={10} />
+            </button>
             <motion.div
               key={reply.id}
               layout="position"

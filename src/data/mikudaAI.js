@@ -125,14 +125,14 @@ export const KB = [
        /tell me (about|more) (him|mikdad|ferdous|yourself)/.test(t) ||
        fuzzy(t, ['mikdad'])) &&
       !isPlatformQ(t) && !isEmailQ(t) && !isPhoneQ(t),
-    answer: "Mikdad is a UI/UX designer and web developer who specialises in interactive websites, modern UI design, branding, and Arabic logo design. He loves building creative experiences.",
+    answer: "Mikdad is a product designer and vibe coder: he designs digital products, then builds them himself with AI-assisted coding. His work spans product and UI design, branding, landing pages and Arabic logo design.",
   },
   {
     id: 'skills',
     test: (t) =>
       /\b(skill|expertise|good at|speciali[zs]e|tech|stack|what do you do|what can)\b/.test(t) ||
       fuzzy(t, ['skill', 'skills', 'expertise', 'specialize', 'specialise']),
-    answer: "Mikdad's core skills:\n• UI/UX Design\n• Web Development (HTML, CSS, JS, React)\n• Branding & Identity Design\n• Arabic Logo & Calligraphy Design",
+    answer: "Mikdad's core skills:\n• Product Design\n• UI/UX Design\n• Vibe Coding — building his designs with AI-assisted coding\n• Branding & Identity Design\n• Arabic Logo & Calligraphy Design",
   },
   {
     id: 'projects',
@@ -140,7 +140,7 @@ export const KB = [
       (/\b(project|portfolio|work|built|made|created|example|case study)\b/.test(t) ||
        fuzzy(t, ['project', 'portfolio', 'work'])) &&
       !isPlatformQ(t),
-    answer: "Mikdad has built a Pac-Man style interactive portfolio, a macOS-inspired multi-window site, landing pages, UI systems, and branding projects. Want me to show you one?",
+    answer: "Mikdad designed and built Clipio — a screen recorder for macOS — and this macOS-style portfolio, plus a Pac-Man style interactive portfolio, landing pages and branding projects. Want me to show you one?",
     action: 'portfolio',
     actionLabel: 'Open Portfolio →',
   },
@@ -149,7 +149,7 @@ export const KB = [
     test: (t) =>
       /\b(service|offer|provide|package|price|cost|rate|quote|charge)\b/.test(t) ||
       fuzzy(t, ['service', 'price', 'offer', 'package', 'quote']),
-    answer: "Mikdad offers:\n• Website design & development\n• UI/UX design\n• Branding & logo design\n• Arabic logo & identity design\n\nOpen to freelance and creative projects.",
+    answer: "Mikdad offers:\n• Product & UI/UX design\n• Turning designs into working products with AI-assisted coding\n• Branding & logo design\n• Arabic logo & identity design\n\nOpen to freelance and creative projects.",
   },
   {
     id: 'link-youtube',
@@ -254,7 +254,7 @@ export const KB = [
     test: (t) =>
       /\b(web|website|react|html|css|javascript|frontend|develop|code)\b/.test(t) ||
       fuzzy(t, ['website', 'react', 'html', 'javascript', 'frontend', 'develop']),
-    answer: "Mikdad builds modern interactive websites with HTML, CSS, JavaScript, and React — focused on smooth UX and creative interactions.",
+    answer: "Mikdad is a vibe coder: he designs the product first, then builds it with AI-assisted coding. This macOS-style portfolio and his Mac app Clipio were both made that way.",
   },
   {
     id: 'ux',
@@ -263,7 +263,7 @@ export const KB = [
       /mikdad.*(design|ux|ui)/.test(t) ||
       /(design|ux|ui).*(mikdad|ferdous|his|your|portfolio)/.test(t) ||
       fuzzy(t, ['figma', 'prototype', 'wireframe']),
-    answer: "UI/UX design is central to Mikdad's work. He creates intuitive interfaces, prototypes, and complete design systems.",
+    answer: "Design is the heart of Mikdad's work. As a product designer he takes an idea from interface and prototype all the way to a working product.",
   },
 ]
 
